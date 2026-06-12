@@ -152,19 +152,6 @@ src/
 - View basic product information
 
 
-## 🔑 Test User Credentials
-
-For testing purposes, you can use the following user credentials:
-
-**Admin User:**
-
-- **URL:** `https://possystemtest.netlify.app/`
-- **Email:** `inctimo.pvt.ltd@gmail.com`
-- **Password:** `inctimo`
-- **Role:** Admin (Full system access)
-- **Username:** `inctimo`
-
-> **Note:** This user has full administrative privileges and can access all features of the POS system including user management, reports, and system settings.
 
 
 ## 🔧 Available Scripts
@@ -366,3 +353,34 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **sekaLabs 2025** - Empowering businesses with modern POS solutions.
+## Initial Setup
+
+### 1. Clone & Install
+```bash
+git clone git@github.com:kohtun386/POS-system.git coffee-pos
+cd coffee-pos
+npm install
+```
+
+### 2. Environment Variables
+Create `.env` file:
+VITE_SUPABASE_URL=your_supabase_url
+
+VITE_SUPABASE_ANON_KEY=your_anon_key
+
+VITE_SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+### 3. Database Setup
+```bash
+supabase login
+supabase link --project-ref your_project_ref
+supabase db push
+```
+
+### 4. Create Admin User
+In Supabase Dashboard → Authentication → Users → Add user
+
+Then in SQL Editor:
+```sql
+INSERT INTO users (id, email, name, username, role, active)
+VALUES ('your_auth_user_id', 'your@email.com', 'Your Name', 'username', 'admin', true);
+```

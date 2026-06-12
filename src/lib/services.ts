@@ -541,7 +541,7 @@ export const settingsService = {
     if (error) throw error
 
     return {
-      storeName: data.store_name || 'sekaLabs 2025 POS',
+      storeName: data.store_name || 'CoffeeShop POS',
       storeAddress: data.store_address || '',
       storePhone: data.store_phone || '',
       storeEmail: data.store_email || '',
@@ -600,7 +600,7 @@ export const settingsService = {
     if (error) throw error
 
     return {
-      storeName: data.store_name || 'sekaLabs 2025 POS',
+      storeName: data.store_name || 'CoffeeShop POS',
       storeAddress: data.store_address || '',
       storePhone: data.store_phone || '',
       storeEmail: data.store_email || '',

@@ -24,7 +24,7 @@ function AppContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-secondary-50 to-primary-50 dark:from-secondary-900 dark:to-secondary-800 flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading sekaLabs 2025 POS..." />
+        <LoadingSpinner size="lg" text="Loading CoffeeShop POS..." />
       </div>
     );
   }

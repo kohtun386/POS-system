@@ -59,7 +59,7 @@ const initialState: AppState = {
   currentUser: null,
   selectedCustomer: null,
   settings: {
-    storeName: 'sekaLabs 2025 POS',
+    storeName: 'CoffeeShop POS',
     storeAddress: '123 Business Street, Colombo 03, Sri Lanka',
     storePhone: '+94 11 234 5678',
     storeEmail: 'info@sekalabs.lk',

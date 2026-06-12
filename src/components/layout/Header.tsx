@@ -108,7 +108,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                 <h1 className="text-lg lg:text-xl font-bold text-secondary-900 dark:text-secondary-100 truncate max-w-48">
                   {state.settings.storeName}
                 </h1>
-                <p className="text-xs text-secondary-500 dark:text-secondary-400 hidden lg:block">sekaLabs 2025 POS System</p>
+                <p className="text-xs text-secondary-500 dark:text-secondary-400 hidden lg:block">CoffeeShop POS</p>
               </div>
             </div>
 
