@@ -1,9 +1,9 @@
 {
-  "name": "sekalabs-2025-pos-system",
+  "name": "coffeeshop-pos",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "sekaLabs 2025 - A modern POS system built with React and Supabase",
+  "description": "CoffeeShop POS - A modern POS system built with React and Supabase",
   "keywords": [
     "react",
     "supabase",
@@ -14,7 +14,7 @@
     "sekalabs",
     "2025"
   ],
-  "author": "sekaLabs 2025 <info@sekalabs.lk>",
+  "author": "Ko Htun <kohtunhtun386@gmail.com>",
   "repository": {
     "type": "git",
     "url": "git@github.com:Keshara1997/POS-system.git"
