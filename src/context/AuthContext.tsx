@@ -3,6 +3,7 @@ import { User as SupabaseUser, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { User } from '../types'
 import { usersService } from '../lib/services'
+import Swal from 'sweetalert2'
 import { swalConfig } from '../lib/sweetAlert'
 
 interface AuthContextType {
