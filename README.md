@@ -1,6 +1,6 @@
-# sekaLabs 2025 POS System
+# Cele-Coffee POS System
 
-A modern, full-featured Point-of-Sale (POS) system built with React, TypeScript, and Supabase. This system provides comprehensive retail management capabilities with role-based access control, real-time inventory management, and detailed reporting.
+A modern, full-featured Point-of-Sale (POS) system designed for coffee shops, built with React, TypeScript, and Supabase. This system provides comprehensive retail management capabilities with role-based access control, real-time inventory management, and detailed reporting.
 
 ![POS System](https://img.shields.io/badge/Version-1.0.0-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3.1-61DAFB.svg)
@@ -338,7 +338,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-**sekaLabs 2025**
+**Cele-Coffee**
 
 - Email: info@sekalabs.lk
 - GitHub: [@Keshara1997](https://github.com/Keshara1997)
@@ -352,7 +352,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**sekaLabs 2025** - Empowering businesses with modern POS solutions.
+**Cele-Coffee** - Empowering businesses with modern POS solutions.
 ## Initial Setup
 
 ### 1. Clone & Install
