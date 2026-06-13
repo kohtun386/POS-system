@@ -542,6 +542,11 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     { id: 'card', label: 'Card', icon: CreditCard },
                     { id: 'digital', label: 'Digital', icon: Smartphone },
                     { id: 'credit', label: 'Credit', icon: Receipt },
+                    { id: 'kbzpay', label: 'KBZpay', icon: Smartphone },
+                    { id: 'wavepay', label: 'WavePay', icon: Smartphone },
+                    { id: 'ayapay', label: 'AYA Pay', icon: Smartphone },
+                    { id: 'cbpay', label: 'CB Pay', icon: Smartphone },
+                    { id: 'mpu', label: 'MPU', icon: CreditCard },
                   ].map(({ id, label, icon: Icon }) => (
                     <button
                       key={id}

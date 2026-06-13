@@ -102,7 +102,7 @@ export interface CardDetails {
 
 export interface Payment {
   id: string;
-  method: 'cash' | 'card' | 'digital' | 'credit';
+  method: 'cash' | 'card' | 'digital' | 'credit' | 'kbzpay' | 'wavepay' | 'ayapay' | 'cbpay' | 'mpu';
   amount: number;
   cardDetails?: CardDetails;
   notes?: string;
@@ -119,7 +119,7 @@ export interface Sale {
   taxAmount: number;
   total: number;
   // allow split payments; keep legacy single-method field
-  paymentMethod: 'cash' | 'card' | 'digital' | 'credit' | 'split';
+  paymentMethod: 'cash' | 'card' | 'digital' | 'credit' | 'split' | 'kbzpay' | 'wavepay' | 'ayapay' | 'cbpay' | 'mpu';
   // when split payments used, payments contains breakdown
   payments?: Payment[];
   cardDetails?: CardDetails;
