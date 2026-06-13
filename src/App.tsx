@@ -25,7 +25,7 @@ function AppContent() {
   // Show loading spinner while auth is loading
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-secondary-50 to-primary-50 dark:from-secondary-900 dark:to-secondary-800 flex items-center justify-center">
+      <div className="min-h-screen bg-[#faf8f5] dark:bg-[#1f1309] flex items-center justify-center">
         <LoadingSpinner size="lg" text="Loading CoffeeShop POS..." />
       </div>
     );
@@ -98,7 +98,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary-50 to-primary-50 dark:from-secondary-900 dark:to-secondary-800 flex flex-col">
+    <div className="min-h-screen bg-[#faf8f5] dark:bg-[#1f1309] flex flex-col">
       <Header currentView={currentView} onViewChange={setCurrentView} />
       <main className="flex-1 overflow-hidden">
         {state.loading ? (

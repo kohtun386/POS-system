@@ -10,7 +10,7 @@ export function SalesTabManager() {
 
   const createNewTab = async () => {
     if (!user) return;
-    
+
     try {
       // Save current tab's state before creating a new one
       if (state.activeSalesTab) {
@@ -20,7 +20,7 @@ export function SalesTabManager() {
             cart: state.cart,
             selectedCustomer: state.selectedCustomer,
           };
-          
+
           await salesTabsService.update(state.activeSalesTab, updates);
           dispatch({
             type: 'UPDATE_SALES_TAB',
@@ -37,7 +37,7 @@ export function SalesTabManager() {
         cart: [],
         selectedCustomer: null,
       };
-      
+
       const newTab = await salesTabsService.create(user.id, newTabData);
       dispatch({ type: 'ADD_SALES_TAB', payload: newTab });
     } catch (error) {
@@ -66,7 +66,7 @@ export function SalesTabManager() {
             cart: state.cart,
             selectedCustomer: state.selectedCustomer,
           };
-          
+
           await salesTabsService.update(state.activeSalesTab, updates);
           dispatch({
             type: 'UPDATE_SALES_TAB',
@@ -80,7 +80,7 @@ export function SalesTabManager() {
         }
       }
     }
-    
+
     dispatch({ type: 'SET_ACTIVE_SALES_TAB', payload: tabId });
   };
 
@@ -89,27 +89,27 @@ export function SalesTabManager() {
   };
 
   return (
-    <div className="w-16 bg-white border-r border-gray-200 flex flex-col h-full">
+    <div className="w-16 bg-[#faf8f5] dark:bg-[#2a1a10] border-r border-[#ded7cc] dark:border-[#54463b] flex flex-col h-full">
       {/* Sale Buttons with Rotated Text */}
       <div className="flex-1 overflow-y-auto py-2 space-y-1">
         {state.salesTabs.map((tab, index) => {
           const isActive = state.activeSalesTab === tab.id;
           const itemCount = getItemCount(tab);
-          const tabNumber = index + 1; // Correct sequential numbering
-          
+          const tabNumber = index + 1;
+
           return (
             <div key={tab.id} className="relative flex flex-col items-center">
               <button
                 onClick={() => switchTab(tab.id)}
                 className={`relative w-12 h-20 rounded-md text-xs font-medium transition-all group flex items-center justify-center ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
+                    ? 'bg-gradient-to-b from-[#9a693a] to-[#7a4f2c] text-white shadow-copper'
+                    : 'bg-[#f0ece5] dark:bg-[#3b2613] text-[#7d6b57] dark:text-[#c6bbab] hover:bg-[#e5ddd2] dark:hover:bg-[#473b32] hover:shadow-md'
                 }`}
               >
                 {/* Rotated Text Label */}
                 <div className="transform rotate-90 whitespace-nowrap">
-                  <span className="text-xs font-medium">
+                  <span className="text-xs font-medium font-fraunces">
                     Sale {tabNumber}
                   </span>
                 </div>
@@ -117,7 +117,7 @@ export function SalesTabManager() {
                 {/* Item Count Badge */}
                 {itemCount > 0 && (
                   <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs flex items-center justify-center ${
-                    isActive ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'
+                    isActive ? 'bg-[#faf8f5] text-[#7a4f2c]' : 'bg-[#e55c13] text-white'
                   }`}>
                     {itemCount}
                   </div>
@@ -130,7 +130,7 @@ export function SalesTabManager() {
                       e.stopPropagation();
                       closeTab(tab.id);
                     }}
-                    className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors ${
+                    className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-[#dc2626] text-white flex items-center justify-center hover:bg-[#b91c1c] transition-colors ${
                       isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                     }`}
                   >
@@ -144,10 +144,10 @@ export function SalesTabManager() {
       </div>
 
       {/* Add New Sale Button */}
-      <div className="p-1 border-t border-gray-100">
+      <div className="p-1 border-t border-[#ded7cc] dark:border-[#54463b]">
         <button
           onClick={createNewTab}
-          className="w-12 h-10 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors flex items-center justify-center mx-auto"
+          className="w-12 h-10 bg-gradient-to-r from-[#9a693a] to-[#b8854a] hover:from-[#b8854a] hover:to-[#cfa16a] text-white rounded-md transition-all duration-300 flex items-center justify-center mx-auto shadow-soft"
           title="Add New Sale"
         >
           <Plus className="h-4 w-4" />

@@ -63,7 +63,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   // Function to detect card type from card number
   const detectCardType = (cardNumber: string): 'visa' | 'mastercard' | 'amex' | 'discover' | 'unknown' => {
     const cleanNumber = cardNumber.replace(/\s/g, '');
-    
+
     if (/^4/.test(cleanNumber)) {
       return 'visa';
     } else if (/^5[1-5]/.test(cleanNumber) || /^2[2-7]/.test(cleanNumber)) {
@@ -73,7 +73,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
     } else if (/^6/.test(cleanNumber)) {
       return 'discover';
     }
-    
+
     return 'unknown';
   };
 
@@ -81,9 +81,8 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const formatCardNumber = (value: string) => {
     const cleanValue = value.replace(/\s/g, '');
     const cardType = detectCardType(cleanValue);
-    
+
     if (cardType === 'amex') {
-      // Amex format: 4-6-5
       return cleanValue.replace(/(\d{4})(\d{0,6})(\d{0,5})/, (_, p1, p2, p3) => {
         let formatted = p1;
         if (p2) formatted += ' ' + p2;
@@ -91,26 +90,23 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         return formatted;
       });
     } else {
-      // Visa, Mastercard, Discover format: 4-4-4-4
       return cleanValue.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
     }
   };
 
-  // Function to get expected card number length
   const getCardNumberLength = (cardType: string) => {
     return cardType === 'amex' ? 15 : 16;
   };
 
-  // Function to handle card number input
   const handleCardNumberChange = (value: string) => {
     const cleanValue = value.replace(/\s/g, '');
     const cardType = detectCardType(cleanValue);
     const maxLength = getCardNumberLength(cardType);
-    
+
     if (cleanValue.length <= maxLength) {
       const formattedValue = formatCardNumber(cleanValue);
       const lastFour = cleanValue.slice(-4);
-      
+
       setCardDetails(prev => ({
         ...prev,
         cardNumber: formattedValue,
@@ -122,7 +118,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
   // Calculate totals
   const subtotal = state.cart.reduce((sum, item) => {
-    const price = item.product.isWeightBased 
+    const price = item.product.isWeightBased
       ? (item.product.pricePerUnit || 0) * (item.weight || 1)
       : item.product.price;
     return sum + (price * item.quantity);
@@ -161,15 +157,14 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
     state.discounts.forEach(discount => {
       if (checkDiscountEligibility(
-        discount, 
-        state.cart, 
-        state.selectedCustomer, 
-        paymentMethod, 
+        discount,
+        state.cart,
+        state.selectedCustomer,
+        paymentMethod,
         subtotal,
         paymentMethod === 'card' ? cardDetails : undefined
       )) {
         if (discount.type === 'free_gift' && discount.freeGiftProducts) {
-          // Add free gifts
           discount.freeGiftProducts.forEach(productId => {
             const product = state.products.find(p => p.id === productId);
             if (product) {
@@ -182,7 +177,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
               });
             }
           });
-          
+
           eligibleDiscounts.push({
             discountId: discount.id,
             discountName: discount.name,
@@ -190,7 +185,6 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
             type: 'free_gift',
           });
         } else {
-          // Calculate discount amount
           let discountAmount = 0;
           if (discount.type === 'percentage') {
             discountAmount = (subtotal * discount.value) / 100;
@@ -216,8 +210,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
     setAppliedDiscounts(eligibleDiscounts);
     setFreeGifts(gifts);
-    
-    // Show alert if there are discounts or free gifts
+
     if (eligibleDiscounts.length > 0) {
       setShowDiscountAlert(true);
     }
@@ -232,14 +225,11 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const paidSoFar = payments.reduce((s, p) => s + p.amount, 0);
   const remaining = Math.max(0, total - paidSoFar);
 
-  // Check if customer has enough credit limit for credit payment
-  const canPayWithCredit = state.selectedCustomer && 
+  const canPayWithCredit = state.selectedCustomer &&
     (state.selectedCustomer.creditLimit - state.selectedCustomer.creditUsed) >= total;
 
-  // Check if payment can be processed
   const canProcessPayment = () => {
     if (isProcessing) return false;
-    // If there are split payments, require that payments equal total
     if (payments.length > 0) {
       const sum = payments.reduce((s, p) => s + p.amount, 0);
       return Math.abs(sum - total) < 0.01;
@@ -249,9 +239,9 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
       case 'cash':
         return amountPaid && parseFloat(amountPaid) >= total;
       case 'card':
-        return cardDetails.bankName && 
-               cardDetails.holderName && 
-               cardDetails.cardNumber && 
+        return cardDetails.bankName &&
+               cardDetails.holderName &&
+               cardDetails.cardNumber &&
                cardDetails.cardType !== 'unknown' &&
                ((cardDetails.cardType === 'amex' && cardDetails.cardNumber.replace(/\s/g, '').length === 15) ||
                 (cardDetails.cardType !== 'amex' && cardDetails.cardNumber.replace(/\s/g, '').length === 16));
@@ -295,19 +285,16 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
     setPayments(prev => prev.filter(p => p.id !== id));
   };
 
-  // Don't render anything if modal is not open and no receipt to show
   if (!isOpen && !showReceipt) return null;
 
   const handlePayment = async () => {
     setIsProcessing(true);
-    
+
     try {
-      // If there's a pending split amount entered but not added, warn user
       if (pendingPayment.amount && parseFloat(pendingPayment.amount) > 0) {
         const res = await swalConfig.confirm('Unadded Payment', 'You have entered a payment amount but not added it to the split list. Add now?', 'Add');
         if (res.isConfirmed) {
           addPendingPayment();
-          // small delay to allow state update
           await new Promise(r => setTimeout(r, 200));
         } else {
           setIsProcessing(false);
@@ -315,12 +302,10 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         }
       }
 
-      // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       const invoiceNumber = await generateInvoice();
 
-      // Build payments: if split used, use payments state, otherwise build from single method
       const salePayments: Payment[] = payments.length > 0 ? payments : [{
         id: Date.now().toString(),
         method: paymentMethod as Payment['method'],
@@ -350,15 +335,13 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         freeGifts: freeGifts.length > 0 ? freeGifts : undefined,
       };
 
-      // Save sale to Supabase and update local state
       const savedSale = await salesService.create(sale);
       dispatch({ type: 'ADD_SALE', payload: savedSale });
 
-      // Update inventory in Supabase and local state
       for (const item of state.cart) {
         try {
           const product = state.products.find(p => p.id === item.product.id);
-          if (product && product.trackInventory) { // Only update if inventory is tracked
+          if (product && product.trackInventory) {
             const quantityToDeduct = item.weight || item.quantity;
             const updatedProduct = {
               ...product,
@@ -370,11 +353,9 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
           }
         } catch (error) {
           console.error(`Error updating inventory for product ${item.product.name}:`, error);
-          // Log the error but don't fail the entire transaction
         }
       }
 
-      // Update customer in Supabase and local state
       if (paymentMethod === 'credit' && state.selectedCustomer) {
         try {
           const updatedCustomer = {
@@ -387,11 +368,9 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
           dispatch({ type: 'UPDATE_CUSTOMER', payload: updatedCustomer });
         } catch (error) {
           console.error('Error updating customer for credit payment:', error);
-          // Don't fail the entire transaction for customer update issues
         }
       } else if (state.selectedCustomer) {
         try {
-          // Update customer purchase history for other payment methods
           const updatedCustomer = {
             ...state.selectedCustomer,
             totalPurchases: state.selectedCustomer.totalPurchases + total,
@@ -401,17 +380,15 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
           dispatch({ type: 'UPDATE_CUSTOMER', payload: updatedCustomer });
         } catch (error) {
           console.error('Error updating customer purchase history:', error);
-          // Don't fail the entire transaction for customer update issues
         }
       }
 
       dispatch({ type: 'CLEAR_CART' });
-      
+
       setCompletedSale(savedSale);
       onComplete(savedSale);
       setIsProcessing(false);
-      
-      // Always show receipt print modal after successful payment
+
       setShowReceipt(true);
     } catch (error) {
       console.error('Payment processing error:', error);
@@ -430,19 +407,18 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
   return (
     <>
-      {/* Only show checkout modal when receipt is not being shown and modal is open */}
       {!showReceipt && isOpen && (
         <div className="modal-overlay">
           <div className={`modal ${isTouchMode ? 'max-w-lg' : 'max-w-md'}`}>
             {/* Header */}
             <div className="modal-header">
-              <h2 className={`font-bold text-gray-900 ${isTouchMode ? 'text-xl' : 'text-lg'}`}>
+              <h2 className={`font-bold text-[#473b32] dark:text-[#f0ece5] ${isTouchMode ? 'text-xl' : 'text-lg'}`}>
                 Complete Payment
               </h2>
               <button
                 onClick={onClose}
                 disabled={isProcessing}
-                className="text-gray-400 hover:text-gray-600 p-2 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50"
+                className="text-[#ad9e8a] hover:text-[#7d6b57] p-2 rounded-xl hover:bg-[#f0ece5] dark:hover:bg-[#3b2613] transition-colors disabled:opacity-50"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -451,14 +427,14 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
             <div className="modal-body space-y-6">
               {/* Discount Alert */}
               {showDiscountAlert && appliedDiscounts.length > 0 && (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4 animate-slide-up">
+                <div className="bg-[#f0fdf4] dark:bg-[#14532d]/20 border border-[#bbf7d0] dark:border-[#166534]/50 rounded-xl p-4 animate-slide-up">
                   <div className="flex items-start space-x-3">
-                    <Gift className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <Gift className="h-5 w-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <h4 className="font-semibold text-green-800 mb-2">Discounts Applied!</h4>
+                      <h4 className="font-semibold text-[#166534] dark:text-[#86efac] mb-2">Discounts Applied!</h4>
                       <div className="space-y-1">
                         {appliedDiscounts.map((discount, index) => (
-                          <div key={index} className="text-sm text-green-700">
+                          <div key={index} className="text-sm text-[#15803d] dark:text-[#4ade80]">
                             <span className="font-medium">{discount.discountName}</span>
                             {discount.type !== 'free_gift' && (
                               <span className="ml-2">- {state.settings.currency} {discount.discountAmount.toFixed(2)}</span>
@@ -466,7 +442,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                           </div>
                         ))}
                         {freeGifts.length > 0 && (
-                          <div className="text-sm text-green-700">
+                          <div className="text-sm text-[#15803d] dark:text-[#4ade80]">
                             <span className="font-medium">Free Gifts: </span>
                             {freeGifts.map(gift => gift.product.name).join(', ')}
                           </div>
@@ -475,7 +451,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     </div>
                     <button
                       onClick={() => setShowDiscountAlert(false)}
-                      className="text-green-600 hover:text-green-800"
+                      className="text-[#16a34a] hover:text-[#15803d]"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -485,21 +461,21 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
               {/* Order Summary */}
               <div>
-                <h3 className={`font-semibold text-gray-900 mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                   Order Summary
                 </h3>
-                
+
                 <div className="space-y-2 mb-4 max-h-32 overflow-y-auto">
                   {state.cart.map((item, index) => (
-                    <div key={index} className="flex justify-between text-sm">
+                    <div key={index} className="flex justify-between text-sm text-[#7d6b57] dark:text-[#c6bbab]">
                       <span className="truncate flex-1 mr-2">
                         {item.product.name} × {item.weight ? `${item.weight}${item.product.unit}` : item.quantity}
                       </span>
-                      <span className="font-medium">{state.settings.currency} {item.subtotal.toFixed(2)}</span>
+                      <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {item.subtotal.toFixed(2)}</span>
                     </div>
                   ))}
                   {freeGifts.map((gift, index) => (
-                    <div key={`gift-${index}`} className="flex justify-between text-sm text-green-600">
+                    <div key={`gift-${index}`} className="flex justify-between text-sm text-[#16a34a]">
                       <span className="truncate flex-1 mr-2">
                         🎁 {gift.product.name} × {gift.quantity} (FREE)
                       </span>
@@ -508,34 +484,34 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                   ))}
                 </div>
 
-                <div className="space-y-2 pt-4 border-t border-gray-200">
-                  <div className="flex justify-between">
+                <div className="space-y-2 pt-4 border-t border-[#ded7cc] dark:border-[#54463b]">
+                  <div className="flex justify-between text-[#7d6b57] dark:text-[#c6bbab]">
                     <span>Subtotal:</span>
-                    <span className="font-medium">{state.settings.currency} {subtotal.toFixed(2)}</span>
+                    <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {subtotal.toFixed(2)}</span>
                   </div>
                   {totalDiscount > 0 && (
-                    <div className="flex justify-between text-green-600">
+                    <div className="flex justify-between text-[#16a34a]">
                       <span>Total Discount:</span>
                       <span className="font-medium">-{state.settings.currency} {totalDiscount.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-[#7d6b57] dark:text-[#c6bbab]">
                     <span>Tax ({state.settings.taxRate}%):</span>
-                    <span className="font-medium">{state.settings.currency} {taxAmount.toFixed(2)}</span>
+                    <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {taxAmount.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
+                  <div className="flex justify-between text-lg font-bold text-[#473b32] dark:text-[#f0ece5] pt-2 border-t border-[#ded7cc] dark:border-[#54463b]">
                     <span>Total:</span>
-                    <span>{state.settings.currency} {total.toFixed(2)}</span>
+                    <span className="text-[#9a693a] dark:text-[#cfa16a]">{state.settings.currency} {total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
 
               {/* Payment Method */}
               <div>
-                <h3 className={`font-semibold text-gray-900 mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                   Payment Method
                 </h3>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { id: 'cash', label: 'Cash', icon: Banknote },
@@ -554,8 +530,8 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                       disabled={id === 'credit' && !canPayWithCredit}
                       className={`flex flex-col items-center space-y-2 p-4 rounded-2xl border-2 transition-all ${
                         paymentMethod === id
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-[#9a693a] bg-[#fcf5eb] text-[#7a4f2c] dark:border-[#cfa16a] dark:bg-[#3b2613]/50 dark:text-[#ddb889]'
+                          : 'border-[#ded7cc] dark:border-[#54463b] hover:border-[#c6bbab] dark:hover:border-[#655547] text-[#7d6b57] dark:text-[#c6bbab]'
                       } ${id === 'credit' && !canPayWithCredit ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                       ${isTouchMode ? 'min-h-[80px]' : 'min-h-[70px]'}`}
                     >
@@ -569,7 +545,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
                 {/* Split Payments controls */}
                 <div className="mt-4">
-                  <h4 className="font-semibold">Split Payments</h4>
+                  <h4 className="font-semibold text-[#473b32] dark:text-[#f0ece5]">Split Payments</h4>
                   <div className="flex items-center space-x-2 mt-2">
                     <select
                       value={pendingPayment.method}
@@ -594,31 +570,31 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
                   <div className="mt-3 space-y-2">
                     {payments.map(p => (
-                      <div key={p.id} className="flex justify-between items-center p-2 border rounded">
+                      <div key={p.id} className="flex justify-between items-center p-2 border border-[#ded7cc] dark:border-[#54463b] rounded-xl bg-[#faf8f5] dark:bg-[#2a1a10]">
                         <div>
-                          <div className="font-medium">{p.method.toUpperCase()}</div>
-                          <div className="text-sm text-gray-600">{p.cardDetails ? `${p.cardDetails.cardType} ••••${p.cardDetails.lastFourDigits}` : ''}</div>
+                          <div className="font-medium text-[#473b32] dark:text-[#f0ece5]">{p.method.toUpperCase()}</div>
+                          <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">{p.cardDetails ? `${p.cardDetails.cardType} ••••${p.cardDetails.lastFourDigits}` : ''}</div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <div className="font-semibold">{state.settings.currency} {p.amount.toFixed(2)}</div>
-                          <button onClick={() => removePayment(p.id)} className="text-red-600">Remove</button>
+                          <div className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {p.amount.toFixed(2)}</div>
+                          <button onClick={() => removePayment(p.id)} className="text-[#dc2626] hover:text-[#b91c1c] text-sm font-medium">Remove</button>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="mt-2 text-sm">
-                    <div>Remaining: <span className="font-semibold">{state.settings.currency} {remaining.toFixed(2)}</span></div>
+                  <div className="mt-2 text-sm text-[#7d6b57] dark:text-[#c6bbab]">
+                    <div>Remaining: <span className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {remaining.toFixed(2)}</span></div>
                   </div>
                 </div>
 
                 {/* Credit Payment Warning */}
                 {paymentMethod === 'credit' && !canPayWithCredit && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-2">
-                    <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                    <span className="text-red-700 text-sm">
-                      {state.selectedCustomer 
-                        ? 'Insufficient credit limit' 
+                  <div className="mt-4 p-3 bg-[#fef2f2] dark:bg-[#450a0a]/30 border border-[#fecaca] dark:border-[#991b1b]/50 rounded-xl flex items-center space-x-2">
+                    <AlertCircle className="h-5 w-5 text-[#dc2626] flex-shrink-0" />
+                    <span className="text-[#b91c1c] dark:text-[#fca5a5] text-sm">
+                      {state.selectedCustomer
+                        ? 'Insufficient credit limit'
                         : 'Please select a customer for credit payment'
                       }
                     </span>
@@ -627,19 +603,19 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
                 {/* Credit Available Info */}
                 {paymentMethod === 'credit' && state.selectedCustomer && (
-                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-                    <div className="text-sm text-blue-800">
+                  <div className="mt-4 p-3 bg-[#fcf5eb] dark:bg-[#3b2613]/30 border border-[#ddb889] dark:border-[#7a4f2c]/50 rounded-xl">
+                    <div className="text-sm text-[#473b32] dark:text-[#f0ece5]">
                       <div className="flex justify-between">
                         <span>Credit Limit:</span>
-                        <span>{state.settings.currency} {state.selectedCustomer.creditLimit.toFixed(2)}</span>
+                        <span className="font-medium">{state.settings.currency} {state.selectedCustomer.creditLimit.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Used:</span>
-                        <span>{state.settings.currency} {state.selectedCustomer.creditUsed.toFixed(2)}</span>
+                        <span className="font-medium">{state.settings.currency} {state.selectedCustomer.creditUsed.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between font-semibold border-t border-blue-200 pt-1 mt-1">
+                      <div className="flex justify-between font-semibold border-t border-[#ddb889] dark:border-[#7a4f2c]/50 pt-1 mt-1">
                         <span>Available:</span>
-                        <span>{state.settings.currency} {(state.selectedCustomer.creditLimit - state.selectedCustomer.creditUsed).toFixed(2)}</span>
+                        <span className="text-[#16a34a]">{state.settings.currency} {(state.selectedCustomer.creditLimit - state.selectedCustomer.creditUsed).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -649,13 +625,13 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
               {/* Cash Payment */}
               {paymentMethod === 'cash' && (
                 <div>
-                  <h3 className={`font-semibold text-gray-900 mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                  <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                     Cash Payment
                   </h3>
-                  
+
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-[#473b32] dark:text-[#f0ece5] mb-2">
                         Amount Received *
                       </label>
                       <input
@@ -669,12 +645,12 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                         disabled={isProcessing}
                       />
                     </div>
-                    
+
                     {amountPaid && parseFloat(amountPaid) >= total && (
-                      <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                      <div className="bg-[#f0fdf4] dark:bg-[#14532d]/20 border border-[#bbf7d0] dark:border-[#166534]/50 rounded-xl p-4">
                         <div className="flex justify-between items-center">
-                          <span className="font-semibold text-green-800">Change Due:</span>
-                          <span className="text-lg font-bold text-green-800">
+                          <span className="font-semibold text-[#166534] dark:text-[#86efac]">Change Due:</span>
+                          <span className="text-lg font-bold text-[#166534] dark:text-[#86efac]">
                             {state.settings.currency} {change.toFixed(2)}
                           </span>
                         </div>
@@ -687,13 +663,13 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
               {/* Card Payment Details */}
               {paymentMethod === 'card' && (
                 <div>
-                  <h3 className={`font-semibold text-gray-900 mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                  <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                     Card Details
                   </h3>
-                  
+
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-[#473b32] dark:text-[#f0ece5] mb-2">
                         Bank Name *
                       </label>
                       <select
@@ -708,9 +684,9 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                         ))}
                       </select>
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-[#473b32] dark:text-[#f0ece5] mb-2">
                         Card Number *
                       </label>
                       <input
@@ -720,24 +696,20 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                         className="input"
                         placeholder="Enter card number"
                         disabled={isProcessing}
-                        maxLength={cardDetails.cardType === 'amex' ? 17 : 19} // Including spaces
+                        maxLength={cardDetails.cardType === 'amex' ? 17 : 19}
                       />
                       {cardDetails.cardType !== 'unknown' && cardDetails.cardNumber && (
                         <div className="mt-2 flex items-center space-x-2">
-                          <span className="text-sm text-gray-600">Detected:</span>
-                          <span className="text-sm font-medium capitalize text-blue-600">
+                          <span className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">Detected:</span>
+                          <span className="text-sm font-medium capitalize text-[#9a693a] dark:text-[#cfa16a]">
                             {cardDetails.cardType}
                           </span>
-                          {cardDetails.cardType === 'visa' && <span className="text-blue-600">💳</span>}
-                          {cardDetails.cardType === 'mastercard' && <span className="text-red-600">💳</span>}
-                          {cardDetails.cardType === 'amex' && <span className="text-green-600">💳</span>}
-                          {cardDetails.cardType === 'discover' && <span className="text-orange-600">💳</span>}
                         </div>
                       )}
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-[#473b32] dark:text-[#f0ece5] mb-2">
                         Card Holder Name *
                       </label>
                       <input
@@ -756,7 +728,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
               {/* Credit Notes */}
               {paymentMethod === 'credit' && (
                 <div>
-                  <h3 className={`font-semibold text-gray-900 mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                  <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                     Credit Notes
                   </h3>
                   <textarea
@@ -781,11 +753,11 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
               >
                 Cancel
               </button>
-              
+
               <button
                 onClick={handlePayment}
                 disabled={!canProcessPayment()}
-                className="btn btn-success btn-md flex items-center space-x-2 min-w-[160px] justify-center px-6 py-3"
+                className="btn btn-primary btn-md flex items-center space-x-2 min-w-[160px] justify-center px-6 py-3"
                 style={{ minHeight: '44px' }}
               >
                 {isProcessing ? (

@@ -20,7 +20,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
       dispatch({ type: 'REMOVE_FROM_CART', payload: index });
     } else {
       const item = state.cart[index];
-      const price = item.product.isWeightBased 
+      const price = item.product.isWeightBased
         ? (item.product.pricePerUnit || 0) * (item.weight || 1)
         : item.product.price;
       const updatedItem = {
@@ -38,11 +38,11 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
 
   const applyDiscount = (index: number, discount: number, discountType: 'percentage' | 'fixed') => {
     const item = state.cart[index];
-    const price = item.product.isWeightBased 
+    const price = item.product.isWeightBased
       ? (item.product.pricePerUnit || 0) * (item.weight || 1)
       : item.product.price;
     let discountAmount = 0;
-    
+
     if (discountType === 'percentage') {
       discountAmount = (price * item.quantity * discount) / 100;
     } else {
@@ -55,7 +55,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
       discountType,
       subtotal: (price * item.quantity) - discountAmount
     };
-    
+
     dispatch({ type: 'UPDATE_CART_ITEM', payload: { index, item: updatedItem } });
   };
 
@@ -72,7 +72,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
   );
 
   const subtotal = state.cart.reduce((sum, item) => {
-    const price = item.product.isWeightBased 
+    const price = item.product.isWeightBased
       ? (item.product.pricePerUnit || 0) * (item.weight || 1)
       : item.product.price;
     return sum + (price * item.quantity);
@@ -81,21 +81,18 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
   const taxAmount = (subtotal - totalDiscount) * (state.settings.taxRate / 100);
   const total = subtotal - totalDiscount + taxAmount;
 
-  // Debug: Log current tax rate (remove this in production)
-  console.log('Current tax rate:', state.settings.taxRate);
-
   return (
-    <div className={`bg-white border-l border-gray-100 flex flex-col h-screen ${
+    <div className={`bg-[#faf8f5] dark:bg-[#1f1309] border-l border-[#ded7cc] dark:border-[#54463b] flex flex-col h-screen ${
       isTouchMode ? 'w-96' : 'w-80'
     } max-w-full`}>
       {/* Cart Header */}
-      <div className="p-4 lg:p-6 border-b border-gray-100 flex-shrink-0">
+      <div className="p-4 lg:p-6 border-b border-[#ded7cc] dark:border-[#54463b] flex-shrink-0">
         <div className="flex items-center justify-between mb-6">
-          <h2 className={`font-bold text-gray-900 ${isTouchMode ? 'text-xl' : 'text-lg'}`}>
+          <h2 className={`font-bold text-[#473b32] dark:text-[#f0ece5] ${isTouchMode ? 'text-xl' : 'text-lg'}`}>
             Shopping Cart
           </h2>
           <div className="flex items-center space-x-2">
-            <ShoppingCart className="h-5 w-5 text-gray-400" />
+            <ShoppingCart className="h-5 w-5 text-[#ad9e8a]" />
             <span className="badge badge-info">
               {state.cart.length} items
             </span>
@@ -105,19 +102,19 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
         {/* Customer Selection */}
         <div className="relative">
           {state.selectedCustomer ? (
-            <div className="card p-4 border-green-200 bg-green-50">
+            <div className="card p-4 border-[#bbf7d0] bg-[#f0fdf4]/50 dark:border-[#166534]/50 dark:bg-[#14532d]/20">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className={`font-medium text-green-800 truncate ${isTouchMode ? 'text-base' : 'text-sm'}`}>
+                  <p className={`font-medium text-[#166534] dark:text-[#86efac] truncate ${isTouchMode ? 'text-base' : 'text-sm'}`}>
                     {state.selectedCustomer.name}
                   </p>
-                  <p className={`text-green-600 truncate ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
+                  <p className={`text-[#16a34a] dark:text-[#4ade80] truncate ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
                     {state.selectedCustomer.email}
                   </p>
                 </div>
                 <button
                   onClick={() => dispatch({ type: 'SET_SELECTED_CUSTOMER', payload: null })}
-                  className="text-green-600 hover:text-green-800 p-1 rounded-lg hover:bg-green-100 transition-colors flex-shrink-0"
+                  className="text-[#16a34a] hover:text-[#15803d] p-1 rounded-lg hover:bg-[#dcfce7] transition-colors flex-shrink-0"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -137,7 +134,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
 
           {/* Customer Search Dropdown */}
           {showCustomerSearch && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg z-50 max-h-64 overflow-hidden animate-slide-up">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-[#faf8f5] dark:bg-[#2a1a10] border border-[#ded7cc] dark:border-[#54463b] rounded-2xl shadow-large z-50 max-h-64 overflow-hidden animate-slide-up">
               <div className="p-4">
                 <input
                   type="text"
@@ -153,14 +150,14 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
                   <button
                     key={customer.id}
                     onClick={() => selectCustomer(customer)}
-                    className="w-full text-left p-4 hover:bg-gray-50 border-t border-gray-100 transition-colors"
+                    className="w-full text-left p-4 hover:bg-[#f0ece5] dark:hover:bg-[#3b2613] border-t border-[#ded7cc]/50 dark:border-[#54463b]/50 transition-colors"
                   >
-                    <p className="font-medium text-sm truncate">{customer.name}</p>
-                    <p className="text-xs text-gray-600 truncate">{customer.email}</p>
+                    <p className="font-medium text-sm text-[#473b32] dark:text-[#f0ece5] truncate">{customer.name}</p>
+                    <p className="text-xs text-[#7d6b57] dark:text-[#c6bbab] truncate">{customer.email}</p>
                   </button>
                 ))}
                 {filteredCustomers.length === 0 && (
-                  <div className="p-4 text-center text-gray-500 text-sm">
+                  <div className="p-4 text-center text-[#7d6b57] dark:text-[#c6bbab] text-sm">
                     No customers found
                   </div>
                 )}
@@ -173,15 +170,15 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
       {/* Cart Items */}
       <div className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6 space-y-4" style={{
         scrollbarWidth: 'thin',
-        scrollbarColor: '#d1d5db #f3f4f6'
+        scrollbarColor: '#c6bbab #f0ece5'
       }}>
         {state.cart.length === 0 ? (
           <div className="text-center py-12">
-            <div className="bg-gray-100 p-6 rounded-3xl inline-block mb-4">
-              <ShoppingCart className="h-12 w-12 text-gray-400" />
+            <div className="bg-[#f0ece5] dark:bg-[#3b2613] p-6 rounded-3xl inline-block mb-4">
+              <ShoppingCart className="h-12 w-12 text-[#ad9e8a]" />
             </div>
-            <p className="text-gray-500 font-medium">Cart is empty</p>
-            <p className="text-gray-400 text-sm mt-1">Add products to get started</p>
+            <p className="text-[#7d6b57] dark:text-[#c6bbab] font-medium">Cart is empty</p>
+            <p className="text-[#ad9e8a] text-sm mt-1">Add products to get started</p>
           </div>
         ) : (
           state.cart.map((item, index) => (
@@ -201,25 +198,25 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
 
       {/* Cart Summary */}
       {state.cart.length > 0 && (
-        <div className="border-t border-gray-100 p-4 lg:p-6 space-y-6 bg-gray-50 flex-shrink-0">
+        <div className="border-t border-[#ded7cc] dark:border-[#54463b] p-4 lg:p-6 space-y-6 bg-[#f0ece5]/50 dark:bg-[#2a1a10] flex-shrink-0">
           <div className="space-y-3">
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between text-[#7d6b57] dark:text-[#c6bbab]">
               <span>Subtotal:</span>
-              <span className="font-medium">{state.settings.currency} {subtotal.toFixed(2)}</span>
+              <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {subtotal.toFixed(2)}</span>
             </div>
             {totalDiscount > 0 && (
-              <div className="flex justify-between text-green-600">
+              <div className="flex justify-between text-[#16a34a]">
                 <span>Discount:</span>
                 <span className="font-medium">-{state.settings.currency} {totalDiscount.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between text-[#7d6b57] dark:text-[#c6bbab]">
               <span>Tax ({state.settings.taxRate}%):</span>
-              <span className="font-medium">{state.settings.currency} {taxAmount.toFixed(2)}</span>
+              <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {taxAmount.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-xl font-bold text-gray-900 pt-3 border-t border-gray-200">
+            <div className="flex justify-between text-xl font-bold text-[#473b32] dark:text-[#f0ece5] pt-3 border-t border-[#ded7cc] dark:border-[#54463b]">
               <span>Total:</span>
-              <span>{state.settings.currency} {total.toFixed(2)}</span>
+              <span className="text-[#9a693a] dark:text-[#cfa16a]">{state.settings.currency} {total.toFixed(2)}</span>
             </div>
           </div>
 
@@ -227,17 +224,17 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
             <button
               onClick={onCheckout}
               disabled={state.cart.length === 0}
-              className={`btn btn-success w-full ${
+              className={`btn btn-primary w-full ${
                 isTouchMode ? 'btn-lg touch-friendly' : 'btn-lg'
               }`}
             >
               Checkout
             </button>
-            
+
             <button
               onClick={onSaveDraft}
               disabled={state.cart.length === 0}
-              className={`btn btn-secondary w-full ${
+              className={`btn btn-ghost w-full ${
                 isTouchMode ? 'btn-md touch-friendly' : 'btn-md'
               }`}
             >
@@ -279,10 +276,10 @@ function CartItemCard({ item, index, onUpdateQuantity, onRemove, onApplyDiscount
     <div className="card p-4 space-y-4">
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <h4 className={`font-medium text-gray-900 truncate ${isTouchMode ? 'text-base' : 'text-sm'}`}>
+          <h4 className={`font-medium text-[#473b32] dark:text-[#f0ece5] truncate ${isTouchMode ? 'text-base' : 'text-sm'}`}>
             {item.product.name}
           </h4>
-          <p className={`text-gray-600 ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
+          <p className={`text-[#7d6b57] dark:text-[#c6bbab] ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
             {item.product.isWeightBased ? (
               <>
                 {currency} {item.product.pricePerUnit?.toFixed(2)} per {item.product.unit}
@@ -293,14 +290,14 @@ function CartItemCard({ item, index, onUpdateQuantity, onRemove, onApplyDiscount
             )}
           </p>
           {item.discount > 0 && (
-            <p className="text-green-600 text-xs font-medium">
+            <p className="text-[#16a34a] text-xs font-medium">
               Discount: {item.discountType === 'percentage' ? `${item.discount}%` : `${currency} ${item.discount.toFixed(2)}`}
             </p>
           )}
         </div>
         <button
           onClick={() => onRemove(index)}
-          className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0"
+          className="text-[#dc2626] hover:text-[#b91c1c] p-2 rounded-lg hover:bg-[#fee2e2] transition-colors flex-shrink-0"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -316,7 +313,7 @@ function CartItemCard({ item, index, onUpdateQuantity, onRemove, onApplyDiscount
           >
             <Minus className="h-4 w-4" />
           </button>
-          <span className={`font-medium min-w-[2rem] text-center ${
+          <span className={`font-medium min-w-[2rem] text-center text-[#473b32] dark:text-[#f0ece5] ${
             isTouchMode ? 'text-lg' : 'text-base'
           }`}>
             {item.quantity}
@@ -334,18 +331,18 @@ function CartItemCard({ item, index, onUpdateQuantity, onRemove, onApplyDiscount
         <div className="flex items-center space-x-3">
           <button
             onClick={() => setShowDiscountInput(!showDiscountInput)}
-            className="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+            className="text-[#9a693a] dark:text-[#cfa16a] hover:text-[#7a4f2c] p-2 rounded-lg hover:bg-[#fcf5eb] dark:hover:bg-[#3b2613] transition-colors"
           >
             <Percent className="h-4 w-4" />
           </button>
-          <span className={`font-semibold ${isTouchMode ? 'text-base' : 'text-sm'}`}>
+          <span className={`font-semibold text-[#473b32] dark:text-[#f0ece5] ${isTouchMode ? 'text-base' : 'text-sm'}`}>
             {currency} {item.subtotal.toFixed(2)}
           </span>
         </div>
       </div>
 
       {showDiscountInput && (
-        <div className="flex items-center space-x-2 pt-3 border-t border-gray-200 animate-slide-up">
+        <div className="flex items-center space-x-2 pt-3 border-t border-[#ded7cc] dark:border-[#54463b] animate-slide-up">
           <select
             value={discountType}
             onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'fixed')}

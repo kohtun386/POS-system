@@ -141,7 +141,7 @@ export function POSTerminal() {
   };
 
   return (
-    <div className="flex h-full bg-gradient-to-br from-secondary-50 to-primary-50 dark:from-secondary-900 dark:to-secondary-800">
+    <div className="flex h-full bg-[#faf8f5] dark:bg-[#1f1309]">
       <SalesTabManager />
       <div className="flex flex-1 overflow-hidden">
         <ProductGrid onAddToCart={addToCart} />
