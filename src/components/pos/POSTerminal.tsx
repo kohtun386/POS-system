@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ShoppingCart } from 'lucide-react';
 import { ProductGrid } from './ProductGrid';
 import { Cart } from './Cart';
 import { CheckoutModal } from './CheckoutModal';
@@ -14,6 +15,7 @@ export function POSTerminal() {
   const { user } = useAuth();
   const [showCheckout, setShowCheckout] = useState(false);
   const [lastSale, setLastSale] = useState<Sale | null>(null);
+  const [showMobileCart, setShowMobileCart] = useState(false);
 
   const addToCart = (product: Product, weight?: number) => {
     // Only check stock if inventory tracking is enabled
@@ -53,6 +55,9 @@ export function POSTerminal() {
       };
       dispatch({ type: 'ADD_TO_CART', payload: newItem });
     }
+
+    // Close mobile cart after adding item so user sees product grid
+    setShowMobileCart(false);
 
     // Update current sales tab
     if (state.activeSalesTab) {
@@ -140,12 +145,48 @@ export function POSTerminal() {
     }
   };
 
+  const cartItemCount = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
     <div className="flex h-full bg-[#faf8f5] dark:bg-[#1f1309]">
       <SalesTabManager />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         <ProductGrid onAddToCart={addToCart} />
-        <Cart onCheckout={handleCheckout} onSaveDraft={saveDraft} />
+
+        {/* Desktop Cart (side panel) */}
+        <div className="hidden md:block h-full">
+          <Cart onCheckout={handleCheckout} onSaveDraft={saveDraft} />
+        </div>
+
+        {/* Mobile: Floating Cart Toggle Button */}
+        {cartItemCount > 0 && (
+          <button
+            onClick={() => setShowMobileCart(true)}
+            className="md:hidden fixed bottom-6 right-6 z-40 bg-[#9a693a] text-white h-14 w-14 rounded-full shadow-large flex items-center justify-center transition-transform active:scale-95"
+          >
+            <ShoppingCart className="h-6 w-6" />
+            <span className="absolute -top-1 -right-1 bg-[#e55c13] text-white text-xs font-bold h-5 w-5 rounded-full flex items-center justify-center">
+              {cartItemCount}
+            </span>
+          </button>
+        )}
+
+        {/* Mobile: Cart Bottom Sheet */}
+        {showMobileCart && (
+          <>
+            <div
+              className="md:hidden fixed inset-0 bg-black/40 z-40 transition-opacity"
+              onClick={() => setShowMobileCart(false)}
+            />
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 max-h-[60vh] overflow-hidden rounded-t-2xl shadow-2xl animate-slide-up">
+              <Cart
+                onCheckout={() => { setShowMobileCart(false); handleCheckout(); }}
+                onSaveDraft={saveDraft}
+                onClose={() => setShowMobileCart(false)}
+              />
+            </div>
+          </>
+        )}
 
         <CheckoutModal
           isOpen={showCheckout}
