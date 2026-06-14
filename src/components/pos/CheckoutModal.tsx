@@ -21,6 +21,8 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const [amountPaid, setAmountPaid] = useState('');
   const [payments, setPayments] = useState<Payment[]>([]);
   const [pendingPayment, setPendingPayment] = useState<{ method: Payment['method']; amount: string }>({ method: 'cash', amount: '' });
+  const [splitPaymentEnabled, setSplitPaymentEnabled] = useState(false);
+  const [showMorePayments, setShowMorePayments] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
@@ -137,6 +139,8 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
       setPaymentMethod('cash');
       setPayments([]);
       setPendingPayment({ method: 'cash', amount: '' });
+      setSplitPaymentEnabled(false);
+      setShowMorePayments(false);
       setCardDetails({
         bankName: '',
         cardType: 'unknown',
@@ -247,6 +251,12 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                 (cardDetails.cardType !== 'amex' && cardDetails.cardNumber.replace(/\s/g, '').length === 16));
       case 'credit':
         return canPayWithCredit;
+      case 'kbzpay':
+      case 'wavepay':
+      case 'ayapay':
+      case 'cbpay':
+      case 'mpu':
+        return amountPaid && parseFloat(amountPaid) >= total;
       case 'digital':
         return true;
       default:
@@ -330,7 +340,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         cashier: user?.user_metadata?.full_name || user?.email || 'Unknown',
         timestamp: new Date(),
         receiptNumber: invoiceNumber,
-        notes: paymentMethod === 'credit' ? creditNotes : undefined,
+        notes: salePayments.some(p => p.method === 'credit') ? creditNotes : undefined,
         appliedDiscounts,
         freeGifts: freeGifts.length > 0 ? freeGifts : undefined,
       };
@@ -356,7 +366,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         }
       }
 
-      if (paymentMethod === 'credit' && state.selectedCustomer) {
+      if (salePayments.some(p => p.method === 'credit') && state.selectedCustomer) {
         try {
           const updatedCustomer = {
             ...state.selectedCustomer,
@@ -515,25 +525,24 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { id: 'cash', label: 'Cash', icon: Banknote },
-                    { id: 'card', label: 'Card', icon: CreditCard },
-                    { id: 'digital', label: 'Digital', icon: Smartphone },
-                    { id: 'credit', label: 'Credit', icon: Receipt },
                     { id: 'kbzpay', label: 'KBZpay', icon: Smartphone },
                     { id: 'wavepay', label: 'WavePay', icon: Smartphone },
                     { id: 'ayapay', label: 'AYA Pay', icon: Smartphone },
-                    { id: 'cbpay', label: 'CB Pay', icon: Smartphone },
-                    { id: 'mpu', label: 'MPU', icon: CreditCard },
                   ].map(({ id, label, icon: Icon }) => (
                     <button
                       key={id}
-                      onClick={() => setPaymentMethod(id)}
-                      disabled={id === 'credit' && !canPayWithCredit}
+                      onClick={() => {
+                        if (splitPaymentEnabled) {
+                          setPendingPayment(prev => ({ ...prev, method: id as Payment['method'] }));
+                        } else {
+                          setPaymentMethod(id);
+                        }
+                      }}
                       className={`flex flex-col items-center space-y-2 p-4 rounded-2xl border-2 transition-all ${
-                        paymentMethod === id
+                        (splitPaymentEnabled ? pendingPayment.method : paymentMethod) === id
                           ? 'border-[#9a693a] bg-[#fcf5eb] text-[#7a4f2c] dark:border-[#cfa16a] dark:bg-[#3b2613]/50 dark:text-[#ddb889]'
                           : 'border-[#ded7cc] dark:border-[#54463b] hover:border-[#c6bbab] dark:hover:border-[#655547] text-[#7d6b57] dark:text-[#c6bbab]'
-                      } ${id === 'credit' && !canPayWithCredit ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                      ${isTouchMode ? 'min-h-[80px]' : 'min-h-[70px]'}`}
+                      } cursor-pointer ${isTouchMode ? 'min-h-[80px]' : 'min-h-[70px]'}`}
                     >
                       <Icon className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
                       <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
@@ -543,48 +552,144 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                   ))}
                 </div>
 
-                {/* Split Payments controls */}
-                <div className="mt-4">
-                  <h4 className="font-semibold text-[#473b32] dark:text-[#f0ece5]">Split Payments</h4>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <select
-                      value={pendingPayment.method}
-                      onChange={(e) => setPendingPayment(prev => ({ ...prev, method: e.target.value as any }))}
-                      className="select"
+                {!splitPaymentEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => setShowMorePayments(!showMorePayments)}
+                    className="mt-3 text-sm text-[#9a693a] dark:text-[#cfa16a] hover:text-[#7a4f2c] dark:hover:text-[#ddb889] font-medium flex items-center space-x-1 transition-colors"
+                  >
+                    <span className={`transform transition-transform duration-200 ${showMorePayments ? 'rotate-90' : ''}`}>›</span>
+                    <span>{showMorePayments ? 'Less payment options' : 'More payment options'}</span>
+                  </button>
+                )}
+
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showMorePayments ? 'max-h-[500px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { id: 'card', label: 'Card', icon: CreditCard },
+                      { id: 'cbpay', label: 'CB Pay', icon: Smartphone },
+                      { id: 'mpu', label: 'MPU', icon: CreditCard },
+                      { id: 'digital', label: 'Digital', icon: Smartphone },
+                    ].map(({ id, label, icon: Icon }) => (
+                      <button
+                        key={id}
+                        onClick={() => {
+                          if (splitPaymentEnabled) {
+                            setPendingPayment(prev => ({ ...prev, method: id as Payment['method'] }));
+                          } else {
+                            setPaymentMethod(id);
+                          }
+                        }}
+                        className={`flex flex-col items-center space-y-2 p-4 rounded-2xl border-2 transition-all ${
+                          (splitPaymentEnabled ? pendingPayment.method : paymentMethod) === id
+                            ? 'border-[#9a693a] bg-[#fcf5eb] text-[#7a4f2c] dark:border-[#cfa16a] dark:bg-[#3b2613]/50 dark:text-[#ddb889]'
+                            : 'border-[#ded7cc] dark:border-[#54463b] hover:border-[#c6bbab] dark:hover:border-[#655547] text-[#7d6b57] dark:text-[#c6bbab]'
+                        } cursor-pointer ${isTouchMode ? 'min-h-[80px]' : 'min-h-[70px]'}`}
+                      >
+                        <Icon className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
+                        <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
+                          {label}
+                        </span>
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => {
+                        if (splitPaymentEnabled) {
+                          setPendingPayment(prev => ({ ...prev, method: 'credit' as Payment['method'] }));
+                        } else {
+                          setPaymentMethod('credit');
+                        }
+                      }}
+                      disabled={!splitPaymentEnabled && !canPayWithCredit}
+                      className={`flex flex-col items-center space-y-2 p-4 rounded-2xl border-2 transition-all col-span-2 ${
+                        (splitPaymentEnabled ? pendingPayment.method : paymentMethod) === 'credit'
+                          ? 'border-[#9a693a] bg-[#fcf5eb] text-[#7a4f2c] dark:border-[#cfa16a] dark:bg-[#3b2613]/50 dark:text-[#ddb889]'
+                          : 'border-[#ded7cc] dark:border-[#54463b] hover:border-[#c6bbab] dark:hover:border-[#655547] text-[#7d6b57] dark:text-[#c6bbab]'
+                      } ${!splitPaymentEnabled && !canPayWithCredit ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                      ${isTouchMode ? 'min-h-[80px]' : 'min-h-[70px]'}`}
                     >
-                      <option value="cash">Cash</option>
-                      <option value="card">Card</option>
-                      <option value="digital">Digital</option>
-                      <option value="credit">Credit</option>
-                    </select>
+                      <Receipt className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
+                      <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
+                        Credit
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Amount Received - always visible */}
+                {!splitPaymentEnabled && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-[#473b32] dark:text-[#f0ece5] mb-2">
+                      Amount Received *
+                    </label>
                     <input
                       type="number"
                       step="0.01"
-                      className="input"
-                      placeholder="Amount"
-                      value={pendingPayment.amount}
-                      onChange={(e) => setPendingPayment(prev => ({ ...prev, amount: e.target.value }))}
+                      min="0"
+                      value={amountPaid}
+                      onChange={(e) => setAmountPaid(e.target.value)}
+                      className={`input ${isTouchMode ? 'h-12 text-lg' : 'h-11'}`}
+                      placeholder={`Minimum: ${state.settings.currency} ${total.toFixed(2)}`}
+                      disabled={isProcessing}
                     />
-                    <button type="button" className="btn btn-primary" onClick={addPendingPayment}>Add</button>
-                  </div>
-
-                  <div className="mt-3 space-y-2">
-                    {payments.map(p => (
-                      <div key={p.id} className="flex justify-between items-center p-2 border border-[#ded7cc] dark:border-[#54463b] rounded-xl bg-[#faf8f5] dark:bg-[#2a1a10]">
-                        <div>
-                          <div className="font-medium text-[#473b32] dark:text-[#f0ece5]">{p.method.toUpperCase()}</div>
-                          <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">{p.cardDetails ? `${p.cardDetails.cardType} ••••${p.cardDetails.lastFourDigits}` : ''}</div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {p.amount.toFixed(2)}</div>
-                          <button onClick={() => removePayment(p.id)} className="text-[#dc2626] hover:text-[#b91c1c] text-sm font-medium">Remove</button>
+                    {paymentMethod === 'cash' && amountPaid && parseFloat(amountPaid) >= total && (
+                      <div className="mt-2 bg-[#f0fdf4] dark:bg-[#14532d]/20 border border-[#bbf7d0] dark:border-[#166534]/50 rounded-xl p-3">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-[#166534] dark:text-[#86efac] text-sm">Change Due:</span>
+                          <span className="text-base font-bold text-[#166534] dark:text-[#86efac]">
+                            {state.settings.currency} {change.toFixed(2)}
+                          </span>
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
+                )}
 
-                  <div className="mt-2 text-sm text-[#7d6b57] dark:text-[#c6bbab]">
-                    <div>Remaining: <span className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {remaining.toFixed(2)}</span></div>
+                {/* Split Payment Toggle */}
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setSplitPaymentEnabled(!splitPaymentEnabled)}
+                    className="text-sm text-[#9a693a] dark:text-[#cfa16a] hover:text-[#7a4f2c] dark:hover:text-[#ddb889] font-medium flex items-center space-x-1 transition-colors"
+                  >
+                    <span className={`transform transition-transform duration-200 ${splitPaymentEnabled ? 'rotate-90' : ''}`}>›</span>
+                    <span>{splitPaymentEnabled ? 'Single Payment' : 'Split Payment'}</span>
+                  </button>
+
+                  {/* Collapsible split payment section */}
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${splitPaymentEnabled ? 'max-h-[500px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
+                    <div className="space-y-3 border border-[#ded7cc] dark:border-[#54463b] rounded-xl p-3 bg-[#faf8f5] dark:bg-[#2a1a10]">
+                      <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">
+                        Remaining to pay: <span className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {remaining.toFixed(2)}</span>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="input flex-1"
+                          placeholder={`Amount (max: ${remaining.toFixed(2)})`}
+                          value={pendingPayment.amount}
+                          onChange={(e) => setPendingPayment(prev => ({ ...prev, amount: e.target.value }))}
+                        />
+                        <button type="button" className="btn btn-primary" onClick={addPendingPayment}>Add</button>
+                      </div>
+
+                      <div className="space-y-2">
+                        {payments.map(p => (
+                          <div key={p.id} className="flex justify-between items-center p-2 border border-[#ded7cc] dark:border-[#54463b] rounded-xl bg-white dark:bg-[#1a0f08]">
+                            <div>
+                              <div className="font-medium text-[#473b32] dark:text-[#f0ece5]">{p.method.toUpperCase()}</div>
+                              <div className="text-xs text-[#7d6b57] dark:text-[#c6bbab]">{p.cardDetails ? `${p.cardDetails.cardType} ••••${p.cardDetails.lastFourDigits}` : ''}</div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <div className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {p.amount.toFixed(2)}</div>
+                              <button onClick={() => removePayment(p.id)} className="text-[#dc2626] hover:text-[#b91c1c] text-sm font-medium">Remove</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -621,44 +726,6 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                   </div>
                 )}
               </div>
-
-              {/* Cash Payment */}
-              {paymentMethod === 'cash' && (
-                <div>
-                  <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
-                    Cash Payment
-                  </h3>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-[#473b32] dark:text-[#f0ece5] mb-2">
-                        Amount Received *
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={amountPaid}
-                        onChange={(e) => setAmountPaid(e.target.value)}
-                        className={`input ${isTouchMode ? 'h-12 text-lg' : 'h-11'}`}
-                        placeholder={`Minimum: ${state.settings.currency} ${total.toFixed(2)}`}
-                        disabled={isProcessing}
-                      />
-                    </div>
-
-                    {amountPaid && parseFloat(amountPaid) >= total && (
-                      <div className="bg-[#f0fdf4] dark:bg-[#14532d]/20 border border-[#bbf7d0] dark:border-[#166534]/50 rounded-xl p-4">
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-[#166534] dark:text-[#86efac]">Change Due:</span>
-                          <span className="text-lg font-bold text-[#166534] dark:text-[#86efac]">
-                            {state.settings.currency} {change.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Card Payment Details */}
               {paymentMethod === 'card' && (
