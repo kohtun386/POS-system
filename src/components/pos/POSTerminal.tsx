@@ -178,12 +178,14 @@ export function POSTerminal() {
               className="md:hidden fixed inset-0 bg-black/40 z-40 transition-opacity"
               onClick={() => setShowMobileCart(false)}
             />
-            <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 max-h-[60vh] overflow-hidden rounded-t-2xl shadow-2xl animate-slide-up">
-              <Cart
-                onCheckout={() => { setShowMobileCart(false); handleCheckout(); }}
-                onSaveDraft={saveDraft}
-                onClose={() => setShowMobileCart(false)}
-              />
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl shadow-2xl animate-slide-up">
+              <div className="flex flex-col h-[60vh]">
+                <Cart
+                  onCheckout={() => { setShowMobileCart(false); handleCheckout(); }}
+                  onSaveDraft={saveDraft}
+                  onClose={() => setShowMobileCart(false)}
+                />
+              </div>
             </div>
           </>
         )}
