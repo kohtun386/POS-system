@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Settings, Clock, Bell, ToggleLeft, ToggleRight, Save, X } from 'lucide-react';
 import { AlertConfiguration } from '../../types';
-import { swalConfig } from '../../lib/sweetAlert';
+
 
 interface ConfigurationCardProps {
     config: AlertConfiguration;
@@ -58,7 +58,7 @@ export function ConfigurationCard({ config, onToggle, onUpdate }: ConfigurationC
                 <div className="flex items-center space-x-3">
                     <span className="text-2xl">{getAlertIcon(config.alertType)}</span>
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-900 font-fraunces">
                             {formatAlertType(config.alertType)}
                         </h3>
                         <p className="text-sm text-gray-500">

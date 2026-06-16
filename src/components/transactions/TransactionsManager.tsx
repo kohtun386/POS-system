@@ -385,7 +385,7 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
         <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">Transaction Details</h2>
+            <h2 className="text-xl font-bold text-gray-900 font-fraunces">Transaction Details</h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 p-2 rounded-xl hover:bg-gray-100 transition-colors"
@@ -423,7 +423,7 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
           {/* Card Details */}
           {transaction.cardDetails && (
             <div className="bg-gray-50 rounded-2xl p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Card Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3 font-fraunces">Card Details</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-gray-600">Bank</p>
@@ -447,7 +447,7 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
 
           {/* Items */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Items</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Items</h3>
             <div className="space-y-3">
               {transaction.items.map((item, index) => (
                 <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
@@ -496,7 +496,7 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
           {/* Notes */}
           {transaction.notes && (
             <div className="bg-blue-50 rounded-2xl p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Notes</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 font-fraunces">Notes</h3>
               <p className="text-gray-700">{transaction.notes}</p>
             </div>
           )}
@@ -506,7 +506,7 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
             <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-purple-900 mb-1">Draft Sale</h3>
+                  <h3 className="text-lg font-semibold text-purple-900 mb-1 font-fraunces">Draft Sale</h3>
                   <p className="text-purple-700 text-sm">This sale is pending payment completion.</p>
                 </div>
                 <button

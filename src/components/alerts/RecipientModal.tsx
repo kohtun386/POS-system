@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, User, Mail, Phone, Shield, Bell } from 'lucide-react';
+import { X, Save, User, Mail, Shield, Bell } from 'lucide-react';
 import { AlertRecipient, AlertType } from '../../types';
 import { alertRecipientsService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
@@ -103,7 +103,7 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
-                    <h2 className="text-xl font-semibold">
+                    <h2 className="text-xl font-semibold font-fraunces">
                         {recipient ? 'Edit Recipient' : 'Add New Recipient'}
                     </h2>
                     <button

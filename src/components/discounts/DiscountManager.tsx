@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Percent, Gift, Calendar, Users } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Percent, Gift } from 'lucide-react';
 import { Discount } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 import { DiscountModal } from './DiscountModal';

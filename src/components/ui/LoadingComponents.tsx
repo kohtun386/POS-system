@@ -65,7 +65,7 @@ export function LoadingOverlay({ isVisible, text = 'Loading...' }: LoadingOverla
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.2 }}
             >
                 <LoadingSpinner size="lg" text={text} />
             </motion.div>

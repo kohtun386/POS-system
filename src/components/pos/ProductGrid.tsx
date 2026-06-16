@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Search, Plus, Package, Scale, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Product } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
@@ -25,7 +25,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
     return matchesSearch && matchesCategory && product.active;
   });
 
-  const categories = ['All', ...Array.from(new Set(state.products.map(p => p.category)))];
+  const categories = useMemo(() => ['All', ...Array.from(new Set(state.products.map(p => p.category)))], [state.products]);
   const isTouchMode = state.settings.interfaceMode === 'touch';
 
   const checkScrollButtons = () => {
@@ -176,7 +176,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
         <div className="modal-overlay">
           <div className="modal max-w-sm">
             <div className="modal-header">
-              <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] font-fraunces">Enter Weight</h3>
+              <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] font-fraunces font-fraunces">Enter Weight</h3>
               <button
                 onClick={() => setShowWeightModal(null)}
                 className="text-[#ad9e8a] hover:text-[#7d6b57]"

@@ -7,14 +7,11 @@ import {
   User,
   AppSettings,
   SalesTab,
-  ProductBatch,
   AlertRecipient,
   AlertTemplate,
   AlertConfiguration,
   AlertHistory,
-  AlertSchedule,
-  NotificationServiceConfig,
-  InventoryAlert
+  NotificationServiceConfig
 } from '../types'
 
 // Products Service
@@ -108,7 +105,7 @@ export const productsService = {
   },
 
   async update(id: string, product: Partial<Product>): Promise<Product> {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('products')
       .update({
         name: product.name,

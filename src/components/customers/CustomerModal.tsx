@@ -116,7 +116,7 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
     <div className="modal-overlay">
       <div className="modal max-w-md">
         <div className="modal-header">
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-gray-900 font-fraunces">
             {customer ? 'Edit Customer' : 'Add New Customer'}
           </h2>
           <button

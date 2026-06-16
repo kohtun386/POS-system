@@ -38,7 +38,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
             className={`space-y-2 ${className}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
         >
             {label && (
                 <label className="block text-sm font-semibold text-secondary-700 dark:text-secondary-300">
@@ -119,7 +119,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
             className={`space-y-2 ${className}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
         >
             {label && (
                 <label className="block text-sm font-semibold text-secondary-700 dark:text-secondary-300">

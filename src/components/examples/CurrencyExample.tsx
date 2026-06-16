@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { CurrencyDisplay, CurrencyInput, CurrencySelector } from '../ui/CurrencyDisplay';
-import { useCurrencyConversion, useCurrencyFormat } from '../../context/CurrencyContext';
+import { useCurrencyConversion } from '../../context/CurrencyContext';
 
 // Example component showing how to use currency features in the POS system
 export function CurrencyExample() {
     const [amount, setAmount] = useState(100);
     const [selectedCurrency, setSelectedCurrency] = useState('USD');
-    const { convert, getRate } = useCurrencyConversion();
-    const { format } = useCurrencyFormat();
+    const { convert } = useCurrencyConversion();
     const [conversionResult, setConversionResult] = useState<any>(null);
     const [isConverting, setIsConverting] = useState(false);
 
@@ -26,12 +25,12 @@ export function CurrencyExample() {
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-8">
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Currency Features Demo</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 font-fraunces">Currency Features Demo</h2>
 
                 {/* Currency Display Examples */}
                 <div className="space-y-6">
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Currency Display Examples</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 font-fraunces">Currency Display Examples</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="p-4 bg-gray-50 rounded-lg">
                                 <p className="text-sm text-gray-600 mb-2">USD Display</p>
@@ -50,7 +49,7 @@ export function CurrencyExample() {
 
                     {/* Currency Input Example */}
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Currency Input</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 font-fraunces">Currency Input</h3>
                         <div className="max-w-xs">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Enter Amount
@@ -67,7 +66,7 @@ export function CurrencyExample() {
 
                     {/* Currency Selector Example */}
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Currency Selector</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 font-fraunces">Currency Selector</h3>
                         <div className="max-w-xs">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Select Currency
@@ -83,7 +82,7 @@ export function CurrencyExample() {
 
                     {/* Currency Conversion Example */}
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Currency Conversion</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 font-fraunces">Currency Conversion</h3>
                         <div className="space-y-4">
                             <div className="flex items-center space-x-4">
                                 <CurrencyDisplay amount={amount} currency="USD" className="text-lg font-bold" />
@@ -121,7 +120,7 @@ export function CurrencyExample() {
 
                     {/* Product Price Example */}
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Product Pricing Example</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 font-fraunces">Product Pricing Example</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="p-4 border border-gray-200 rounded-lg">
                                 <h4 className="font-semibold mb-2">Product: Premium Tea</h4>
@@ -183,7 +182,7 @@ export function CurrencyExample() {
 
                     {/* Transaction Example */}
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Transaction Example</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 font-fraunces">Transaction Example</h3>
                         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                             <h4 className="font-semibold text-blue-800 mb-3">Sample Sale</h4>
                             <div className="space-y-2 text-sm">

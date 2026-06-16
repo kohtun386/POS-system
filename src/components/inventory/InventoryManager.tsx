@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Package, AlertTriangle, TrendingUp, TrendingDown, Filter } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Product } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 import { ProductModal } from './ProductModal';

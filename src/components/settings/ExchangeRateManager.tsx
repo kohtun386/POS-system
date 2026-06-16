@@ -149,7 +149,7 @@ export function ExchangeRateManager({ className = '' }: ExchangeRateManagerProps
             <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Exchange Rate Management</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 font-fraunces">Exchange Rate Management</h3>
                         <p className="text-sm text-gray-600">
                             Base Currency: {state.baseCurrency.code} - {state.baseCurrency.name}
                         </p>

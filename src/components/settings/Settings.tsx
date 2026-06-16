@@ -172,7 +172,7 @@ export function Settings() {
               <div className="bg-blue-100 p-2 rounded-xl">
                 <Store className="h-6 w-6 text-blue-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Store Information</h2>
+              <h2 className="text-xl font-bold text-gray-900 font-fraunces">Store Information</h2>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -305,7 +305,7 @@ export function Settings() {
               <div className="bg-green-100 p-2 rounded-xl">
                 <DollarSign className="h-6 w-6 text-green-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Financial Settings</h2>
+              <h2 className="text-xl font-bold text-gray-900 font-fraunces">Financial Settings</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -332,7 +332,7 @@ export function Settings() {
               <div className="bg-yellow-100 p-2 rounded-xl">
                 <RefreshCw className="h-6 w-6 text-yellow-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Exchange Rate Settings</h2>
+              <h2 className="text-xl font-bold text-gray-900 font-fraunces">Exchange Rate Settings</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -398,7 +398,7 @@ export function Settings() {
             {/* Exchange Rate Status and Controls */}
             {exchangeRateStatus && (
               <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Exchange Rate Status</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Exchange Rate Status</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
                     <p className="text-sm text-gray-600">Provider</p>
@@ -456,7 +456,7 @@ export function Settings() {
               <div className="bg-yellow-100 p-2 rounded-xl">
                 <RefreshCw className="h-6 w-6 text-yellow-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Exchange Rate Management</h2>
+              <h2 className="text-xl font-bold text-gray-900 font-fraunces">Exchange Rate Management</h2>
             </div>
 
             <ExchangeRateManager />
@@ -468,7 +468,7 @@ export function Settings() {
               <div className="bg-purple-100 p-2 rounded-xl">
                 <FileText className="h-6 w-6 text-purple-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Invoice Settings</h2>
+              <h2 className="text-xl font-bold text-gray-900 font-fraunces">Invoice Settings</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -516,7 +516,7 @@ export function Settings() {
               <div className="bg-purple-100 p-2 rounded-xl">
                 <Globe className="h-6 w-6 text-purple-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">System Preferences</h2>
+              <h2 className="text-xl font-bold text-gray-900 font-fraunces">System Preferences</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -545,7 +545,7 @@ export function Settings() {
               <div className="bg-orange-100 p-2 rounded-xl">
                 <Printer className="h-6 w-6 text-orange-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Hardware Settings</h2>
+              <h2 className="text-xl font-bold text-gray-900 font-fraunces">Hardware Settings</h2>
             </div>
 
             <div className="space-y-4">
@@ -587,7 +587,7 @@ export function Settings() {
               <div className="bg-red-100 p-2 rounded-xl">
                 <Users className="h-6 w-6 text-red-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Current User</h2>
+              <h2 className="text-xl font-bold text-gray-900 font-fraunces">Current User</h2>
             </div>
 
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
@@ -597,7 +597,7 @@ export function Settings() {
                     <Users className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">{state.currentUser?.name}</h3>
+                    <h3 className="font-bold text-gray-900 font-fraunces">{state.currentUser?.name}</h3>
                     <p className="text-sm text-gray-600">Role: {state.currentUser?.role}</p>
                     <p className="text-sm text-gray-600">Email: {state.currentUser?.email}</p>
                   </div>

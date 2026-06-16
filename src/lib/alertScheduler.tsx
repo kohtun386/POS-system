@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { alertService } from '../lib/alertService';
+import { alertService } from './alertService';
 
 // Alert Scheduler Hook
 export function useAlertScheduler(intervalMinutes: number = 60) {
@@ -79,15 +79,15 @@ export function AlertStatusIndicator() {
     };
 
     return (
-        <div className= "flex items-center space-x-2" >
-        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title = "Alert system active" />
+        <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Alert system active" />
             <button
-        onClick={ handleManualCheck }
-    className = "text-xs text-gray-600 hover:text-gray-900 transition-colors"
-    title = "Run manual alert check"
-        >
-        Check Alerts
+                onClick={handleManualCheck}
+                className="text-xs text-gray-600 hover:text-gray-900 transition-colors"
+                title="Run manual alert check"
+            >
+                Check Alerts
             </button>
-            </div>
-  );
+        </div>
+    );
 }

@@ -158,7 +158,6 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
     const eligibleDiscounts: AppliedDiscount[] = [];
     const gifts: CartItem[] = [];
-    let autoDiscountAmount = 0;
 
     state.discounts.forEach(discount => {
       if (checkDiscountEligibility(
@@ -438,7 +437,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
           <div className={`modal ${isTouchMode ? 'max-w-lg' : 'max-w-md'}`}>
             {/* Header */}
             <div className="modal-header">
-              <h2 className={`font-bold text-[#473b32] dark:text-[#f0ece5] ${isTouchMode ? 'text-xl' : 'text-lg'}`}>
+              <h2 className={`font-bold font-fraunces text-[#473b32] dark:text-[#f0ece5] ${isTouchMode ? 'text-xl' : 'text-lg'}`}>
                 Complete Payment
               </h2>
               <button
@@ -487,7 +486,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
               {/* Order Summary */}
               <div>
-                <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                <h3 className={`font-semibold font-fraunces text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                   Order Summary
                 </h3>
 
@@ -534,7 +533,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
               {/* Payment Method */}
               <div>
-                <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                <h3 className={`font-semibold font-fraunces text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                   Payment Method
                 </h3>
 
@@ -641,7 +640,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                           initial={{ opacity: 0, y: -6 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -6 }}
-                          transition={{ duration: 0.25 }}
+                          transition={{ duration: 0.2 }}
                           className="mt-2 bg-[#f0fdf4] dark:bg-[#14532d]/20 border border-[#bbf7d0] dark:border-[#166534]/50 rounded-xl p-3"
                         >
                           <div className="flex justify-between items-center">
@@ -695,7 +694,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                             </div>
                             <div className="flex items-center space-x-2">
                               <div className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {p.amount.toFixed(2)}</div>
-                              <button onClick={() => removePayment(p.id)} className="text-[#dc2626] hover:text-[#b91c1c] text-sm font-medium">Remove</button>
+                              <button onClick={() => removePayment(p.id)} className="btn-ghost text-sm font-medium !text-red-600 hover:!text-red-800">Remove</button>
                             </div>
                           </div>
                         ))}
@@ -745,10 +744,10 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
                   >
                     <div className="overflow-hidden">
-                      <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                      <h3 className={`font-semibold font-fraunces text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                     Card Details
                   </h3>
 
@@ -819,10 +818,10 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
                   >
                     <div className="overflow-hidden">
-                      <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                      <h3 className={`font-semibold font-fraunces text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                     Credit Notes
                   </h3>
                   <textarea

@@ -273,7 +273,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
     <div className="modal-overlay">
       <div className="modal max-w-4xl">
         <div className="modal-header">
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-gray-900 font-fraunces">
             {product ? 'Edit Product' : 'Add New Product'}
           </h2>
           <button
@@ -286,7 +286,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
 
         <div className="modal-body space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Basic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -364,7 +364,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing & Stock</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Pricing & Stock</h3>
             
             <div className="mb-4">
               <label className="flex items-center space-x-3">
@@ -513,7 +513,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Image</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Product Image</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -549,7 +549,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Batch Management</h3>
+                <h3 className="text-lg font-semibold text-gray-900 font-fraunces">Batch Management</h3>
                 <p className="text-sm text-gray-600">Track manufacturing and expiry dates for better inventory control</p>
               </div>
               <button

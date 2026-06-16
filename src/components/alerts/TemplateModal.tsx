@@ -132,7 +132,7 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
             <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
-                    <h2 className="text-xl font-semibold">
+                    <h2 className="text-xl font-semibold font-fraunces">
                         {template ? 'Edit Template' : 'Add New Template'}
                     </h2>
                     <button

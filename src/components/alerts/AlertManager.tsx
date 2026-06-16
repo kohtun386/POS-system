@@ -6,14 +6,12 @@ import {
     Mail,
     MessageSquare,
     Clock,
-    AlertTriangle,
     CheckCircle,
     XCircle,
     Plus,
     Edit,
     Trash2,
     RefreshCw,
-    Filter,
     Search
 } from 'lucide-react';
 import {
@@ -21,8 +19,7 @@ import {
     AlertTemplate,
     AlertConfiguration,
     AlertHistory,
-    NotificationServiceConfig,
-    AlertType
+    NotificationServiceConfig
 } from '../../types';
 import {
     alertRecipientsService,
@@ -70,7 +67,7 @@ export function AlertManager() {
             setConfigurations(configurationsData);
             setHistory(historyData);
             setServices(servicesData);
-        } catch (error) {
+        } catch (_error) {
             console.error('Error loading alert data:', error);
             swalConfig.error('Failed to load alert data');
         } finally {
@@ -89,7 +86,7 @@ export function AlertManager() {
             const successfulAlerts = results.filter(r => r.shouldSend).length;
 
             swalConfig.success(`Alert check completed! ${successfulAlerts}/${totalAlerts} alerts sent successfully.`);
-        } catch (error) {
+        } catch (_error) {
             console.error('Error running alert check:', error);
             swalConfig.error('Failed to run alert check');
         } finally {
@@ -283,7 +280,7 @@ function OverviewTab({
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Alert System Overview</h2>
+                <h2 className="text-xl font-semibold font-fraunces">Alert System Overview</h2>
                 <button
                     onClick={onRunCheck}
                     disabled={loading}
@@ -360,7 +357,7 @@ function RecipientsTab({
                 await alertRecipientsService.delete(id);
                 onUpdate();
                 swalConfig.success('Recipient deleted successfully!');
-            } catch (error) {
+            } catch (_error) {
                 swalConfig.error('Failed to delete recipient');
             }
         }
@@ -369,7 +366,7 @@ function RecipientsTab({
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Alert Recipients</h2>
+                <h2 className="text-xl font-semibold font-fraunces">Alert Recipients</h2>
                 <button
                     onClick={() => {
                         setEditingRecipient(null);
@@ -474,7 +471,7 @@ function TemplatesTab({
                 await alertTemplatesService.delete(id);
                 onUpdate();
                 swalConfig.success('Template deleted successfully!');
-            } catch (error) {
+            } catch (_error) {
                 swalConfig.error('Failed to delete template');
             }
         }
@@ -483,7 +480,7 @@ function TemplatesTab({
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Alert Templates</h2>
+                <h2 className="text-xl font-semibold font-fraunces">Alert Templates</h2>
                 <button
                     onClick={() => {
                         setEditingTemplate(null);
@@ -570,7 +567,7 @@ function ConfigurationTab({
             await alertConfigurationsService.update(id, { isEnabled });
             onUpdate();
             swalConfig.success('Configuration updated successfully!');
-        } catch (error) {
+        } catch (_error) {
             swalConfig.error('Failed to update configuration');
         }
     };
@@ -580,14 +577,14 @@ function ConfigurationTab({
             await alertConfigurationsService.update(id, updates);
             onUpdate();
             swalConfig.success('Configuration updated successfully!');
-        } catch (error) {
+        } catch (_error) {
             swalConfig.error('Failed to update configuration');
         }
     };
 
     return (
         <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Alert Configurations</h2>
+            <h2 className="text-xl font-semibold font-fraunces">Alert Configurations</h2>
 
             <div className="space-y-4">
                 {configurations.map((config) => (
@@ -620,7 +617,7 @@ function HistoryTab({
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Alert History</h2>
+                <h2 className="text-xl font-semibold font-fraunces">Alert History</h2>
             </div>
 
             {/* Filters */}
@@ -718,7 +715,7 @@ function ServicesTab({
                 await notificationServiceConfigService.delete(id);
                 onUpdate();
                 swalConfig.success('Service deleted successfully!');
-            } catch (error) {
+            } catch (_error) {
                 swalConfig.error('Failed to delete service');
             }
         }
@@ -727,7 +724,7 @@ function ServicesTab({
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Notification Services</h2>
+                <h2 className="text-xl font-semibold font-fraunces">Notification Services</h2>
                 <button
                     onClick={() => {
                         setEditingService(null);

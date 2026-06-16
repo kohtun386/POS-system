@@ -4,7 +4,6 @@ import {
     AlertTemplate,
     AlertConfiguration,
     AlertHistory,
-    AlertSchedule,
     NotificationServiceConfig,
     InventoryAlert,
     AlertType,
@@ -298,8 +297,7 @@ export class AlertService {
         channel: 'email' | 'sms',
         status: 'pending' | 'sent' | 'failed' | 'delivered',
         messageContent?: string,
-        errorMessage?: string,
-        messageId?: string
+        errorMessage?: string
     ): Promise<void> {
         try {
             const alertHistory: Omit<AlertHistory, 'id'> = {
@@ -381,7 +379,7 @@ export class AlertService {
             }
 
             // Get templates
-            const { data: emailTemplate, error: emailTemplateError } = await supabase
+            const { data: emailTemplate, error: _emailTemplateError } = await supabase
                 .from('alert_templates')
                 .select('*')
                 .eq('type', alert.alertType)
@@ -389,7 +387,7 @@ export class AlertService {
                 .eq('is_active', true)
                 .single();
 
-            const { data: smsTemplate, error: smsTemplateError } = await supabase
+            const { data: smsTemplate, error: _smsTemplateError } = await supabase
                 .from('alert_templates')
                 .select('*')
                 .eq('type', alert.alertType)
@@ -432,8 +430,7 @@ export class AlertService {
                         'email',
                         emailResult.success ? 'sent' : 'failed',
                         emailResult.success ? 'Email sent successfully' : emailResult.error,
-                        emailResult.error,
-                        emailResult.messageId
+                        emailResult.error
                     );
                 }
 
@@ -451,8 +448,7 @@ export class AlertService {
                         'sms',
                         smsResult.success ? 'sent' : 'failed',
                         smsResult.success ? 'SMS sent successfully' : smsResult.error,
-                        smsResult.error,
-                        smsResult.messageId
+                        smsResult.error
                     );
                 }
             }

@@ -148,7 +148,7 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-2 font-fraunces">
             <User className="h-6 w-6 text-blue-600" />
             <span>{user ? 'Edit User' : 'Add New User'}</span>
           </h2>
@@ -260,7 +260,7 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
 
           {/* Role Permissions Display */}
           <div className="bg-gray-50 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center space-x-2">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center space-x-2 font-fraunces">
               {formData.role === 'admin' && <Crown className="h-4 w-4 text-amber-500" />}
               {formData.role === 'manager' && <Shield className="h-4 w-4 text-blue-500" />}
               {formData.role === 'cashier' && <User className="h-4 w-4 text-gray-500" />}

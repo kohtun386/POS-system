@@ -15,7 +15,7 @@ export function POSTerminal() {
   const { state, dispatch } = useApp();
   const { user } = useAuth();
   const [showCheckout, setShowCheckout] = useState(false);
-  const [lastSale, setLastSale] = useState<Sale | null>(null);
+  const [_lastSale, setLastSale] = useState<Sale | null>(null);
   const [showMobileCart, setShowMobileCart] = useState(false);
 
   const addToCart = (product: Product, weight?: number) => {
@@ -167,7 +167,7 @@ export function POSTerminal() {
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
               onClick={() => setShowMobileCart(true)}
               className="md:hidden fixed bottom-6 right-6 z-40 bg-gradient-to-r from-[#9a693a] to-[#7a4f2c] text-white h-14 w-14 rounded-full shadow-large flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-copper active:scale-95"
             >
@@ -188,7 +188,7 @@ export function POSTerminal() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
+                transition={{ duration: 0.2 }}
                 className="md:hidden fixed inset-0 bg-black/40 z-40"
                 onClick={() => setShowMobileCart(false)}
               />
@@ -197,7 +197,7 @@ export function POSTerminal() {
                 initial={{ y: '100%' }}
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
                 className="md:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl shadow-2xl"
               >
                 <div className="flex flex-col h-[60vh] bg-[#faf8f5] dark:bg-[#1f1309] rounded-t-2xl overflow-hidden">

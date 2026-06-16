@@ -90,7 +90,7 @@ export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
       {/* Cart Header */}
       <div className="p-4 lg:p-6 border-b border-[#ded7cc] dark:border-[#54463b] flex-shrink-0">
         <div className="flex items-center justify-between mb-6">
-          <h2 className={`font-bold text-[#473b32] dark:text-[#f0ece5] ${isTouchMode ? 'text-xl' : 'text-lg'}`}>
+          <h2 className={`font-bold font-fraunces text-[#473b32] dark:text-[#f0ece5] ${isTouchMode ? 'text-xl' : 'text-lg'}`}>
             Shopping Cart
           </h2>
           <div className="flex items-center space-x-2">
@@ -195,7 +195,7 @@ export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
                 initial={{ opacity: 0, height: 0, y: -8 }}
                 animate={{ opacity: 1, height: 'auto', y: 0 }}
                 exit={{ opacity: 0, height: 0, y: 8, marginBottom: 0 }}
-                transition={{ duration: 0.25, ease: 'easeOut' }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
               >
                 <CartItemCard
                   item={item}
@@ -219,7 +219,7 @@ export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className="border-t border-[#ded7cc] dark:border-[#54463b] p-4 lg:p-6 space-y-6 bg-[#f0ece5]/50 dark:bg-[#2a1a10] flex-shrink-0"
           >
           <div className="space-y-3">
@@ -377,7 +377,7 @@ function CartItemCard({ item, index, onUpdateQuantity, onRemove, onApplyDiscount
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className="flex items-center space-x-2 pt-3 border-t border-[#ded7cc] dark:border-[#54463b] overflow-hidden"
           >
           <select

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { X, User, Mail, Phone, MapPin, CreditCard, Calendar, ShoppingBag, Receipt } from 'lucide-react';
-import { Customer, Sale } from '../../types';
+import { Customer } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 import { format } from 'date-fns';
 
@@ -46,7 +46,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
                 <User className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">{customer.name}</h2>
+                <h2 className="text-2xl font-bold font-fraunces">{customer.name}</h2>
                 <p className="text-blue-100">Customer ID: {customer.id}</p>
               </div>
             </div>
@@ -130,7 +130,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
               {/* Customer Information */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-gray-50 rounded-2xl p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-6">Contact Information</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-6 font-fraunces">Contact Information</h3>
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3">
                       <Mail className="h-5 w-5 text-gray-400" />
@@ -157,7 +157,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
                 </div>
 
                 <div className="bg-gray-50 rounded-2xl p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-6">Account Information</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-6 font-fraunces">Account Information</h3>
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3">
                       <CreditCard className="h-5 w-5 text-gray-400" />
@@ -193,7 +193,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
 
               {/* Credit Information */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Credit Information</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4 font-fraunces">Credit Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Credit Limit</p>
@@ -223,7 +223,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
           {activeTab === 'transactions' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-gray-900">Transaction History</h3>
+                <h3 className="text-xl font-bold text-gray-900 font-fraunces">Transaction History</h3>
                 <p className="text-gray-600">{totalTransactions} transactions</p>
               </div>
 

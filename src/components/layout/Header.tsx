@@ -174,7 +174,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
             )}
 
             {/* Notifications */}
-            <button className="p-2 rounded-2xl text-[#7d6b57] hover:text-[#473b32] hover:bg-[#f0ece5]/50 transition-all duration-300 relative">
+            <button className="btn-ghost p-2 rounded-2xl transition-all duration-300 relative">
               <Bell className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-[#e55c13] rounded-full animate-pulse"></span>
             </button>

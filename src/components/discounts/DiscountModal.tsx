@@ -241,7 +241,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
     <div className="modal-overlay">
       <div className="modal max-w-4xl">
         <div className="modal-header">
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-gray-900 font-fraunces">
             {discount ? 'Edit Discount' : 'Add New Discount'}
           </h2>
           <button
@@ -255,7 +255,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
         <div className="modal-body space-y-6">
           {/* Basic Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Basic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -306,7 +306,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
 
           {/* Discount Value */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Discount Value</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Discount Value</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {formData.type !== 'free_gift' && (
                 <div>
@@ -366,7 +366,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
           {/* Free Gift Products */}
           {formData.type === 'free_gift' && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Free Gift Products</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Free Gift Products</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-48 overflow-y-auto border border-gray-200 rounded-xl p-4">
                 {state.products.map(product => (
                   <label key={product.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
@@ -391,7 +391,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
 
           {/* Valid Days */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Valid Days (Optional)</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Valid Days (Optional)</h3>
             <p className="text-sm text-gray-600 mb-3">Select specific days when this discount is valid. Leave empty for all days.</p>
             <div className="grid grid-cols-7 gap-2">
               {dayNames.map((day, index) => (
@@ -413,7 +413,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Additional Conditions</h3>
+                <h3 className="text-lg font-semibold text-gray-900 font-fraunces">Additional Conditions</h3>
                 <p className="text-sm text-gray-600">Add specific conditions that must be met for this discount to apply</p>
               </div>
               <button
@@ -632,7 +632,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
 
           {/* Validity Period */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Validity Period</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Validity Period</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

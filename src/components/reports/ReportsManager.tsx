@@ -11,12 +11,12 @@ export function ReportsManager() {
   const [startDateInput, setStartDateInput] = useState('');
   const [endDateInput, setEndDateInput] = useState('');
 
-  const endDate = (dateRange === 'custom' && endDateInput && endDateInput.trim() !== '') ? new Date(endDateInput) : new Date();
-  const startDate = (dateRange === 'custom' && startDateInput && startDateInput.trim() !== '') ? new Date(startDateInput) : subDays(endDate, parseInt(dateRange) || 7);
+  const endDate = useMemo(() => (dateRange === 'custom' && endDateInput && endDateInput.trim() !== '') ? new Date(endDateInput) : new Date(), [dateRange, endDateInput]);
+  const startDate = useMemo(() => (dateRange === 'custom' && startDateInput && startDateInput.trim() !== '') ? new Date(startDateInput) : subDays(endDate, parseInt(dateRange) || 7), [dateRange, startDateInput, endDate]);
 
   // Validate dates
-  const validEndDate = isNaN(endDate.getTime()) ? new Date() : endDate;
-  const validStartDate = isNaN(startDate.getTime()) ? subDays(validEndDate, 7) : startDate;
+  const validEndDate = useMemo(() => isNaN(endDate.getTime()) ? new Date() : endDate, [endDate]);
+  const validStartDate = useMemo(() => isNaN(startDate.getTime()) ? subDays(validEndDate, 7) : startDate, [startDate, validEndDate]);
 
   const filteredSales = state.sales.filter(sale => {
     const saleDate = new Date(sale.timestamp);
@@ -497,7 +497,7 @@ export function ReportsManager() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Sales Trend */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center font-fraunces">
               <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
               Sales Trend
             </h3>
@@ -543,7 +543,7 @@ export function ReportsManager() {
 
           {/* Category Distribution */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center font-fraunces">
               <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
               Sales by Category
             </h3>
@@ -582,7 +582,7 @@ export function ReportsManager() {
         <div className="grid grid-cols-1 gap-6">
           {/* Customer Spending Chart */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center font-fraunces">
               <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
               Top Customer Spending
             </h3>
@@ -627,7 +627,7 @@ export function ReportsManager() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Stock Status Chart */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center font-fraunces">
               <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
               Stock Status Distribution
             </h3>
@@ -666,7 +666,7 @@ export function ReportsManager() {
 
           {/* Category Stock Value */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center font-fraunces">
               <DollarSign className="h-5 w-5 mr-2 text-green-600" />
               Stock Value by Category
             </h3>
@@ -710,7 +710,7 @@ export function ReportsManager() {
       {reportType === 'sales' && (
         <div className="card overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center font-fraunces">
               <ShoppingCart className="h-5 w-5 mr-2 text-green-600" />
               Top Selling Products
             </h3>
@@ -757,7 +757,7 @@ export function ReportsManager() {
       {reportType === 'customers' && (
         <div className="card overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center font-fraunces">
               <Users className="h-5 w-5 mr-2 text-blue-600" />
               Customer Analytics
             </h3>
@@ -811,7 +811,7 @@ export function ReportsManager() {
       {reportType === 'inventory' && (
         <div className="card overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center font-fraunces">
               <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
               Inventory Analytics
             </h3>

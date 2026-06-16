@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Mail, MessageSquare, Key, Globe } from 'lucide-react';
+import { X, Save, Mail, MessageSquare, Key } from 'lucide-react';
 import { NotificationServiceConfig } from '../../types';
 import { notificationServiceConfigService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
@@ -124,7 +124,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
-                    <h2 className="text-xl font-semibold">
+                    <h2 className="text-xl font-semibold font-fraunces">
                         {service ? 'Edit Service' : 'Add New Service'}
                     </h2>
                     <button
