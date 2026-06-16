@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Trash2, Plus, Minus, User, Percent, FileText, ShoppingCart, X } from 'lucide-react';
 import { CartItem, Customer } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
@@ -83,7 +84,7 @@ export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
   const total = subtotal - totalDiscount + taxAmount;
 
   return (
-    <div className={`bg-[#faf8f5] dark:bg-[#1f1309] border-l border-[#ded7cc] dark:border-[#54463b] flex flex-col h-full ${
+    <div className={`bg-[#faf8f5] dark:bg-[#1f1309] border-l border-[#ded7cc] dark:border-[#54463b] flex flex-col h-full transition-[width] duration-300 ${
       isTouchMode ? 'w-full md:w-96' : 'w-full md:w-80'
     }`}>
       {/* Cart Header */}
@@ -177,10 +178,7 @@ export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
       </div>
 
       {/* Cart Items */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6 space-y-4" style={{
-        scrollbarWidth: 'thin',
-        scrollbarColor: '#c6bbab #f0ece5'
-      }}>
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6 space-y-4 cart-scrollbar">
         {state.cart.length === 0 ? (
           <div className="text-center py-12">
             <div className="bg-[#f0ece5] dark:bg-[#3b2613] p-6 rounded-3xl inline-block mb-4">
@@ -190,24 +188,40 @@ export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
             <p className="text-[#ad9e8a] text-sm mt-1">Add products to get started</p>
           </div>
         ) : (
-          state.cart.map((item, index) => (
-            <CartItemCard
-              key={`${item.product.id}-${index}`}
-              item={item}
-              index={index}
-              onUpdateQuantity={updateQuantity}
-              onRemove={removeFromCart}
-              onApplyDiscount={applyDiscount}
-              isTouchMode={isTouchMode}
-              currency={state.settings.currency}
-            />
-          ))
+          <AnimatePresence initial={false}>
+            {state.cart.map((item, index) => (
+              <motion.div
+                key={`${item.product.id}-${index}`}
+                initial={{ opacity: 0, height: 0, y: -8 }}
+                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                exit={{ opacity: 0, height: 0, y: 8, marginBottom: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+              >
+                <CartItemCard
+                  item={item}
+                  index={index}
+                  onUpdateQuantity={updateQuantity}
+                  onRemove={removeFromCart}
+                  onApplyDiscount={applyDiscount}
+                  isTouchMode={isTouchMode}
+                  currency={state.settings.currency}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         )}
       </div>
 
       {/* Cart Summary */}
-      {state.cart.length > 0 && (
-        <div className="border-t border-[#ded7cc] dark:border-[#54463b] p-4 lg:p-6 space-y-6 bg-[#f0ece5]/50 dark:bg-[#2a1a10] flex-shrink-0">
+      <AnimatePresence>
+        {state.cart.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="border-t border-[#ded7cc] dark:border-[#54463b] p-4 lg:p-6 space-y-6 bg-[#f0ece5]/50 dark:bg-[#2a1a10] flex-shrink-0"
+          >
           <div className="space-y-3">
             <div className="flex justify-between text-[#7d6b57] dark:text-[#c6bbab]">
               <span>Subtotal:</span>
@@ -251,8 +265,9 @@ export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
               <span>Save Draft</span>
             </button>
           </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -282,7 +297,7 @@ function CartItemCard({ item, index, onUpdateQuantity, onRemove, onApplyDiscount
   };
 
   return (
-    <div className="card p-4 space-y-4">
+    <motion.div layout className="card p-4 space-y-4">
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <h4 className={`font-medium text-[#473b32] dark:text-[#f0ece5] truncate ${isTouchMode ? 'text-base' : 'text-sm'}`}>
@@ -322,11 +337,17 @@ function CartItemCard({ item, index, onUpdateQuantity, onRemove, onApplyDiscount
           >
             <Minus className="h-4 w-4" />
           </button>
-          <span className={`font-medium min-w-[2rem] text-center text-[#473b32] dark:text-[#f0ece5] ${
+          <motion.span
+            key={item.quantity}
+            initial={{ scale: 1.3 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className={`font-medium min-w-[2rem] text-center text-[#473b32] dark:text-[#f0ece5] ${
             isTouchMode ? 'text-lg' : 'text-base'
-          }`}>
+          }`}
+          >
             {item.quantity}
-          </span>
+          </motion.span>
           <button
             onClick={() => onUpdateQuantity(index, item.quantity + 1)}
             className={`btn btn-secondary ${
@@ -350,8 +371,15 @@ function CartItemCard({ item, index, onUpdateQuantity, onRemove, onApplyDiscount
         </div>
       </div>
 
-      {showDiscountInput && (
-        <div className="flex items-center space-x-2 pt-3 border-t border-[#ded7cc] dark:border-[#54463b] animate-slide-up">
+      <AnimatePresence>
+        {showDiscountInput && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="flex items-center space-x-2 pt-3 border-t border-[#ded7cc] dark:border-[#54463b] overflow-hidden"
+          >
           <select
             value={discountType}
             onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'fixed')}
@@ -373,8 +401,9 @@ function CartItemCard({ item, index, onUpdateQuantity, onRemove, onApplyDiscount
           >
             Apply
           </button>
-        </div>
-      )}
-    </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

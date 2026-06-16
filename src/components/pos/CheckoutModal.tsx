@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { X, CreditCard, Banknote, Smartphone, Check, Receipt, AlertCircle, Gift } from 'lucide-react';
 import { Sale, CardDetails, AppliedDiscount, CartItem, Payment } from '../../types';
 import { useApp, checkDiscountEligibility, useInvoiceGeneration } from '../../context/SupabaseAppContext';
@@ -312,7 +313,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         }
       }
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 400));
 
       const invoiceNumber = await generateInvoice();
 
@@ -414,6 +415,21 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   };
 
   const isTouchMode = state.settings.interfaceMode === 'touch';
+
+  // Shared payment-method button class builder — avoids 8× style duplication
+  const paymentBtnClasses = (methodId: string, isDisabled = false) => {
+    const isActive = splitPaymentEnabled
+      ? pendingPayment.method === methodId
+      : paymentMethod === methodId;
+    return [
+      'flex flex-col items-center space-y-2 p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer',
+      isActive
+        ? 'border-[#9a693a] bg-[#fcf5eb] text-[#7a4f2c] dark:border-[#cfa16a] dark:bg-[#3b2613]/50 dark:text-[#ddb889]'
+        : 'border-[#ded7cc] dark:border-[#54463b] hover:border-[#c6bbab] dark:hover:border-[#655547] text-[#7d6b57] dark:text-[#c6bbab]',
+      isTouchMode ? 'min-h-[80px]' : 'min-h-[70px]',
+      isDisabled ? 'opacity-50 cursor-not-allowed' : '',
+    ].join(' ');
+  };
 
   return (
     <>
@@ -538,11 +554,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                           setPaymentMethod(id);
                         }
                       }}
-                      className={`flex flex-col items-center space-y-2 p-4 rounded-2xl border-2 transition-all ${
-                        (splitPaymentEnabled ? pendingPayment.method : paymentMethod) === id
-                          ? 'border-[#9a693a] bg-[#fcf5eb] text-[#7a4f2c] dark:border-[#cfa16a] dark:bg-[#3b2613]/50 dark:text-[#ddb889]'
-                          : 'border-[#ded7cc] dark:border-[#54463b] hover:border-[#c6bbab] dark:hover:border-[#655547] text-[#7d6b57] dark:text-[#c6bbab]'
-                      } cursor-pointer ${isTouchMode ? 'min-h-[80px]' : 'min-h-[70px]'}`}
+                      className={paymentBtnClasses(id)}
                     >
                       <Icon className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
                       <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
@@ -558,7 +570,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     onClick={() => setShowMorePayments(!showMorePayments)}
                     className="mt-3 text-sm text-[#9a693a] dark:text-[#cfa16a] hover:text-[#7a4f2c] dark:hover:text-[#ddb889] font-medium flex items-center space-x-1 transition-colors"
                   >
-                    <span className={`transform transition-transform duration-200 ${showMorePayments ? 'rotate-90' : ''}`}>›</span>
+                    <span className={`transform transition-transform duration-300 ${showMorePayments ? 'rotate-90' : ''}`}>›</span>
                     <span>{showMorePayments ? 'Less payment options' : 'More payment options'}</span>
                   </button>
                 )}
@@ -580,11 +592,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                             setPaymentMethod(id);
                           }
                         }}
-                        className={`flex flex-col items-center space-y-2 p-4 rounded-2xl border-2 transition-all ${
-                          (splitPaymentEnabled ? pendingPayment.method : paymentMethod) === id
-                            ? 'border-[#9a693a] bg-[#fcf5eb] text-[#7a4f2c] dark:border-[#cfa16a] dark:bg-[#3b2613]/50 dark:text-[#ddb889]'
-                            : 'border-[#ded7cc] dark:border-[#54463b] hover:border-[#c6bbab] dark:hover:border-[#655547] text-[#7d6b57] dark:text-[#c6bbab]'
-                        } cursor-pointer ${isTouchMode ? 'min-h-[80px]' : 'min-h-[70px]'}`}
+                        className={paymentBtnClasses(id)}
                       >
                         <Icon className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
                         <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
@@ -601,12 +609,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                         }
                       }}
                       disabled={!splitPaymentEnabled && !canPayWithCredit}
-                      className={`flex flex-col items-center space-y-2 p-4 rounded-2xl border-2 transition-all col-span-2 ${
-                        (splitPaymentEnabled ? pendingPayment.method : paymentMethod) === 'credit'
-                          ? 'border-[#9a693a] bg-[#fcf5eb] text-[#7a4f2c] dark:border-[#cfa16a] dark:bg-[#3b2613]/50 dark:text-[#ddb889]'
-                          : 'border-[#ded7cc] dark:border-[#54463b] hover:border-[#c6bbab] dark:hover:border-[#655547] text-[#7d6b57] dark:text-[#c6bbab]'
-                      } ${!splitPaymentEnabled && !canPayWithCredit ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                      ${isTouchMode ? 'min-h-[80px]' : 'min-h-[70px]'}`}
+                      className={`${paymentBtnClasses('credit', !splitPaymentEnabled && !canPayWithCredit)} col-span-2`}
                     >
                       <Receipt className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
                       <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
@@ -632,16 +635,24 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                       placeholder={`Minimum: ${state.settings.currency} ${total.toFixed(2)}`}
                       disabled={isProcessing}
                     />
-                    {paymentMethod === 'cash' && amountPaid && parseFloat(amountPaid) >= total && (
-                      <div className="mt-2 bg-[#f0fdf4] dark:bg-[#14532d]/20 border border-[#bbf7d0] dark:border-[#166534]/50 rounded-xl p-3">
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-[#166534] dark:text-[#86efac] text-sm">Change Due:</span>
-                          <span className="text-base font-bold text-[#166534] dark:text-[#86efac]">
-                            {state.settings.currency} {change.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                    <AnimatePresence>
+                      {paymentMethod === 'cash' && amountPaid && parseFloat(amountPaid) >= total && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.25 }}
+                          className="mt-2 bg-[#f0fdf4] dark:bg-[#14532d]/20 border border-[#bbf7d0] dark:border-[#166534]/50 rounded-xl p-3"
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold text-[#166534] dark:text-[#86efac] text-sm">Change Due:</span>
+                            <span className="text-base font-bold text-[#166534] dark:text-[#86efac]">
+                              {state.settings.currency} {change.toFixed(2)}
+                            </span>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 )}
 
@@ -652,7 +663,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     onClick={() => setSplitPaymentEnabled(!splitPaymentEnabled)}
                     className="text-sm text-[#9a693a] dark:text-[#cfa16a] hover:text-[#7a4f2c] dark:hover:text-[#ddb889] font-medium flex items-center space-x-1 transition-colors"
                   >
-                    <span className={`transform transition-transform duration-200 ${splitPaymentEnabled ? 'rotate-90' : ''}`}>›</span>
+                    <span className={`transform transition-transform duration-300 ${splitPaymentEnabled ? 'rotate-90' : ''}`}>›</span>
                     <span>{splitPaymentEnabled ? 'Single Payment' : 'Split Payment'}</span>
                   </button>
 
@@ -728,9 +739,16 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
               </div>
 
               {/* Card Payment Details */}
-              {paymentMethod === 'card' && (
-                <div>
-                  <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+              <AnimatePresence>
+                {paymentMethod === 'card' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                  >
+                    <div className="overflow-hidden">
+                      <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                     Card Details
                   </h3>
 
@@ -790,12 +808,21 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     </div>
                   </div>
                 </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Credit Notes */}
-              {paymentMethod === 'credit' && (
-                <div>
-                  <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+              <AnimatePresence>
+                {paymentMethod === 'credit' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                  >
+                    <div className="overflow-hidden">
+                      <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                     Credit Notes
                   </h3>
                   <textarea
@@ -807,7 +834,9 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     disabled={isProcessing}
                   />
                 </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Action Buttons */}

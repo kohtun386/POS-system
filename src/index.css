@@ -395,6 +395,16 @@
   background: rgba(84, 70, 59, 0.6);
 }
 
+/* Firefox scrollbar — light mode */
+.cart-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #c6bbab #f0ece5;
+}
+/* Firefox scrollbar — dark mode */
+.dark .cart-scrollbar {
+  scrollbar-color: #54463b #3b2613;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; }

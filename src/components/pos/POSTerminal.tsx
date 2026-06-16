@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ShoppingCart } from 'lucide-react';
 import { ProductGrid } from './ProductGrid';
 import { Cart } from './Cart';
@@ -159,36 +160,57 @@ export function POSTerminal() {
         </div>
 
         {/* Mobile: Floating Cart Toggle Button */}
-        {cartItemCount > 0 && (
-          <button
-            onClick={() => setShowMobileCart(true)}
-            className="md:hidden fixed bottom-6 right-6 z-40 bg-[#9a693a] text-white h-14 w-14 rounded-full shadow-large flex items-center justify-center transition-transform active:scale-95"
-          >
-            <ShoppingCart className="h-6 w-6" />
-            <span className="absolute -top-1 -right-1 bg-[#e55c13] text-white text-xs font-bold h-5 w-5 rounded-full flex items-center justify-center">
-              {cartItemCount}
-            </span>
-          </button>
-        )}
+        <AnimatePresence>
+          {cartItemCount > 0 && (
+            <motion.button
+              key="cart-fab"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              onClick={() => setShowMobileCart(true)}
+              className="md:hidden fixed bottom-6 right-6 z-40 bg-gradient-to-r from-[#9a693a] to-[#7a4f2c] text-white h-14 w-14 rounded-full shadow-large flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-copper active:scale-95"
+            >
+              <ShoppingCart className="h-6 w-6" />
+              <span className="absolute -top-1 -right-1 bg-[#e55c13] text-white text-xs font-bold h-5 w-5 rounded-full flex items-center justify-center">
+                {cartItemCount}
+              </span>
+            </motion.button>
+          )}
+        </AnimatePresence>
 
         {/* Mobile: Cart Bottom Sheet */}
-        {showMobileCart && (
-          <>
-            <div
-              className="md:hidden fixed inset-0 bg-black/40 z-40 transition-opacity"
-              onClick={() => setShowMobileCart(false)}
-            />
-            <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl shadow-2xl animate-slide-up">
-              <div className="flex flex-col h-[60vh]">
-                <Cart
-                  onCheckout={() => { setShowMobileCart(false); handleCheckout(); }}
-                  onSaveDraft={saveDraft}
-                  onClose={() => setShowMobileCart(false)}
-                />
-              </div>
-            </div>
-          </>
-        )}
+        <AnimatePresence>
+          {showMobileCart && (
+            <>
+              <motion.div
+                key="cart-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="md:hidden fixed inset-0 bg-black/40 z-40"
+                onClick={() => setShowMobileCart(false)}
+              />
+              <motion.div
+                key="cart-bottom-sheet"
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="md:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl shadow-2xl"
+              >
+                <div className="flex flex-col h-[60vh] bg-[#faf8f5] dark:bg-[#1f1309] rounded-t-2xl overflow-hidden">
+                  <Cart
+                    onCheckout={() => { setShowMobileCart(false); handleCheckout(); }}
+                    onSaveDraft={saveDraft}
+                    onClose={() => setShowMobileCart(false)}
+                  />
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         <CheckoutModal
           isOpen={showCheckout}
