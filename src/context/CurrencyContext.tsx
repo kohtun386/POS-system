@@ -156,11 +156,13 @@ export function CurrencyProvider({ children, initialDisplayCurrency = 'USD' }: C
         return await formatCurrency(amount, currency);
     };
 
-    // Update exchange rates
+    // Update exchange rates (manual trigger only — background polling is disabled)
     const updateExchangeRates = async (): Promise<boolean> => {
         dispatch({ type: 'SET_LOADING', payload: true });
 
         try {
+            // Guard: service auto-init is disabled; this call gracefully fails
+            // if the exchange rate service was never started.
             const success = await exchangeRateService.updateExchangeRates();
             if (success) {
                 await loadExchangeRates();
@@ -168,7 +170,7 @@ export function CurrencyProvider({ children, initialDisplayCurrency = 'USD' }: C
             }
             return success;
         } catch (error) {
-            console.error('Error updating exchange rates:', error);
+            console.error('Error updating exchange rates (service may not be initialized):', error);
             dispatch({ type: 'SET_ERROR', payload: 'Failed to update exchange rates' });
             return false;
         } finally {
@@ -213,19 +215,20 @@ export function CurrencyProvider({ children, initialDisplayCurrency = 'USD' }: C
         }
     }, [state.baseCurrency]);
 
-    // Initialize exchange rate service
-    useEffect(() => {
-        const initializeService = async () => {
-            try {
-                await exchangeRateService.initialize();
-                dispatch({ type: 'SET_LAST_UPDATE_TIME', payload: exchangeRateService.getLastUpdateTime() });
-            } catch (error) {
-                console.error('Error initializing exchange rate service:', error);
-            }
-        };
-
-        initializeService();
-    }, []);
+    // Initialize exchange rate service — DISABLED: background polling unnecessary
+    // for current CoffeeShop POS operations. Manual updates still work via
+    // Settings → ExchangeRateManager when needed.
+    // useEffect(() => {
+    //     const initializeService = async () => {
+    //         try {
+    //             await exchangeRateService.initialize();
+    //             dispatch({ type: 'SET_LAST_UPDATE_TIME', payload: exchangeRateService.getLastUpdateTime() });
+    //         } catch (error) {
+    //             console.error('Error initializing exchange rate service:', error);
+    //         }
+    //     };
+    //     initializeService();
+    // }, []);
 
     const contextValue: CurrencyContextType = {
         state,

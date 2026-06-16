@@ -1,4 +1,4 @@
-import { CurrencyUtils, updateExchangeRate } from './currencyUtils';
+import { CurrencyUtils } from './currencyUtils';
 
 // Exchange rate API response interfaces
 interface ExchangeRateAPIResponse {
@@ -252,7 +252,7 @@ export class ExchangeRateService {
 
         for (const [targetCurrency, rate] of Object.entries(rates)) {
             try {
-                await updateExchangeRate(
+                await CurrencyUtils.updateExchangeRate(
                     baseCurrency,
                     targetCurrency,
                     rate,
