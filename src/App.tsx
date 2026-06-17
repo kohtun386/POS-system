@@ -98,7 +98,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] dark:bg-[#1f1309] flex flex-col">
+    <div className="h-dvh bg-[#faf8f5] dark:bg-[#1f1309] flex flex-col">
       <Header currentView={currentView} onViewChange={setCurrentView} />
       <main className="flex-1 overflow-hidden">
         {state.loading ? (
@@ -111,7 +111,7 @@ function AppContent() {
               <LoadingSpinner size="lg" text="Loading module..." />
             </div>
           }>
-            <div className="animate-fade-in">
+            <div className="animate-fade-in h-full">
               {renderCurrentView()}
             </div>
           </Suspense>

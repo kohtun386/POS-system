@@ -37,7 +37,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90dvh] overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-8">
           <div className="flex items-center justify-between">
@@ -81,7 +81,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
         </div>
 
         {/* Content */}
-        <div className="p-8 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div className="p-8 overflow-y-auto max-h-[calc(90dvh-200px)]">
           {activeTab === 'details' && (
             <div className="space-y-8">
               {/* Customer Stats */}

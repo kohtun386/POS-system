@@ -190,7 +190,7 @@
   .modal {
     @apply bg-[#faf8f5]/95 backdrop-blur-xl rounded-3xl shadow-large w-full overflow-hidden;
     @apply dark:bg-[#2a1a10]/95 dark:border dark:border-[#54463b]/50;
-    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
     display: flex;
     flex-direction: column;
     @apply animate-scale-in;
@@ -203,7 +203,7 @@
 
   .modal-body {
     @apply p-6 overflow-y-auto flex-1;
-    max-height: calc(100vh - 200px);
+    max-height: calc(100dvh - 200px);
   }
 
   .modal-footer {

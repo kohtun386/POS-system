@@ -434,7 +434,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
     <>
       {!showReceipt && isOpen && (
         <div className="modal-overlay">
-          <div className={`modal ${isTouchMode ? 'max-w-lg' : 'max-w-md'}`}>
+          <div className={`modal ${isTouchMode ? 'max-w-lg md:max-w-xl' : 'max-w-md md:max-w-lg'}`}>
             {/* Header */}
             <div className="modal-header">
               <h2 className={`font-bold font-fraunces text-[#473b32] dark:text-[#f0ece5] ${isTouchMode ? 'text-xl' : 'text-lg'}`}>
@@ -490,7 +490,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                   Order Summary
                 </h3>
 
-                <div className="space-y-2 mb-4 max-h-32 overflow-y-auto">
+                <div className="space-y-2 mb-4 max-h-40 md:max-h-48 overflow-y-auto">
                   {state.cart.map((item, index) => (
                     <div key={index} className="flex justify-between text-sm text-[#7d6b57] dark:text-[#c6bbab]">
                       <span className="truncate flex-1 mr-2">
@@ -537,7 +537,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                   Payment Method
                 </h3>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
                     { id: 'cash', label: 'Cash', icon: Banknote },
                     { id: 'kbzpay', label: 'KBZpay', icon: Smartphone },
@@ -575,7 +575,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                 )}
 
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showMorePayments ? 'max-h-[500px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {[
                       { id: 'card', label: 'Card', icon: CreditCard },
                       { id: 'cbpay', label: 'CB Pay', icon: Smartphone },
@@ -608,7 +608,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                         }
                       }}
                       disabled={!splitPaymentEnabled && !canPayWithCredit}
-                      className={`${paymentBtnClasses('credit', !splitPaymentEnabled && !canPayWithCredit)} col-span-2`}
+                      className={`${paymentBtnClasses('credit', !splitPaymentEnabled && !canPayWithCredit)} col-span-2 sm:col-span-3`}
                     >
                       <Receipt className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
                       <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>

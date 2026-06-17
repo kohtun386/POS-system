@@ -151,11 +151,11 @@ export function POSTerminal() {
   return (
     <div className="flex h-full bg-[#faf8f5] dark:bg-[#1f1309]">
       <SalesTabManager />
-      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
         <ProductGrid onAddToCart={addToCart} />
 
         {/* Desktop Cart (side panel) */}
-        <div className="hidden md:block h-full">
+        <div className="hidden lg:block h-full">
           <Cart onCheckout={handleCheckout} onSaveDraft={saveDraft} />
         </div>
 
@@ -169,7 +169,7 @@ export function POSTerminal() {
               exit={{ scale: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               onClick={() => setShowMobileCart(true)}
-              className="md:hidden fixed bottom-6 right-6 z-40 bg-gradient-to-r from-[#9a693a] to-[#7a4f2c] text-white h-14 w-14 rounded-full shadow-large flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-copper active:scale-95"
+              className="lg:hidden fixed bottom-6 right-6 z-40 bg-gradient-to-r from-[#9a693a] to-[#7a4f2c] text-white h-14 w-14 rounded-full shadow-large flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-copper active:scale-95"
             >
               <ShoppingCart className="h-6 w-6" />
               <span className="absolute -top-1 -right-1 bg-[#e55c13] text-white text-xs font-bold h-5 w-5 rounded-full flex items-center justify-center">
@@ -189,7 +189,7 @@ export function POSTerminal() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="md:hidden fixed inset-0 bg-black/40 z-40"
+                className="lg:hidden fixed inset-0 bg-black/40 z-40"
                 onClick={() => setShowMobileCart(false)}
               />
               <motion.div
@@ -198,9 +198,9 @@ export function POSTerminal() {
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="md:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl shadow-2xl"
+                className="lg:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl shadow-2xl"
               >
-                <div className="flex flex-col h-[60vh] bg-[#faf8f5] dark:bg-[#1f1309] rounded-t-2xl overflow-hidden">
+                <div className="flex flex-col h-[60dvh] bg-[#faf8f5] dark:bg-[#1f1309] rounded-t-2xl overflow-hidden">
                   <Cart
                     onCheckout={() => { setShowMobileCart(false); handleCheckout(); }}
                     onSaveDraft={saveDraft}

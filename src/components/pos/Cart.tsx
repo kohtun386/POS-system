@@ -85,7 +85,7 @@ export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
 
   return (
     <div className={`bg-[#faf8f5] dark:bg-[#1f1309] border-l border-[#ded7cc] dark:border-[#54463b] flex flex-col h-full transition-[width] duration-300 ${
-      isTouchMode ? 'w-full md:w-96' : 'w-full md:w-80'
+      isTouchMode ? 'w-full lg:w-96' : 'w-full lg:w-80'
     }`}>
       {/* Cart Header */}
       <div className="p-4 lg:p-6 border-b border-[#ded7cc] dark:border-[#54463b] flex-shrink-0">
@@ -97,7 +97,7 @@ export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
             {onClose && (
               <button
                 onClick={onClose}
-                className="md:hidden p-1 rounded-lg text-[#7d6b57] hover:text-[#473b32] hover:bg-[#f0ece5] dark:hover:bg-[#3b2613] transition-colors"
+                className="lg:hidden p-1 rounded-lg text-[#7d6b57] hover:text-[#473b32] hover:bg-[#f0ece5] dark:hover:bg-[#3b2613] transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
