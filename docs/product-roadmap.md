@@ -44,8 +44,6 @@ Features needed for beta in real coffee shop.
 
 ### 1. Localization (i18n) — English / Myanmar
 
-### 2. Localization (i18n) — English / Myanmar
-
 **Status:** Scoping needed.
 
 Coffee shop in Myanmar → baristas need Myanmar language UI. Customers may see receipts in either language. Owners likely prefer English for reports.
@@ -64,6 +62,40 @@ Coffee shop in Myanmar → baristas need Myanmar language UI. Customers may see 
 - No language-specific CSS needed (LTR for both)
 
 **Effort:** 2-3 days (library setup + key extraction + translation), after scope decision.
+
+### 2. Food Costing Module — Ingredients, Recipes, Theoretical COGS
+
+**Status:** Scoping complete. MVP defined. Awaiting implementation.
+
+**Problem:** Coffee shop owners don't know true profit per drink. `Product.cost` is a single manual number — no ingredient-level breakdown, no automatic recalculation when vendor prices change.
+
+**MVP Scope** (from PM brainstorm):
+
+| Entity | What it does |
+|---|---|
+| `Ingredient` | Raw purchased item (beans, milk, syrup). Tracked in its own unit (kg, L, pcs). Has `currentCost`, `costHistory`, `stockOnHand` |
+| `Recipe` | Links one `Product` → many `RecipeLine`s. Computes `theoreticalCost` = sum of (ingredient qty × cost × wastage%). Optional `laborCostPerUnit` + `overheadPercent` |
+| `RecipeLine` | One ingredient in a recipe: quantity, unit, `wastagePercent` (default 5%), `isOptional` flag |
+| `WasteLog` | Manual waste entry: ingredient, quantity, reason (spill, expired, burnt batch). Feeds actual COGS |
+
+**What MVP delivers:**
+- Ingredient CRUD (table + modal, follows existing Manager/Modal component pattern)
+- Recipe CRUD — assign ingredients to products, set quantities, auto-compute `theoreticalCost`
+- `Product.cost` becomes read-only, computed from its recipe
+- Cost display on product detail (margin = price − theoreticalCost)
+- Manual waste logging
+
+**Integration with existing system:**
+- Existing `Product.trackInventory` stays — controls POS stock deduction
+- Existing `ProductBatch` (supplier batches with expiry) feeds `Ingredient.costHistory`
+- Existing weight-based logic (`isWeightBased`) reused for ingredients sold by weight
+- Recipe costing for weight-based products uses per-kg yield
+
+**Deferred to v2:** `PrepBatch` (sub-recipe production runs), inventory audit reconciliation, vendor-weighted average cost, unit conversion table.
+
+**DB migration needed:** 4 new tables: `ingredients`, `recipes`, `recipe_lines`, `waste_logs`. New services: `ingredientsService`, `recipesService`, `wasteLogsService`. New types in `src/types/index.ts`.
+
+**Effort:** 3-5 days (DB migration + types + services + 3 Manager/Modal component pairs + recipe cost computation + waste log).
 
 ---
 
@@ -84,7 +116,6 @@ Full details in `docs/technical-debt.md`. Summary:
 **Recommended cadence:** One debt item per sprint. Start with React Refresh splits (lowest risk, fixes dev experience). Then color palette formalization. Then `any` types (highest effort, spread across 2 sprints — `services.ts` first, then context files, then scattered.)
 
 **Not on roadmap yet but surfaced in discussions:**
-- Food Costing feature (ingredients, recipes, COGS) — see PM brainstorm
 - Sales tab sharing between baristas
 - Alert system wiring into navigation
 
@@ -94,7 +125,8 @@ Full details in `docs/technical-debt.md`. Summary:
 
 ```
 1. i18n scoping + impl                ← NEXT (2-3 days, needed for Myanmar beta)
-2. React Refresh warnings             ← POST-BETA (1 hour, dev experience)
-3. Color palette formalization        ← POST-BETA (1-2 hours, visual polish)
-4. any type cleanup                   ← POST-BETA (3-4 hours, type safety)
+2. Food Costing module                ← HIGH (3-5 days, profit tracking for beta)
+3. React Refresh warnings             ← POST-BETA (1 hour, dev experience)
+4. Color palette formalization        ← POST-BETA (1-2 hours, visual polish)
+5. any type cleanup                   ← POST-BETA (3-4 hours, type safety)
 ```
