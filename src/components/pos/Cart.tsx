@@ -84,7 +84,7 @@ export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
   const total = subtotal - totalDiscount + taxAmount;
 
   return (
-    <div className={`bg-[#faf8f5] dark:bg-[#1f1309] border-l border-[#ded7cc] dark:border-[#54463b] flex flex-col h-full transition-[width] duration-300 ${
+    <div className={`bg-[#faf8f5] dark:bg-[#1f1309] border-l border-[#ded7cc] dark:border-[#54463b] flex flex-col flex-1 min-h-0 transition-[width] duration-300 ${
       isTouchMode ? 'w-full lg:w-96' : 'w-full lg:w-80'
     }`}>
       {/* Cart Header */}

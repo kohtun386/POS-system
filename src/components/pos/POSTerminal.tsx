@@ -155,7 +155,7 @@ export function POSTerminal() {
         <ProductGrid onAddToCart={addToCart} />
 
         {/* Desktop Cart (side panel) */}
-        <div className="hidden lg:block h-full">
+        <div className="hidden lg:flex lg:flex-col min-h-0 overflow-hidden">
           <Cart onCheckout={handleCheckout} onSaveDraft={saveDraft} />
         </div>
 
