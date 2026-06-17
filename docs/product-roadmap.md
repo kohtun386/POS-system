@@ -20,34 +20,29 @@ Commits referenced: `8556dc3`, `25da4db`
 
 **Note:** `CheckoutModal.tsx` still renders both old and new payment methods side-by-side. Future PR should decide whether to consolidate `digital` into local options or keep both tiers.
 
+### ✅ PWA Conversion — Option A Soft-Offline (Resolved 2026-06-17)
+
+**Decision:** Option A (Soft-offline) — installable iPad app with cached UI shell, cart survives refresh.
+
+**Implementation:**
+- Installed `vite-plugin-pwa` with `generateSW` strategy (precache + runtimeCaching)
+- 41 precache entries: JS, CSS, HTML, icons, PNG, SVG
+- Google Fonts cached via `CacheFirst` (1-year expiry)
+- Supabase API calls cached via `NetworkFirst` (5-second timeout, 5-minute expiry)
+- `registerType: 'autoUpdate'` — new SW auto-activates on next page load
+- Fixed `site.webmanifest`: name, short_name, theme_color (`#473b32`), background_color (`#faf8f5`), orientation (`landscape`), maskable icon
+- Fixed `<link rel="icon">` from broken `/vite.svg` → `/favicon-32x32.png`
+- Cart persistence: `CART_STORAGE_KEY` in localStorage, auto-saved on every cart/selectedCustomer change, auto-restored on mount
+
+**Remaining (post-beta):** Upgrade to Option C (offline checkout queue) based on real shop connectivity data.
+
 ---
 
 ## Short-Term Roadmap
 
-Features needed for beta in real coffee shop. Blocked until decisions made.
+Features needed for beta in real coffee shop.
 
-### 1. PWA Conversion — Offline & Installable
-
-**Status:** Needs approach decision.
-
-Partial PWA assets exist (`site.webmanifest`, icons, `<link rel="manifest">`, theme-color meta) but no service worker, no offline capability, no local state persistence.
-
-**Open decision — which offline tier?**
-
-| Option | Scope | Effort |
-|---|---|---|
-| **A — Soft-offline** | Cache UI shell + fonts + icons. Cart survives refresh. Auth session cached. Operations wait for network. | 1-2 days |
-| **B — Hard-offline** | Full local-first. Process sales offline, queue sync. Conflict resolution. Needs Dexie/IndexedDB local store + sync protocol. | 1-2 weeks |
-| **C — Hybrid** | B for sales-critical path (checkout queues offline), A for everything else (products/customers cached stale for browsing) | 3-5 days |
-
-**Recommendation:** Start with **Option A** for beta. Delivers 80% of user value (app launches from home screen, survives WiFi hiccups). Upgrade to C post-beta based on real connectivity data from shop.
-
-**Dependencies before implementation:**
-- Fix `site.webmanifest`: `name` → `"CoffeeShop POS"`, `short_name` → `"CoffeePOS"`, `theme_color` → `"#473b32"`, `background_color` → `"#faf8f5"`
-- Fix `<link rel="icon">` from `/vite.svg` (missing) → `/favicon-32x32.png`
-- Decision on Option A vs B vs C
-
-**Effort:** 1-2 days (Option A), after decision.
+### 1. Localization (i18n) — English / Myanmar
 
 ### 2. Localization (i18n) — English / Myanmar
 
@@ -98,9 +93,8 @@ Full details in `docs/technical-debt.md`. Summary:
 ## Priority Order
 
 ```
-1. PWA decision + Option A impl       ← NEXT (1-2 days, gating beta)
-2. i18n scoping + impl                ← AFTER PWA (2-3 days, needed for Myanmar beta)
-3. React Refresh warnings             ← POST-BETA (1 hour, dev experience)
-4. Color palette formalization        ← POST-BETA (1-2 hours, visual polish)
-5. any type cleanup                   ← POST-BETA (3-4 hours, type safety)
+1. i18n scoping + impl                ← NEXT (2-3 days, needed for Myanmar beta)
+2. React Refresh warnings             ← POST-BETA (1 hour, dev experience)
+3. Color palette formalization        ← POST-BETA (1-2 hours, visual polish)
+4. any type cleanup                   ← POST-BETA (3-4 hours, type safety)
 ```

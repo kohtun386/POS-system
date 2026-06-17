@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, useState } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
 import {
   Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, AppliedDiscount, CardDetails
 } from '../types';
@@ -228,10 +228,59 @@ const AppContext = createContext<{
   dispatch: React.Dispatch<AppAction>;
 } | null>(null);
 
+const CART_STORAGE_KEY = 'coffeepos_cart';
+
+function loadPersistedCart(): { cart: CartItem[]; selectedCustomer: Customer | null } | null {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.cart)) {
+      return {
+        cart: parsed.cart,
+        selectedCustomer: parsed.selectedCustomer || null,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function persistCart(cart: CartItem[], selectedCustomer: Customer | null) {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify({ cart, selectedCustomer }));
+  } catch {
+    // localStorage full or unavailable — silently ignore
+  }
+}
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const { user, profile } = useAuth();
   const [initialized, setInitialized] = useState(false);
+  const cartRestored = useRef(false);
+
+  // Restore cart from localStorage on mount (before Supabase load)
+  useEffect(() => {
+    if (!cartRestored.current) {
+      const persisted = loadPersistedCart();
+      if (persisted && persisted.cart.length > 0) {
+        dispatch({ type: 'SET_CART', payload: persisted.cart });
+      }
+      if (persisted && persisted.selectedCustomer) {
+        dispatch({ type: 'SET_SELECTED_CUSTOMER', payload: persisted.selectedCustomer });
+      }
+      cartRestored.current = true;
+    }
+  }, []);
+
+  // Persist cart to localStorage on every change (skip during initial data load)
+  useEffect(() => {
+    if (cartRestored.current) {
+      persistCart(state.cart, state.selectedCustomer);
+    }
+  }, [state.cart, state.selectedCustomer]);
 
   // Load data from Supabase when user is authenticated
   useEffect(() => {
