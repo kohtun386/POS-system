@@ -206,6 +206,11 @@ export function TransactionsManager() {
             <option value="card">Card</option>
             <option value="digital">Digital</option>
             <option value="credit">Credit</option>
+            <option value="kbzpay">KBZpay</option>
+            <option value="wavepay">WavePay</option>
+            <option value="ayapay">AYA Pay</option>
+            <option value="cbpay">CB Pay</option>
+            <option value="mpu">MPU</option>
           </select>
 
           <select
