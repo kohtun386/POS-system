@@ -79,7 +79,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
 
   return (
     <>
-      <div className="flex-1 flex flex-col bg-[#faf8f5] dark:bg-[#1f1309]">
+      <div className="flex-1 min-w-0 flex flex-col bg-[#faf8f5] dark:bg-[#1f1309]">
         {/* Search and Filter Bar */}
         <div className="p-4 lg:p-6 border-b border-[#ded7cc] dark:border-[#54463b] bg-[#faf8f5] dark:bg-[#1f1309] overflow-x-hidden">
           <div className="flex flex-col lg:flex-row gap-4">
@@ -266,9 +266,7 @@ function ProductCard({ product, onAddToCart, isTouchMode, currency }: ProductCar
     >
       <div className="flex flex-col h-full">
         {/* Product Image */}
-        <div className={`bg-[#f0ece5] dark:bg-[#3b2613] rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden ${
-          isTouchMode ? 'h-32' : 'h-24'
-        }`}>
+        <div className={`bg-[#f0ece5] dark:bg-[#3b2613] rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden aspect-square`}>
           {product.image ? (
             <img
               src={product.image}

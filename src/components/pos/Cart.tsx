@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Trash2, Plus, Minus, User, Percent, FileText, ShoppingCart, X } from 'lucide-react';
+import { Trash2, Plus, Minus, User, Percent, FileText, ShoppingCart } from 'lucide-react';
 import { CartItem, Customer } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 
 interface CartProps {
   onCheckout: () => void;
   onSaveDraft: () => void;
-  onClose?: () => void;
 }
 
-export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
+export function Cart({ onCheckout, onSaveDraft }: CartProps) {
   const { state, dispatch } = useApp();
   const [showCustomerSearch, setShowCustomerSearch] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
@@ -84,8 +83,8 @@ export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
   const total = subtotal - totalDiscount + taxAmount;
 
   return (
-    <div className={`bg-[#faf8f5] dark:bg-[#1f1309] border-l border-[#ded7cc] dark:border-[#54463b] flex flex-col flex-1 min-h-0 transition-[width] duration-300 ${
-      isTouchMode ? 'w-full lg:w-96' : 'w-full lg:w-80'
+    <div className={`bg-[#faf8f5] dark:bg-[#1f1309] border-l border-[#ded7cc] dark:border-[#54463b] flex flex-col flex-1 min-h-0 ${
+      isTouchMode ? 'w-full md:w-64 lg:w-96' : 'w-full md:w-64 lg:w-80'
     }`}>
       {/* Cart Header */}
       <div className="p-4 lg:p-6 border-b border-[#ded7cc] dark:border-[#54463b] flex-shrink-0">
@@ -94,14 +93,6 @@ export function Cart({ onCheckout, onSaveDraft, onClose }: CartProps) {
             Shopping Cart
           </h2>
           <div className="flex items-center space-x-2">
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="lg:hidden p-1 rounded-lg text-[#7d6b57] hover:text-[#473b32] hover:bg-[#f0ece5] dark:hover:bg-[#3b2613] transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            )}
             <ShoppingCart className="h-5 w-5 text-[#ad9e8a]" />
             <span className="badge badge-info">
               {state.cart.length} items

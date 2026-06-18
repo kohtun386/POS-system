@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   User, Settings, LogOut, ShoppingCart, Monitor, Smartphone, Bell, Menu, X, Percent,
   Receipt, Package, Users, BarChart3, Sun, Moon
@@ -18,6 +18,14 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
   const { signOut } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const toggleInterfaceMode = () => {
     const newMode = state.settings.interfaceMode === 'touch' ? 'traditional' : 'touch';
@@ -48,8 +56,10 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
     const role = state.currentUser?.role;
     const items = [];
 
-    // POS - All roles can access
-    items.push({ id: 'pos', label: 'POS', icon: ShoppingCart, color: 'text-[#9a693a]' });
+    // POS - All roles can access on tablet/desktop. On mobile, only cashiers.
+    if (!isMobile || role === 'cashier') {
+      items.push({ id: 'pos', label: 'POS', icon: ShoppingCart, color: 'text-[#9a693a]' });
+    }
 
     // Sales/Transactions - Manager and Admin only (Cashiers should only have POS access)
     if (role === 'admin' || role === 'manager') {

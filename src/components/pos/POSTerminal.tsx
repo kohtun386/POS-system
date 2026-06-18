@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ShoppingCart } from 'lucide-react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { ProductGrid } from './ProductGrid';
 import { Cart } from './Cart';
 import { CheckoutModal } from './CheckoutModal';
@@ -11,12 +9,21 @@ import { useAuth } from '../../context/AuthContext';
 import { salesService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
 
+const ReportsManager = lazy(() => import('../reports/ReportsManager').then(m => ({ default: m.ReportsManager })));
+
 export function POSTerminal() {
   const { state, dispatch } = useApp();
   const { user } = useAuth();
   const [showCheckout, setShowCheckout] = useState(false);
   const [_lastSale, setLastSale] = useState<Sale | null>(null);
-  const [showMobileCart, setShowMobileCart] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const addToCart = (product: Product, weight?: number) => {
     // Only check stock if inventory tracking is enabled
@@ -56,9 +63,6 @@ export function POSTerminal() {
       };
       dispatch({ type: 'ADD_TO_CART', payload: newItem });
     }
-
-    // Close mobile cart after adding item so user sees product grid
-    setShowMobileCart(false);
 
     // Update current sales tab
     if (state.activeSalesTab) {
@@ -146,78 +150,32 @@ export function POSTerminal() {
     }
   };
 
-  const cartItemCount = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+  // On mobile (< 768px), admin/manager see the dashboard, not POS
+  if (isMobile && state.currentUser?.role !== 'cashier') {
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center h-full text-[#ad9e8a]">Loading dashboard...</div>}>
+        <ReportsManager />
+      </Suspense>
+    );
+  }
 
   return (
     <div className="flex h-full bg-[#faf8f5] dark:bg-[#1f1309]">
       <SalesTabManager />
-      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0">
         <ProductGrid onAddToCart={addToCart} />
 
-        {/* Desktop Cart (side panel) */}
-        <div className="hidden lg:flex lg:flex-col min-h-0">
+        {/* Cart — fixed-width side panel, hidden on mobile where dashboard is shown */}
+        <div className="hidden md:flex md:flex-shrink-0 md:flex-col min-h-0">
           <Cart onCheckout={handleCheckout} onSaveDraft={saveDraft} />
         </div>
-
-        {/* Mobile: Floating Cart Toggle Button */}
-        <AnimatePresence>
-          {cartItemCount > 0 && (
-            <motion.button
-              key="cart-fab"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              onClick={() => setShowMobileCart(true)}
-              className="lg:hidden fixed bottom-6 right-6 z-40 bg-gradient-to-r from-[#9a693a] to-[#7a4f2c] text-white h-14 w-14 rounded-full shadow-large flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-copper active:scale-95"
-            >
-              <ShoppingCart className="h-6 w-6" />
-              <span className="absolute -top-1 -right-1 bg-[#e55c13] text-white text-xs font-bold h-5 w-5 rounded-full flex items-center justify-center">
-                {cartItemCount}
-              </span>
-            </motion.button>
-          )}
-        </AnimatePresence>
-
-        {/* Mobile: Cart Bottom Sheet */}
-        <AnimatePresence>
-          {showMobileCart && (
-            <>
-              <motion.div
-                key="cart-backdrop"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="lg:hidden fixed inset-0 bg-black/40 z-40"
-                onClick={() => setShowMobileCart(false)}
-              />
-              <motion.div
-                key="cart-bottom-sheet"
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%' }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="lg:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl shadow-2xl"
-              >
-                <div className="flex flex-col h-[60dvh] bg-[#faf8f5] dark:bg-[#1f1309] rounded-t-2xl">
-                  <Cart
-                    onCheckout={() => { setShowMobileCart(false); handleCheckout(); }}
-                    onSaveDraft={saveDraft}
-                    onClose={() => setShowMobileCart(false)}
-                  />
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-
-        <CheckoutModal
-          isOpen={showCheckout}
-          onClose={() => setShowCheckout(false)}
-          onComplete={handleCheckoutComplete}
-        />
       </div>
+
+      <CheckoutModal
+        isOpen={showCheckout}
+        onClose={() => setShowCheckout(false)}
+        onComplete={handleCheckoutComplete}
+      />
     </div>
   );
 }
