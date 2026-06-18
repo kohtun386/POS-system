@@ -95,7 +95,6 @@ export interface CardDetails {
   id: string;
   bankName: string;
   cardType: 'visa' | 'mastercard' | 'amex' | 'discover' | 'unknown';
-  cardNumber: string;
   lastFourDigits: string;
   holderName: string;
 }

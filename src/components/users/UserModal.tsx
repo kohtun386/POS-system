@@ -3,7 +3,7 @@ import { X, User, Mail, Lock, Shield, Crown } from 'lucide-react';
 import { User as UserType } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 import { usersService } from '../../lib/services';
-import { supabaseAdmin } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { swalConfig } from '../../lib/sweetAlert';
 
 interface UserModalProps {
@@ -78,20 +78,36 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
           return;
         }
 
-        // First create the auth user
-        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        // Save current admin session before signUp (signUp replaces the session)
+        const { data: { session: adminSession } } = await supabase.auth.getSession();
+
+        // Create auth user via signUp (sends confirmation email)
+        const { data: authData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
-          email_confirm: true
+          options: {
+            data: {
+              name: formData.name,
+              username: formData.username,
+            }
+          }
         });
 
         if (authError) throw authError;
+        if (!authData.user) throw new Error('Failed to create auth user');
 
-        // Then create the user profile directly in the database
-        const { data: profileData, error: profileError } = await supabaseAdmin
+        const newUserId = authData.user.id;
+
+        // Restore admin session immediately (signUp replaces current session)
+        if (adminSession) {
+          await supabase.auth.setSession(adminSession);
+        }
+
+        // Create user profile — RLS on users INSERT uses CHECK (true)
+        const { data: profileData, error: profileError } = await supabase
           .from('users')
           .insert({
-            id: authData.user.id,
+            id: newUserId,
             username: formData.username,
             name: formData.name,
             email: formData.email,

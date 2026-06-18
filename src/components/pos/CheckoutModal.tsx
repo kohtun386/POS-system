@@ -34,10 +34,10 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const [cardDetails, setCardDetails] = useState<Partial<CardDetails>>({
     bankName: '',
     cardType: 'unknown',
-    cardNumber: '',
     lastFourDigits: '',
     holderName: '',
   });
+  const [cardNumberInput, setCardNumberInput] = useState('');
 
   // Sri Lankan banks list
   const sriLankanBanks = [
@@ -103,17 +103,17 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
   const handleCardNumberChange = (value: string) => {
     const cleanValue = value.replace(/\s/g, '');
-    const cardType = detectCardType(cleanValue);
-    const maxLength = getCardNumberLength(cardType);
+    const detectedType = detectCardType(cleanValue);
+    const maxLength = getCardNumberLength(detectedType);
 
     if (cleanValue.length <= maxLength) {
       const formattedValue = formatCardNumber(cleanValue);
       const lastFour = cleanValue.slice(-4);
 
+      setCardNumberInput(formattedValue);
       setCardDetails(prev => ({
         ...prev,
-        cardNumber: formattedValue,
-        cardType,
+        cardType: detectedType,
         lastFourDigits: lastFour
       }));
     }
@@ -145,10 +145,10 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
       setCardDetails({
         bankName: '',
         cardType: 'unknown',
-        cardNumber: '',
         lastFourDigits: '',
         holderName: '',
       });
+      setCardNumberInput('');
     }
   }, [isOpen]);
 
@@ -245,10 +245,8 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
       case 'card':
         return cardDetails.bankName &&
                cardDetails.holderName &&
-               cardDetails.cardNumber &&
                cardDetails.cardType !== 'unknown' &&
-               ((cardDetails.cardType === 'amex' && cardDetails.cardNumber.replace(/\s/g, '').length === 15) ||
-                (cardDetails.cardType !== 'amex' && cardDetails.cardNumber.replace(/\s/g, '').length === 16));
+               cardDetails.lastFourDigits && cardDetails.lastFourDigits.length === 4;
       case 'credit':
         return canPayWithCredit;
       case 'kbzpay':
@@ -282,7 +280,6 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         id: Date.now().toString(),
         bankName: cardDetails.bankName || '',
         cardType: cardDetails.cardType || 'unknown',
-        cardNumber: cardDetails.cardNumber || '',
         lastFourDigits: cardDetails.lastFourDigits || '',
         holderName: cardDetails.holderName || ''
       } : undefined
@@ -775,14 +772,14 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                       </label>
                       <input
                         type="text"
-                        value={cardDetails.cardNumber}
+                        value={cardNumberInput}
                         onChange={(e) => handleCardNumberChange(e.target.value)}
                         className="input"
-                        placeholder="Enter card number"
+                        placeholder="Enter card number for detection"
                         disabled={isProcessing}
                         maxLength={cardDetails.cardType === 'amex' ? 17 : 19}
                       />
-                      {cardDetails.cardType !== 'unknown' && cardDetails.cardNumber && (
+                      {cardDetails.cardType !== 'unknown' && cardNumberInput && (
                         <div className="mt-2 flex items-center space-x-2">
                           <span className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">Detected:</span>
                           <span className="text-sm font-medium capitalize text-[#9a693a] dark:text-[#cfa16a]">
