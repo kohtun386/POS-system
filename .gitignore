@@ -25,3 +25,4 @@ dist-ssr
 .env
 .mcp.json
 supabase-mcp-server-supabase-0.8.2.tgz
+.vercel
