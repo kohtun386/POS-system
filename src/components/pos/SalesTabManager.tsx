@@ -125,17 +125,25 @@ export function SalesTabManager() {
 
                 {/* Close button */}
                 {state.salesTabs.length > 1 && (
-                  <button
+                  <span
+                    role="button"
+                    tabIndex={0}
                     onClick={(e) => {
                       e.stopPropagation();
                       closeTab(tab.id);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.stopPropagation();
+                        closeTab(tab.id);
+                      }
                     }}
                     className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-[#dc2626] text-white flex items-center justify-center hover:bg-[#b91c1c] transition-colors ${
                       isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                     }`}
                   >
                     <X className="h-2 w-2" />
-                  </button>
+                  </span>
                 )}
               </button>
             </div>
