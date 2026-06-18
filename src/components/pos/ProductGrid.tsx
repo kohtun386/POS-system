@@ -81,7 +81,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
     <>
       <div className="flex-1 flex flex-col bg-[#faf8f5] dark:bg-[#1f1309]">
         {/* Search and Filter Bar */}
-        <div className="p-4 lg:p-6 border-b border-[#ded7cc] dark:border-[#54463b] bg-[#faf8f5] dark:bg-[#1f1309]">
+        <div className="p-4 lg:p-6 border-b border-[#ded7cc] dark:border-[#54463b] bg-[#faf8f5] dark:bg-[#1f1309] overflow-x-hidden">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#ad9e8a] h-5 w-5" />
@@ -100,7 +100,6 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
                 <button
                   onClick={() => scrollCategories('left')}
                   className="absolute left-0 z-10 flex items-center justify-center w-8 h-8 bg-[#faf8f5] border border-[#ded7cc] rounded-full shadow-sm hover:bg-[#f0ece5] transition-all"
-                  style={{ transform: 'translateX(-50%)' }}
                 >
                   <ChevronLeft className="h-4 w-4 text-[#7d6b57]" />
                 </button>
@@ -132,7 +131,6 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
                 <button
                   onClick={() => scrollCategories('right')}
                   className="absolute right-0 z-10 flex items-center justify-center w-8 h-8 bg-[#faf8f5] border border-[#ded7cc] rounded-full shadow-sm hover:bg-[#f0ece5] transition-all"
-                  style={{ transform: 'translateX(50%)' }}
                 >
                   <ChevronRight className="h-4 w-4 text-[#7d6b57]" />
                 </button>

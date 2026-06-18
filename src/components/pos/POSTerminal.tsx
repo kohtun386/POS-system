@@ -151,11 +151,11 @@ export function POSTerminal() {
   return (
     <div className="flex h-full bg-[#faf8f5] dark:bg-[#1f1309]">
       <SalesTabManager />
-      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
         <ProductGrid onAddToCart={addToCart} />
 
         {/* Desktop Cart (side panel) */}
-        <div className="hidden lg:flex lg:flex-col min-h-0 overflow-hidden">
+        <div className="hidden lg:flex lg:flex-col min-h-0">
           <Cart onCheckout={handleCheckout} onSaveDraft={saveDraft} />
         </div>
 
@@ -200,7 +200,7 @@ export function POSTerminal() {
                 transition={{ duration: 0.2, ease: 'easeOut' }}
                 className="lg:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl shadow-2xl"
               >
-                <div className="flex flex-col h-[60dvh] bg-[#faf8f5] dark:bg-[#1f1309] rounded-t-2xl overflow-hidden">
+                <div className="flex flex-col h-[60dvh] bg-[#faf8f5] dark:bg-[#1f1309] rounded-t-2xl">
                   <Cart
                     onCheckout={() => { setShowMobileCart(false); handleCheckout(); }}
                     onSaveDraft={saveDraft}
