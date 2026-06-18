@@ -323,7 +323,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ] = await Promise.all([
         productsService.getAll(),
         customersService.getAll(),
-        salesService.getAll(),
+        salesService.getAll().then(r => r.data),
         discountsService.getAll(),
         settingsService.get(),
         usersService.getAll(),

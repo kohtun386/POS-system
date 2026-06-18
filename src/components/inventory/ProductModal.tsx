@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Scale } from 'lucide-react';
 import { Product, ProductBatch } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
+import { productsService } from '../../lib/services';
 import Swal from 'sweetalert2';
 
 interface ProductModalProps {
@@ -54,7 +55,8 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
         image: product.image || '',
         trackInventory: product.trackInventory ?? true,
       });
-      setBatches(product.batches || []);
+      // Lazy-load batches on edit — no longer bundled in getAll()
+      productsService.getBatchesByProductId(product.id).then(setBatches);
     } else {
       setFormData({
         name: '',
@@ -191,8 +193,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
     };
 
     try {
-      const { productsService } = await import('../../lib/services');
-      
+
       if (product) {
         await productsService.update(productData.id, productData);
         dispatch({ type: 'UPDATE_PRODUCT', payload: productData });

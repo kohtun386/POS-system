@@ -1,6 +1,7 @@
 import { supabase } from './supabase'
 import {
   Product,
+  ProductBatch,
   Customer,
   Sale,
   Discount,
@@ -19,10 +20,7 @@ export const productsService = {
   async getAll(): Promise<Product[]> {
     const { data, error } = await supabase
       .from('products')
-      .select(`
-        *,
-        product_batches (*)
-      `)
+      .select('*')
       .eq('active', true)
       .order('name')
 
@@ -46,17 +44,29 @@ export const productsService = {
       pricePerUnit: product.price_per_unit || undefined,
       unit: product.unit || undefined,
       trackInventory: product.track_inventory ?? true,
-      batches: product.product_batches?.map((batch: any) => ({
-        id: batch.id,
-        batchNumber: batch.batch_number,
-        manufacturingDate: new Date(batch.manufacturing_date),
-        expiryDate: new Date(batch.expiry_date),
-        quantity: batch.quantity || 0,
-        costPrice: batch.cost_price || 0,
-        supplierInfo: batch.supplier_info || ''
-      })) || [],
+      batches: [], // Lazy-loaded via getBatchesByProductId()
       createdAt: new Date(product.created_at),
       updatedAt: new Date(product.updated_at)
+    }))
+  },
+
+  async getBatchesByProductId(productId: string): Promise<ProductBatch[]> {
+    const { data, error } = await supabase
+      .from('product_batches')
+      .select('*')
+      .eq('product_id', productId)
+      .order('expiry_date', { ascending: true })
+
+    if (error) throw error
+
+    return data.map((batch: any) => ({
+      id: batch.id,
+      batchNumber: batch.batch_number,
+      manufacturingDate: new Date(batch.manufacturing_date),
+      expiryDate: new Date(batch.expiry_date),
+      quantity: batch.quantity || 0,
+      costPrice: batch.cost_price || 0,
+      supplierInfo: batch.supplier_info || ''
     }))
   },
 
@@ -317,15 +327,29 @@ export const customersService = {
 
 // Sales Service
 export const salesService = {
-  async getAll(): Promise<Sale[]> {
+  async getAll(
+    { limit = 50, cursor = 0 }: { limit?: number; cursor?: number } = {}
+  ): Promise<{ data: Sale[]; count: number; hasMore: boolean }> {
+    // Fetch total count (lightweight — only scans index)
+    const { count, error: countError } = await supabase
+      .from('sales')
+      .select('*', { count: 'exact', head: true })
+
+    if (countError) throw countError
+
+    const from = cursor
+    const to = cursor + limit - 1
+
+    // Fetch paginated rows
     const { data, error } = await supabase
       .from('sales')
       .select('*')
       .order('created_at', { ascending: false })
+      .range(from, to)
 
     if (error) throw error
 
-    return data.map(sale => ({
+    const sales = data.map(sale => ({
       id: sale.id,
       invoiceNumber: sale.invoice_number,
       customerId: sale.customer_id || undefined,
@@ -346,6 +370,12 @@ export const salesService = {
       appliedDiscounts: sale.applied_discounts as any,
       freeGifts: sale.free_gifts as any
     }))
+
+    return {
+      data: sales,
+      count: count ?? 0,
+      hasMore: cursor + limit < (count ?? 0)
+    }
   },
 
   async create(sale: Omit<Sale, 'id'>): Promise<Sale> {
