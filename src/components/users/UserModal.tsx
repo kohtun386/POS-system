@@ -103,19 +103,20 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
           await supabase.auth.setSession(adminSession);
         }
 
-        // Create user profile — RLS on users INSERT uses CHECK (true)
+        // Trigger handle_new_auth_user() on auth.users INSERT already created
+        // a default profile row with role='cashier'. UPDATE to set admin-chosen role.
+        // (Admin UPDATE policy allows any authenticated admin to UPDATE any user.)
         const { data: profileData, error: profileError } = await supabase
           .from('users')
-          .insert({
-            id: newUserId,
+          .update({
             username: formData.username,
             name: formData.name,
-            email: formData.email,
             role: formData.role,
             permissions: [],
             active: formData.active,
             avatar: formData.avatar || null
           })
+          .eq('id', newUserId)
           .select()
           .single();
 

@@ -156,25 +156,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       if (error) throw error
 
-      // Create user profile in database
+      // Profile row auto-created by DB trigger handle_new_auth_user().
+      // Fetch the trigger-created profile instead of inserting.
       if (data.user) {
         const { data: profileData, error: profileError } = await supabase
           .from('users')
-          .insert({
-            id: data.user.id,
-            username,
-            name,
-            email,
-            role: 'cashier', // Default role
-            permissions: ['pos_access'],
-            active: true
-          })
-          .select()
+          .select('*')
+          .eq('id', data.user.id)
           .single()
 
         if (profileError) {
-          console.error('Profile creation error:', profileError)
-          throw new Error(`Failed to create user profile: ${profileError.message}`)
+          console.error('Profile fetch error:', profileError)
+          throw new Error(`Failed to load user profile: ${profileError.message}`)
         }
 
         // Set the profile data immediately
