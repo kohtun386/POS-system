@@ -1,5 +1,6 @@
 ---
 marp: true
+auto-advance: 20
 theme: default
 paginate: true
 backgroundColor: #faf8f5
