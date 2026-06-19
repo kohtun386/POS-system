@@ -1,46 +1,23 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(npx vite *)",
-      "Bash(npm uninstall *)",
-      "Bash(npx update-browserslist-db@latest *)",
-      "Bash(npm run *)",
-      "WebSearch",
-      "Bash(npx -y @supabase/mcp-server --help)",
-      "Bash(npm search *)",
-      "Bash(npm view *)",
-      "WebFetch(domain:github.com)",
-      "Bash(npm pack *)",
-      "Bash(npx *)",
-      "mcp__supabase-platform__list_tables",
-      "Bash(npm ls *)",
-      "Bash(git add *)",
-      "Bash(git commit -m 'feat: implement Espresso & Copper design theme *)",
-      "Bash(git push *)",
-      "Bash(git commit -m 'feat: theme Espresso & Copper into components *)",
-      "mcp__plugin_claude-mem_mcp-search__observation_add",
-      "Bash(git commit -m 'docs: add CLAUDE.md with build, test, style, and architecture guidelines *)",
-      "Bash(git commit *)",
-      "mcp__supabase-db__postgrestRequest",
-      "Bash(grep -rPn '\\(?<!\\\\w\\)#[0-9a-fA-F]{3,6}\\(?!\\\\w\\)' src/components/ --include=\"*.tsx\" --include=\"*.ts\")",
-      "Bash(grep -v \":0$\")",
-      "Bash(node -e ' *)",
-      "Bash(npx eslint *)",
-      "Read(//tmp/**)",
-      "Bash(node -e \"process.stdin.on\\('data',d=>{const p=JSON.parse\\(d\\);console.log\\('deps:',Object.keys\\(p.dependencies\\).join\\('\\\\n'\\)\\);console.log\\('devDeps:',Object.keys\\(p.devDependencies||{}\\).join\\('\\\\n'\\)\\)}\\)\")",
-      "mcp__supabase-platform__get_publishable_keys",
-      "Bash(grep -v '^$')",
-      "mcp__supabase-platform__execute_sql",
-      "mcp__supabase-platform__get_logs",
-      "mcp__supabase-platform__apply_migration",
-      "mcp__supabase-platform__list_migrations",
-      "mcp__plugin_claude-mem_mcp-search__search",
-      "Bash(xargs sed -i 's/90vh/90dvh/g')",
-      "mcp__supabase-platform__get_advisors"
-    ]
+  "mcpServers": {
+    "supabase-platform": {},
+    "supabase-db": {}
   },
   "enabledMcpjsonServers": [
     "supabase-platform",
     "supabase-db"
-  ]
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npx *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "WebSearch",
+      "mcp__supabase-platform__list_tables",
+      "mcp__supabase-platform__execute_sql",
+      "mcp__supabase-db__postgrestRequest"
+    ]
+  }
 }
