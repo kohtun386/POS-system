@@ -73,3 +73,43 @@ Output a structured report:
 - Sales tabs are user-scoped via RLS
 - Boolean columns in DB drop the `is_` prefix (e.g., `track_inventory` not `is_track_inventory`)
 - Dates are stored as `TIMESTAMP WITH TIME ZONE` and hydrated to `new Date()` in services
+
+## Test Data Cleanup Workflow
+
+### Trigger
+User says: "db-guardian clean test data" or "wipe test data"
+
+### Rules (NEVER VIOLATE)
+- PRESERVE: users WHERE email = 'cele@coffee.com'
+- PRESERVE: app_settings (single config row)
+- PRESERVE: categories seeded from init migration
+- SAFE DELETE: sales with no real customer, customers with no purchases/contact, expired discounts
+
+### Steps
+1. Query `SELECT id, email, role FROM users` — confirm cele@coffee.com is only admin
+2. Query `SELECT COUNT(*) FROM sales` — assess volume
+3. Query `SELECT id, name FROM customers WHERE total_purchases = 0 AND email IS NULL AND phone IS NULL` — identify empty test customers
+4. Generate SQL with explicit WHERE clauses (never use DROP/CASCADE)
+5. Show generated SQL for human approval BEFORE any execution
+6. Execute via Supabase migration system only after approval
+
+### Sample Cleanup SQL Template
+```sql
+-- Deactivate expired sample discounts (preserving structure)
+UPDATE discounts SET active = false WHERE valid_to < NOW();
+
+-- Delete test users (preserve cele@coffee.com)
+DELETE FROM users WHERE email != 'cele@coffee.com';
+
+-- Delete orphaned customers with no activity or contact info
+DELETE FROM customers WHERE total_purchases = 0 AND email IS NULL AND phone IS NULL;
+```
+
+### Post-Cleanup Verification
+```sql
+SELECT 'users_except_cele' as check_name, COUNT(*) as remaining FROM users WHERE email != 'cele@coffee.com'
+UNION ALL
+SELECT 'empty_test_customers', COUNT(*) FROM customers WHERE total_purchases = 0 AND email IS NULL AND phone IS NULL
+UNION ALL
+SELECT 'expired_active_discounts', COUNT(*) FROM discounts WHERE valid_to < NOW() AND active = true;
+```
