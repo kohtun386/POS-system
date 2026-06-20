@@ -54,6 +54,7 @@ interface AppState {
   selectedCustomer: Customer | null;
   salesTabs: SalesTab[];
   activeSalesTab: string;
+  activeShopId: string;  // Current shop for multi-tenant scoping
   loading: boolean;
   error: string | null;
 }
@@ -102,6 +103,8 @@ interface AppState {
 | `UPDATE_SALES_TAB` | `{ id, updates }` | Merge updates into tab by id |
 | `REMOVE_SALES_TAB` | `string` (id) | Remove + activate first remaining |
 | `SET_ACTIVE_SALES_TAB` | `string` (id) | Switch active tab + load its cart/customer |
+| **Shop** | | |
+| `SET_ACTIVE_SHOP` | `string` (shop_id) | Set active shop for multi-tenant scoping |
 
 ### 3.3 Cart Persistence
 
@@ -151,6 +154,8 @@ if (salesTabs.length === 0 && user) {
 | `useApp()` | Returns `{ state, dispatch }`. Every component uses this. |
 | `useInvoiceGeneration()` | Returns async function that generates invoice number AND persists counter to Supabase. |
 | `useInvoiceStats()` | Returns function that computes invoice statistics from current state. |
+| `getActiveShopId(state)` | Returns `state.activeShopId`. For future service layer injection. |
+| `useActiveShopId()` | Hook returning active shop ID from context. For future service layer injection. |
 
 ### 3.6 Exported Utility Functions
 
