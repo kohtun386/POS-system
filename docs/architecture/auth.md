@@ -233,106 +233,198 @@ AppProvider useEffect: user is null →
 
 ## 4. RLS Policy Patterns
 
+All policies now include `shop_id IN (SELECT public.current_shop_ids())` scoping. The `current_shop_ids()` function returns all shop_ids the current user is a member of via `shop_memberships`.
+
 ### 4.1 Standard Pattern (Most Tables)
 
 ```sql
--- SELECT: all authenticated users
-CREATE POLICY "<table> viewable by all authenticated" ON <table>
-  FOR SELECT USING (auth.role() = 'authenticated');
+-- SELECT: shop members
+CREATE POLICY "<table> viewable by shop members" ON <table>
+  FOR SELECT USING (
+    auth.role() = 'authenticated'
+    AND shop_id IN (SELECT public.current_shop_ids())
+  );
 
--- ALL (INSERT/UPDATE/DELETE): admin/manager only
-CREATE POLICY "<table> write by admin/manager" ON <table>
+-- ALL (INSERT/UPDATE/DELETE): shop admin/manager
+CREATE POLICY "<table> write by shop admin/manager" ON <table>
   FOR ALL USING (
     auth.role() = 'authenticated'
+    AND shop_id IN (SELECT public.current_shop_ids())
     AND EXISTS (
-      SELECT 1 FROM users
+      SELECT 1 FROM public.users
       WHERE users.id = auth.uid()
       AND users.role IN ('admin', 'manager')
     )
   );
 ```
 
-**Tables using this pattern:** app_settings, categories, customers, suppliers, products, product_batches, discounts, currency_config, exchange_rates, exchange_rate_history
+**Tables using this pattern:** app_settings, categories, suppliers, product_batches, discounts, currency_config, exchange_rates, exchange_rate_history, alert_recipients, alert_templates, alert_configurations, alert_history, notification_service_config
 
-### 4.2 Sales Pattern (Cashiers Can Insert)
+### 4.2 Products/Customers Pattern (Per-Operation)
 
 ```sql
--- SELECT: all authenticated
-CREATE POLICY "Sales viewable by all authenticated" ON sales
-  FOR SELECT USING (auth.role() = 'authenticated');
-
--- INSERT: all authenticated (cashiers record transactions)
-CREATE POLICY "Sales insert by all authenticated" ON sales
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-
--- UPDATE: admin/manager only
-CREATE POLICY "Sales update by admin/manager" ON sales
-  FOR UPDATE USING (
+-- SELECT: shop members
+CREATE POLICY "<table> viewable by shop members" ON <table>
+  FOR SELECT USING (
     auth.role() = 'authenticated'
-    AND EXISTS (
-      SELECT 1 FROM users WHERE users.id = auth.uid()
-      AND users.role IN ('admin', 'manager')
-    )
+    AND shop_id IN (SELECT public.current_shop_ids())
   );
 
--- DELETE: admin/manager only
-CREATE POLICY "Sales delete by admin/manager" ON sales
-  FOR DELETE USING (
+-- INSERT/UPDATE/DELETE: separate policies, shop admin/manager
+CREATE POLICY "<table> insert by shop admin/manager" ON <table>
+  FOR INSERT WITH CHECK (
     auth.role() = 'authenticated'
-    AND EXISTS (
-      SELECT 1 FROM users WHERE users.id = auth.uid()
-      AND users.role IN ('admin', 'manager')
-    )
+    AND shop_id IN (SELECT public.current_shop_ids())
+    AND EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND users.role IN ('admin', 'manager'))
+  );
+-- ... same for UPDATE and DELETE
+```
+
+**Tables:** products, customers
+
+### 4.3 Sales Pattern (Cashiers Can Insert)
+
+```sql
+-- SELECT: shop members
+CREATE POLICY "Sales viewable by shop members" ON sales
+  FOR SELECT USING (
+    auth.role() = 'authenticated'
+    AND shop_id IN (SELECT public.current_shop_ids())
+  );
+
+-- INSERT: all shop members (cashiers record transactions)
+CREATE POLICY "Sales insert by shop members" ON sales
+  FOR INSERT WITH CHECK (
+    auth.role() = 'authenticated'
+    AND shop_id IN (SELECT public.current_shop_ids())
+  );
+
+-- UPDATE/DELETE: shop admin/manager only
+CREATE POLICY "Sales update by shop admin/manager" ON sales
+  FOR UPDATE USING (
+    auth.role() = 'authenticated'
+    AND shop_id IN (SELECT public.current_shop_ids())
+    AND EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND users.role IN ('admin', 'manager'))
   );
 ```
 
-### 4.3 Sales Tabs Pattern (User-Scoped)
+### 4.4 Sales Tabs Pattern (User-Scoped + Shop-Scoped)
 
 ```sql
--- SELECT: own tabs only
-CREATE POLICY "Users can view their own sales tabs" ON sales_tabs
+-- SELECT: own tabs in own shops
+CREATE POLICY "Sales tabs viewable by owner in shop" ON sales_tabs
   FOR SELECT USING (
     auth.role() = 'authenticated'
     AND user_id = auth.uid()
+    AND shop_id IN (SELECT public.current_shop_ids())
   );
 
--- ALL: own tabs only
-CREATE POLICY "Users can manage their own sales tabs" ON sales_tabs
-  FOR ALL USING (
+-- ALL: own tabs in own shops
+CREATE POLICY "Sales tabs insert by owner in shop" ON sales_tabs
+  FOR INSERT WITH CHECK (
     auth.role() = 'authenticated'
     AND user_id = auth.uid()
+    AND shop_id IN (SELECT public.current_shop_ids())
   );
+-- Same pattern for UPDATE and DELETE
 ```
 
-### 4.4 Users Table (Mixed Permissions)
+### 4.5 Users Table (Mixed Permissions)
 
 ```sql
--- SELECT: all authenticated
-CREATE POLICY "Users viewable by authenticated users" ON users
-  FOR SELECT USING (auth.role() = 'authenticated');
+-- SELECT: shop members
+CREATE POLICY "Users viewable by shop members" ON users
+  FOR SELECT USING (
+    auth.role() = 'authenticated'
+    AND shop_id IN (SELECT public.current_shop_ids())
+  );
 
 -- INSERT: all authenticated (trigger creates profile, this is fallback)
-CREATE POLICY "Users insert by authenticated users" ON users
+CREATE POLICY "Users insert by authenticated" ON users
   FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
 -- UPDATE: self OR admin
-CREATE POLICY "Users can update their own profile or admins can update any" ON users
+CREATE POLICY "Users update self or admin" ON users
   FOR UPDATE USING (
     auth.role() = 'authenticated'
     AND (
       auth.uid() = id
-      OR EXISTS (
-        SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin'
-      )
+      OR EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND users.role = 'admin')
     )
   );
 
 -- DELETE: no policy (implicit deny)
 ```
 
+### 4.6 Shops Pattern (Member-Scoped)
+
+```sql
+-- SELECT: members can view own shops
+CREATE POLICY "Shops viewable by members" ON shops
+  FOR SELECT USING (
+    auth.role() = 'authenticated'
+    AND id IN (SELECT public.current_shop_ids())
+  );
+
+-- ALL: shop admin only
+CREATE POLICY "Shops write by shop admin" ON shops
+  FOR ALL USING (
+    auth.role() = 'authenticated'
+    AND id IN (SELECT public.current_shop_ids())
+    AND EXISTS (
+      SELECT 1 FROM public.shop_memberships
+      WHERE shop_memberships.user_id = auth.uid()
+      AND shop_memberships.shop_id = shops.id
+      AND shop_memberships.role = 'admin'
+    )
+  );
+```
+
+### 4.7 Shop Memberships Pattern
+
+```sql
+-- SELECT: members can view own shop's memberships
+CREATE POLICY "Shop memberships viewable by shop members" ON shop_memberships
+  FOR SELECT USING (
+    auth.role() = 'authenticated'
+    AND shop_id IN (SELECT public.current_shop_ids())
+  );
+
+-- ALL: shop admin only
+CREATE POLICY "Shop memberships write by shop admin" ON shop_memberships
+  FOR ALL USING (
+    auth.role() = 'authenticated'
+    AND shop_id IN (SELECT public.current_shop_ids())
+    AND EXISTS (
+      SELECT 1 FROM public.shop_memberships sm
+      WHERE sm.user_id = auth.uid()
+      AND sm.shop_id = shop_memberships.shop_id
+      AND sm.role = 'admin'
+    )
+  );
+```
+
 ---
 
-## 5. SECURITY DEFINER Functions
+## 5. Helper Functions
+
+### 5.1 `current_shop_ids()` — INVOKER
+
+```sql
+CREATE OR REPLACE FUNCTION public.current_shop_ids()
+RETURNS SETOF uuid
+LANGUAGE sql STABLE SECURITY INVOKER SET search_path = ''
+AS $$
+    SELECT shop_id FROM public.shop_memberships
+    WHERE user_id = auth.uid() AND is_active = true;
+$$;
+```
+
+Returns all shop_ids the current user is an active member of. Used in every RLS policy. INVOKER security — respects RLS on `shop_memberships` itself.
+
+---
+
+## 6. SECURITY DEFINER Functions
 
 Functions that run with owner privileges (bypass RLS). Must be carefully controlled.
 
