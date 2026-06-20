@@ -1,386 +1,313 @@
-# Cele-Coffee POS System
+# CoffeeShop POS
 
-A modern, full-featured Point-of-Sale (POS) system designed for coffee shops, built with React, TypeScript, and Supabase. This system provides comprehensive retail management capabilities with role-based access control, real-time inventory management, and detailed reporting.
+A multi-tenant, web-based point-of-sale platform for coffee shops, food courts, and small-to-medium restaurants. Built for speed — 3-item checkout in under 10 seconds on iPad.
 
-![POS System](https://img.shields.io/badge/Version-1.0.0-blue.svg)
-![React](https://img.shields.io/badge/React-18.3.1-61DAFB.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-3178C6.svg)
-![Supabase](https://img.shields.io/badge/Supabase-2.50.5-3ECF8E.svg)
-
-## 🚀 Features
-
-### Core POS Functionality
-
-- **Point of Sale Terminal** - Intuitive checkout interface with product search and cart management
-- **Receipt Printing** - Generate and print receipts for transactions
-- **Multiple Payment Methods** - Support for various payment options
-- **Sales Management** - Complete transaction history and management
-
-### Inventory Management
-
-- **Product Catalog** - Add, edit, and manage product inventory
-- **Stock Tracking** - Real-time inventory levels and alerts
-- **Category Management** - Organize products by categories
-- **Barcode Support** - Product identification and quick scanning
-
-### Customer Management
-
-- **Customer Database** - Store and manage customer information
-- **Purchase History** - Track customer buying patterns
-- **Customer Profiles** - Detailed customer records and preferences
-
-### User Management & Security
-
-- **Role-Based Access Control** - Admin, Manager, and Cashier roles
-- **User Authentication** - Secure login with Supabase Auth
-- **Permission Management** - Granular access control for different features
-
-### Reporting & Analytics
-
-- **Sales Reports** - Comprehensive sales analytics and insights
-- **Inventory Reports** - Stock levels, low inventory alerts
-- **Transaction History** - Detailed transaction records
-- **Performance Metrics** - Business performance tracking
-
-### Additional Features
-
-- **Discount Management** - Create and apply various discount types
-- **Settings Configuration** - Customizable system settings
-- **Dark/Light Theme** - Modern UI with theme switching
-- **Responsive Design** - Works on desktop, tablet, and mobile devices
-
-## 🛠️ Tech Stack
-
-- **Frontend**: React 18.3.1, TypeScript 5.5.3
-- **Styling**: Tailwind CSS 3.4.1
-- **Backend**: Supabase (Database, Auth, Real-time)
-- **Build Tool**: Vite 5.4.2
-- **UI Components**: Custom components with Framer Motion animations
-- **Charts**: Recharts for data visualization
-- **Icons**: Lucide React
-- **Notifications**: SweetAlert2
-
-## 📋 Prerequisites
-
-Before running this project, make sure you have:
-
-- **Node.js** (v16 or higher)
-- **npm** or **yarn** package manager
-- **Supabase Account** - For database and authentication
-
-## 🚀 Installation
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/Keshara1997/POS-system.git
-   cd POS-system
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Set up Supabase**
-
-   - Create a new project at [supabase.com](https://supabase.com)
-   - Run the SQL script in `supabase_init.sql` to set up your database schema
-   - Copy your Supabase URL and anon key
-
-4. **Configure environment variables**
-   Create a `.env.local` file in the root directory:
-
-   ```env
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
-
-5. **Start the development server**
-
-   ```bash
-   npm run dev
-   ```
-
-6. **Open your browser**
-   Navigate to `http://localhost:5173` to view the application
-
-## 🏗️ Project Structure
-
-```
-src/
-├── components/          # React components
-│   ├── auth/           # Authentication components
-│   ├── customers/      # Customer management
-│   ├── discounts/      # Discount management
-│   ├── inventory/      # Inventory management
-│   ├── layout/         # Layout components
-│   ├── pos/            # POS terminal components
-│   ├── reports/        # Reporting components
-│   ├── settings/       # Settings components
-│   ├── transactions/   # Transaction management
-│   ├── users/          # User management
-│   └── ui/             # Reusable UI components
-├── context/            # React contexts
-├── lib/                # Utility libraries and services
-├── types/              # TypeScript type definitions
-└── main.tsx           # Application entry point
-```
-
-## 👥 User Roles
-
-### Admin
-
-- Full system access
-- User management
-- All reports and analytics
-- System settings
-
-### Manager
-
-- POS operations
-- Inventory management
-- Customer management
-- Sales reports
-- Discount management
-
-### Cashier
-
-- POS terminal access only
-- Process transactions
-- View basic product information
-
-
-
-
-## 🔧 Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-
-## 🗄️ Database Schema
-
-The system uses Supabase with the following main tables:
-
-- `users` - User accounts and roles
-- `products` - Product catalog
-- `categories` - Product categories
-- `customers` - Customer information
-- `transactions` - Sales transactions
-- `transaction_items` - Individual transaction items
-- `discounts` - Discount configurations
-
-## 🎨 UI/UX Features
-
-- **Modern Design** - Clean, professional interface
-- **Responsive Layout** - Works on all device sizes
-- **Dark/Light Themes** - User preference support
-- **Smooth Animations** - Enhanced user experience with Framer Motion
-- **Intuitive Navigation** - Easy-to-use interface for all user types
-
-## 🔒 Security Features
-
-- **Authentication** - Secure user login with Supabase Auth
-- **Role-Based Access** - Granular permissions system
-- **Data Validation** - Input validation and sanitization
-- **Secure API** - Protected database operations
-
-## 📱 Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## 🌿 Branch Management
-
-This project follows a structured branching strategy to ensure organized development and deployment:
-
-### Branch Structure
-
-- **`main`** - Production-ready code, always stable and deployable
-- **`develop`** - Integration branch for features, staging environment
-- **`feature/*`** - Feature development branches (e.g., `feature/user-authentication`)
-- **`bugfix/*`** - Bug fix branches (e.g., `bugfix/inventory-calculation`)
-- **`hotfix/*`** - Critical production fixes (e.g., `hotfix/security-patch`)
-- **`release/*`** - Release preparation branches (e.g., `release/v1.1.0`)
-
-### Branch Naming Conventions
-
-- **Features**: `feature/description-of-feature`
-- **Bug fixes**: `bugfix/issue-description`
-- **Hotfixes**: `hotfix/critical-issue`
-- **Releases**: `release/version-number`
-- **Documentation**: `docs/update-description`
-
-### Workflow
-
-1. **Feature Development**
-
-   ```bash
-   git checkout develop
-   git pull origin develop
-   git checkout -b feature/your-feature-name
-   # Make your changes
-   git push origin feature/your-feature-name
-   ```
-
-2. **Bug Fixes**
-
-   ```bash
-   git checkout develop
-   git pull origin develop
-   git checkout -b bugfix/issue-description
-   # Fix the issue
-   git push origin bugfix/issue-description
-   ```
-
-3. **Hotfixes** (for critical production issues)
-   ```bash
-   git checkout main
-   git pull origin main
-   git checkout -b hotfix/critical-issue
-   # Fix the critical issue
-   git push origin hotfix/critical-issue
-   ```
-
-## 🍴 Git Repository Fork
-
-### Forking the Repository
-
-To contribute to this project, you'll need to fork the repository:
-
-1. **Fork on GitHub**
-
-   - Go to the [repository page](https://github.com/Keshara1997/POS-system)
-   - Click the "Fork" button in the top-right corner
-   - Choose your account to fork to
-
-2. **Clone Your Fork**
-
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/POS-system.git
-   cd POS-system
-   ```
-
-3. **Add Upstream Remote**
-
-   ```bash
-   git remote add upstream https://github.com/Keshara1997/POS-system.git
-   ```
-
-4. **Keep Your Fork Updated**
-   ```bash
-   git fetch upstream
-   git checkout main
-   git merge upstream/main
-   git push origin main
-   ```
-
-### Working with Forks
-
-- **Sync with upstream**: Regularly pull changes from the main repository
-- **Create branches**: Always work on feature branches, never directly on main
-- **Submit PRs**: Create pull requests from your fork to the main repository
-- **Stay updated**: Keep your fork synchronized with the upstream repository
-
-## 🤝 Contributing
-
-### Getting Started
-
-1. **Fork the repository** (see [Git Repository Fork](#-git-repository-fork) section above)
-2. **Clone your fork** and set up the development environment
-3. **Create a feature branch** following our [branch naming conventions](#branch-naming-conventions)
-4. **Make your changes** and test thoroughly
-5. **Commit your changes** with descriptive commit messages
-6. **Push to your fork** and create a Pull Request
-
-### Pull Request Process
-
-1. **Create a Pull Request** from your feature branch to `develop`
-2. **Fill out the PR template** with:
-
-   - Description of changes
-   - Screenshots (if applicable)
-   - Testing instructions
-   - Related issues (if any)
-
-3. **Code Review** - Maintainers will review your code
-4. **Address feedback** - Make requested changes
-5. **Merge** - Once approved, your changes will be merged
-
-### Commit Message Guidelines
-
-Use conventional commit format:
-
-- `feat:` - New features
-- `fix:` - Bug fixes
-- `docs:` - Documentation changes
-- `style:` - Code style changes
-- `refactor:` - Code refactoring
-- `test:` - Adding or updating tests
-- `chore:` - Maintenance tasks
-
-Example:
-
-```bash
-git commit -m "feat: add user authentication system"
-git commit -m "fix: resolve inventory calculation bug"
-git commit -m "docs: update API documentation"
-```
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👨‍💻 Author
-
-**Cele-Coffee**
-
-- Email: info@sekalabs.lk
-- GitHub: [@Keshara1997](https://github.com/Keshara1997)
-
-## 🙏 Acknowledgments
-
-- Built with modern web technologies
-- Powered by Supabase for backend services
-- UI components inspired by modern design systems
-- Icons provided by Lucide React
+![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)
+![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6.svg)
+![Supabase](https://img.shields.io/badge/Supabase-2.50-3ECF8E.svg)
 
 ---
 
-**Cele-Coffee** - Empowering businesses with modern POS solutions.
-## Initial Setup
+## Features
 
-### 1. Clone & Install
+### POS Terminal
+- Product grid with search, category filter, stock indicators
+- Cart with quantity control, per-item discounts, customer assignment
+- 9 payment methods: Cash, Card, KBZpay, WavePay, AYAPay, CBPay, MPU, Digital, Credit
+- Split payments across multiple methods
+- Card type auto-detection (Visa/Mastercard/Amex/Discover)
+- Credit sales with customer credit limit tracking
+- Draft sales — save incomplete transactions, resume later
+- Multi-tab sales — serve multiple customers simultaneously
+- Receipt printing with @media print styles
+- Weight-based products (per-kg/lb/g pricing)
+
+### Inventory Management
+- Product CRUD with image upload, batch tracking, SKU/barcode
+- Stock auto-deduction on sale completion
+- Low-stock and out-of-stock indicators
+- Inventory reports: value, turnover ratio, profit margin
+
+### Customer Management
+- Customer database with credit system (limit/used/available)
+- Price tiers: Standard, Premium, VIP, Wholesale
+- Transaction history per customer
+- Credit payment validation at checkout
+
+### Discount Engine
+- 4 discount types: percentage, fixed, free_gift
+- 6 condition types: min_amount, specific_products, payment_method, customer_tier, card_type, bank_name
+- Valid days (Sun-Sat), date ranges, max discount caps
+- Auto-apply at checkout — no barista intervention needed
+
+### Reports & Analytics
+- Sales trends (line chart), category distribution (pie chart)
+- Top products, customer spending patterns
+- Inventory analytics: stock status, value by category, turnover
+- Date range filter: today, 7/30/90 days, custom range
+- CSV export for all reports
+
+### Multi-Currency
+- 11 supported currencies: USD, EUR, GBP, CAD, LKR, JPY, AUD, CHF, CNY, INR, MMK
+- Exchange rate management with API integration or manual override
+- Currency conversion with 5-minute in-memory cache
+- Base currency + display currency separation
+
+### User Management & RBAC
+- 3 roles: Admin (full access), Manager (POS+inventory+reports), Cashier (POS only)
+- Role-based navigation — cashiers see POS only, managers see everything except user management
+- RLS enforced at database level — not just UI
+
+### PWA
+- Installable on iPad ("Add to Home Screen") and Android
+- Service worker precaches app shell
+- Supabase API cached with NetworkFirst strategy (5s timeout)
+- Cart persists across page refresh via localStorage
+
+### Multi-Tenancy (Foundation)
+- `shop_id` placeholder migration planned for all 13 tables
+- Role-aware RLS policies already in place
+- Schema foundation enables future multi-shop operation
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18.3, TypeScript 5.5 (strict) |
+| Styling | Tailwind CSS 3.4 — Espresso & Copper design system |
+| State | React Context + useReducer (5 providers) |
+| Backend | Supabase (PostgreSQL, Auth, REST API) |
+| Build | Vite 5.4 with code-splitting |
+| PWA | vite-plugin-pwa (Workbox) |
+| Animations | Framer Motion |
+| Charts | Recharts |
+| Icons | Lucide React |
+| Notifications | SweetAlert2 |
+| Dates | date-fns |
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js ≥ 18.x
+- npm ≥ 9.x
+- Supabase project ([supabase.com](https://supabase.com))
+
+### Setup
+
 ```bash
-git clone git@github.com:kohtun386/POS-system.git coffee-pos
-cd coffee-pos
+# 1. Clone
+git clone git@github.com:kohtun386/POS-system.git
+cd POS-system
+
+# 2. Install
 npm install
-```
 
-### 2. Environment Variables
-Create `.env` file:
-VITE_SUPABASE_URL=your_supabase_url
+# 3. Environment
+# Create .env file with your Supabase credentials:
+VITE_SUPABASE_URL=https://<your-project-ref>.supabase.co
+VITE_SUPABASE_ANON_KEY=<your-anon-key>
 
-VITE_SUPABASE_ANON_KEY=your_anon_key
-
-VITE_SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-### 3. Database Setup
-```bash
+# 4. Database
 supabase login
-supabase link --project-ref your_project_ref
+supabase link --project-ref <your-project-ref>
 supabase db push
+
+# 5. Run
+npm run dev
+# → http://localhost:5173
 ```
 
-### 4. Create Admin User
-In Supabase Dashboard → Authentication → Users → Add user
+### Create Admin User
 
-Then in SQL Editor:
+1. Supabase Dashboard → Authentication → Users → Invite user by email
+2. User signs up via the app login page
+3. DB trigger `handle_new_auth_user()` auto-creates profile with role `cashier`
+4. In Supabase SQL Editor, promote to admin:
+
 ```sql
-INSERT INTO users (id, email, name, username, role, active)
-VALUES ('your_auth_user_id', 'your@email.com', 'Your Name', 'username', 'admin', true);
+UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
 ```
+
+### Scripts
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Dev server with HMR. `--host` exposes on local network for iPad testing. |
+| `npm run build` | Production build to `dist/` |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | ESLint across all source files |
+
+---
+
+## Project Structure
+
+```
+src/
+├── components/
+│   ├── alerts/          # Inventory alert management (recipients, templates, configs)
+│   ├── auth/            # Login page
+│   ├── customers/       # Customer manager, modal, detail view
+│   ├── discounts/       # Discount manager and modal
+│   ├── examples/        # Currency feature demo component
+│   ├── inventory/       # Product manager and modal
+│   ├── layout/          # Header with role-based navigation
+│   ├── pos/             # POS terminal, product grid, cart, checkout, receipt, sales tabs
+│   ├── reports/         # Sales/customer/inventory reports with charts
+│   ├── settings/        # Store settings, logo upload, exchange rate manager
+│   ├── transactions/    # Transaction history with filters
+│   ├── users/           # User manager and modal
+│   └── ui/              # Reusable: Button, Card, Input, CurrencyDisplay, LoadingSpinner
+├── context/
+│   ├── SupabaseAppContext.tsx   # Active state management (useReducer, 25 actions)
+│   ├── AuthContext.tsx          # Supabase auth wrapper
+│   ├── ThemeContext.tsx         # Light/dark/system theme
+│   └── CurrencyContext.tsx      # Multi-currency + exchange rates
+├── lib/
+│   ├── services.ts              # 12 service objects (all DB access)
+│   ├── supabase.ts              # Supabase client init
+│   ├── currencyUtils.ts         # CurrencyUtils class
+│   ├── exchangeRateService.ts   # Exchange rate API integration
+│   ├── alertService.ts          # Inventory alert processing (email/SMS)
+│   ├── alertScheduler.tsx       # Alert check scheduler
+│   ├── sweetAlert.ts            # SweetAlert2 themed configs
+│   └── database.types.ts        # Auto-generated Supabase types
+├── types/
+│   └── index.ts                 # All TypeScript interfaces
+├── App.tsx                      # Provider tree + route rendering
+└── main.tsx                     # Entry point
+```
+
+---
+
+## Database
+
+**Supabase project ref:** `ejvvwnupiqytximrbmfw`
+
+### Tables (13)
+
+| Table | Purpose |
+|-------|---------|
+| `app_settings` | Single-row store configuration |
+| `categories` | Product categories |
+| `customers` | Customer records with credit system |
+| `suppliers` | Supplier records (data model only, no UI) |
+| `products` | Product catalog (weight-based + unit-based) |
+| `product_batches` | Manufacturing/expiry batch tracking |
+| `discounts` | Discount engine with JSONB conditions |
+| `users` | Staff profiles (extends auth.users) |
+| `sales` | Transaction records with JSONB items |
+| `sales_tabs` | Multi-tab POS workflow (user-scoped) |
+| `currency_config` | Supported currencies |
+| `exchange_rates` | Active exchange rates (versioned) |
+| `exchange_rate_history` | Rate change audit trail |
+
+### Migrations
+
+9 migration files in `supabase/migrations/`. Run `supabase db push` to apply.
+
+### Key Database Features
+
+- **Row Level Security** on all 13 tables — role-aware policies (admin/manager/cashier)
+- **Triggers:** auto invoice number generation, customer stats update, user profile auto-creation
+- **8 functions** with `SET search_path = ''` (injection hardening)
+- **30+ indexes** for performance (B-tree, GIN full-text, partial, composite)
+
+---
+
+## User Roles
+
+| Role | Access |
+|------|--------|
+| **Admin** | Everything: POS, transactions, inventory, customers, discounts, reports, users, settings |
+| **Manager** | POS, transactions, inventory, customers, discounts, reports, settings. No user management. |
+| **Cashier** | POS terminal only. Redirected to POS if navigating elsewhere. |
+
+---
+
+## Design System
+
+**Theme:** Espresso & Copper — warm browns, copper accents, frosted glass effects.
+
+| Token | Tailwind | Hex | Usage |
+|-------|----------|-----|-------|
+| Primary | `primary-600` | `#9a693a` | Buttons, links, active nav |
+| Secondary | `secondary-100` | `#f0ece5` | Card backgrounds |
+| Accent | `accent-500` | `#f57323` | Highlights, badges |
+| Danger | `danger-600` | `#dc2626` | Delete actions |
+
+**Typography:** Fraunces (serif) for headings, DM Sans (sans-serif) for body.
+
+**Dark mode:** Tailwind `class` strategy. Toggle via header button.
+
+**Full token catalog:** [`docs/design-system.md`](docs/design-system.md)
+
+---
+
+## Documentation
+
+Documentation-Driven Development (DDD) workflow. Docs are source of truth.
+
+| Document | Path | Content |
+|----------|------|---------|
+| **PRD** | [`docs/prd.md`](docs/prd.md) | User personas, 21 features with acceptance criteria, glossary |
+| **Database** | [`docs/architecture/database.md`](docs/architecture/database.md) | Schema map, FK relationships, indexes, functions, RLS matrix |
+| **Auth** | [`docs/architecture/auth.md`](docs/architecture/auth.md) | Auth flow, role hierarchy, permission matrix, RLS patterns |
+| **State Management** | [`docs/architecture/state-management.md`](docs/architecture/state-management.md) | Provider tree, reducer actions, data flow diagrams |
+| **Design System** | [`docs/design-system.md`](docs/design-system.md) | Color tokens, typography, spacing, component catalog |
+| **Deployment** | [`docs/architecture/deployment.md`](docs/architecture/deployment.md) | Env vars, build/deploy, PWA config, backup, troubleshooting |
+| **Roadmap** | [`docs/roadmap.md`](docs/roadmap.md) | Feature roadmap, technical debt register |
+| **Multi-Tenancy** | [`docs/specs/multi-tenancy.md`](docs/specs/multi-tenancy.md) | shop_id migration strategy |
+| **Maintenance** | [`docs/ops/maintenance-checklist.md`](docs/ops/maintenance-checklist.md) | Monthly security & DB maintenance |
+
+---
+
+## Security
+
+| Measure | Status |
+|---------|--------|
+| RLS on all 13 tables | ✅ Enabled |
+| Role-aware policies (not blanket authenticated) | ✅ Since migration `20260618000001` |
+| Card data purge (cardNumber stripped) | ✅ Since migration `20260618000001` |
+| Function search_path hardening | ✅ Since migration `20260618000002` |
+| SECURITY DEFINER functions revoked from client | ✅ |
+| Service role key removed from client bundle | ✅ |
+| User profile auto-creation via trigger | ✅ Since migration `20260619000002` |
+
+**Planned:** Multi-tenant shop_id isolation, audit logging, MFA for admin accounts.
+
+---
+
+## Contributing
+
+### Commit Convention
+
+```
+feat: add customer export to CSV
+fix: cart total not updating on discount change
+docs: update database schema documentation
+refactor: extract checkout payment logic to service
+```
+
+### PR Guidelines
+
+- Reference acceptance criteria from `docs/prd.md` (e.g., "Implements FR-POS-03")
+- Include screenshots for UI changes
+- Run `npm run lint` before submitting
+- Update relevant docs if schema or behavior changes
+
+---
+
+## License
+
+MIT
+
+## Author
+
+**Ko Htun** — kohtunhtun386@gmail.com
+GitHub: [@kohtun386](https://github.com/kohtun386)
