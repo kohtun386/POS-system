@@ -1,8 +1,10 @@
 # Database Architecture — CoffeeShop POS
 
 **Supabase project:** `ejvvwnupiqytximrbmfw`
-**Last schema migration:** `20260619000003_fix_user_creation_flow.sql`
-**Generated:** 2026-06-19
+**Last schema migration:** `20260620000001_shop_id_placeholder.sql`
+**Generated:** 2026-06-20
+
+> **Multi-tenancy:** All tables now have `shop_id UUID NOT NULL DEFAULT '4f3dab19-144e-4a29-95a5-2ee82f160ce5'`. Single default shop. No UI for shop switching yet. See `docs/specs/multi-tenancy.md`.
 
 ---
 
@@ -472,3 +474,184 @@ users
 - `sales_tabs`: Only `user_id = auth.uid()` — complete user isolation
 - `sales`: Cashiers can INSERT (record transactions) but not UPDATE/DELETE
 - All admin/manager checks use `EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role IN ('admin', 'manager'))`
+
+---
+
+## 6. Multi-Tenancy Tables (Migration 20260620000001)
+
+### 6.1 `shops`
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `name` | text NOT NULL | | |
+| `address` | text | | |
+| `phone` | text | | |
+| `email` | text | | |
+| `owner_id` | uuid | | Future: link to auth.users |
+| `subscription_tier` | text | `'free'` | CHECK: `'free'` \| `'pro'` \| `'enterprise'` |
+| `is_active` | boolean | `true` | |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+| `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
+
+**Default shop:** `4f3dab19-144e-4a29-95a5-2ee82f160ce5` — seeded from `app_settings` store_name.
+
+---
+
+### 6.2 `shop_memberships`
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `user_id` | uuid FK NOT NULL | | → `users(id)` ON DELETE CASCADE |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)` ON DELETE CASCADE |
+| `role` | text NOT NULL | `'cashier'` | CHECK: `'admin'` \| `'manager'` \| `'cashier'`. Per-shop role. |
+| `is_active` | boolean | `true` | |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+| `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
+
+**Constraints:** UNIQUE(`user_id`, `shop_id`)
+**Seeded:** All existing users as members of default shop with their current role.
+
+---
+
+### 6.3 Alert Tables (born with shop_id)
+
+#### `alert_recipients`
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | default shop | → `shops(id)` |
+| `name` | text NOT NULL | | |
+| `email` | text | | |
+| `phone` | text | | |
+| `role` | text NOT NULL | `'manager'` | CHECK: `'admin'` \| `'manager'` \| `'cashier'` |
+| `alert_types` | text[] | `'{"low_stock", "out_of_stock"}'` | |
+| `is_active` | boolean | `true` | |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+| `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
+
+#### `alert_templates`
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | default shop | → `shops(id)` |
+| `name` | text NOT NULL | | |
+| `type` | text NOT NULL | | CHECK: `'low_stock'` \| `'out_of_stock'` \| `'reorder'` \| `'expiry_warning'` \| `'batch_expiry'` |
+| `channel` | text NOT NULL | `'email'` | CHECK: `'email'` \| `'sms'` \| `'both'` |
+| `subject` | text | | |
+| `body` | text NOT NULL | | |
+| `is_active` | boolean | `true` | |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+| `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
+
+#### `alert_configurations`
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | default shop | → `shops(id)` |
+| `alert_type` | text NOT NULL | | CHECK: same as alert_templates.type |
+| `is_enabled` | boolean | `true` | |
+| `threshold_value` | integer | `150` | Percentage of min_stock |
+| `check_frequency_minutes` | integer | `60` | |
+| `cooldown_minutes` | integer | `1440` | 24 hours |
+| `email_template_id` | uuid | | |
+| `sms_template_id` | uuid | | |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+| `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
+
+#### `alert_history`
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | default shop | → `shops(id)` |
+| `alert_type` | text NOT NULL | | CHECK: same as above |
+| `product_id` | uuid | | |
+| `product_name` | text | | |
+| `product_sku` | text | | |
+| `current_stock` | integer | | |
+| `min_stock` | integer | | |
+| `threshold_value` | integer | | |
+| `recipient_id` | uuid | | |
+| `recipient_name` | text | | |
+| `recipient_email` | text | | |
+| `recipient_phone` | text | | |
+| `channel` | text | | CHECK: `'email'` \| `'sms'` |
+| `status` | text | `'pending'` | CHECK: `'pending'` \| `'sent'` \| `'failed'` \| `'delivered'` |
+| `template_id` | uuid | | |
+| `message_content` | text | | |
+| `error_message` | text | | |
+| `sent_at` | timestamptz | | |
+| `delivered_at` | timestamptz | | |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+
+#### `notification_service_config`
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | default shop | → `shops(id)` |
+| `service_name` | text NOT NULL | | `'sendgrid'`, `'twilio'`, `'aws_ses'` |
+| `service_type` | text NOT NULL | `'email'` | CHECK: `'email'` \| `'sms'` \| `'both'` |
+| `config_data` | jsonb | `'{}'` | API keys, endpoints |
+| `is_active` | boolean | `true` | |
+| `is_default` | boolean | `false` | |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+| `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
+
+### 6.4 shop_id Column Added To (all 13 existing tables)
+
+Every existing table now has:
+```sql
+shop_id UUID NOT NULL DEFAULT '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid REFERENCES shops(id)
+```
+
+Tables: `app_settings`, `categories`, `customers`, `suppliers`, `products`, `product_batches`, `discounts`, `users`, `sales`, `sales_tabs`, `currency_config`, `exchange_rates`, `exchange_rate_history`
+
+### 6.5 shop_id Indexes
+
+| Index | Table | Type |
+|-------|-------|------|
+| `idx_app_settings_shop_id` | app_settings | B-tree |
+| `idx_categories_shop_id` | categories | B-tree |
+| `idx_customers_shop_id` | customers | B-tree |
+| `idx_suppliers_shop_id` | suppliers | B-tree |
+| `idx_products_shop_id` | products | B-tree |
+| `idx_product_batches_shop_id` | product_batches | B-tree |
+| `idx_discounts_shop_id` | discounts | B-tree |
+| `idx_users_shop_id` | users | B-tree |
+| `idx_sales_shop_id` | sales | B-tree |
+| `idx_sales_tabs_shop_id` | sales_tabs | B-tree |
+| `idx_currency_config_shop_id` | currency_config | B-tree |
+| `idx_exchange_rates_shop_id` | exchange_rates | B-tree |
+| `idx_exchange_rate_history_shop_id` | exchange_rate_history | B-tree |
+| `idx_sales_shop_created_at` | sales | Composite (shop_id, created_at) |
+| `idx_products_shop_active` | products | Composite (shop_id, active) |
+| `idx_customers_shop_name` | customers | Composite (shop_id, name) |
+| `idx_sales_tabs_shop_user` | sales_tabs | Composite (shop_id, user_id) |
+| `idx_shop_memberships_user_id` | shop_memberships | B-tree |
+| `idx_shop_memberships_shop_id` | shop_memberships | B-tree |
+| `idx_shop_memberships_user_shop` | shop_memberships | Composite (user_id, shop_id) |
+| `idx_alert_recipients_shop_id` | alert_recipients | B-tree |
+| `idx_alert_templates_shop_id` | alert_templates | B-tree |
+| `idx_alert_configurations_shop_id` | alert_configurations | B-tree |
+| `idx_alert_history_shop_id` | alert_history | B-tree |
+| `idx_notification_service_config_shop_id` | notification_service_config | B-tree |
+
+### 6.6 RLS on New Tables (Temporary — Chunk 1)
+
+All 7 new tables have RLS enabled with **temporary permissive policies** (`auth.role() = 'authenticated'` for all operations). These will be replaced with role-aware policies in Chunk 2.
+
+| Table | Current Policy | Chunk 2 Target |
+|-------|---------------|----------------|
+| `shops` | All authenticated (full access) | SELECT: member of shop. Write: admin of shop. |
+| `shop_memberships` | All authenticated (full access) | SELECT: member of shop. Write: admin of shop. |
+| `alert_recipients` | All authenticated (full access) | SELECT: all authenticated. Write: admin/manager. |
+| `alert_templates` | All authenticated (full access) | SELECT: all authenticated. Write: admin/manager. |
+| `alert_configurations` | All authenticated (full access) | SELECT: all authenticated. Write: admin/manager. |
+| `alert_history` | All authenticated (full access) | SELECT: all authenticated. Write: admin/manager. |
+| `notification_service_config` | All authenticated (full access) | SELECT: all authenticated. Write: admin/manager. |
