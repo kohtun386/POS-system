@@ -25,6 +25,7 @@ What changes:
 - Service calls: `settingsService.update()` → `shopsService.update()` for shop-related fields
 - State slice: `state.settings` → `state.shop` for store identity and POS config fields
 - Consumers: all components reading `state.settings.currency` etc. → `state.shop.currency`
+- SQL function: `generate_invoice_number()` reads from `shops` instead of `app_settings`
 
 What does NOT change:
 - Settings UI layout, sections, field order, input types, labels
@@ -50,6 +51,7 @@ export interface Shop {
   email: string;
   logo?: string;
   ownerId?: string;
+  businessType: 'coffee_shop' | 'pharmacy' | 'retail' | 'restaurant' | 'other';
   subscriptionTier: 'free' | 'pro' | 'enterprise';
   isActive: boolean;
   // POS config (moved from app_settings)
@@ -65,16 +67,17 @@ export interface Shop {
 
 ### `shops` Table — New Columns
 
-Add to existing `shops` table (6 columns):
+Add to existing `shops` table (7 columns):
 
-| Column | Type | Default |
-|--------|------|---------|
-| `logo` | text | NULL |
-| `tax_rate` | numeric(5,4) | 0.0000 |
-| `currency` | text | 'USD' |
-| `base_currency` | text | 'USD' |
-| `invoice_prefix` | text | 'INV' |
-| `invoice_counter` | integer | 1000 |
+| Column | Type | Default | Purpose |
+|--------|------|---------|---------|
+| `logo` | text | NULL | Store logo (base64 or URL) |
+| `business_type` | text | `'coffee_shop'` | Business category for future feature toggling |
+| `tax_rate` | numeric(5,4) | 0.0000 | Per-shop tax rate |
+| `currency` | text | 'USD' | Display currency |
+| `base_currency` | text | 'USD' | Base currency for pricing |
+| `invoice_prefix` | text | 'INV' | Invoice number prefix |
+| `invoice_counter` | integer | 1000 | Next invoice number |
 
 Existing columns (`name`, `address`, `phone`, `email`) already present from multi-tenancy migration.
 
@@ -89,9 +92,9 @@ After migration, `app_settings` keeps ONLY:
 | `auto_backup` | boolean | backup toggle |
 | `receipt_printer` | boolean | printer toggle |
 | `theme` | text | light/dark/auto |
-| `exchange_rate_provider` | text | rate provider (stays — out of shop scope) |
-| `exchange_rate_api_key` | text | API key (stays — out of shop scope) |
-| `exchange_rate_update_interval` | integer | update interval (stays — out of shop scope) |
+| `exchange_rate_provider` | text | rate provider (stays — not shop-specific) |
+| `exchange_rate_api_key` | text | API key (stays — not shop-specific) |
+| `exchange_rate_update_interval` | integer | update interval (stays — not shop-specific) |
 | `shop_id` | uuid | FK to shops |
 | `created_at` | timestamptz | audit |
 | `updated_at` | timestamptz | audit |
@@ -125,9 +128,153 @@ shop.currency ?? 'USD'
 shop.taxRate ?? 0
 shop.invoicePrefix ?? 'INV'
 shop.invoiceCounter ?? 1000
+shop.businessType ?? 'coffee_shop'
 ```
 
 No fallback chain to `app_settings`. If shop field is NULL, use default. Simple.
+
+---
+
+## Database Function Refactoring
+
+### Current: `generate_invoice_number()` reads from `app_settings`
+
+```sql
+-- CURRENT (reads from app_settings — single global row)
+CREATE OR REPLACE FUNCTION generate_invoice_number()
+RETURNS TEXT
+SET search_path = ''
+AS $$
+DECLARE
+    prefix TEXT;
+    counter INTEGER;
+    new_invoice_number TEXT;
+BEGIN
+    SELECT invoice_prefix, invoice_counter
+    INTO prefix, counter
+    FROM app_settings
+    LIMIT 1;
+
+    IF prefix IS NULL THEN prefix := 'INV'; END IF;
+    IF counter IS NULL THEN counter := 1000; END IF;
+
+    new_invoice_number := prefix || '-' || LPAD(counter::TEXT, 6, '0');
+
+    UPDATE app_settings
+    SET invoice_counter = counter + 1,
+        updated_at = timezone('utc'::text, now());
+
+    RETURN new_invoice_number;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### New: `generate_invoice_number(p_shop_id UUID)` reads from `shops`
+
+```sql
+-- NEW (reads from shops — per-shop config)
+CREATE OR REPLACE FUNCTION generate_invoice_number(p_shop_id UUID)
+RETURNS TEXT
+SET search_path = ''
+AS $$
+DECLARE
+    prefix TEXT;
+    counter INTEGER;
+    new_invoice_number TEXT;
+BEGIN
+    SELECT invoice_prefix, invoice_counter
+    INTO prefix, counter
+    FROM public.shops
+    WHERE id = p_shop_id;
+
+    IF prefix IS NULL THEN prefix := 'INV'; END IF;
+    IF counter IS NULL THEN counter := 1000; END IF;
+
+    new_invoice_number := prefix || '-' || LPAD(counter::TEXT, 6, '0');
+
+    UPDATE public.shops
+    SET invoice_counter = counter + 1,
+        updated_at = timezone('utc'::text, now())
+    WHERE id = p_shop_id;
+
+    RETURN new_invoice_number;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### `auto_generate_invoice_number()` trigger — updated
+
+The trigger must pass `shop_id` from the `sales` row being inserted:
+
+```sql
+CREATE OR REPLACE FUNCTION auto_generate_invoice_number()
+RETURNS TRIGGER
+SET search_path = ''
+AS $$
+BEGIN
+    IF NEW.invoice_number IS NULL OR NEW.invoice_number = '' THEN
+        NEW.invoice_number := generate_invoice_number(NEW.shop_id);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+**Dependency:** `sales` table must have `shop_id` column (already present from multi-tenancy migration).
+
+---
+
+## Security & RLS
+
+### Existing `shops` Table RLS (already implemented)
+
+The `shops` table already has correct RLS policies from migration `20260620000002_rls_shop_id_scoping.sql`:
+
+```sql
+-- SELECT: any authenticated user can view their own shop
+CREATE POLICY "Shops viewable by members" ON shops
+  FOR SELECT USING (
+    auth.role() = 'authenticated'
+    AND id IN (SELECT public.current_shop_ids())
+  );
+
+-- ALL (INSERT/UPDATE/DELETE): only shop admin can modify
+CREATE POLICY "Shops write by shop admin" ON shops
+  FOR ALL USING (
+    auth.role() = 'authenticated'
+    AND id IN (SELECT public.current_shop_ids())
+    AND EXISTS (
+      SELECT 1 FROM public.shop_memberships
+      WHERE shop_memberships.user_id = auth.uid()
+      AND shop_memberships.shop_id = shops.id
+      AND shop_memberships.role = 'admin'
+    )
+  );
+```
+
+**What this means for Settings UI:**
+- Shop members can VIEW their shop config (SELECT works)
+- Only shop ADMIN can MODIFY shop config (UPDATE works)
+- Manager and cashier roles CANNOT update shop fields via `shopsService.update()` — RLS will reject the query
+- The existing `canEditSettings` UI guard (`role === 'admin' || role === 'manager'`) must be tightened for shop fields: only admin can save Business Profile changes
+
+### `app_settings` RLS (unchanged)
+
+Existing policies remain: admin/manager can read/write. Cashiers can read only. No change needed.
+
+### Helper Function
+
+```sql
+-- Already exists — returns all shop_ids the current user is a member of
+CREATE OR REPLACE FUNCTION public.current_shop_ids()
+RETURNS SETOF uuid
+LANGUAGE sql STABLE SECURITY INVOKER
+SET search_path = ''
+AS $$
+    SELECT shop_id FROM public.shop_memberships
+    WHERE user_id = auth.uid() AND is_active = true;
+$$;
+```
 
 ---
 
@@ -157,24 +304,7 @@ export const shopsService = {
     if (error) throw error;
 
     // 3. Map snake_case → camelCase with defaults
-    return {
-      id: data.id,
-      name: data.name || 'CoffeeShop POS',
-      address: data.address || '',
-      phone: data.phone || '',
-      email: data.email || '',
-      logo: data.logo || undefined,
-      ownerId: data.owner_id || undefined,
-      subscriptionTier: data.subscription_tier || 'free',
-      isActive: data.is_active ?? true,
-      taxRate: data.tax_rate ?? 0,
-      currency: data.currency || 'USD',
-      baseCurrency: data.base_currency || 'USD',
-      invoicePrefix: data.invoice_prefix || 'INV',
-      invoiceCounter: data.invoice_counter ?? 1000,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    };
+    return mapShopRow(data);
   },
 
   async update(id: string, shop: Partial<Shop>): Promise<Shop> {
@@ -185,6 +315,7 @@ export const shopsService = {
     if (shop.phone !== undefined) updateData.phone = shop.phone;
     if (shop.email !== undefined) updateData.email = shop.email;
     if (shop.logo !== undefined) updateData.logo = shop.logo;
+    if (shop.businessType !== undefined) updateData.business_type = shop.businessType;
     if (shop.taxRate !== undefined) updateData.tax_rate = shop.taxRate;
     if (shop.currency !== undefined) updateData.currency = shop.currency;
     if (shop.baseCurrency !== undefined) updateData.base_currency = shop.baseCurrency;
@@ -203,11 +334,39 @@ export const shopsService = {
     return mapShopRow(data);
   }
 }
+
+// Shared mapping helper
+function mapShopRow(data: any): Shop {
+  return {
+    id: data.id,
+    name: data.name || 'CoffeeShop POS',
+    address: data.address || '',
+    phone: data.phone || '',
+    email: data.email || '',
+    logo: data.logo || undefined,
+    ownerId: data.owner_id || undefined,
+    businessType: data.business_type || 'coffee_shop',
+    subscriptionTier: data.subscription_tier || 'free',
+    isActive: data.is_active ?? true,
+    taxRate: data.tax_rate ?? 0,
+    currency: data.currency || 'USD',
+    baseCurrency: data.base_currency || 'USD',
+    invoicePrefix: data.invoice_prefix || 'INV',
+    invoiceCounter: data.invoice_counter ?? 1000,
+    createdAt: new Date(data.created_at),
+    updatedAt: new Date(data.updated_at),
+  };
+}
 ```
 
 ### `settingsService` — Trimmed
 
 `get()` and `update()` only handle: `interface_mode`, `auto_backup`, `receipt_printer`, `theme`, `exchange_rate_*`. All store identity and POS config columns removed from queries.
+
+### RLS Enforcement in Service Layer
+
+- `shopsService.update()` will fail silently if non-admin calls it (RLS rejects UPDATE). Frontend should catch and show "Only shop admins can modify business settings".
+- `shopsService.getByUserId()` works for all roles (SELECT policy allows all members).
 
 ---
 
@@ -242,6 +401,7 @@ const initialState = {
     address: '',
     phone: '',
     email: '',
+    businessType: 'coffee_shop',
     taxRate: 0,
     currency: 'LKR',
     baseCurrency: 'USD',
@@ -342,7 +502,7 @@ Only 3 areas change:
 
 2. **`handleSubmit`** — split into two service calls:
    ```typescript
-   // Shop fields → shopsService
+   // Shop fields → shopsService (RLS: admin only)
    await shopsService.update(state.shop.id, {
      name: formData.storeName,
      address: formData.storeAddress,
@@ -412,26 +572,25 @@ Only 3 areas change:
 
 ## Migration Strategy
 
-Single migration file.
+Single migration file. Sequenced to avoid data loss.
 
-### Sequence
-
-1. Add new columns to `shops` (with defaults)
-2. Backfill from `app_settings` (single row → default shop)
-3. Drop store identity + POS config columns from `app_settings`
-
-### SQL
+### Step 1: Add columns to `shops`
 
 ```sql
--- 1. Add columns
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS logo TEXT;
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS business_type TEXT DEFAULT 'coffee_shop'
+  CHECK (business_type IN ('coffee_shop', 'pharmacy', 'retail', 'restaurant', 'other'));
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(5,4) DEFAULT 0.0000;
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'USD';
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS base_currency TEXT DEFAULT 'USD';
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS invoice_prefix TEXT DEFAULT 'INV';
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS invoice_counter INTEGER DEFAULT 1000;
+```
 
--- 2. Backfill from app_settings
+### Step 2: Backfill default shop from `app_settings`
+
+```sql
+-- Target the seeded default shop
 UPDATE shops SET
   tax_rate = COALESCE((SELECT tax_rate FROM app_settings LIMIT 1), 0),
   currency = COALESCE((SELECT currency FROM app_settings LIMIT 1), 'USD'),
@@ -439,8 +598,11 @@ UPDATE shops SET
   invoice_prefix = COALESCE((SELECT invoice_prefix FROM app_settings LIMIT 1), 'INV'),
   invoice_counter = COALESCE((SELECT invoice_counter FROM app_settings LIMIT 1), 1000)
 WHERE id = '4f3dab19-144e-4a29-95a5-2ee82f160ce5';
+```
 
--- 3. Drop columns from app_settings
+### Step 3: Drop migrated columns from `app_settings`
+
+```sql
 ALTER TABLE app_settings DROP COLUMN IF EXISTS store_name;
 ALTER TABLE app_settings DROP COLUMN IF EXISTS store_address;
 ALTER TABLE app_settings DROP COLUMN IF EXISTS store_phone;
@@ -453,15 +615,69 @@ ALTER TABLE app_settings DROP COLUMN IF EXISTS invoice_prefix;
 ALTER TABLE app_settings DROP COLUMN IF EXISTS invoice_counter;
 ```
 
+### Step 4: Refactor `generate_invoice_number()` to read from `shops`
+
+```sql
+-- Drop old function (no-arg version)
+DROP FUNCTION IF EXISTS generate_invoice_number();
+
+-- New function: takes shop_id, reads from shops table
+CREATE OR REPLACE FUNCTION generate_invoice_number(p_shop_id UUID)
+RETURNS TEXT
+SET search_path = ''
+AS $$
+DECLARE
+    prefix TEXT;
+    counter INTEGER;
+    new_invoice_number TEXT;
+BEGIN
+    SELECT invoice_prefix, invoice_counter
+    INTO prefix, counter
+    FROM public.shops
+    WHERE id = p_shop_id;
+
+    IF prefix IS NULL THEN prefix := 'INV'; END IF;
+    IF counter IS NULL THEN counter := 1000; END IF;
+
+    new_invoice_number := prefix || '-' || LPAD(counter::TEXT, 6, '0');
+
+    UPDATE public.shops
+    SET invoice_counter = counter + 1,
+        updated_at = timezone('utc'::text, now())
+    WHERE id = p_shop_id;
+
+    RETURN new_invoice_number;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### Step 5: Update trigger to pass `shop_id`
+
+```sql
+CREATE OR REPLACE FUNCTION auto_generate_invoice_number()
+RETURNS TRIGGER
+SET search_path = ''
+AS $$
+BEGIN
+    IF NEW.invoice_number IS NULL OR NEW.invoice_number = '' THEN
+        NEW.invoice_number := generate_invoice_number(NEW.shop_id);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
 ### Risk
 
-Dropping columns from `app_settings` is destructive and one-way. Backup before running.
+- Dropping columns from `app_settings` is destructive and one-way. Backup before running.
+- `generate_invoice_number()` signature change (adds `p_shop_id` param) breaks any direct callers. The trigger is updated in Step 5. Frontend `useInvoiceGeneration()` calls `settingsService.update()` to increment counter — this must change to `shopsService.update()`.
+- RLS on `shops` already enforced. No additional policies needed.
 
 ### Implementation Order
 
-1. Migration (schema changes)
-2. Types (`Shop` interface, trim `AppSettings`)
-3. Service layer (`shopsService`, trim `settingsService`)
+1. Migration (Steps 1-5 above)
+2. Types (`Shop` interface with `businessType`, trim `AppSettings`)
+3. Service layer (`shopsService` with `mapShopRow`, trim `settingsService`)
 4. Context (`SET_SHOP` action, `state.shop`, trim `state.settings`, update `loadData`)
 5. Components (all `state.settings.currency` → `state.shop.currency` etc.)
 6. Settings UI (repoint formData initial values + handleSubmit)
@@ -478,3 +694,4 @@ Dropping columns from `app_settings` is destructive and one-way. Backup before r
 - Per-shop user role management (roles stay global in `users` table)
 - Exchange rate configuration (stays in `app_settings` — not shop-specific)
 - New Settings UI layout or sections (existing UI reused as-is)
+- `business_type` feature toggling (column added for future use only)
