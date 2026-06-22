@@ -1,20 +1,40 @@
 # Dynamic Shop Configuration System — Design Spec
 
 **Date:** 2026-06-22
-**Status:** Approved
-**Approach:** Dedicated columns on `shops` + `shopsService` + merged context
+**Status:** Approved (Pivoted)
+**Approach:** Refactor existing Settings UI to read/write `shops` table instead of `app_settings`
 
 ---
 
 ## Problem
 
-Store identity (name, address, phone, email) and POS config (tax_rate, currency, invoice settings) are hardcoded in `app_settings` as a single global row. Multi-tenant shops can't customize their own business profile. Receipt details, currency, tax rate are shared across all shops — breaks multi-tenancy.
+Store identity (name, address, phone, email) and POS config (tax_rate, currency, invoice settings) live in `app_settings` as a single global row. Multi-tenant shops can't customize their own business profile. Receipt details, currency, tax rate are shared across all shops — breaks multi-tenancy.
 
 ## Goals
 
 - **Scalability:** Each shop has its own business profile and POS config.
 - **Autonomy:** Shop owners manage their info without developer intervention.
 - **Robustness:** POS remains functional with sensible defaults if fields are NULL.
+
+## Scope
+
+**Refactor only.** No new UI components. The existing System Settings page (`src/components/settings/Settings.tsx`) already contains all necessary input fields. The task is to repoint the data source of those existing inputs from `app_settings` to the `shops` table.
+
+What changes:
+- Data source: `app_settings` → `shops` table
+- Service calls: `settingsService.update()` → `shopsService.update()` for shop-related fields
+- State slice: `state.settings` → `state.shop` for store identity and POS config fields
+- Consumers: all components reading `state.settings.currency` etc. → `state.shop.currency`
+
+What does NOT change:
+- Settings UI layout, sections, field order, input types, labels
+- Currency dropdown loading, exchange rate test/update buttons
+- Logo upload component
+- Permission gating (`canEditSettings`)
+- `handleChange`, `handleLogoChange` handlers
+- Preferences section (theme, interface mode, printer, backup) — stays in `app_settings`
+
+---
 
 ## Data Model
 
@@ -38,9 +58,6 @@ export interface Shop {
   baseCurrency: string;
   invoicePrefix: string;
   invoiceCounter: number;
-  exchangeRateProvider?: 'fixer' | 'currencylayer' | 'exchangerate' | 'manual';
-  exchangeRateApiKey?: string;
-  exchangeRateUpdateInterval?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,7 +65,7 @@ export interface Shop {
 
 ### `shops` Table — New Columns
 
-Add to existing `shops` table:
+Add to existing `shops` table (6 columns):
 
 | Column | Type | Default |
 |--------|------|---------|
@@ -58,9 +75,6 @@ Add to existing `shops` table:
 | `base_currency` | text | 'USD' |
 | `invoice_prefix` | text | 'INV' |
 | `invoice_counter` | integer | 1000 |
-| `exchange_rate_provider` | text | 'exchangerate' |
-| `exchange_rate_api_key` | text | NULL |
-| `exchange_rate_update_interval` | integer | 60 |
 
 Existing columns (`name`, `address`, `phone`, `email`) already present from multi-tenancy migration.
 
@@ -75,11 +89,14 @@ After migration, `app_settings` keeps ONLY:
 | `auto_backup` | boolean | backup toggle |
 | `receipt_printer` | boolean | printer toggle |
 | `theme` | text | light/dark/auto |
+| `exchange_rate_provider` | text | rate provider (stays — out of shop scope) |
+| `exchange_rate_api_key` | text | API key (stays — out of shop scope) |
+| `exchange_rate_update_interval` | integer | update interval (stays — out of shop scope) |
 | `shop_id` | uuid | FK to shops |
 | `created_at` | timestamptz | audit |
 | `updated_at` | timestamptz | audit |
 
-Removed: `store_name`, `store_address`, `store_phone`, `store_email`, `store_logo`, `tax_rate`, `currency`, `base_currency`, `invoice_prefix`, `invoice_counter`, `exchange_rate_provider`, `exchange_rate_api_key`, `exchange_rate_update_interval`.
+Removed from `app_settings`: `store_name`, `store_address`, `store_phone`, `store_email`, `store_logo`, `tax_rate`, `currency`, `base_currency`, `invoice_prefix`, `invoice_counter`.
 
 ### `AppSettings` Type — Trimmed
 
@@ -89,6 +106,9 @@ export interface AppSettings {
   autoBackup: boolean;
   receiptPrinter: boolean;
   theme: 'light' | 'dark' | 'auto';
+  exchangeRateProvider?: 'fixer' | 'currencylayer' | 'exchangerate' | 'manual';
+  exchangeRateApiKey?: string;
+  exchangeRateUpdateInterval?: number;
 }
 ```
 
@@ -152,9 +172,6 @@ export const shopsService = {
       baseCurrency: data.base_currency || 'USD',
       invoicePrefix: data.invoice_prefix || 'INV',
       invoiceCounter: data.invoice_counter ?? 1000,
-      exchangeRateProvider: data.exchange_rate_provider || 'exchangerate',
-      exchangeRateApiKey: data.exchange_rate_api_key || undefined,
-      exchangeRateUpdateInterval: data.exchange_rate_update_interval ?? 60,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
     };
@@ -173,9 +190,6 @@ export const shopsService = {
     if (shop.baseCurrency !== undefined) updateData.base_currency = shop.baseCurrency;
     if (shop.invoicePrefix !== undefined) updateData.invoice_prefix = shop.invoicePrefix;
     if (shop.invoiceCounter !== undefined) updateData.invoice_counter = shop.invoiceCounter;
-    if (shop.exchangeRateProvider !== undefined) updateData.exchange_rate_provider = shop.exchangeRateProvider;
-    if (shop.exchangeRateApiKey !== undefined) updateData.exchange_rate_api_key = shop.exchangeRateApiKey;
-    if (shop.exchangeRateUpdateInterval !== undefined) updateData.exchange_rate_update_interval = shop.exchangeRateUpdateInterval;
 
     const { data, error } = await supabase
       .from('shops')
@@ -186,7 +200,6 @@ export const shopsService = {
 
     if (error) throw error;
 
-    // Return mapped result (same as getByUserId mapping)
     return mapShopRow(data);
   }
 }
@@ -194,7 +207,7 @@ export const shopsService = {
 
 ### `settingsService` — Trimmed
 
-`get()` and `update()` only handle: `interface_mode`, `auto_backup`, `receipt_printer`, `theme`. All store identity and POS config columns removed from queries.
+`get()` and `update()` only handle: `interface_mode`, `auto_backup`, `receipt_printer`, `theme`, `exchange_rate_*`. All store identity and POS config columns removed from queries.
 
 ---
 
@@ -244,6 +257,9 @@ const initialState = {
     autoBackup: true,
     receiptPrinter: true,
     theme: 'light',
+    exchangeRateProvider: 'exchangerate',
+    exchangeRateApiKey: '',
+    exchangeRateUpdateInterval: 60,
   },
 };
 ```
@@ -281,6 +297,83 @@ async function loadData() {
 
 ---
 
+## Settings UI — No Layout Changes
+
+The existing Settings page is reused as-is. Only the data source changes.
+
+### Current Form Fields → New Source
+
+| Form Field | Current Source | New Source | Section (unchanged) |
+|---|---|---|---|
+| `storeName` | `state.settings.storeName` | `state.shop.name` | Store Information |
+| `storePhone` | `state.settings.storePhone` | `state.shop.phone` | Store Information |
+| `storeEmail` | `state.settings.storeEmail` | `state.shop.email` | Store Information |
+| `storeAddress` | `state.settings.storeAddress` | `state.shop.address` | Store Information |
+| `storeLogo` | `state.settings.storeLogo` | `state.shop.logo` | Store Information |
+| `currency` | `state.settings.currency` | `state.shop.currency` | Store Information |
+| `baseCurrency` | `state.settings.baseCurrency` | `state.shop.baseCurrency` | Store Information |
+| `taxRate` | `state.settings.taxRate` | `state.shop.taxRate` | Financial Settings |
+| `invoicePrefix` | `state.settings.invoicePrefix` | `state.shop.invoicePrefix` | Invoice Settings |
+| `invoiceCounter` | `state.settings.invoiceCounter` | `state.shop.invoiceCounter` | Invoice Settings |
+| `exchangeRateProvider` | `state.settings.exchangeRateProvider` | `state.settings.exchangeRateProvider` | Exchange Rate (no change) |
+| `exchangeRateApiKey` | `state.settings.exchangeRateApiKey` | `state.settings.exchangeRateApiKey` | Exchange Rate (no change) |
+| `exchangeRateUpdateInterval` | `state.settings.exchangeRateUpdateInterval` | `state.settings.exchangeRateUpdateInterval` | Exchange Rate (no change) |
+| `receiptPrinter` | `state.settings.receiptPrinter` | `state.settings.receiptPrinter` | Hardware (no change) |
+| `autoBackup` | `state.settings.autoBackup` | `state.settings.autoBackup` | Hardware (no change) |
+| `theme` | `state.settings.theme` | `state.settings.theme` | System Preferences (no change) |
+
+### Changes to Settings.tsx
+
+Only 3 areas change:
+
+1. **`formData` initial values** — 10 fields read from `state.shop` instead of `state.settings`:
+   ```typescript
+   storeName: state.shop.name,           // was state.settings.storeName
+   storeAddress: state.shop.address,     // was state.settings.storeAddress
+   storePhone: state.shop.phone,         // was state.settings.storePhone
+   storeEmail: state.shop.email,         // was state.settings.storeEmail
+   storeLogo: state.shop.logo,           // was state.settings.storeLogo
+   taxRate: state.shop.taxRate.toString(), // was state.settings.taxRate
+   currency: state.shop.currency,        // was state.settings.currency
+   baseCurrency: state.shop.baseCurrency, // was state.settings.baseCurrency
+   invoicePrefix: state.shop.invoicePrefix, // was state.settings.invoicePrefix
+   invoiceCounter: state.shop.invoiceCounter?.toString(), // was state.settings.invoiceCounter
+   ```
+
+2. **`handleSubmit`** — split into two service calls:
+   ```typescript
+   // Shop fields → shopsService
+   await shopsService.update(state.shop.id, {
+     name: formData.storeName,
+     address: formData.storeAddress,
+     phone: formData.storePhone,
+     email: formData.storeEmail,
+     logo: formData.storeLogo,
+     taxRate: parseFloat(formData.taxRate),
+     currency: formData.currency,
+     baseCurrency: formData.baseCurrency,
+     invoicePrefix: formData.invoicePrefix,
+     invoiceCounter: parseInt(formData.invoiceCounter),
+   });
+   dispatch({ type: 'SET_SHOP', payload: shopUpdates });
+
+   // Preference fields → settingsService (unchanged)
+   await settingsService.update({
+     interfaceMode: ...,
+     autoBackup: ...,
+     receiptPrinter: ...,
+     theme: ...,
+     exchangeRateProvider: ...,
+     exchangeRateApiKey: ...,
+     exchangeRateUpdateInterval: ...,
+   });
+   dispatch({ type: 'SET_SETTINGS', payload: prefsUpdates });
+   ```
+
+3. **`useInvoiceStats`** — reads from `state.shop` instead of `state.settings`.
+
+---
+
 ## Receipt Component
 
 `ReceiptContent` reads from `state.shop` instead of `state.settings`:
@@ -294,44 +387,6 @@ async function loadData() {
 | `state.settings.storeLogo` | `state.shop.logo` |
 | `state.settings.currency` | `state.shop.currency` |
 | `state.settings.taxRate` | `state.shop.taxRate` |
-
----
-
-## Settings UI
-
-One Settings page, two logical sections.
-
-### Section 1: Business Profile
-
-Reads/writes `shopsService`. Admin/Manager only.
-
-Fields:
-- Store Name, Phone, Email, Address, Logo (existing, new source)
-- Tax Rate, Currency, Base Currency (moved from Financial section)
-- Invoice Prefix, Invoice Counter (moved from Invoice section)
-- Exchange Rate Provider, API Key, Update Interval (moved from Exchange Rate section)
-
-### Section 2: Preferences
-
-Reads/writes `settingsService`.
-
-Fields:
-- Theme (light/dark/auto)
-- Interface Mode (touch/traditional)
-- Receipt Printer toggle
-- Auto Backup toggle
-- Current User info (read-only)
-
-### Save Handler
-
-```typescript
-const handleSave = async () => {
-  await shopsService.update(state.shop.id, shopFormData);
-  await settingsService.update(prefsFormData);
-  dispatch({ type: 'SET_SHOP', payload: shopFormData });
-  dispatch({ type: 'SET_SETTINGS', payload: prefsFormData });
-};
-```
 
 ---
 
@@ -375,9 +430,6 @@ ALTER TABLE shops ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'USD';
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS base_currency TEXT DEFAULT 'USD';
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS invoice_prefix TEXT DEFAULT 'INV';
 ALTER TABLE shops ADD COLUMN IF NOT EXISTS invoice_counter INTEGER DEFAULT 1000;
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS exchange_rate_provider TEXT DEFAULT 'exchangerate';
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS exchange_rate_api_key TEXT;
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS exchange_rate_update_interval INTEGER DEFAULT 60;
 
 -- 2. Backfill from app_settings
 UPDATE shops SET
@@ -385,10 +437,7 @@ UPDATE shops SET
   currency = COALESCE((SELECT currency FROM app_settings LIMIT 1), 'USD'),
   base_currency = COALESCE((SELECT base_currency FROM app_settings LIMIT 1), 'USD'),
   invoice_prefix = COALESCE((SELECT invoice_prefix FROM app_settings LIMIT 1), 'INV'),
-  invoice_counter = COALESCE((SELECT invoice_counter FROM app_settings LIMIT 1), 1000),
-  exchange_rate_provider = COALESCE((SELECT exchange_rate_provider FROM app_settings LIMIT 1), 'exchangerate'),
-  exchange_rate_api_key = (SELECT exchange_rate_api_key FROM app_settings LIMIT 1),
-  exchange_rate_update_interval = COALESCE((SELECT exchange_rate_update_interval FROM app_settings LIMIT 1), 60)
+  invoice_counter = COALESCE((SELECT invoice_counter FROM app_settings LIMIT 1), 1000)
 WHERE id = '4f3dab19-144e-4a29-95a5-2ee82f160ce5';
 
 -- 3. Drop columns from app_settings
@@ -402,9 +451,6 @@ ALTER TABLE app_settings DROP COLUMN IF EXISTS currency;
 ALTER TABLE app_settings DROP COLUMN IF EXISTS base_currency;
 ALTER TABLE app_settings DROP COLUMN IF EXISTS invoice_prefix;
 ALTER TABLE app_settings DROP COLUMN IF EXISTS invoice_counter;
-ALTER TABLE app_settings DROP COLUMN IF EXISTS exchange_rate_provider;
-ALTER TABLE app_settings DROP COLUMN IF EXISTS exchange_rate_api_key;
-ALTER TABLE app_settings DROP COLUMN IF EXISTS exchange_rate_update_interval;
 ```
 
 ### Risk
@@ -418,7 +464,7 @@ Dropping columns from `app_settings` is destructive and one-way. Backup before r
 3. Service layer (`shopsService`, trim `settingsService`)
 4. Context (`SET_SHOP` action, `state.shop`, trim `state.settings`, update `loadData`)
 5. Components (all `state.settings.currency` → `state.shop.currency` etc.)
-6. Settings UI (split into Business Profile + Preferences)
+6. Settings UI (repoint formData initial values + handleSubmit)
 7. Receipt (`ReceiptContent` reads from `state.shop`)
 8. Lint + type check
 
@@ -430,3 +476,5 @@ Dropping columns from `app_settings` is destructive and one-way. Backup before r
 - Shop creation/management UI (admin creates shops via Supabase Dashboard)
 - Receipt customization (custom footer text, show/hide elements)
 - Per-shop user role management (roles stay global in `users` table)
+- Exchange rate configuration (stays in `app_settings` — not shop-specific)
+- New Settings UI layout or sections (existing UI reused as-is)
