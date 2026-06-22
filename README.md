@@ -66,9 +66,10 @@ A multi-tenant, web-based point-of-sale platform for coffee shops, food courts, 
 - Cart persists across page refresh via localStorage
 
 ### Multi-Tenancy (Foundation)
-- `shop_id` placeholder migration planned for all 13 tables
-- Role-aware RLS policies already in place
-- Schema foundation enables future multi-shop operation
+- `shop_id` column on all 18 tables with default shop UUID
+- `shops` and `shop_memberships` tables for per-shop roles
+- RLS policies scoped via `current_shop_ids()` helper function
+- Schema foundation complete — UI for shop switching deferred
 
 ---
 
@@ -189,7 +190,7 @@ src/
 
 **Supabase project ref:** `ejvvwnupiqytximrbmfw`
 
-### Tables (13)
+### Tables (18)
 
 | Table | Purpose |
 |-------|---------|
@@ -206,16 +207,21 @@ src/
 | `currency_config` | Supported currencies |
 | `exchange_rates` | Active exchange rates (versioned) |
 | `exchange_rate_history` | Rate change audit trail |
+| `shops` | Multi-tenant shop records |
+| `shop_memberships` | User-to-shop role assignments |
+| `alert_recipients` | Alert notification recipients |
+| `alert_templates` | Email/SMS alert templates |
+| `alert_configurations` | Alert type settings and thresholds |
 
 ### Migrations
 
-9 migration files in `supabase/migrations/`. Run `supabase db push` to apply.
+14 migration files in `supabase/migrations/`. Run `supabase db push` to apply.
 
 ### Key Database Features
 
-- **Row Level Security** on all 13 tables — role-aware policies (admin/manager/cashier)
+- **Row Level Security** on all 18 tables — role-aware policies (admin/manager/cashier)
 - **Triggers:** auto invoice number generation, customer stats update, user profile auto-creation
-- **8 functions** with `SET search_path = ''` (injection hardening)
+- **9 functions** with `SET search_path = ''` (injection hardening)
 - **30+ indexes** for performance (B-tree, GIN full-text, partial, composite)
 
 ---
@@ -256,13 +262,17 @@ Documentation-Driven Development (DDD) workflow. Docs are source of truth.
 | Document | Path | Content |
 |----------|------|---------|
 | **PRD** | [`docs/prd.md`](docs/prd.md) | User personas, 21 features with acceptance criteria, glossary |
+| **Decisions** | [`docs/decisions.md`](docs/decisions.md) | Key technology decisions (stack, architecture, database, multi-tenancy, security) |
+| **Patterns** | [`docs/patterns.md`](docs/patterns.md) | Coding conventions and patterns (components, services, state, RLS, naming) |
 | **Database** | [`docs/architecture/database.md`](docs/architecture/database.md) | Schema map, FK relationships, indexes, functions, RLS matrix |
 | **Auth** | [`docs/architecture/auth.md`](docs/architecture/auth.md) | Auth flow, role hierarchy, permission matrix, RLS patterns |
 | **State Management** | [`docs/architecture/state-management.md`](docs/architecture/state-management.md) | Provider tree, reducer actions, data flow diagrams |
 | **Design System** | [`docs/design-system.md`](docs/design-system.md) | Color tokens, typography, spacing, component catalog |
 | **Deployment** | [`docs/architecture/deployment.md`](docs/architecture/deployment.md) | Env vars, build/deploy, PWA config, backup, troubleshooting |
 | **Roadmap** | [`docs/roadmap.md`](docs/roadmap.md) | Feature roadmap, technical debt register |
-| **Multi-Tenancy** | [`docs/specs/multi-tenancy.md`](docs/specs/multi-tenancy.md) | shop_id migration strategy |
+| **Technical Debt** | [`docs/technical-debt.md`](docs/technical-debt.md) | any types, React Refresh warnings, color palette drift |
+| **Multi-Tenancy** | [`docs/specs/multi-tenancy.md`](docs/specs/multi-tenancy.md) | Gap analysis and shop_id migration strategy |
+| **Inventory Alerts** | [`docs/specs/inventory-alerts.md`](docs/specs/inventory-alerts.md) | Alert system spec (5 alert types, email/SMS, templates) |
 | **Maintenance** | [`docs/ops/maintenance-checklist.md`](docs/ops/maintenance-checklist.md) | Monthly security & DB maintenance |
 
 ---
@@ -271,8 +281,9 @@ Documentation-Driven Development (DDD) workflow. Docs are source of truth.
 
 | Measure | Status |
 |---------|--------|
-| RLS on all 13 tables | ✅ Enabled |
+| RLS on all 18 tables | ✅ Enabled |
 | Role-aware policies (not blanket authenticated) | ✅ Since migration `20260618000001` |
+| shop_id RLS scoping via `current_shop_ids()` | ✅ Since migration `20260620000002` |
 | Card data purge (cardNumber stripped) | ✅ Since migration `20260618000001` |
 | Function search_path hardening | ✅ Since migration `20260618000002` |
 | SECURITY DEFINER functions revoked from client | ✅ |
