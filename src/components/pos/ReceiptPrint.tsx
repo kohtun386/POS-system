@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { Sale } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -8,219 +9,222 @@ interface ReceiptPrintProps {
   onClose: () => void;
 }
 
-export function ReceiptPrint({ sale, onClose }: ReceiptPrintProps) {
+// Shared receipt markup — used in both the on-screen preview and the portal print target
+function ReceiptContent({ sale }: { sale: Sale }) {
   const { state } = useApp();
   const { profile } = useAuth();
 
+  return (
+    <>
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        {state.settings.storeLogo && (
+          <img
+            src={state.settings.storeLogo}
+            alt="Store Logo"
+            style={{ height: 64, width: 64, margin: '0 auto 16px', objectFit: 'contain' }}
+          />
+        )}
+        <h1 style={{ fontSize: 20, fontWeight: 'bold', color: '#111827' }}>{state.settings.storeName}</h1>
+        <p style={{ fontSize: 14, color: '#6b7280' }}>{state.settings.storeAddress}</p>
+        {state.settings.storePhone && (
+          <p style={{ fontSize: 14, color: '#6b7280' }}>Tel: {state.settings.storePhone}</p>
+        )}
+        {state.settings.storeEmail && (
+          <p style={{ fontSize: 14, color: '#6b7280' }}>Email: {state.settings.storeEmail}</p>
+        )}
+      </div>
+
+      <div style={{ borderTop: '1px solid #d1d5db', borderBottom: '1px solid #d1d5db', padding: '16px 0', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 8 }}>
+          <span>Receipt #:</span>
+          <span style={{ fontWeight: 600 }}>#{sale.receiptNumber}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 8 }}>
+          <span>Invoice #:</span>
+          <span style={{ fontWeight: 600 }}>{sale.invoiceNumber}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 8 }}>
+          <span>Date:</span>
+          <span>{format(new Date(sale.timestamp), 'MMM dd, yyyy HH:mm')}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 8 }}>
+          <span>Cashier:</span>
+          <span>{profile ? profile.name : sale.cashier}</span>
+        </div>
+        {sale.customerName && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+            <span>Customer:</span>
+            <span>{sale.customerName}</span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        {sale.items.map((item, index) => (
+          <div key={index} style={{ marginBottom: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 14, fontWeight: 500 }}>{item.product.name}</span>
+              <span style={{ fontSize: 14, fontWeight: 600 }}>
+                {state.settings.currency} {item.subtotal.toFixed(2)}
+              </span>
+            </div>
+            <div style={{ fontSize: 12, color: '#6b7280', marginLeft: 8 }}>
+              {state.settings.currency}{' '}
+              {item.product.isWeightBased
+                ? (item.product.pricePerUnit || 0).toFixed(2)
+                : item.product.price.toFixed(2)}{' '}
+              {item.product.isWeightBased ? `per ${item.product.unit}` : ''} ×{' '}
+              {item.weight ? `${item.weight}${item.product.unit}` : item.quantity}
+              {item.discount > 0 && (
+                <span style={{ color: '#16a34a', marginLeft: 8 }}>
+                  (Discount: -{state.settings.currency} {item.discount.toFixed(2)})
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {sale.freeGifts && sale.freeGifts.length > 0 && (
+          <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 8, marginTop: 8 }}>
+            <p style={{ fontSize: 14, fontWeight: 500, color: '#16a34a', marginBottom: 8 }}>Free Gifts:</p>
+            {sale.freeGifts.map((gift, index) => (
+              <div key={index} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#16a34a' }}>
+                <span>{gift.product.name} x {gift.quantity}</span>
+                <span>FREE</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ borderTop: '1px solid #d1d5db', paddingTop: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 4 }}>
+          <span>Subtotal:</span>
+          <span>{state.settings.currency} {sale.subtotal.toFixed(2)}</span>
+        </div>
+        {sale.discountAmount > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#16a34a', marginBottom: 4 }}>
+            <span>Total Discount:</span>
+            <span>-{state.settings.currency} {sale.discountAmount.toFixed(2)}</span>
+          </div>
+        )}
+        {sale.appliedDiscounts && sale.appliedDiscounts.length > 0 && (
+          <div style={{ fontSize: 12, color: '#16a34a', marginLeft: 8, marginBottom: 4 }}>
+            {sale.appliedDiscounts.map((discount, index) => (
+              <div key={index}>&bull; {discount.discountName}</div>
+            ))}
+          </div>
+        )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 4 }}>
+          <span>Tax ({state.settings.taxRate}%):</span>
+          <span>{state.settings.currency} {sale.taxAmount.toFixed(2)}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 'bold', borderTop: '1px solid #d1d5db', paddingTop: 8 }}>
+          <span>Total:</span>
+          <span>{state.settings.currency} {sale.total.toFixed(2)}</span>
+        </div>
+
+        {sale.payments && sale.payments.length > 0 ? (
+          <div style={{ marginTop: 8 }}>
+            <h4 style={{ fontSize: 14, fontWeight: 500 }}>Payments</h4>
+            <div style={{ marginTop: 4 }}>
+              {sale.payments.map((p, i) => (
+                <div key={p.id ?? i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 2 }}>
+                  <div>
+                    <span style={{ fontWeight: 500, textTransform: 'capitalize' }}>{p.method}</span>
+                    {p.cardDetails && (
+                      <span style={{ marginLeft: 8, fontSize: 12, color: '#6b7280' }}>
+                        ({p.cardDetails.cardType} &bull;&bull;&bull;&bull;{p.cardDetails.lastFourDigits})
+                      </span>
+                    )}
+                  </div>
+                  <div>{state.settings.currency} {p.amount.toFixed(2)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginTop: 8 }}>
+            <span>Payment Method:</span>
+            <span style={{ textTransform: 'capitalize' }}>{sale.paymentMethod}</span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: 24, paddingTop: 16, borderTop: '1px solid #d1d5db' }}>
+        <p style={{ fontSize: 12, color: '#6b7280' }}>Thank you for your business!</p>
+        <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+          {format(new Date(), 'yyyy-MM-dd HH:mm:ss')}
+        </p>
+      </div>
+    </>
+  );
+}
+
+export function ReceiptPrint({ sale, onClose }: ReceiptPrintProps) {
   const handlePrint = () => {
     window.print();
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal max-w-md">
-        <div className="modal-header no-print">
-          <h2 className="text-xl font-bold text-gray-900 font-fraunces">Print Receipt</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100"
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Receipt Content */}
-        <div className="modal-body" id="receipt-content">
-          <div className="text-center mb-6">
-            {state.settings.storeLogo && (
-              <img 
-                src={state.settings.storeLogo} 
-                alt="Store Logo" 
-                className="h-16 w-16 mx-auto mb-4 object-contain"
-              />
-            )}
-            <h1 className="text-xl font-bold text-gray-900">{state.settings.storeName}</h1>
-            <p className="text-sm text-gray-600">{state.settings.storeAddress}</p>
-            {state.settings.storePhone && (
-              <p className="text-sm text-gray-600">Tel: {state.settings.storePhone}</p>
-            )}
-            {state.settings.storeEmail && (
-              <p className="text-sm text-gray-600">Email: {state.settings.storeEmail}</p>
-            )}
+    <>
+      {/* On-screen modal — hidden when printing */}
+      <div className="modal-overlay no-print">
+        <div className="modal max-w-md">
+          <div className="modal-header">
+            <h2 className="text-xl font-bold text-gray-900 font-fraunces">Print Receipt</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100"
+            >
+              &times;
+            </button>
           </div>
 
-          <div className="border-t border-b border-gray-300 py-4 mb-4">
-            <div className="flex justify-between text-sm mb-2">
-              <span>Receipt #:</span>
-              <span className="font-semibold">#{sale.receiptNumber}</span>
-            </div>
-            <div className="flex justify-between text-sm mb-2">
-              <span>Invoice #:</span>
-              <span className="font-semibold">{sale.invoiceNumber}</span>
-            </div>
-            <div className="flex justify-between text-sm mb-2">
-              <span>Date:</span>
-              <span>{format(new Date(sale.timestamp), 'MMM dd, yyyy HH:mm')}</span>
-            </div>
-            <div className="flex justify-between text-sm mb-2">
-              <span>Cashier:</span>
-              <span>
-                {profile ? (
-                  <span>
-                    {profile.name}
-                  </span>
-                ) : (
-                  sale.cashier
-                )}
-              </span>
-            </div>
-            {sale.customerName && (
-              <div className="flex justify-between text-sm">
-                <span>Customer:</span>
-                <span>{sale.customerName}</span>
-              </div>
-            )}
+          <div className="modal-body">
+            <ReceiptContent sale={sale} />
           </div>
 
-          <div className="space-y-2 mb-4">
-            {sale.items.map((item, index) => (
-              <div key={index}>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">{item.product.name}</span>
-                  <span className="text-sm font-semibold">
-                    {state.settings.currency} {item.subtotal.toFixed(2)}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-600 ml-2">
-                  {state.settings.currency} {
-                    item.product.isWeightBased 
-                      ? (item.product.pricePerUnit || 0).toFixed(2)
-                      : item.product.price.toFixed(2)
-                  } {item.product.isWeightBased ? `per ${item.product.unit}` : ''} × {
-                    item.weight ? `${item.weight}${item.product.unit}` : item.quantity
-                  }
-                  {item.discount > 0 && (
-                    <span className="text-green-600 ml-2">
-                      (Discount: -{state.settings.currency} {item.discount.toFixed(2)})
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-            
-            {/* Free Gifts */}
-            {sale.freeGifts && sale.freeGifts.length > 0 && (
-              <>
-                <div className="border-t border-gray-200 pt-2 mt-2">
-                  <p className="text-sm font-medium text-green-600 mb-2">🎁 Free Gifts:</p>
-                  {sale.freeGifts.map((gift, index) => (
-                    <div key={index} className="flex justify-between text-sm text-green-600">
-                      <span>{gift.product.name} × {gift.quantity}</span>
-                      <span>FREE</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="border-t border-gray-300 pt-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Subtotal:</span>
-              <span>{state.settings.currency} {sale.subtotal.toFixed(2)}</span>
-            </div>
-            {sale.discountAmount > 0 && (
-              <div className="flex justify-between text-sm text-green-600">
-                <span>Total Discount:</span>
-                <span>-{state.settings.currency} {sale.discountAmount.toFixed(2)}</span>
-              </div>
-            )}
-            {sale.appliedDiscounts && sale.appliedDiscounts.length > 0 && (
-              <div className="text-xs text-green-600 ml-2">
-                {sale.appliedDiscounts.map((discount, index) => (
-                  <div key={index}>• {discount.discountName}</div>
-                ))}
-              </div>
-            )}
-            <div className="flex justify-between text-sm">
-              <span>Tax ({state.settings.taxRate}%):</span>
-              <span>{state.settings.currency} {sale.taxAmount.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-lg font-bold border-t border-gray-300 pt-2">
-              <span>Total:</span>
-              <span>{state.settings.currency} {sale.total.toFixed(2)}</span>
-            </div>
-            {/* Payment breakdown: show individual payments if present */}
-            {sale.payments && sale.payments.length > 0 ? (
-              <div className="mt-2">
-                <h4 className="text-sm font-medium">Payments</h4>
-                <div className="mt-1 space-y-1">
-                  {sale.payments.map((p, i) => (
-                    <div key={p.id ?? i} className="flex justify-between text-sm">
-                      <div>
-                        <span className="font-medium capitalize">{p.method}</span>
-                        {p.cardDetails && <span className="ml-2 text-xs text-gray-600">({p.cardDetails.cardType} ••••{p.cardDetails.lastFourDigits})</span>}
-                      </div>
-                      <div>{state.settings.currency} {p.amount.toFixed(2)}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="flex justify-between text-sm mt-2">
-                <span>Payment Method:</span>
-                <span className="capitalize">{sale.paymentMethod}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="text-center mt-6 pt-4 border-t border-gray-300">
-            <p className="text-xs text-gray-600">Thank you for your business!</p>
-            <p className="text-xs text-gray-600 mt-1">
-              {format(new Date(), 'yyyy-MM-dd HH:mm:ss')}
-            </p>
+          <div className="modal-footer">
+            <button onClick={onClose} className="btn btn-secondary btn-md">
+              Close
+            </button>
+            <button onClick={handlePrint} className="btn btn-primary btn-md">
+              Print Receipt
+            </button>
           </div>
         </div>
+      </div>
 
-        <div className="modal-footer no-print">
-          <button
-            onClick={onClose}
-            className="btn btn-secondary btn-md"
-          >
-            Close
-          </button>
-          <button
-            onClick={handlePrint}
-            className="btn btn-primary btn-md"
-          >
-            Print Receipt
-          </button>
-        </div>        </div>
+      {/* Print-only receipt — portaled directly into body, no Tailwind ancestors */}
+      {createPortal(
+        <div id="print-receipt">
+          <ReceiptContent sale={sale} />
+          <style>{`
+            #print-receipt { display: none; }
 
-        <style>
-        {`
-          @media print {
-            .no-print {
-              display: none !important;
+            @media print {
+              /* Hide everything on the page */
+              body > *:not(#print-receipt) { display: none !important; }
+
+              /* Show only the portaled receipt */
+              #print-receipt {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                max-width: 80mm !important;
+                margin: 0 auto !important;
+                padding: 0 !important;
+                background: white !important;
+                color: black !important;
+                font-family: sans-serif !important;
+                font-size: 14px !important;
+              }
             }
-            
-            body * {
-              visibility: hidden;
-            }
-            
-            #receipt-content, #receipt-content * {
-              visibility: visible;
-            }
-            
-            #receipt-content {
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
-            }
-          }
-        `}
-        </style>
-    </div>
+          `}</style>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
