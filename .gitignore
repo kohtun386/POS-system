@@ -29,6 +29,7 @@ supabase-mcp-server-supabase-0.8.2.tgz
 # MCP and Claude config (may contain env var references exposing project architecture)
 .mcp.json
 .claude/settings*.json
+.claude/plans/
 opencode.json
 
 # Presentations (local use only)
