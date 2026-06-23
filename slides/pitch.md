@@ -24,7 +24,7 @@ style: |
 ---
 
 # Coffee-POS
-## Point-of-Sale for Independent Coffee Shops
+## Point-of-Sale for Myanmar Coffee Shops
 
 **Stack:** React + TypeScript + Supabase + Tailwind CSS
 **Theme:** Espresso & Copper
@@ -34,74 +34,70 @@ style: |
 
 # The Problem
 
-## Small café owners lose time & money every shift.
+## Small café owners in Myanmar lose time & money every shift.
 
 - **Slow checkouts** — scribbled orders, mental math, shared tills
 - **Messy inventory** — no real-time stock tracking, surprise shortages mid-rush
 - **Zero customer memory** — regulars' preferences live in baristas' heads
-- **Paper receipts** — lost, faded, useless for end-of-month reconciliation
+- **No local payment support** — generic POS systems don't handle KBZpay, WavePay, AYAPay
 
-**Result:** long queues, wasted beans, missed repeat business.
-
----
-
-# The User
-
-## Independent café owners & their baristas.
-
-| Who | Needs |
-|---|---|
-| **Owner** | Track sales, manage stock, view reports |
-| **Barista** | Fast order entry, split payments, weight-based pricing |
-| **Both** | Works on counter tablet — touch-first, not mouse-first |
-
-Role-based access: `admin` → `manager` → `cashier`
-Cashiers see only the POS terminal. No distractions.
+**Owner** needs reports & stock control.
+**Barista** needs fast touch entry & split payments.
+Both need it on a counter tablet — touch-first, not mouse-first.
 
 ---
 
-# Solution Sketch
+# The Solution
 
 ## Coffee-POS: fast, warm, built for the counter.
 
-- **Touch-friendly UI** — `.touch-friendly` mode with larger tap targets, no tiny dropdowns
-- **Espresso & Copper theme** — warm browns (`#9a693a` / `#7a4f2c`), `Fraunces` headings, `DM Sans` body
-- **Real-time cart** — weight-based products, automatic discount checks, split payments
-- **Multi-currency** — MMK and LKR support via `CurrencyContext`
-- **Sales tabs** — user-scoped, pick up where you left off
-- **Role-gated navigation** — baristas stay in POS, owners access reports + settings
+- **Touch-friendly UI** — large tap targets, no tiny dropdowns, works on iPad
+- **Espresso & Copper theme** — warm browns, `Fraunces` headings, feels like a coffee shop
+- **Real-time cart** — weight-based products, auto discount checks, split payments
+- **Multi-currency** — MMK and LKR with live exchange rates
+- **Sales tabs** — user-scoped, serve multiple customers, pick up where you left off
+- **Role-gated** — baristas see POS only, owners see everything
 
 ---
 
-# MVP Scope
+# Core Features
 
-## Built & running on Supabase.
+## Everything a coffee shop needs. Nothing it doesn't.
 
-| Domain | Features |
+| Domain | What's Built |
 |---|---|
-| **POS Terminal** | Product grid, cart, checkout, split payments, weight-based items |
-| **Inventory** | CRUD products, stock tracking, low-stock alerts |
-| **Customers** | Customer list, purchase history, detail modal |
-| **Discounts** | Percentage, fixed, free-gift discounts with condition engine |
-| **Reports** | Sales charts (Recharts), date-range filtering |
-| **Auth & RBAC** | Supabase Auth + role-based navigation |
-| **Settings** | Interface mode (touch/traditional), currency, logo upload |
+| **POS Terminal** | Product grid, cart, checkout, 9 payment methods, weight-based items |
+| **Inventory** | CRUD products, stock tracking, batch expiry, low-stock alerts |
+| **Customers** | Credit system, price tiers, purchase history |
+| **Discounts** | Percentage, fixed, free-gift with 6 condition types |
+| **Reports** | Sales trends, category charts, inventory analytics, CSV export |
+| **Auth & RBAC** | Supabase Auth, 3 roles, RLS on every table |
 
 ---
 
-# Stretch Goals & AI Usage
+# Multi-Tenant Architecture
 
-## What's next. How AI helped.
+## One codebase, many shops. Data isolated by design.
 
-### Stretch Goals
-- Alert system (email/SMS low-stock + sales summary)
-- Sales tab sharing between baristas
-- Offline mode with local-first sync
+- **`shop_id` on all 18 tables** — every row scoped to its shop
+- **RLS policies** — `current_shop_ids()` helper, no cross-shop data leaks
+- **Per-shop config** — each shop owns its name, currency, tax rate, invoice prefix
+- **`shop_memberships`** — users can be admin at Shop A, cashier at Shop B
+- **`business_type` column** — future feature toggling per shop category
+- **Single deployment** — one Vercel build serves all tenants
 
-### AI-Assisted Development (Vibe Coding Tour)
-- **`pos-helper` Skill** — lint runner + Espresso & Copper theme consistency checker
+Schema foundation is live. Shop switching UI is next.
+
+---
+
+# Built with AI
+
+## Full-stack generation from type definitions to UI components.
+
+- **Claude Code** — generated 48 source files, 14 migrations, 13 docs
+- **`pos-helper` Skill** — lint runner + Espresso & Copper theme checker
 - **`db-guardian` Agent** — schema safety validator against `database.types.ts`
-- **Supabase MCPs** — `@supabase-db` for PostgREST queries, `@supabase-platform` for migrations, branch management, edge functions
-- **Claude Code** — full-stack generation from type definitions to UI components
+- **Supabase MCPs** — PostgREST queries, migration management, edge functions
+- **Documentation-Driven Development** — docs written first, code follows
 
 **Built vibe-to-vibe. Coffee shops deserve good software too.**
