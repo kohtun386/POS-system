@@ -30,6 +30,10 @@ style: |
 **Theme:** Espresso & Copper
 **PechaKucha 6×20** — 6 slides, 20 seconds each
 
+<!-- Speaker Notes (20s):
+This is Coffee-POS — a web-based point-of-sale built specifically for Myanmar coffee shops. React, TypeScript, Supabase, and a custom Espresso & Copper design system. Six slides, twenty seconds each. Let's go.
+-->
+
 ---
 
 # The Problem
@@ -45,6 +49,10 @@ style: |
 **Barista** needs fast touch entry & split payments.
 Both need it on a counter tablet — touch-first, not mouse-first.
 
+<!-- Speaker Notes (20s):
+Café owners in Myanmar face four problems every shift. Slow checkouts with mental math. No stock tracking — beans run out mid-rush. Customer preferences live only in baristas' heads. And generic POS systems don't support local payments like KBZpay or WavePay. Owners need reports. Baristas need speed. Both need it on a tablet.
+-->
+
 ---
 
 # The Solution
@@ -57,6 +65,10 @@ Both need it on a counter tablet — touch-first, not mouse-first.
 - **Multi-currency** — MMK and LKR with live exchange rates
 - **Sales tabs** — user-scoped, serve multiple customers, pick up where you left off
 - **Role-gated** — baristas see POS only, owners see everything
+
+<!-- Speaker Notes (20s):
+Coffee-POS is touch-first — large tap targets designed for iPad on a counter. The Espresso & Copper theme feels warm, not clinical. Real-time cart with weight-based pricing, automatic discounts, and split payments. Multi-currency for MMK and LKR. Sales tabs let baristas serve multiple customers. Role-based: baristas see POS only, owners see everything.
+-->
 
 ---
 
@@ -73,6 +85,10 @@ Both need it on a counter tablet — touch-first, not mouse-first.
 | **Reports** | Sales trends, category charts, inventory analytics, CSV export |
 | **Auth & RBAC** | Supabase Auth, 3 roles, RLS on every table |
 
+<!-- Speaker Notes (20s):
+Six domains, all built. POS terminal with 9 payment methods and weight-based items. Inventory with batch tracking and low-stock alerts. Customer credit system with price tiers. A discount engine with 6 condition types that auto-apply at checkout. Reports with charts and CSV export. Auth with 3 roles and row-level security on every table.
+-->
+
 ---
 
 # Multi-Tenant Architecture
@@ -88,6 +104,10 @@ Both need it on a counter tablet — touch-first, not mouse-first.
 
 Schema foundation is live. Shop switching UI is next.
 
+<!-- Speaker Notes (20s):
+The architecture is multi-tenant. Every table has a shop_id column. Row-level security ensures no shop sees another shop's data. Each shop configures its own name, currency, tax rate, and invoice prefix. Users can have different roles at different shops. One deployment on Vercel serves all tenants. The schema is live — shop switching UI is next.
+-->
+
 ---
 
 # Built with AI
@@ -101,3 +121,7 @@ Schema foundation is live. Shop switching UI is next.
 - **Documentation-Driven Development** — docs written first, code follows
 
 **Built vibe-to-vibe. Coffee shops deserve good software too.**
+
+<!-- Speaker Notes (20s):
+This entire project was built with AI assistance. Claude Code generated 48 source files, 14 migrations, and 13 documentation files. Custom skills handle linting and schema validation. Supabase MCPs manage the database. We practiced Documentation-Driven Development — docs written first, code follows. Built vibe-to-vibe. Coffee shops deserve good software too.
+-->
