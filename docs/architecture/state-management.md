@@ -1,6 +1,6 @@
 # State Management Architecture — CoffeeShop POS
 
-**Last updated:** 2026-06-19
+**Last updated:** 2026-06-23
 **Source of truth:** `src/context/SupabaseAppContext.tsx` (active), `src/context/AuthContext.tsx`, `src/context/ThemeContext.tsx`, `src/context/CurrencyContext.tsx`
 
 ---
@@ -50,15 +50,20 @@ interface AppState {
   discounts: Discount[];
   cart: CartItem[];
   currentUser: User | null;
-  settings: AppSettings;
+  shop: Shop;              // Business identity + POS behavior
+  settings: AppSettings;   // Global/preferences-style settings only
   selectedCustomer: Customer | null;
   salesTabs: SalesTab[];
   activeSalesTab: string;
-  activeShopId: string;  // Current shop for multi-tenant scoping
+  activeShopId: string;
   loading: boolean;
   error: string | null;
 }
 ```
+
+`Shop` owns store name, address, phone, email, logo, tax rate, currency, base currency, invoice prefix/counter, business type, subscription status, and draft retention.
+
+`AppSettings` owns interface mode, auto backup, receipt printer, theme, and exchange-rate provider/key/update interval. It must not contain store identity, tax, currency, or invoice fields in the target architecture.
 
 ### 3.2 Action Types (25 actions)
 
@@ -90,8 +95,9 @@ interface AppState {
 | `ADD_SALE` | `Sale` | Append sale |
 | `DELETE_SALE` | `string` (id) | Remove by id |
 | **Settings** | | |
-| `SET_SETTINGS` | `Partial<AppSettings>` | Merge into settings |
-| `INCREMENT_INVOICE_COUNTER` | `number` | Set new counter value |
+| `SET_SETTINGS` | `Partial<AppSettings>` | Merge preference/global settings only |
+| `SET_SHOP` | `Partial<Shop>` | Merge business identity/POS config into `state.shop` |
+| ~~`INCREMENT_INVOICE_COUNTER`~~ | ~~`number`~~ | **DEPRECATED.** Invoice counter mutation belongs to the atomic DB function `generate_invoice_number(p_shop_id)`. No frontend reducer action for checkout flows. |
 | **Discounts** | | |
 | `SET_DISCOUNTS` | `Discount[]` | Replace all |
 | `ADD_DISCOUNT` | `Discount` | Append |
@@ -126,7 +132,8 @@ Cart state persists across page refresh via two mechanisms:
 On auth (user + profile available), `loadData()` runs:
 
 ```typescript
-const [products, customers, sales, discounts, settings, users, salesTabs] = await Promise.all([
+const [shop, products, customers, sales, discounts, settings, users, salesTabs] = await Promise.all([
+  shopsService.getByUserId(user.id),
   productsService.getAll(),
   customersService.getAll(),
   salesService.getAll().then(r => r.data),
@@ -137,7 +144,7 @@ const [products, customers, sales, discounts, settings, users, salesTabs] = awai
 ]);
 ```
 
-All 7 queries run in parallel. If any fail, error dispatched. On logout, all state reset to initial.
+All data queries run in parallel after auth/profile are available. Shop loading is required for business identity, POS configuration, and approval gating. If any critical query fails, error is dispatched. On logout, all state resets to initial.
 
 If no sales tabs exist, initial tab auto-created:
 ```typescript
@@ -152,7 +159,7 @@ if (salesTabs.length === 0 && user) {
 | Hook | Purpose |
 |------|---------|
 | `useApp()` | Returns `{ state, dispatch }`. Every component uses this. |
-| `useInvoiceGeneration()` | Returns async function that generates invoice number AND persists counter to Supabase. |
+| `useInvoiceGeneration()` | Returns async function that requests an invoice number from the DB-owned atomic invoice path. |
 | `useInvoiceStats()` | Returns function that computes invoice statistics from current state. |
 | `getActiveShopId(state)` | Returns `state.activeShopId`. For future service layer injection. |
 | `useActiveShopId()` | Hook returning active shop ID from context. For future service layer injection. |
@@ -162,10 +169,10 @@ if (salesTabs.length === 0 && user) {
 | Function | Purpose |
 |----------|---------|
 | `checkDiscountEligibility(discount, cart, customer, paymentMethod, total, cardDetails?)` | Returns boolean. Checks active, date range, valid days, all conditions. |
-| `getNextInvoiceNumber(settings)` | Returns formatted string `PREFIX-000001`. |
-| `generateNextInvoiceNumber(settings)` | Returns `{ invoiceNumber, newCounter }`. |
-| `resetInvoiceCounter(dispatch, newCounter)` | Dispatch counter update. |
-| `setInvoicePrefix(dispatch, prefix)` | Dispatch prefix update. |
+| `getNextInvoiceNumber` | Deprecated for source-of-truth generation; display-only helpers must not mutate counters. |
+| `generateNextInvoiceNumber` | Deprecated for persistence; invoice generation must use the atomic DB function/RPC path. |
+| `resetInvoiceCounter` | Deprecated except for explicitly approved administrative reset workflows. |
+| `setInvoicePrefix` | Replaced by shop configuration updates through `shopsService`. |
 
 ---
 
@@ -262,10 +269,10 @@ interface CurrencyState {
 
 | Component | Reads | Dispatches |
 |-----------|-------|------------|
-| `POSTerminal` | `state.cart`, `state.activeSalesTab`, `state.currentUser`, `state.settings` | `ADD_TO_CART`, `UPDATE_CART_ITEM`, `UPDATE_SALES_TAB`, `CLEAR_CART` |
-| `ProductGrid` | `state.products`, `state.settings` | — |
-| `Cart` | `state.cart`, `state.selectedCustomer`, `state.customers`, `state.settings` | `UPDATE_CART_ITEM`, `REMOVE_FROM_CART`, `SET_SELECTED_CUSTOMER` |
-| `CheckoutModal` | `state.cart`, `state.selectedCustomer`, `state.discounts`, `state.products`, `state.settings`, `state.currentUser` | `ADD_SALE`, `UPDATE_PRODUCT`, `UPDATE_CUSTOMER`, `CLEAR_CART`, `INCREMENT_INVOICE_COUNTER` |
+| `POSTerminal` | `state.cart`, `state.activeSalesTab`, `state.currentUser`, `state.shop`, `state.settings` | `ADD_TO_CART`, `UPDATE_CART_ITEM`, `UPDATE_SALES_TAB`, `CLEAR_CART` |
+| `ProductGrid` | `state.products`, `state.shop`, `state.settings` | — |
+| `Cart` | `state.cart`, `state.selectedCustomer`, `state.customers`, `state.shop`, `state.settings` | `UPDATE_CART_ITEM`, `REMOVE_FROM_CART`, `SET_SELECTED_CUSTOMER` |
+| `CheckoutModal` | `state.cart`, `state.selectedCustomer`, `state.discounts`, `state.products`, `state.shop`, `state.settings`, `state.currentUser` | `ADD_SALE`, `UPDATE_PRODUCT`, `UPDATE_CUSTOMER`, `CLEAR_CART` (invoice counter mutation removed — owned by atomic DB function) |
 | `SalesTabManager` | `state.salesTabs`, `state.activeSalesTab`, `state.cart`, `state.selectedCustomer` | `ADD_SALES_TAB`, `UPDATE_SALES_TAB`, `REMOVE_SALES_TAB`, `SET_ACTIVE_SALES_TAB` |
 
 ### 7.2 Management Components
@@ -278,17 +285,17 @@ interface CurrencyState {
 | `CustomerModal` | — | `ADD_CUSTOMER`, `UPDATE_CUSTOMER` |
 | `DiscountManager` | `state.discounts` | `DELETE_DISCOUNT` |
 | `DiscountModal` | `state.products` (for free gift selection) | `ADD_DISCOUNT`, `UPDATE_DISCOUNT` |
-| `TransactionsManager` | `state.sales`, `state.settings` | — |
-| `ReportsManager` | `state.sales`, `state.products`, `state.customers`, `state.settings` | — |
+| `TransactionsManager` | `state.sales`, `state.shop` | — |
+| `ReportsManager` | `state.sales`, `state.products`, `state.customers`, `state.shop` | — |
 | `UserManager` | `state.users`, `state.currentUser` | `SET_USERS` |
 | `UserModal` | `state.users`, `state.currentUser` | `SET_USERS` |
-| `Settings` | `state.settings`, `state.currentUser` | `SET_SETTINGS` |
+| `Settings` | `state.shop`, `state.settings`, `state.currentUser` | `SET_SHOP`, `SET_SETTINGS` |
 
 ### 7.3 Layout Components
 
 | Component | Reads | Dispatches |
 |-----------|-------|------------|
-| `Header` | `state.currentUser`, `state.settings`, `state.cart` | `SET_SETTINGS` (interface mode toggle) |
+| `Header` | `state.currentUser`, `state.shop`, `state.settings`, `state.cart` | `SET_SETTINGS` (interface mode toggle) |
 | `LoginPage` | — | — (uses `useAuth()` only) |
 
 ---
@@ -313,7 +320,7 @@ CheckoutModal opens
   ├─ User clicks "Complete Payment"
   │   │
   │   ▼
-  │   generateInvoice() → settingsService.update() + dispatch INCREMENT_INVOICE_COUNTER
+  │   generateInvoice() → DB-backed atomic invoice function/RPC for active shop
   │   │
   │   ▼
   │   salesService.create(sale) → dispatch ADD_SALE
@@ -372,7 +379,7 @@ supabase.auth.onAuthStateChange(event, session)
   │   AppProvider useEffect: user + profile available → loadData()
   │   │
   │   ▼
-  │   Promise.all([products, customers, sales, discounts, settings, users, salesTabs])
+  │   Promise.all([shop, products, customers, sales, discounts, settings, users, salesTabs])
   │   dispatch all → state populated
   │
   ├─ SIGNED_OUT:
@@ -401,7 +408,7 @@ supabase.auth.onAuthStateChange(event, session)
 | Call `supabase.from()` in components | Bypasses service layer. No camelCase↔snake_case mapping. | Use service objects from `src/lib/services.ts` |
 | Mutate `state` directly | Breaks React rendering. Reducer won't fire. | Always `dispatch()` |
 | Duplicate stock deduction logic | `CheckoutModal` already handles it. Double-deduct = negative stock. | Let CheckoutModal handle inventory. |
-| Build invoice number manually | `useInvoiceGeneration()` handles prefix + counter + Supabase persist. | Use `useInvoiceGeneration()` hook. |
+| Build invoice number manually | Frontend counter increments can duplicate invoices under concurrency. | Use the DB-backed `useInvoiceGeneration()` path. |
 | Reimplement discount eligibility | `checkDiscountEligibility()` handles all 6 condition types. | Use exported utility function. |
 | `any` type in reducer payloads | Loses type safety. 73 lint errors already. | Use discriminated union (planned cleanup). |
 
@@ -411,7 +418,7 @@ supabase.auth.onAuthStateChange(event, session)
 
 | Change | Impact | Status |
 |--------|--------|--------|
-| `shopId` in AppState | All queries scoped by shop. `activeShopId` field added. | Planned (shop_id migration) |
+| `shop: Shop` in AppState | Business identity/POS config moves out of settings. | Dynamic shop configuration milestone |
 | Discriminated union for actions | Eliminates `payload: any`. Type-safe dispatch. | Planned (tech debt #1) |
 | Split context exports to separate files | Fixes React Refresh warnings (26 warnings, 6 files). | Planned (tech debt #2) |
 | Zustand or Redux Toolkit evaluation | Current useReducer pattern works but scales poorly with 25 actions. | Not started |

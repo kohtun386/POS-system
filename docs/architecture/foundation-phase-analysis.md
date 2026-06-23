@@ -1,3 +1,6 @@
+> HISTORICAL / ARCHIVED: This analysis describes the pre-2026-06-20 foundation phase, before the `shop_id` placeholder migration. The current source of truth is `docs/specs/multi-tenancy.md`, `docs/architecture/database.md`, and `docs/superpowers/specs/2026-06-22-dynamic-shop-configuration-design.md`. Do not treat "current state" statements in this file as current architecture.
+
+---
 # Foundation Phase — Analysis Report
 
 **Date:** 2026-06-19  

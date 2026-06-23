@@ -1,7 +1,7 @@
 # Auth Architecture — CoffeeShop POS
 
 **Supabase project:** `ejvvwnupiqytximrbmfw`
-**Last updated:** 2026-06-19
+**Last updated:** 2026-06-23
 
 ---
 
@@ -42,36 +42,44 @@ AppProvider.useEffect triggers loadData()
 Promise.all([products, customers, sales, discounts, settings, users, salesTabs])
 ```
 
-### 1.2 Sign Up
+### 1.2 Sign Up And Pending Approval
+
+Instant active access after signup is deprecated.
 
 ```
-User enters email, password, name, username
+User enters email, password, name, username, optional shop name
     │
     ▼
 AuthContext.signUp(email, password, name, username)
     │
     ▼
-supabase.auth.signUp({ email, password, options: { data: { name, username } } })
+supabase.auth.signUp({ email, password, options: { data: { name, username, shop_name } } })
     │
     ▼
 DB trigger: handle_new_auth_user() fires on auth.users INSERT
     │
-    ├─ Extracts username from raw_user_meta_data → username
-    ├─ Extracts name from raw_user_meta_data → name
-    ├─ Fallback: email prefix for both
+    ├─ Creates public.users profile with active=false
+    ├─ Creates shops row with is_active=false for self-registration
+    ├─ Creates shop_memberships row with is_active=false
     │
     ▼
-INSERT INTO public.users (id, username, name, email, role='cashier', permissions=['pos_access'], active=true)
+User cannot access POS until approved
     │
     ▼
-Frontend fetches trigger-created profile:
-    supabase.from('users').select('*').eq('id', userId).single()
+After sign-in / email verification, frontend shows PendingApprovalScreen
     │
     ▼
-setProfile(trigger-created row)
+Authorized approver activates users.active, shop_memberships.is_active, shops.is_active
+    │
+    ▼
+User can access app data for the active shop
 ```
 
-**Critical:** Frontend does NOT insert user profile. Trigger handles it. Frontend then UPDATES if admin changes role.
+**Critical:** Frontend does NOT insert user profiles directly. The trigger creates the profile/shop/membership skeleton, and app access is gated until all approval flags are active.
+
+**Email confirmation:** Supabase may create the `auth.users` row before email confirmation. If email confirmation is enabled, unconfirmed users cannot sign in normally; approval gating is still required after confirmation.
+
+**Self-registration role:** The intended owner of a self-registered shop is a pending shop admin/owner. Existing admins creating staff can assign `cashier`, `manager`, or `admin` through the user-management workflow after the trigger-created profile exists.
 
 ### 1.3 Admin Creating New User
 
@@ -138,9 +146,9 @@ AppProvider useEffect: user is null →
 
 | Creation Path | Default Role | Override |
 |---------------|-------------|----------|
-| Sign up via app | `cashier` | Admin can update via UserManager |
+| Self-registration via app | pending shop `admin`/owner | Activated only after approval; staff roles assigned separately |
 | Admin creates user | `cashier` (trigger) → admin sets via UPDATE | Admin sets role in UserModal |
-| Dashboard-created user | `cashier` (trigger fallback) | Admin updates after creation |
+| Dashboard-created user | pending/default role from trigger | Admin updates and activates after creation |
 
 ---
 
@@ -226,7 +234,7 @@ AppProvider useEffect: user is null →
 | `users` self-deletion | Blocked in UI | `UserManager.tsx` hides delete button for current user |
 | `sales_tabs` isolation | `user_id = auth.uid()` | RLS policy — complete per-user isolation |
 | `sales` cashier insert | `auth.role() = 'authenticated'` | RLS policy — all authenticated can insert sales |
-| `app_settings` single-row | `SELECT * LIMIT 1` | Service pattern, not RLS |
+| `app_settings` preferences | Read/update preference fields only; store identity lives in `shops` | Service pattern + RLS |
 | `settingsService` read-only for cashiers | UI only | `Settings.tsx: canEditSettings = role === 'admin' \|\| role === 'manager'` |
 
 ---
@@ -366,9 +374,9 @@ CREATE POLICY "Shops viewable by members" ON shops
     AND id IN (SELECT public.current_shop_ids())
   );
 
--- ALL: shop admin only
-CREATE POLICY "Shops write by shop admin" ON shops
-  FOR ALL USING (
+-- UPDATE: shop admin only for own shop
+CREATE POLICY "Shops update by shop admin" ON shops
+  FOR UPDATE USING (
     auth.role() = 'authenticated'
     AND id IN (SELECT public.current_shop_ids())
     AND EXISTS (
@@ -376,6 +384,29 @@ CREATE POLICY "Shops write by shop admin" ON shops
       WHERE shop_memberships.user_id = auth.uid()
       AND shop_memberships.shop_id = shops.id
       AND shop_memberships.role = 'admin'
+    )
+  );
+
+-- INSERT: trusted signup/admin workflow only. A separate platform-admin role is not modeled yet.
+CREATE POLICY "Shops insert by platform admin" ON shops
+  FOR INSERT WITH CHECK (
+    auth.role() = 'authenticated'
+    AND EXISTS (
+      SELECT 1 FROM public.users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+      AND users.shop_id = shops.id  -- Must be their own shop
+    )
+  );
+
+-- DELETE: trusted admin workflow only. Direct client delete should remain unavailable unless a platform-admin model is explicitly added.
+CREATE POLICY "Shops delete by platform admin" ON shops
+  FOR DELETE USING (
+    auth.role() = 'authenticated'
+    AND EXISTS (
+      SELECT 1 FROM public.users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
     )
   );
 ```
@@ -390,7 +421,7 @@ CREATE POLICY "Shop memberships viewable by shop members" ON shop_memberships
     AND shop_id IN (SELECT public.current_shop_ids())
   );
 
--- ALL: shop admin only
+-- UPDATE: shop admin only for own shop. INSERT/DELETE require an explicitly modeled platform/admin workflow or trusted server-side function.
 CREATE POLICY "Shop memberships write by shop admin" ON shop_memberships
   FOR ALL USING (
     auth.role() = 'authenticated'
@@ -403,6 +434,8 @@ CREATE POLICY "Shop memberships write by shop admin" ON shop_memberships
     )
   );
 ```
+
+**Note:** The `shop_memberships` INSERT/DELETE operations are intentionally restricted. New memberships for self-registration are created by the `handle_new_auth_user()` SECURITY DEFINER trigger (bypasses RLS). Admin-initiated membership management should use a trusted server-side function or explicit platform-admin workflow.
 
 ---
 
@@ -467,13 +500,13 @@ Functions that run with owner privileges (bypass RLS). Must be carefully control
 
 | Gap | Risk | Mitigation |
 |-----|------|------------|
-| No tenant isolation | Any authenticated user sees all data | shop_id migration (planned) |
+| Dynamic shop configuration incomplete | Store identity/POS config still being moved from `app_settings` to `shops` | Dynamic shop configuration spec |
 | No audit logging | Can't trace who changed what | activity_log table (planned) |
-| No rate limiting | Brute force on login | Supabase Dashboard → Auth → Rate Limits (manual) |
+| Signup abuse risk | Bot signups can create pending shops/users | Email confirmation, CAPTCHA, Supabase rate limits, optional signup Edge Function limiter |
 | No MFA | Admin accounts vulnerable | Supabase Dashboard → Auth → MFA (manual) |
 | `users` DELETE blocked | Can't remove users via app | Intentional — use `active=false` soft delete |
 | Leaked password protection | Must enable manually | Supabase Dashboard → Auth → Settings (manual) |
-| No session invalidation | User stays logged in after role change | Re-login required; no real-time role push |
+| No session invalidation | User stays logged in after role/approval change | Re-login or refresh required; no real-time role push |
 | `users` UPDATE: manager can't edit others | Only admin can update other users | UI hides edit for non-admin managers; RLS blocks |
 
 ---

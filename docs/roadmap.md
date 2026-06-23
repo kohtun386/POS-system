@@ -61,6 +61,29 @@ Commits referenced: `8556dc3`, `25da4db`, `64e0082`
 
 ---
 
+### ✅ Multi-Tenancy Foundation — shop_id Placeholder (Completed 2026-06-20)
+
+**Decision:** Add `shop_id` foundation before onboarding more shops.
+
+**Implementation:**
+- `shops` and `shop_memberships` tables created
+- Tenant-scoped tables received `shop_id` with the default shop UUID
+- `shop_id` indexes created for tenant-scoped access paths
+- Default shop seeded for existing single-shop operation
+
+**Remaining:** Dynamic per-shop configuration is the next milestone. `shops` will own business identity and POS behavior; `app_settings` will be trimmed to global/preferences-style settings.
+
+### ✅ Documentation Reconciliation — Dynamic Shop Config Source Of Truth (Completed 2026-06-23)
+
+**Decision:** Align docs before implementation so there is one canonical architecture.
+
+**Canonical rules:**
+- `shops` owns store identity, tax/currency behavior, invoice config, business type, and draft retention
+- `app_settings` owns global/preferences-style settings only
+- Invoice generation is atomic and database-owned per shop
+- Instant signup access is deprecated in favor of Pending Approval
+- Exchange-rate API keys remain in `app_settings` temporarily with documented security risk and future server-side secret migration
+
 ## Short-Term Roadmap
 
 Features needed for beta in real coffee shop.
@@ -143,7 +166,7 @@ Not blocking beta. Schedule after stabilization.
 
 → Full gap analysis moved to `docs/specs/multi-tenancy.md`.
 
-Summary: Zero tenant isolation currently. Every table needs `shop_id`, every RLS policy needs rewrite (~25 policies), auth model shifts from global roles to per-shop memberships. **Estimated cost: 2-3 weeks.** Alternative for < 5 shops: separate Supabase projects per shop.
+Historical note: this section originally described the pre-2026-06-20 state when tenant isolation was not yet present. The `shop_id` foundation now exists. Current remaining work is dynamic shop configuration: move store identity, tax, currency, invoice config, business type, and draft retention into `shops`; trim `app_settings`; route invoice generation through the atomic DB function; and add pending approval gating.
 
 ---
 
@@ -156,6 +179,6 @@ Summary: Zero tenant isolation currently. Every table needs `shop_id`, every RLS
 4. React Refresh warnings             ← POST-BETA (1 hour, dev experience)
 5. Color palette formalization        ← POST-BETA (1-2 hours, visual polish)
 6. any type cleanup                   ← POST-BETA (3-4 hours, type safety)
-7. Multi-tenant readiness             ← GROWTH (2-3 weeks, when onboarding second shop)
+7. Dynamic shop configuration         ← NEXT ARCHITECTURE MILESTONE
 8. Monthly maintenance checklist      ← See docs/ops/maintenance-checklist.md
 ```

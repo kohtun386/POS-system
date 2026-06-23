@@ -98,7 +98,8 @@ is_weight_based: product.isWeightBased,
 | `customersService` | customers | `update()` only includes provided fields |
 | `salesService` | sales | Cursor-based pagination: `{ limit, cursor } → { data, count, hasMore }` |
 | `discountsService` | discounts | JSONB conditions, free_gift_products array |
-| `settingsService` | app_settings | Single-row table, `update()` fetches existing ID first |
+| `shopsService` | shops | Business identity and per-shop POS behavior: name, logo, tax, currency, invoice config, draft retention |
+| `settingsService` | app_settings | Global/preferences-style settings only: interface mode, theme, printer, backup, exchange-rate config |
 | `usersService` | users | CRUD only, auth handled separately |
 | `salesTabsService` | sales_tabs | User-scoped, joins customers for selected_customer |
 | `alertRecipientsService` | alert_recipients | alert_types JSONB array |
@@ -135,15 +136,15 @@ state.products.push(newProduct);
 | Sales | `SET_SALES`, `ADD_SALE`, `DELETE_SALE` |
 | Discounts | `SET_DISCOUNTS`, `ADD_DISCOUNT`, `UPDATE_DISCOUNT`, `DELETE_DISCOUNT` |
 | Users | `SET_USERS` (direct replace, no per-user actions) |
-| Settings | `SET_SETTINGS` (partial merge) |
+| Settings | `SET_SETTINGS` (preferences only), `SET_SHOP` (business/POS config) |
 | Sales Tabs | `SET_SALES_TABS`, `ADD_SALES_TAB`, `UPDATE_SALES_TAB`, `REMOVE_SALES_TAB`, `SET_ACTIVE_SALES_TAB` |
-| Meta | `SET_LOADING`, `SET_ERROR`, `SET_CURRENT_USER`, `SET_SELECTED_CUSTOMER`, `INCREMENT_INVOICE_COUNTER`, `SET_ACTIVE_SHOP` |
+| Meta | `SET_LOADING`, `SET_ERROR`, `SET_CURRENT_USER`, `SET_SELECTED_CUSTOMER`, `SET_ACTIVE_SHOP` |
 
 **Source:** `docs/architecture/state-management.md`
 
 ### Cart Persistence
 
-Cart auto-saved to `localStorage` under `CART_STORAGE_KEY = 'coffeepos_cart'` on every change. Restored on mount before Supabase load. Also persisted to `sales_tabs` table for cross-device continuity.
+Cart auto-saved to `localStorage` under `CART_STORAGE_KEY = 'coffeepos_cart'` on every change. Restored on mount before Supabase load. Also persisted to `sales_tabs` table for cross-device continuity. Cleanup of stale DB cart backup data is safe because localStorage is the primary active-session persistence path.
 
 **Source:** `docs/architecture/state-management.md`
 
@@ -208,9 +209,9 @@ Separate INSERT, UPDATE, DELETE policies for finer control. Same role gating as 
 
 ## Auth Flow Patterns
 
-### Sign-Up: DB Trigger Creates Profile
+### Sign-Up: DB Trigger Creates Pending Profile
 
-Frontend calls `supabase.auth.signUp()`. DB trigger `handle_new_auth_user()` inserts into `public.users` with role='cashier'. Frontend fetches the trigger-created profile. Never INSERTs into users table directly.
+Frontend calls `supabase.auth.signUp()`. DB trigger `handle_new_auth_user()` creates a pending profile/shop/membership skeleton for self-registration. Instant active access is deprecated: the user sees Pending Approval until `users.active`, `shop_memberships.is_active`, and `shops.is_active` are true. Never INSERT into `users` directly from components.
 
 **Source:** `docs/architecture/auth.md`
 
@@ -294,11 +295,11 @@ Components use local `loading` state or `state.loading` from context. Buttons di
 
 ## Invoice Number Generation
 
-Use `useInvoiceGeneration()` hook from SupabaseAppContext, not manual string construction. The hook generates the number, persists the counter increment to Supabase, and dispatches `INCREMENT_INVOICE_COUNTER`.
+Use `useInvoiceGeneration()` from SupabaseAppContext, not manual string construction. The hook must call the DB-owned atomic invoice generation path for the active shop. Frontend-side counter increments are prohibited because concurrent checkouts can generate duplicate invoices.
 
 ```ts
 const generateInvoice = useInvoiceGeneration();
-const invoiceNumber = await generateInvoice();  // async — writes to DB
+const invoiceNumber = await generateInvoice();  // async — DB function owns counter mutation
 ```
 
 **Source:** `CLAUDE.md`
@@ -322,7 +323,7 @@ Use `checkDiscountEligibility()` from SupabaseAppContext. Don't reimplement cond
 | Mutate `state` directly | Breaks React state model | Use `dispatch()` |
 | Forget camelCase↔snake_case mapping | Data silently wrong | Map in service methods |
 | Duplicate inventory deduction logic | CheckoutModal already handles it | Don't re-deduct stock |
-| Manual invoice number construction | Desyncs with counter in DB | Use `useInvoiceGeneration()` |
+| Manual invoice number construction | Can desync or duplicate counters under concurrency | Use DB-backed `useInvoiceGeneration()` |
 | Reimplement discount checking | Edge cases not covered | Use `checkDiscountEligibility()` |
 
 **Source:** `CLAUDE.md`, `docs/architecture/state-management.md`

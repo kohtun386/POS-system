@@ -1,7 +1,7 @@
 # Dynamic Shop Configuration System — Design Spec
 
 **Date:** 2026-06-22
-**Status:** Active
+**Status:** Active — reconciled 2026-06-23
 **Scope:** Multi-tenant SaaS transition — global settings → per-shop configuration
 
 ---
@@ -13,9 +13,9 @@ The CoffeeShop POS currently stores all configuration — business identity, POS
 This spec defines the full transition to per-shop configuration using general SaaS patterns (organization model, membership roles, tenant-scoped RLS, subscription tiers) without adopting a specific boilerplate. The work is split into 4 phases: database migration, service layer, state/UI refactor, and governance features (approval workflow, anti-bot, auto-cleanup).
 
 **Key decisions:**
-- Exchange rates stay global in `app_settings` (market data, not shop-specific)
+- Exchange-rate configuration stays in `app_settings` as global/preferences-style configuration. API keys remain there temporarily with explicit security risk and future server-side secret migration.
 - Draft retention is shop-configurable, defaulting to 30 days
-- New signups enter `PENDING` state — require email verification + admin approval
+- New signups enter `PENDING` state — require email verification when enabled plus approval before POS access
 - RLS corrected so shop admins (not just global admins) manage shop settings
 - Cart persistence uses localStorage as primary, `sales_tabs.cart` as backup — cleanup cron is safe
 
@@ -28,7 +28,7 @@ This spec defines the full transition to per-shop configuration using general Sa
 | Layer | Storage | Contents | Rationale |
 |-------|---------|----------|-----------|
 | **Platform Config** | `.env` / deployment config | Supabase URL, anon key, service role key, API secrets | Secrets never in DB. Deploy-time config. |
-| **Global Preferences** | `app_settings` (single row, shop_id FK) | Theme, interface mode, auto backup, receipt printer, exchange rate config | User preference, not business identity. Exchange rates are market data. |
+| **Global Preferences** | `app_settings` | Theme, interface mode, auto backup, receipt printer, exchange-rate config | Preferences/global operational settings, not business identity. Exchange-rate API keys remain here temporarily with documented risk. |
 | **Shop Config** | `shops` table (per-shop rows) | Name, address, phone, email, logo, tax rate, currency, base currency, invoice prefix/counter, business type, subscription tier | Business identity + POS behavior. Core multi-tenant data. |
 
 ### 1.2 `shops` Table — Current vs Target
@@ -48,7 +48,7 @@ This spec defines the full transition to per-shop configuration using general Sa
 | `created_at` | timestamptz | |
 | `updated_at` | timestamptz | |
 
-**Columns to add** (7):
+**Columns to add** (8):
 
 | Column | Type | Default | Purpose |
 |--------|------|---------|---------|
@@ -58,7 +58,8 @@ This spec defines the full transition to per-shop configuration using general Sa
 | `currency` | text | `'USD'` | Display currency |
 | `base_currency` | text | `'USD'` | Base currency for pricing |
 | `invoice_prefix` | text | `'INV'` | Invoice number prefix |
-| `invoice_counter` | integer | `1000` | Next invoice number |
+| `invoice_counter` | integer | `1000` | Next invoice number; mutated only by atomic DB function |
+| `draft_retention_days` | integer | `30` | Shop-configurable draft cleanup retention |
 
 ### 1.3 `app_settings` Table — Trimmed to Preferences
 
@@ -75,7 +76,7 @@ This spec defines the full transition to per-shop configuration using general Sa
 | `receipt_printer` | boolean | Printer toggle |
 | `theme` | text | light/dark/auto |
 | `exchange_rate_provider` | text | Rate provider (stays global) |
-| `exchange_rate_api_key` | text | API key (stays global) |
+| `exchange_rate_api_key` | text | API key, temporarily DB-stored global setting; known security risk |
 | `exchange_rate_update_interval` | integer | Update interval in minutes |
 | `created_at` | timestamptz | |
 | `updated_at` | timestamptz | |
@@ -161,24 +162,19 @@ interface AppState {
 ```typescript
 type AppAction =
   | { type: 'SET_SHOP'; payload: Partial<Shop> }
-  | { type: 'INCREMENT_INVOICE_COUNTER'; payload: number }
   // ... existing actions
 ```
+
+Invoice counter mutation is intentionally not a normal frontend reducer action. Checkout invoice generation must use the atomic database function/RPC path. If an administrative invoice reset feature is later added, it should be modeled as an explicit admin workflow, not reused by checkout.
 
 ### 2.3 Reducer
 
 ```typescript
 case 'SET_SHOP':
   return { ...state, shop: { ...state.shop, ...action.payload } };
-
-case 'INCREMENT_INVOICE_COUNTER':
-  return {
-    ...state,
-    shop: { ...state.shop, invoiceCounter: action.payload }
-  };
 ```
 
-Note: `INCREMENT_INVOICE_COUNTER` moves from `state.settings` → `state.shop`.
+There is no checkout-facing `INCREMENT_INVOICE_COUNTER` reducer in the target architecture. The database-owned invoice function mutates `shops.invoice_counter` atomically.
 
 ### 2.4 Initial State
 
@@ -255,7 +251,8 @@ export const shopsService = {
     if (shop.currency !== undefined) updateData.currency = shop.currency;
     if (shop.baseCurrency !== undefined) updateData.base_currency = shop.baseCurrency;
     if (shop.invoicePrefix !== undefined) updateData.invoice_prefix = shop.invoicePrefix;
-    if (shop.invoiceCounter !== undefined) updateData.invoice_counter = shop.invoiceCounter;
+    // Do not update invoice_counter in normal checkout flows. Use the atomic DB invoice function instead.
+    if (shop.invoiceCounter !== undefined) updateData.invoice_counter = shop.invoiceCounter; // admin reset only
     if (shop.draftRetentionDays !== undefined) updateData.draft_retention_days = shop.draftRetentionDays;
 
     const { data, error } = await supabase
@@ -322,34 +319,23 @@ async function loadData() {
 }
 ```
 
-### 2.8 Invoice Generation — Updated
+### 2.8 Invoice Generation — DB-Owned Atomic Source Of Truth
 
 ```typescript
 // src/context/SupabaseAppContext.tsx
 
 export function useInvoiceGeneration() {
-  const { state, dispatch } = useApp();
+  const { state } = useApp();
 
   return async () => {
-    const { invoiceNumber, newCounter } = generateNextInvoiceNumber(state.shop);
-
-    try {
-      await shopsService.update(state.shop.id, { invoiceCounter: newCounter });
-      dispatch({ type: 'INCREMENT_INVOICE_COUNTER', payload: newCounter });
-    } catch (error) {
-      console.error('Error updating invoice counter:', error);
-    }
-
-    return invoiceNumber;
+    return await invoicesService.generateForShop(state.shop.id);
   };
 }
-
-export function generateNextInvoiceNumber(shop: Shop): { invoiceNumber: string; newCounter: number } {
-  const newCounter = shop.invoiceCounter + 1;
-  const invoiceNumber = `${shop.invoicePrefix}-${newCounter.toString().padStart(6, '0')}`;
-  return { invoiceNumber, newCounter };
-}
 ```
+
+`invoicesService.generateForShop(shopId)` must call the DB-owned atomic invoice generation path, such as RPC `generate_invoice_number(p_shop_id)`, or create a sale that invokes `auto_generate_invoice_number()` with `NEW.shop_id`.
+
+Frontend code must not calculate and persist `invoiceCounter` increments as the source of truth. UI-only formatting helpers are allowed, but counter mutation must be atomic in the database to avoid duplicate invoice numbers under concurrent checkouts.
 
 ---
 
@@ -423,11 +409,11 @@ New signups enter a `PENDING` state. Access is gated until a platform admin appr
 User signs up
   → auth.users row created
   → trigger handle_new_auth_user() fires
-    → public.users row created (role='cashier', active=false)
+    → public.users row created (pending shop admin/owner, active=false)
     → shop_memberships row created (is_active=false)
     → shops row created (is_active=false) [NEW: for self-registration]
   → User sees "Pending Approval" screen
-  → Platform admin reviews → sets users.active=true, shop_memberships.is_active=true, shops.is_active=true
+  → Authorized approver reviews → sets users.active=true, shop_memberships.is_active=true, shops.is_active=true
   → User can now access POS
 ```
 
@@ -456,14 +442,14 @@ BEGIN
         split_part(NEW.email, '@', 1)
     );
 
-    -- 1. Create user profile (inactive until approved)
+    -- 1. Create owner profile (inactive until approved)
     INSERT INTO public.users (id, username, name, email, role, permissions, active)
     VALUES (
         NEW.id,
         v_username,
         v_name,
         NEW.email,
-        'admin',                          -- Shop owner = admin of their shop
+        'admin',                          -- Pending shop owner = admin of their shop after approval
         ARRAY['pos_access']::TEXT[],
         false                             -- PENDING until approved
     );
@@ -499,7 +485,7 @@ if (!state.shop.isActive) {
 **Approval notification:**
 - UI state change: user sees "Your account is pending approval" screen with no POS access
 - Email notification (optional, via existing `notification_service_config`): "Your shop has been approved! You can now access the POS."
-- Admin sees pending shops in a management view (future UI, or Supabase Dashboard initially)
+- Authorized approver sees pending shops in a management view (future UI, or Supabase Dashboard initially)
 
 ### 4.2 Anti-Bot Strategy
 
@@ -535,7 +521,7 @@ Supabase has built-in rate limiting on auth endpoints. Additional layers:
 
 ### 4.3 RLS Correction — Shop Admin Policy
 
-**Current state (migration `20260620000003`):**
+**Historical problem (older RLS draft):**
 
 ```sql
 -- Shops write: GLOBAL admin only (users.role = 'admin')
@@ -577,7 +563,7 @@ CREATE POLICY "Shops update by shop admin" ON shops
     )
   );
 
--- Shops INSERT: platform admin only (create shops for others)
+-- Shops INSERT: trusted signup/admin workflow only. A separate platform-admin role is not modeled yet.
 CREATE POLICY "Shops insert by platform admin" ON shops
   FOR INSERT WITH CHECK (
     auth.role() = 'authenticated'
@@ -589,7 +575,7 @@ CREATE POLICY "Shops insert by platform admin" ON shops
     )
   );
 
--- Shops DELETE: platform admin only
+-- Shops DELETE: trusted admin workflow only. Direct client delete should remain unavailable unless a platform-admin model is explicitly added.
 CREATE POLICY "Shops delete by platform admin" ON shops
   FOR DELETE USING (
     auth.role() = 'authenticated'
@@ -711,7 +697,7 @@ SELECT cron.schedule(
 | Step | Action | Migration |
 |------|--------|-----------|
 | 1.1 | Add 7 columns to `shops` | `ALTER TABLE shops ADD COLUMN ...` |
-| 1.2 | Add `draft_retention_days` to `shops` | `ALTER TABLE shops ADD COLUMN draft_retention_days INTEGER DEFAULT 30` |
+| 1.2 | Confirm/add `draft_retention_days` to `shops` | Included with the 8 shop config columns if not already present |
 | 1.3 | Backfill default shop from `app_settings` | `UPDATE shops SET tax_rate = ..., currency = ...` |
 | 1.4 | Drop 10 columns from `app_settings` | `ALTER TABLE app_settings DROP COLUMN ...` |
 | 1.5 | Refactor `generate_invoice_number()` | Add `p_shop_id` parameter |
@@ -732,8 +718,8 @@ SELECT cron.schedule(
 | 2.2 | Trim `AppSettings` interface (remove 10 fields) |
 | 2.3 | Create `shopsService` in `src/lib/services.ts` |
 | 2.4 | Trim `settingsService.get()` and `settingsService.update()` |
-| 2.5 | Update `useInvoiceGeneration()` to use `shopsService` |
-| 2.6 | Update `generateNextInvoiceNumber()` param from `settings` → `shop` |
+| 2.5 | Update `useInvoiceGeneration()` to use DB-backed `invoicesService`/RPC, not frontend counter increments |
+| 2.6 | Deprecate frontend `generateNextInvoiceNumber()` for persistence; keep only display helpers if needed |
 
 **Verification:** TypeScript compiles. Service tests pass.
 
@@ -745,7 +731,7 @@ SELECT cron.schedule(
 |------|--------|
 | 3.1 | Add `shop: Shop` to `AppState` + `SET_SHOP` action in SupabaseAppContext |
 | 3.2 | Update `loadData()` to call `shopsService.getByUserId()` |
-| 3.3 | Update `INCREMENT_INVOICE_COUNTER` reducer to write to `state.shop` |
+| 3.3 | Remove invoice counter mutation as normal frontend reducer flow; DB function is source of truth |
 | 3.4 | Update `Header.tsx`: `storeName`/`storeLogo` → `shop.name`/`shop.logo` |
 | 3.5 | Update `ReceiptPrint.tsx`: 7 fields → `state.shop.*` |
 | 3.6 | Update `Cart.tsx`: `currency`/`taxRate` → `shop.*` |
@@ -805,11 +791,11 @@ SELECT cron.schedule(
 | Conflict | Resolution |
 |----------|------------|
 | RLS write = global admin only → shop admin can't edit settings | Phase 1 Step 1.7: update RLS to shop-admin-scoped |
-| `INCREMENT_INVOICE_COUNTER` writes to `state.settings` | Phase 3 Step 3.3: move to `state.shop` |
-| `useInvoiceGeneration()` calls `settingsService.update()` | Phase 2 Step 2.5: change to `shopsService.update()` |
+| `INCREMENT_INVOICE_COUNTER` writes to frontend state | Remove as source-of-truth flow; invoice counter mutation belongs to atomic DB function |
+| `useInvoiceGeneration()` calls `settingsService.update()` | Phase 2 Step 2.5: change to DB-backed invoice RPC/service |
 | `generate_invoice_number()` no-arg reads `app_settings` | Phase 1 Step 1.5: add `p_shop_id` param, read `shops` |
 | Cart in localStorage + `sales_tabs.cart` | Cleanup cron safe: localStorage is primary |
-| `handle_new_auth_user()` creates active users | Phase 4 Step 4.1: set `is_active=false` for approval gate |
+| `handle_new_auth_user()` creates active users | Phase 4 Step 4.1: create pending inactive user/shop/membership for approval gate |
 | CheckoutModal hardcoded bank list | Deferred — banks are regional, not shop-specific |
 
 ---
@@ -820,7 +806,7 @@ SELECT cron.schedule(
 - Shop creation/management UI beyond approval (admin uses Dashboard initially)
 - Receipt customization (custom footer text, show/hide elements)
 - Per-shop user role management (roles stay global in `users` table)
-- Exchange rate configuration (stays in `app_settings` — market data)
+- Moving exchange-rate API keys out of `app_settings` into Edge Function secrets/server-side env vars
 - New Settings UI layout or sections (existing UI reused as-is)
 - `business_type` feature toggling (column added for future use)
 - Multi-shop membership UI (user sees one shop)

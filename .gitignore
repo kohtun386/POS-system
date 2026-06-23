@@ -42,3 +42,6 @@ opencode.json
 
 # Presentations (local use only)
 slides/
+.agents/
+.codex/
+AGENTS.md

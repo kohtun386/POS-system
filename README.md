@@ -1,6 +1,6 @@
 # CoffeeShop POS
 
-A multi-tenant, web-based point-of-sale platform built for coffee shops, food courts, and small-to-medium restaurants — with a focus on the Myanmar market. Supports 9 payment methods including KBZpay, WavePay, AYAPay, CBPay, and MPU. Installable as a PWA on iPad and Android. Multi-tenancy foundation in place: per-shop config, RLS-scoped data, and role-based access across 18 database tables.
+A multi-tenant, web-based point-of-sale platform built for coffee shops, food courts, and small-to-medium restaurants — with a focus on the Myanmar market. Supports 9 payment methods including KBZpay, WavePay, AYAPay, CBPay, and MPU. Installable as a PWA on iPad and Android. Multi-tenancy foundation is in place with `shop_id` scoping and role-based access; dynamic per-shop configuration is specified and pending implementation.
 
 ![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
@@ -76,7 +76,7 @@ A multi-tenant, web-based point-of-sale platform built for coffee shops, food co
 - Cart persists across page refresh via localStorage
 
 ### Multi-Tenancy (Foundation)
-- `shop_id` column on all 18 tables with default shop UUID
+- `shop_id` foundation on tenant-scoped tables with default shop UUID
 - `shops` and `shop_memberships` tables for per-shop roles
 - RLS policies scoped via `current_shop_ids()` helper function
 - Schema foundation complete — UI for shop switching deferred
@@ -134,15 +134,15 @@ npm run dev
 # → http://localhost:5173
 ```
 
-### Create Admin User
+### Create Admin / Approve User
 
-1. Supabase Dashboard → Authentication → Users → Invite user by email
-2. User signs up via the app login page
-3. DB trigger `handle_new_auth_user()` auto-creates profile with role `cashier`
-4. In Supabase SQL Editor, promote to admin:
+1. Supabase Dashboard → Authentication → Users → Invite user by email, or let the user sign up via the app
+2. DB trigger `handle_new_auth_user()` creates a pending profile/shop/membership skeleton for self-registration
+3. Instant access after signup is deprecated; access requires `users.active`, `shop_memberships.is_active`, and `shops.is_active`
+4. In Supabase SQL Editor, assign role and activate the user/shop records:
 
 ```sql
-UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
+UPDATE users SET role = 'admin', active = true WHERE email = 'your@email.com';\n-- Also activate the related shop_memberships row and shop row for self-registration.
 ```
 
 ### Scripts
@@ -204,7 +204,7 @@ src/
 
 | Table | Purpose |
 |-------|---------|
-| `app_settings` | Single-row store configuration |
+| `app_settings` | Global/preferences-style settings: interface, theme, printer, backup, exchange-rate config |
 | `categories` | Product categories |
 | `customers` | Customer records with credit system |
 | `suppliers` | Supplier records (data model only, no UI) |
@@ -217,7 +217,7 @@ src/
 | `currency_config` | Supported currencies |
 | `exchange_rates` | Active exchange rates (versioned) |
 | `exchange_rate_history` | Rate change audit trail |
-| `shops` | Multi-tenant shop records |
+| `shops` | Shop identity and per-shop POS configuration: branding, tax, currency, invoice config, draft retention |
 | `shop_memberships` | User-to-shop role assignments |
 | `alert_recipients` | Alert notification recipients |
 | `alert_templates` | Email/SMS alert templates |
@@ -230,7 +230,7 @@ src/
 ### Key Database Features
 
 - **Row Level Security** on all 18 tables — role-aware policies (admin/manager/cashier)
-- **Triggers:** auto invoice number generation, customer stats update, user profile auto-creation
+- **Triggers/functions:** atomic per-shop invoice number generation, customer stats update, pending user/profile/shop creation
 - **9 functions** with `SET search_path = ''` (injection hardening)
 - **30+ indexes** for performance (B-tree, GIN full-text, partial, composite)
 
@@ -281,7 +281,7 @@ Documentation-Driven Development (DDD) workflow. Docs are source of truth.
 | **Deployment** | [`docs/architecture/deployment.md`](docs/architecture/deployment.md) | Env vars, build/deploy, PWA config, backup, troubleshooting |
 | **Roadmap** | [`docs/roadmap.md`](docs/roadmap.md) | Feature roadmap, technical debt register |
 | **Technical Debt** | [`docs/technical-debt.md`](docs/technical-debt.md) | any types, React Refresh warnings, color palette drift |
-| **Multi-Tenancy** | [`docs/specs/multi-tenancy.md`](docs/specs/multi-tenancy.md) | Gap analysis and shop_id migration strategy |
+| **Multi-Tenancy** | [`docs/specs/multi-tenancy.md`](docs/specs/multi-tenancy.md) | Current shop_id foundation, dynamic shop configuration target, historical context |
 | **Inventory Alerts** | [`docs/specs/inventory-alerts.md`](docs/specs/inventory-alerts.md) | Alert system spec (5 alert types, email/SMS, templates) |
 | **Maintenance** | [`docs/ops/maintenance-checklist.md`](docs/ops/maintenance-checklist.md) | Monthly security & DB maintenance |
 
@@ -300,7 +300,7 @@ Documentation-Driven Development (DDD) workflow. Docs are source of truth.
 | Service role key removed from client bundle | ✅ |
 | User profile auto-creation via trigger | ✅ Since migration `20260619000002` |
 
-**Planned:** Multi-tenant shop_id isolation, audit logging, MFA for admin accounts.
+**Planned:** Dynamic per-shop configuration implementation, audit logging, MFA for admin accounts, server-side storage for exchange-rate API keys.
 
 ---
 

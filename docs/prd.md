@@ -1,7 +1,7 @@
 # Product Requirements Document — CoffeeShop POS v1
 
 **Status:** Draft
-**Last updated:** 2026-06-19
+**Last updated:** 2026-06-23
 **Supersedes:** Nothing (new document)
 **Governs:** All v1 feature work. Every PR must reference acceptance criteria from this doc.
 
@@ -14,10 +14,10 @@ CoffeeShop POS is a multi-tenant, web-based point-of-sale platform for fast-pace
 **v1 focus:** High-speed retail checkout workflow. Barista adds products → cart → checkout → receipt. Under 10 seconds for a 3-item order on iPad.
 
 **Architecture foundation (in progress):**
-- Multi-tenant schema with `shop_id` placeholder on all tables
+- Multi-tenant schema with `shop_id` foundation on tenant-scoped tables
 - Role-based access control (admin / manager / cashier)
 - Modular component structure (Manager + Modal pattern per domain)
-- Supabase backend with RLS-enforced tenant isolation
+- Supabase backend with RLS-enforced tenant isolation and pending dynamic per-shop configuration
 
 **Future expansion (not v1):** Table management, kitchen display system (KDS), recipe/ingredient costing, supplier portals, delivery integration.
 
@@ -274,30 +274,36 @@ Acceptance Criteria:
 
 ### 3.8 Settings
 
-**FR-SET-01: Configure store settings**
-> As an Owner, I want to configure store information, tax rate, currency, and invoice settings, so that receipts and pricing reflect my business.
+**FR-SET-01: Configure shop settings and global preferences**
+> As an Owner, I want to configure shop identity, POS behavior, and system preferences, so that receipts, pricing, and staff workflows reflect my business.
 
 Acceptance Criteria:
-- Settings page: store name, address, phone, email, logo upload, tax rate, display currency, base currency, invoice prefix, invoice counter
+- Shop Configuration section persists to `shops`: store name, address, phone, email, logo upload, tax rate, display currency, base currency, invoice prefix, business type, and draft retention days
+- Invoice counter is DB-owned and not user-editable from the Settings UI; invoice numbers come from the atomic database function `generate_invoice_number(p_shop_id)` which mutates `shops.invoice_counter` atomically. Only an explicit admin reset workflow (if implemented) should modify the counter.
+- Global Preferences section persists to `app_settings`: interface mode, theme, receipt printer toggle, auto-backup toggle, exchange-rate provider, exchange-rate API key, and exchange-rate update interval
+- Exchange-rate API key storage in `app_settings` is a known security compromise; future work moves provider keys to Edge Function secrets or server-side deployment environment variables
 - Exchange rate management: view/edit rates, update from API, view history
-- System preferences: theme (light/dark/auto)
-- Hardware: receipt printer toggle, auto-backup toggle
 - Current user info display
-- Read-only for non-admin/manager roles
-- Changes persist to Supabase `app_settings` table
+- Shop identity/POS config editable by shop admin only
+- Preference fields editable by admin/manager according to RLS and UI permissions
+- Changes persist through service objects, not direct component-level Supabase calls
 
 ---
 
 ### 3.9 Authentication & Authorization
 
-**FR-AUTH-01: Email/password authentication**
-> As a user, I want to sign up and sign in with email and password, so that my identity is verified.
+**FR-AUTH-01: Email/password authentication with pending approval**
+> As a user, I want to sign up and sign in with email and password, so that my identity is verified before I access the POS.
 
 Acceptance Criteria:
 - Login page: email + password + show/hide password toggle
-- Sign up: email + password + name + username; triggers DB profile auto-creation
+- Sign up: email + password + name + username; self-registration creates a pending user/shop/membership workflow
+- Instant active access after signup is deprecated
+- If email confirmation is enabled in Supabase, unconfirmed users cannot sign in normally
+- Pending users see a Pending Approval screen instead of POS access
+- Access requires `users.active = true`, `shop_memberships.is_active = true`, and `shops.is_active = true`
 - Sign out: confirmation dialog → clears all state → redirects to login
-- Friendly error messages for: invalid credentials, email not confirmed, too many requests, network errors
+- Friendly error messages for: invalid credentials, email not confirmed, pending approval, too many requests, network errors
 - Session persisted across page refresh (Supabase autoRefreshToken)
 
 **FR-AUTH-02: Role-based access control**
@@ -313,18 +319,20 @@ Acceptance Criteria:
 
 ### 3.10 Multi-Tenancy (Foundation)
 
-**FR-MT-01: Shop isolation via schema**
-> As a system, I need all data scoped to a shop, so that multiple coffee shops can operate independently on the same platform.
+**FR-MT-01: Shop isolation and dynamic shop configuration**
+> As a system, I need data and configuration scoped to a shop, so that multiple coffee shops can operate independently on the same platform.
 
-Acceptance Criteria (placeholder migration — foundation only):
-- `shops` table exists with default shop row
+Acceptance Criteria:
+- `shops` table exists with default shop row and dynamic shop configuration fields
 - `shop_memberships` table exists linking users to shops with per-shop roles
-- All 13+ tables have `shop_id UUID NOT NULL DEFAULT '<default-shop>' REFERENCES shops(id)` column
+- Tenant-scoped tables have `shop_id UUID NOT NULL DEFAULT '<default-shop>' REFERENCES shops(id)` column
 - Index on every `shop_id` FK column
-- RLS policies scope all queries by `shop_id` via subquery to `shop_memberships`
-- Default shop seeded from existing `app_settings` store data
-- No UI for shop switching (future feature)
-- Existing single-shop operation unchanged after migration
+- RLS policies scope queries by `shop_id` via active shop membership
+- `shops` owns store identity, tax rate, currency, invoice prefix/counter, business type, and draft retention
+- `app_settings` owns global/preferences-style settings only
+- Invoice generation is atomic and database-owned per shop
+- No UI for shop switching in this milestone
+- Existing single-shop operation unchanged for default shop users after migration
 
 ---
 
@@ -362,8 +370,9 @@ Acceptance Criteria (placeholder migration — foundation only):
 | No service_role in client | Removed from JS bundle; admin ops via Edge Functions |
 | Function search_path | All 8 public functions use `SET search_path = ''` |
 | SECURITY DEFINER revoked | `handle_new_auth_user()`, `rls_auto_enable()` — client roles cannot invoke |
-| Tenant isolation (planned) | `shop_id` FK + RLS subquery to `shop_memberships` |
+| Tenant isolation | `shop_id` FK + RLS subquery to active `shop_memberships` |
 | Password policy | Supabase "Strong" setting; leaked password protection enabled |
+| Pending approval | Self-signups gated until user, shop membership, and shop are active |
 
 ### 4.4 Accessibility
 
@@ -425,8 +434,8 @@ Acceptance Criteria (placeholder migration — foundation only):
 | **Discount Condition** | `discounts.conditions` (JSONB) | Rule that must be met for discount to auto-apply. Types: min_amount, specific_products, payment_method, customer_tier, card_type, bank_name. |
 | **Free Gift** | `discounts.type: 'free_gift'` | Discount that adds product(s) to cart at $0. Products specified in `free_gift_products` array. |
 | **Applied Discount** | `sales.applied_discounts` (JSONB) | Snapshot of discounts applied at sale time. Preserves history even if discount later deleted. |
-| **Active Shop** | `shop_memberships` (planned) | Shop user is currently operating in. Determined at login or shop selector. All queries scoped to this shop. |
-| **Shop Membership** | `shop_memberships` (planned) | User-to-shop link with per-shop role. User can be admin at Shop A, cashier at Shop B. |
+| **Active Shop** | `shop_memberships` | Shop user is currently operating in. Determined by active membership for now; shop selector deferred. All queries scoped to this shop. |
+| **Shop Membership** | `shop_memberships` | User-to-shop link with per-shop role. User can be admin at Shop A, cashier at Shop B in the long-term model. |
 | **RLS** | Row Level Security | Postgres feature. Policies filter rows at query level. Supabase enforces on every API call. |
 | **SECURITY DEFINER** | Function attribute | Function runs with owner privileges, bypassing RLS. Used for triggers only. Client roles revoked. |
 | **Invoice Number** | `sales.invoice_number` | Formatted as `{prefix}-{counter}` (e.g., `INV-001001`). Auto-generated by DB trigger if empty. |
@@ -457,7 +466,7 @@ Acceptance Criteria (placeholder migration — foundation only):
 | FR-RPT-02 | Customer reports | Spending patterns, top customers. |
 | FR-RPT-03 | Inventory reports | Stock status, value by category. |
 | FR-USR-01 | User management | CRUD with roles, self-edit prevention, admin-only. |
-| FR-SET-01 | Settings | Store config, currency, exchange rates, theme, hardware. |
-| FR-AUTH-01 | Auth | Email/password, sign up/in/out, friendly errors. |
+| FR-SET-01 | Settings | Shop config in `shops`; global preferences/exchange settings in `app_settings`. |
+| FR-AUTH-01 | Auth | Email/password, pending approval, sign up/in/out, friendly errors. |
 | FR-AUTH-02 | RBAC | Role-based nav + RLS enforcement. |
-| FR-MT-01 | Multi-tenancy | shop_id placeholder on all tables, RLS scope, no UI yet. |
+| FR-MT-01 | Multi-tenancy | shop_id foundation, dynamic shop config, DB-owned invoices, no shop switching UI yet. |

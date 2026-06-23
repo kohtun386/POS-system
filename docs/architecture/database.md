@@ -3,8 +3,9 @@
 **Supabase project:** `ejvvwnupiqytximrbmfw`
 **Last schema migration:** `20260620000001_shop_id_placeholder.sql`
 **Generated:** 2026-06-20
+**Reconciled:** 2026-06-23
 
-> **Multi-tenancy:** All tables now have `shop_id UUID NOT NULL DEFAULT '4f3dab19-144e-4a29-95a5-2ee82f160ce5'`. Single default shop. No UI for shop switching yet. See `docs/specs/multi-tenancy.md`.
+> **Multi-tenancy:** The `shop_id` foundation exists with a single default shop and no shop-switching UI yet. Dynamic shop configuration is the next milestone: `shops` owns business identity and POS behavior, while `app_settings` is trimmed to global/preferences-style settings. See `docs/specs/multi-tenancy.md` and `docs/superpowers/specs/2026-06-22-dynamic-shop-configuration-design.md`.
 
 ---
 
@@ -13,32 +14,27 @@
 ### 1.1 Core Business Tables
 
 #### `app_settings`
-Single-row store configuration. One row per POS installation.
+Global/preferences-style configuration. This table no longer owns store identity, tax, currency, or invoice numbering in the target dynamic shop configuration architecture.
 
 | Column | Type | Default | Notes |
 |--------|------|---------|-------|
 | `id` | uuid PK | `gen_random_uuid()` | |
-| `store_name` | text | `'sekaLabs 2025 POS'` | |
-| `store_address` | text | | |
-| `store_phone` | text | | |
-| `store_email` | text | | |
-| `store_logo` | text | | Base64 or URL |
-| `tax_rate` | decimal(5,4) | `0.0000` | 0.0875 = 8.75% |
-| `currency` | text | `'USD'` | Display currency |
-| `base_currency` | text | `'USD'` | Base currency for pricing |
+| `shop_id` | uuid FK | default shop | Compatibility tenant link and cleanup key |
 | `interface_mode` | text | `'touch'` | CHECK: `'touch'` \| `'traditional'` |
-| `auto_backup` | boolean | `true` | |
-| `receipt_printer` | boolean | `false` | |
+| `auto_backup` | boolean | `true` | Backup preference |
+| `receipt_printer` | boolean | `false` | Printer preference |
 | `theme` | text | `'light'` | CHECK: `'light'` \| `'dark'` \| `'auto'` |
-| `invoice_prefix` | text | `'INV'` | |
-| `invoice_counter` | integer | `1000` | Monotonic counter |
-| `exchange_rate_provider` | text | `'exchangerate'` | |
-| `exchange_rate_api_key` | text | | |
+| `exchange_rate_provider` | text | `'exchangerate'` | Global rate provider |
+| `exchange_rate_api_key` | text | | Temporarily stored in DB; security risk documented below |
 | `exchange_rate_update_interval` | integer | `60` | Minutes |
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
-**Service:** `settingsService.get()` → `SELECT * ... LIMIT 1`. `settingsService.update()` fetches ID first, then UPDATEs by ID.
+**Canonical ownership:** Store name, address, phone, email, logo, tax rate, display currency, base currency, invoice prefix, invoice counter, business type, and draft retention belong to `shops`.
+
+**Exchange-rate API key note:** `exchange_rate_api_key` remains in `app_settings` for the current architecture. This is a known security compromise. Future work should move provider keys to Edge Function secrets or server-side deployment environment variables and document rotation.
+
+**Service:** `settingsService.get()` and `settingsService.update()` should handle only the global/preference fields above. Shop-owned fields must use `shopsService`.
 
 ---
 
@@ -205,7 +201,7 @@ Staff profiles. Extends Supabase `auth.users`.
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
-**Auto-creation:** `handle_new_auth_user()` trigger on `auth.users` INSERT → creates profile with role `'cashier'`, permissions `['pos_access']`. Frontend then UPDATES this row with admin-chosen role.
+**Auto-creation:** `handle_new_auth_user()` trigger on `auth.users` INSERT creates a pending profile for self-registration. Instant active access is deprecated: new self-signups remain inactive until the user profile, shop membership, and shop are approved.
 
 **Service:** `usersService` — full CRUD. `AuthContext.loadProfile()` reads directly via `supabase.from('users')`.
 
@@ -436,8 +432,8 @@ users
 | Function | Security | Purpose | Trigger? |
 |----------|----------|---------|----------|
 | `update_updated_at_column()` | INVOKER, `search_path=''` | Sets `updated_at = now()` on UPDATE | Yes — all tables with `updated_at` |
-| `generate_invoice_number()` | INVOKER, `search_path=''` | Reads `app_settings`, increments counter, returns formatted number | No — called by `auto_generate_invoice_number()` |
-| `auto_generate_invoice_number()` | INVOKER, `search_path=''` | Calls `generate_invoice_number()` if invoice_number is empty | Yes — BEFORE INSERT on `sales` |
+| `generate_invoice_number(p_shop_id uuid)` | INVOKER, `search_path=''` | Atomically reads `shops.invoice_prefix`/`invoice_counter`, increments the shop counter, returns formatted invoice number | No — called by `auto_generate_invoice_number()` or RPC-backed service path |
+| `auto_generate_invoice_number()` | INVOKER, `search_path=''` | Calls `generate_invoice_number(NEW.shop_id)` if invoice_number is empty | Yes — BEFORE INSERT on `sales` |
 | `update_customer_stats()` | INVOKER, `search_path=''` | Updates `customers.total_purchases` and `last_purchase` | Yes — AFTER INSERT/UPDATE on `sales` |
 | `handle_new_auth_user()` | SECURITY DEFINER, `search_path=''` | Creates `public.users` row on `auth.users` insert | Yes — AFTER INSERT on `auth.users` |
 | `get_current_exchange_rate(text, text)` | INVOKER, `search_path=''` | Returns current rate between two currencies | No — called from app |
@@ -481,20 +477,32 @@ users
 
 ### 6.1 `shops`
 
+`shops` owns business identity and per-shop POS behavior.
+
 | Column | Type | Default | Notes |
 |--------|------|---------|-------|
 | `id` | uuid PK | `gen_random_uuid()` | |
-| `name` | text NOT NULL | | |
-| `address` | text | | |
-| `phone` | text | | |
-| `email` | text | | |
+| `name` | text NOT NULL | | Store/business name |
+| `address` | text | | Receipt/store address |
+| `phone` | text | | Receipt/store phone |
+| `email` | text | | Receipt/store email |
+| `logo` | text | | Store logo, base64 or URL |
 | `owner_id` | uuid | | Future: link to auth.users |
+| `business_type` | text | `'coffee_shop'` | CHECK target: `coffee_shop`, `pharmacy`, `retail`, `restaurant`, `other` |
+| `tax_rate` | numeric(5,4) | `0.0000` | Per-shop tax rate |
+| `currency` | text | `'USD'` | Per-shop display currency |
+| `base_currency` | text | `'USD'` | Per-shop base currency for pricing |
+| `invoice_prefix` | text | `'INV'` | Invoice prefix |
+| `invoice_counter` | integer | `1000` | Mutated only by atomic invoice DB function |
+| `draft_retention_days` | integer | `30` | Cleanup retention for draft sales |
 | `subscription_tier` | text | `'free'` | CHECK: `'free'` \| `'pro'` \| `'enterprise'` |
-| `is_active` | boolean | `true` | |
+| `is_active` | boolean | `true` | Pending approval keeps this false |
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
-**Default shop:** `4f3dab19-144e-4a29-95a5-2ee82f160ce5` — seeded from `app_settings` store_name.
+**Default shop:** `4f3dab19-144e-4a29-95a5-2ee82f160ce5` — seeded from existing store data.
+
+**Rule:** Store identity, tax/currency behavior, invoice configuration, business type, and draft retention belong here, not in `app_settings`.
 
 ---
 
