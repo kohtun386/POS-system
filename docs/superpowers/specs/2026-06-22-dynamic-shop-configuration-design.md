@@ -1,48 +1,90 @@
 # Dynamic Shop Configuration System — Design Spec
 
 **Date:** 2026-06-22
-**Status:** Approved (Pivoted)
-**Approach:** Refactor existing Settings UI to read/write `shops` table instead of `app_settings`
+**Status:** Active
+**Scope:** Multi-tenant SaaS transition — global settings → per-shop configuration
 
 ---
 
-## Problem
+## Executive Summary
 
-Store identity (name, address, phone, email) and POS config (tax_rate, currency, invoice settings) live in `app_settings` as a single global row. Multi-tenant shops can't customize their own business profile. Receipt details, currency, tax rate are shared across all shops — breaks multi-tenancy.
+The CoffeeShop POS currently stores all configuration — business identity, POS behavior, and user preferences — in a single global `app_settings` row. This breaks multi-tenancy: shops share currency, tax rates, invoice counters, and store branding.
 
-## Goals
+This spec defines the full transition to per-shop configuration using general SaaS patterns (organization model, membership roles, tenant-scoped RLS, subscription tiers) without adopting a specific boilerplate. The work is split into 4 phases: database migration, service layer, state/UI refactor, and governance features (approval workflow, anti-bot, auto-cleanup).
 
-- **Scalability:** Each shop has its own business profile and POS config.
-- **Autonomy:** Shop owners manage their info without developer intervention.
-- **Robustness:** POS remains functional with sensible defaults if fields are NULL.
-
-## Scope
-
-**Refactor only.** No new UI components. The existing System Settings page (`src/components/settings/Settings.tsx`) already contains all necessary input fields. The task is to repoint the data source of those existing inputs from `app_settings` to the `shops` table.
-
-What changes:
-- Data source: `app_settings` → `shops` table
-- Service calls: `settingsService.update()` → `shopsService.update()` for shop-related fields
-- State slice: `state.settings` → `state.shop` for store identity and POS config fields
-- Consumers: all components reading `state.settings.currency` etc. → `state.shop.currency`
-- SQL function: `generate_invoice_number()` reads from `shops` instead of `app_settings`
-
-What does NOT change:
-- Settings UI layout, sections, field order, input types, labels
-- Currency dropdown loading, exchange rate test/update buttons
-- Logo upload component
-- Permission gating (`canEditSettings`)
-- `handleChange`, `handleLogoChange` handlers
-- Preferences section (theme, interface mode, printer, backup) — stays in `app_settings`
+**Key decisions:**
+- Exchange rates stay global in `app_settings` (market data, not shop-specific)
+- Draft retention is shop-configurable, defaulting to 30 days
+- New signups enter `PENDING` state — require email verification + admin approval
+- RLS corrected so shop admins (not just global admins) manage shop settings
+- Cart persistence uses localStorage as primary, `sales_tabs.cart` as backup — cleanup cron is safe
 
 ---
 
-## Data Model
+## 1. Data Model Architecture
 
-### New `Shop` TypeScript Interface
+### 1.1 Three-Layer Configuration Model
+
+| Layer | Storage | Contents | Rationale |
+|-------|---------|----------|-----------|
+| **Platform Config** | `.env` / deployment config | Supabase URL, anon key, service role key, API secrets | Secrets never in DB. Deploy-time config. |
+| **Global Preferences** | `app_settings` (single row, shop_id FK) | Theme, interface mode, auto backup, receipt printer, exchange rate config | User preference, not business identity. Exchange rates are market data. |
+| **Shop Config** | `shops` table (per-shop rows) | Name, address, phone, email, logo, tax rate, currency, base currency, invoice prefix/counter, business type, subscription tier | Business identity + POS behavior. Core multi-tenant data. |
+
+### 1.2 `shops` Table — Current vs Target
+
+**Current columns** (from migration `20260620000001`):
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | PK |
+| `name` | text | NOT NULL |
+| `address` | text | |
+| `phone` | text | |
+| `email` | text | |
+| `owner_id` | uuid | |
+| `subscription_tier` | text | DEFAULT 'free', CHECK (free/pro/enterprise) |
+| `is_active` | boolean | DEFAULT true |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
+
+**Columns to add** (7):
+
+| Column | Type | Default | Purpose |
+|--------|------|---------|---------|
+| `logo` | text | NULL | Store logo (base64 or URL) |
+| `business_type` | text | `'coffee_shop'` | Business category. CHECK: coffee_shop/pharmacy/retail/restaurant/other |
+| `tax_rate` | numeric(5,4) | `0.0000` | Per-shop tax rate |
+| `currency` | text | `'USD'` | Display currency |
+| `base_currency` | text | `'USD'` | Base currency for pricing |
+| `invoice_prefix` | text | `'INV'` | Invoice number prefix |
+| `invoice_counter` | integer | `1000` | Next invoice number |
+
+### 1.3 `app_settings` Table — Trimmed to Preferences
+
+**Columns to drop** (10): `store_name`, `store_address`, `store_phone`, `store_email`, `store_logo`, `tax_rate`, `currency`, `base_currency`, `invoice_prefix`, `invoice_counter`.
+
+**Columns retained:**
+
+| Column | Type | Purpose |
+|--------|------|---------|
+| `id` | uuid | PK |
+| `shop_id` | uuid | FK to shops (NOT NULL, DEFAULT to default shop) |
+| `interface_mode` | text | touch/traditional |
+| `auto_backup` | boolean | Backup toggle |
+| `receipt_printer` | boolean | Printer toggle |
+| `theme` | text | light/dark/auto |
+| `exchange_rate_provider` | text | Rate provider (stays global) |
+| `exchange_rate_api_key` | text | API key (stays global) |
+| `exchange_rate_update_interval` | integer | Update interval in minutes |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
+
+### 1.4 TypeScript Interfaces
 
 ```typescript
 // src/types/index.ts
+
 export interface Shop {
   id: string;
   name: string;
@@ -60,51 +102,14 @@ export interface Shop {
   baseCurrency: string;
   invoicePrefix: string;
   invoiceCounter: number;
+  // Data retention (new — shop-configurable)
+  draftRetentionDays: number;
   createdAt: Date;
   updatedAt: Date;
 }
-```
 
-### `shops` Table — New Columns
-
-Add to existing `shops` table (7 columns):
-
-| Column | Type | Default | Purpose |
-|--------|------|---------|---------|
-| `logo` | text | NULL | Store logo (base64 or URL) |
-| `business_type` | text | `'coffee_shop'` | Business category for future feature toggling |
-| `tax_rate` | numeric(5,4) | 0.0000 | Per-shop tax rate |
-| `currency` | text | 'USD' | Display currency |
-| `base_currency` | text | 'USD' | Base currency for pricing |
-| `invoice_prefix` | text | 'INV' | Invoice number prefix |
-| `invoice_counter` | integer | 1000 | Next invoice number |
-
-Existing columns (`name`, `address`, `phone`, `email`) already present from multi-tenancy migration.
-
-### `app_settings` — Trimmed to Preferences
-
-After migration, `app_settings` keeps ONLY:
-
-| Column | Type | Purpose |
-|--------|------|---------|
-| `id` | uuid | PK |
-| `interface_mode` | text | touch/traditional |
-| `auto_backup` | boolean | backup toggle |
-| `receipt_printer` | boolean | printer toggle |
-| `theme` | text | light/dark/auto |
-| `exchange_rate_provider` | text | rate provider (stays — not shop-specific) |
-| `exchange_rate_api_key` | text | API key (stays — not shop-specific) |
-| `exchange_rate_update_interval` | integer | update interval (stays — not shop-specific) |
-| `shop_id` | uuid | FK to shops |
-| `created_at` | timestamptz | audit |
-| `updated_at` | timestamptz | audit |
-
-Removed from `app_settings`: `store_name`, `store_address`, `store_phone`, `store_email`, `store_logo`, `tax_rate`, `currency`, `base_currency`, `invoice_prefix`, `invoice_counter`.
-
-### `AppSettings` Type — Trimmed
-
-```typescript
 export interface AppSettings {
+  // Preferences only (trimmed from 17 fields → 7)
   interfaceMode: 'touch' | 'traditional';
   autoBackup: boolean;
   receiptPrinter: boolean;
@@ -115,9 +120,9 @@ export interface AppSettings {
 }
 ```
 
-### Fallback Logic
+### 1.5 Fallback Logic
 
-Shop fields use hardcoded defaults when NULL:
+Shop fields use hardcoded defaults when NULL — no fallback chain to `app_settings`:
 
 ```
 shop.name ?? 'CoffeeShop POS'
@@ -129,269 +134,53 @@ shop.taxRate ?? 0
 shop.invoicePrefix ?? 'INV'
 shop.invoiceCounter ?? 1000
 shop.businessType ?? 'coffee_shop'
-```
-
-No fallback chain to `app_settings`. If shop field is NULL, use default. Simple.
-
----
-
-## Database Function Refactoring
-
-### Current: `generate_invoice_number()` reads from `app_settings`
-
-```sql
--- CURRENT (reads from app_settings — single global row)
-CREATE OR REPLACE FUNCTION generate_invoice_number()
-RETURNS TEXT
-SET search_path = ''
-AS $$
-DECLARE
-    prefix TEXT;
-    counter INTEGER;
-    new_invoice_number TEXT;
-BEGIN
-    SELECT invoice_prefix, invoice_counter
-    INTO prefix, counter
-    FROM app_settings
-    LIMIT 1;
-
-    IF prefix IS NULL THEN prefix := 'INV'; END IF;
-    IF counter IS NULL THEN counter := 1000; END IF;
-
-    new_invoice_number := prefix || '-' || LPAD(counter::TEXT, 6, '0');
-
-    UPDATE app_settings
-    SET invoice_counter = counter + 1,
-        updated_at = timezone('utc'::text, now());
-
-    RETURN new_invoice_number;
-END;
-$$ LANGUAGE plpgsql;
-```
-
-### New: `generate_invoice_number(p_shop_id UUID)` reads from `shops`
-
-```sql
--- NEW (reads from shops — per-shop config)
-CREATE OR REPLACE FUNCTION generate_invoice_number(p_shop_id UUID)
-RETURNS TEXT
-SET search_path = ''
-AS $$
-DECLARE
-    prefix TEXT;
-    counter INTEGER;
-    new_invoice_number TEXT;
-BEGIN
-    SELECT invoice_prefix, invoice_counter
-    INTO prefix, counter
-    FROM public.shops
-    WHERE id = p_shop_id;
-
-    IF prefix IS NULL THEN prefix := 'INV'; END IF;
-    IF counter IS NULL THEN counter := 1000; END IF;
-
-    new_invoice_number := prefix || '-' || LPAD(counter::TEXT, 6, '0');
-
-    UPDATE public.shops
-    SET invoice_counter = counter + 1,
-        updated_at = timezone('utc'::text, now())
-    WHERE id = p_shop_id;
-
-    RETURN new_invoice_number;
-END;
-$$ LANGUAGE plpgsql;
-```
-
-### `auto_generate_invoice_number()` trigger — updated
-
-The trigger must pass `shop_id` from the `sales` row being inserted:
-
-```sql
-CREATE OR REPLACE FUNCTION auto_generate_invoice_number()
-RETURNS TRIGGER
-SET search_path = ''
-AS $$
-BEGIN
-    IF NEW.invoice_number IS NULL OR NEW.invoice_number = '' THEN
-        NEW.invoice_number := generate_invoice_number(NEW.shop_id);
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-```
-
-**Dependency:** `sales` table must have `shop_id` column (already present from multi-tenancy migration).
-
----
-
-## Security & RLS
-
-### Existing `shops` Table RLS (already implemented)
-
-The `shops` table already has correct RLS policies from migration `20260620000002_rls_shop_id_scoping.sql`:
-
-```sql
--- SELECT: any authenticated user can view their own shop
-CREATE POLICY "Shops viewable by members" ON shops
-  FOR SELECT USING (
-    auth.role() = 'authenticated'
-    AND id IN (SELECT public.current_shop_ids())
-  );
-
--- ALL (INSERT/UPDATE/DELETE): only shop admin can modify
-CREATE POLICY "Shops write by shop admin" ON shops
-  FOR ALL USING (
-    auth.role() = 'authenticated'
-    AND id IN (SELECT public.current_shop_ids())
-    AND EXISTS (
-      SELECT 1 FROM public.shop_memberships
-      WHERE shop_memberships.user_id = auth.uid()
-      AND shop_memberships.shop_id = shops.id
-      AND shop_memberships.role = 'admin'
-    )
-  );
-```
-
-**What this means for Settings UI:**
-- Shop members can VIEW their shop config (SELECT works)
-- Only shop ADMIN can MODIFY shop config (UPDATE works)
-- Manager and cashier roles CANNOT update shop fields via `shopsService.update()` — RLS will reject the query
-- The existing `canEditSettings` UI guard (`role === 'admin' || role === 'manager'`) must be tightened for shop fields: only admin can save Business Profile changes
-
-### `app_settings` RLS (unchanged)
-
-Existing policies remain: admin/manager can read/write. Cashiers can read only. No change needed.
-
-### Helper Function
-
-```sql
--- Already exists — returns all shop_ids the current user is a member of
-CREATE OR REPLACE FUNCTION public.current_shop_ids()
-RETURNS SETOF uuid
-LANGUAGE sql STABLE SECURITY INVOKER
-SET search_path = ''
-AS $$
-    SELECT shop_id FROM public.shop_memberships
-    WHERE user_id = auth.uid() AND is_active = true;
-$$;
+shop.draftRetentionDays ?? 30
 ```
 
 ---
 
-## Service Layer
+## 2. State Management & Services
 
-### New `shopsService`
+### 2.1 AppState Changes
 
 ```typescript
-export const shopsService = {
-  async getByUserId(userId: string): Promise<Shop> {
-    // 1. Get user's active shop_id from shop_memberships
-    const { data: membership } = await supabase
-      .from('shop_memberships')
-      .select('shop_id')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .limit(1)
-      .single();
+// src/context/SupabaseAppContext.tsx
 
-    // 2. Load shop
-    const { data, error } = await supabase
-      .from('shops')
-      .select('*')
-      .eq('id', membership.shop_id)
-      .single();
-
-    if (error) throw error;
-
-    // 3. Map snake_case → camelCase with defaults
-    return mapShopRow(data);
-  },
-
-  async update(id: string, shop: Partial<Shop>): Promise<Shop> {
-    // Map camelCase → snake_case
-    const updateData: any = {};
-    if (shop.name !== undefined) updateData.name = shop.name;
-    if (shop.address !== undefined) updateData.address = shop.address;
-    if (shop.phone !== undefined) updateData.phone = shop.phone;
-    if (shop.email !== undefined) updateData.email = shop.email;
-    if (shop.logo !== undefined) updateData.logo = shop.logo;
-    if (shop.businessType !== undefined) updateData.business_type = shop.businessType;
-    if (shop.taxRate !== undefined) updateData.tax_rate = shop.taxRate;
-    if (shop.currency !== undefined) updateData.currency = shop.currency;
-    if (shop.baseCurrency !== undefined) updateData.base_currency = shop.baseCurrency;
-    if (shop.invoicePrefix !== undefined) updateData.invoice_prefix = shop.invoicePrefix;
-    if (shop.invoiceCounter !== undefined) updateData.invoice_counter = shop.invoiceCounter;
-
-    const { data, error } = await supabase
-      .from('shops')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return mapShopRow(data);
-  }
-}
-
-// Shared mapping helper
-function mapShopRow(data: any): Shop {
-  return {
-    id: data.id,
-    name: data.name || 'CoffeeShop POS',
-    address: data.address || '',
-    phone: data.phone || '',
-    email: data.email || '',
-    logo: data.logo || undefined,
-    ownerId: data.owner_id || undefined,
-    businessType: data.business_type || 'coffee_shop',
-    subscriptionTier: data.subscription_tier || 'free',
-    isActive: data.is_active ?? true,
-    taxRate: data.tax_rate ?? 0,
-    currency: data.currency || 'USD',
-    baseCurrency: data.base_currency || 'USD',
-    invoicePrefix: data.invoice_prefix || 'INV',
-    invoiceCounter: data.invoice_counter ?? 1000,
-    createdAt: new Date(data.created_at),
-    updatedAt: new Date(data.updated_at),
-  };
-}
-```
-
-### `settingsService` — Trimmed
-
-`get()` and `update()` only handle: `interface_mode`, `auto_backup`, `receipt_printer`, `theme`, `exchange_rate_*`. All store identity and POS config columns removed from queries.
-
-### RLS Enforcement in Service Layer
-
-- `shopsService.update()` will fail silently if non-admin calls it (RLS rejects UPDATE). Frontend should catch and show "Only shop admins can modify business settings".
-- `shopsService.getByUserId()` works for all roles (SELECT policy allows all members).
-
----
-
-## Context / State Management
-
-### AppState Changes
-
-```typescript
 interface AppState {
-  shop: Shop;            // NEW — business identity + POS config
-  settings: AppSettings; // TRIMMED — preferences only
+  // NEW — business identity + POS config
+  shop: Shop;
+  // TRIMMED — preferences only
+  settings: AppSettings;
   activeShopId: string;
-  // ... rest unchanged
+  // ... rest unchanged (products, customers, sales, users, discounts, cart, etc.)
 }
 ```
 
-### New Action
+### 2.2 New Actions
 
 ```typescript
 type AppAction =
-  | { type: 'SET_SHOP'; payload: Shop }
+  | { type: 'SET_SHOP'; payload: Partial<Shop> }
+  | { type: 'INCREMENT_INVOICE_COUNTER'; payload: number }
   // ... existing actions
 ```
 
-### Initial State
+### 2.3 Reducer
+
+```typescript
+case 'SET_SHOP':
+  return { ...state, shop: { ...state.shop, ...action.payload } };
+
+case 'INCREMENT_INVOICE_COUNTER':
+  return {
+    ...state,
+    shop: { ...state.shop, invoiceCounter: action.payload }
+  };
+```
+
+Note: `INCREMENT_INVOICE_COUNTER` moves from `state.settings` → `state.shop`.
+
+### 2.4 Initial State
 
 ```typescript
 const initialState = {
@@ -409,6 +198,7 @@ const initialState = {
     invoiceCounter: 1000,
     subscriptionTier: 'free',
     isActive: true,
+    draftRetentionDays: 30,
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -424,30 +214,107 @@ const initialState = {
 };
 ```
 
-### Reducer
+### 2.5 `shopsService` — New
 
 ```typescript
-case 'SET_SHOP':
-  return { ...state, shop: { ...state.shop, ...action.payload } };
-case 'INCREMENT_INVOICE_COUNTER':
-  return { ...state, shop: { ...state.shop, invoiceCounter: action.payload } };
+// src/lib/services.ts
+
+export const shopsService = {
+  async getByUserId(userId: string): Promise<Shop> {
+    // 1. Get user's active shop_id from shop_memberships
+    const { data: membership, error: memError } = await supabase
+      .from('shop_memberships')
+      .select('shop_id')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .limit(1)
+      .single();
+
+    if (memError || !membership) throw new Error('No active shop membership');
+
+    // 2. Load shop
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('id', membership.shop_id)
+      .single();
+
+    if (error) throw error;
+    return mapShopRow(data);
+  },
+
+  async update(id: string, shop: Partial<Shop>): Promise<Shop> {
+    const updateData: Record<string, any> = {};
+    if (shop.name !== undefined) updateData.name = shop.name;
+    if (shop.address !== undefined) updateData.address = shop.address;
+    if (shop.phone !== undefined) updateData.phone = shop.phone;
+    if (shop.email !== undefined) updateData.email = shop.email;
+    if (shop.logo !== undefined) updateData.logo = shop.logo;
+    if (shop.businessType !== undefined) updateData.business_type = shop.businessType;
+    if (shop.taxRate !== undefined) updateData.tax_rate = shop.taxRate;
+    if (shop.currency !== undefined) updateData.currency = shop.currency;
+    if (shop.baseCurrency !== undefined) updateData.base_currency = shop.baseCurrency;
+    if (shop.invoicePrefix !== undefined) updateData.invoice_prefix = shop.invoicePrefix;
+    if (shop.invoiceCounter !== undefined) updateData.invoice_counter = shop.invoiceCounter;
+    if (shop.draftRetentionDays !== undefined) updateData.draft_retention_days = shop.draftRetentionDays;
+
+    const { data, error } = await supabase
+      .from('shops')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return mapShopRow(data);
+  }
+};
+
+function mapShopRow(data: any): Shop {
+  return {
+    id: data.id,
+    name: data.name || 'CoffeeShop POS',
+    address: data.address || '',
+    phone: data.phone || '',
+    email: data.email || '',
+    logo: data.logo || undefined,
+    ownerId: data.owner_id || undefined,
+    businessType: data.business_type || 'coffee_shop',
+    subscriptionTier: data.subscription_tier || 'free',
+    isActive: data.is_active ?? true,
+    taxRate: data.tax_rate ?? 0,
+    currency: data.currency || 'USD',
+    baseCurrency: data.base_currency || 'USD',
+    invoicePrefix: data.invoice_prefix || 'INV',
+    invoiceCounter: data.invoice_counter ?? 1000,
+    draftRetentionDays: data.draft_retention_days ?? 30,
+    createdAt: new Date(data.created_at),
+    updatedAt: new Date(data.updated_at),
+  };
+}
 ```
 
-### Data Loading
+### 2.6 `settingsService` — Trimmed
+
+`get()` and `update()` remove all store identity and POS config columns. Only handle: `interface_mode`, `auto_backup`, `receipt_printer`, `theme`, `exchange_rate_*`.
+
+### 2.7 Data Loading
 
 ```typescript
 async function loadData() {
-  const [shop, settings, products, customers, sales, discounts, users, salesTabs] =
-    await Promise.all([
-      user ? shopsService.getByUserId(user.id) : Promise.resolve(null),
-      settingsService.get(),
-      productsService.getAll(),
-      customersService.getAll(),
-      salesService.getAll().then(r => r.data),
-      discountsService.getAll(),
-      usersService.getAll(),
-      user ? salesTabsService.getByUserId(user.id) : Promise.resolve([]),
-    ]);
+  const [
+    shop, settings, products, customers, sales,
+    discounts, users, salesTabs
+  ] = await Promise.all([
+    user ? shopsService.getByUserId(user.id) : Promise.resolve(null),
+    settingsService.get(),
+    productsService.getAll(),
+    customersService.getAll(),
+    salesService.getAll().then(r => r.data),
+    discountsService.getAll(),
+    usersService.getAll(),
+    user ? salesTabsService.getByUserId(user.id) : Promise.resolve([]),
+  ]);
 
   if (shop) dispatch({ type: 'SET_SHOP', payload: shop });
   dispatch({ type: 'SET_SETTINGS', payload: settings });
@@ -455,173 +322,46 @@ async function loadData() {
 }
 ```
 
----
+### 2.8 Invoice Generation — Updated
 
-## Settings UI — No Layout Changes
+```typescript
+// src/context/SupabaseAppContext.tsx
 
-The existing Settings page is reused as-is. Only the data source changes.
+export function useInvoiceGeneration() {
+  const { state, dispatch } = useApp();
 
-### Current Form Fields → New Source
+  return async () => {
+    const { invoiceNumber, newCounter } = generateNextInvoiceNumber(state.shop);
 
-| Form Field | Current Source | New Source | Section (unchanged) |
-|---|---|---|---|
-| `storeName` | `state.settings.storeName` | `state.shop.name` | Store Information |
-| `storePhone` | `state.settings.storePhone` | `state.shop.phone` | Store Information |
-| `storeEmail` | `state.settings.storeEmail` | `state.shop.email` | Store Information |
-| `storeAddress` | `state.settings.storeAddress` | `state.shop.address` | Store Information |
-| `storeLogo` | `state.settings.storeLogo` | `state.shop.logo` | Store Information |
-| `currency` | `state.settings.currency` | `state.shop.currency` | Store Information |
-| `baseCurrency` | `state.settings.baseCurrency` | `state.shop.baseCurrency` | Store Information |
-| `taxRate` | `state.settings.taxRate` | `state.shop.taxRate` | Financial Settings |
-| `invoicePrefix` | `state.settings.invoicePrefix` | `state.shop.invoicePrefix` | Invoice Settings |
-| `invoiceCounter` | `state.settings.invoiceCounter` | `state.shop.invoiceCounter` | Invoice Settings |
-| `exchangeRateProvider` | `state.settings.exchangeRateProvider` | `state.settings.exchangeRateProvider` | Exchange Rate (no change) |
-| `exchangeRateApiKey` | `state.settings.exchangeRateApiKey` | `state.settings.exchangeRateApiKey` | Exchange Rate (no change) |
-| `exchangeRateUpdateInterval` | `state.settings.exchangeRateUpdateInterval` | `state.settings.exchangeRateUpdateInterval` | Exchange Rate (no change) |
-| `receiptPrinter` | `state.settings.receiptPrinter` | `state.settings.receiptPrinter` | Hardware (no change) |
-| `autoBackup` | `state.settings.autoBackup` | `state.settings.autoBackup` | Hardware (no change) |
-| `theme` | `state.settings.theme` | `state.settings.theme` | System Preferences (no change) |
+    try {
+      await shopsService.update(state.shop.id, { invoiceCounter: newCounter });
+      dispatch({ type: 'INCREMENT_INVOICE_COUNTER', payload: newCounter });
+    } catch (error) {
+      console.error('Error updating invoice counter:', error);
+    }
 
-### Changes to Settings.tsx
+    return invoiceNumber;
+  };
+}
 
-Only 3 areas change:
-
-1. **`formData` initial values** — 10 fields read from `state.shop` instead of `state.settings`:
-   ```typescript
-   storeName: state.shop.name,           // was state.settings.storeName
-   storeAddress: state.shop.address,     // was state.settings.storeAddress
-   storePhone: state.shop.phone,         // was state.settings.storePhone
-   storeEmail: state.shop.email,         // was state.settings.storeEmail
-   storeLogo: state.shop.logo,           // was state.settings.storeLogo
-   taxRate: state.shop.taxRate.toString(), // was state.settings.taxRate
-   currency: state.shop.currency,        // was state.settings.currency
-   baseCurrency: state.shop.baseCurrency, // was state.settings.baseCurrency
-   invoicePrefix: state.shop.invoicePrefix, // was state.settings.invoicePrefix
-   invoiceCounter: state.shop.invoiceCounter?.toString(), // was state.settings.invoiceCounter
-   ```
-
-2. **`handleSubmit`** — split into two service calls:
-   ```typescript
-   // Shop fields → shopsService (RLS: admin only)
-   await shopsService.update(state.shop.id, {
-     name: formData.storeName,
-     address: formData.storeAddress,
-     phone: formData.storePhone,
-     email: formData.storeEmail,
-     logo: formData.storeLogo,
-     taxRate: parseFloat(formData.taxRate),
-     currency: formData.currency,
-     baseCurrency: formData.baseCurrency,
-     invoicePrefix: formData.invoicePrefix,
-     invoiceCounter: parseInt(formData.invoiceCounter),
-   });
-   dispatch({ type: 'SET_SHOP', payload: shopUpdates });
-
-   // Preference fields → settingsService (unchanged)
-   await settingsService.update({
-     interfaceMode: ...,
-     autoBackup: ...,
-     receiptPrinter: ...,
-     theme: ...,
-     exchangeRateProvider: ...,
-     exchangeRateApiKey: ...,
-     exchangeRateUpdateInterval: ...,
-   });
-   dispatch({ type: 'SET_SETTINGS', payload: prefsUpdates });
-   ```
-
-3. **`useInvoiceStats`** — reads from `state.shop` instead of `state.settings`.
-
----
-
-## Receipt Component
-
-`ReceiptContent` reads from `state.shop` instead of `state.settings`:
-
-| Before | After |
-|--------|-------|
-| `state.settings.storeName` | `state.shop.name` |
-| `state.settings.storeAddress` | `state.shop.address` |
-| `state.settings.storePhone` | `state.shop.phone` |
-| `state.settings.storeEmail` | `state.shop.email` |
-| `state.settings.storeLogo` | `state.shop.logo` |
-| `state.settings.currency` | `state.shop.currency` |
-| `state.settings.taxRate` | `state.shop.taxRate` |
-
----
-
-## Components Requiring `state.settings` → `state.shop` Updates
-
-| Component | Fields | Change |
-|-----------|--------|--------|
-| `Header.tsx` | `storeName`, `storeLogo` | → `shop.name`, `shop.logo` |
-| `ProductGrid.tsx` | `currency` | → `shop.currency` |
-| `Cart.tsx` | `currency`, `taxRate` | → `shop.currency`, `shop.taxRate` |
-| `CheckoutModal.tsx` | `currency`, `taxRate` | → `shop.currency`, `shop.taxRate` |
-| `InventoryManager.tsx` | `currency` | → `shop.currency` |
-| `CustomerManager.tsx` | `currency` | → `shop.currency` |
-| `CustomerDetailModal.tsx` | `currency` | → `shop.currency` |
-| `TransactionsManager.tsx` | `currency` | → `shop.currency` |
-| `ReportsManager.tsx` | `currency` | → `shop.currency` |
-| `DiscountManager.tsx` | `currency` | → `shop.currency` |
-| `DiscountModal.tsx` | `currency` | → `shop.currency` |
-| `useInvoiceGeneration()` | `invoiceCounter`, `invoicePrefix` | → `shop.*` |
-| `generateNextInvoiceNumber()` | `settings` param | → `shop` param |
-
----
-
-## Migration Strategy
-
-Single migration file. Sequenced to avoid data loss.
-
-### Step 1: Add columns to `shops`
-
-```sql
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS logo TEXT;
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS business_type TEXT DEFAULT 'coffee_shop'
-  CHECK (business_type IN ('coffee_shop', 'pharmacy', 'retail', 'restaurant', 'other'));
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(5,4) DEFAULT 0.0000;
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'USD';
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS base_currency TEXT DEFAULT 'USD';
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS invoice_prefix TEXT DEFAULT 'INV';
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS invoice_counter INTEGER DEFAULT 1000;
+export function generateNextInvoiceNumber(shop: Shop): { invoiceNumber: string; newCounter: number } {
+  const newCounter = shop.invoiceCounter + 1;
+  const invoiceNumber = `${shop.invoicePrefix}-${newCounter.toString().padStart(6, '0')}`;
+  return { invoiceNumber, newCounter };
+}
 ```
 
-### Step 2: Backfill default shop from `app_settings`
+---
+
+## 3. Database Function Refactoring
+
+### 3.1 `generate_invoice_number()` — reads from `shops`
 
 ```sql
--- Target the seeded default shop
-UPDATE shops SET
-  tax_rate = COALESCE((SELECT tax_rate FROM app_settings LIMIT 1), 0),
-  currency = COALESCE((SELECT currency FROM app_settings LIMIT 1), 'USD'),
-  base_currency = COALESCE((SELECT base_currency FROM app_settings LIMIT 1), 'USD'),
-  invoice_prefix = COALESCE((SELECT invoice_prefix FROM app_settings LIMIT 1), 'INV'),
-  invoice_counter = COALESCE((SELECT invoice_counter FROM app_settings LIMIT 1), 1000)
-WHERE id = '4f3dab19-144e-4a29-95a5-2ee82f160ce5';
-```
-
-### Step 3: Drop migrated columns from `app_settings`
-
-```sql
-ALTER TABLE app_settings DROP COLUMN IF EXISTS store_name;
-ALTER TABLE app_settings DROP COLUMN IF EXISTS store_address;
-ALTER TABLE app_settings DROP COLUMN IF EXISTS store_phone;
-ALTER TABLE app_settings DROP COLUMN IF EXISTS store_email;
-ALTER TABLE app_settings DROP COLUMN IF EXISTS store_logo;
-ALTER TABLE app_settings DROP COLUMN IF EXISTS tax_rate;
-ALTER TABLE app_settings DROP COLUMN IF EXISTS currency;
-ALTER TABLE app_settings DROP COLUMN IF EXISTS base_currency;
-ALTER TABLE app_settings DROP COLUMN IF EXISTS invoice_prefix;
-ALTER TABLE app_settings DROP COLUMN IF EXISTS invoice_counter;
-```
-
-### Step 4: Refactor `generate_invoice_number()` to read from `shops`
-
-```sql
--- Drop old function (no-arg version)
+-- Drop old no-arg version
 DROP FUNCTION IF EXISTS generate_invoice_number();
 
--- New function: takes shop_id, reads from shops table
+-- New: per-shop invoice generation
 CREATE OR REPLACE FUNCTION generate_invoice_number(p_shop_id UUID)
 RETURNS TEXT
 SET search_path = ''
@@ -651,7 +391,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### Step 5: Update trigger to pass `shop_id`
+### 3.2 `auto_generate_invoice_number()` trigger — passes `shop_id`
 
 ```sql
 CREATE OR REPLACE FUNCTION auto_generate_invoice_number()
@@ -667,31 +407,421 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### Risk
-
-- Dropping columns from `app_settings` is destructive and one-way. Backup before running.
-- `generate_invoice_number()` signature change (adds `p_shop_id` param) breaks any direct callers. The trigger is updated in Step 5. Frontend `useInvoiceGeneration()` calls `settingsService.update()` to increment counter — this must change to `shopsService.update()`.
-- RLS on `shops` already enforced. No additional policies needed.
-
-### Implementation Order
-
-1. Migration (Steps 1-5 above)
-2. Types (`Shop` interface with `businessType`, trim `AppSettings`)
-3. Service layer (`shopsService` with `mapShopRow`, trim `settingsService`)
-4. Context (`SET_SHOP` action, `state.shop`, trim `state.settings`, update `loadData`)
-5. Components (all `state.settings.currency` → `state.shop.currency` etc.)
-6. Settings UI (repoint formData initial values + handleSubmit)
-7. Receipt (`ReceiptContent` reads from `state.shop`)
-8. Lint + type check
+**Dependency:** `sales.shop_id` already exists from multi-tenancy migration `20260620000001`.
 
 ---
 
-## Out of Scope
+## 4. Governance & Security
+
+### 4.1 Account Approval Workflow
+
+New signups enter a `PENDING` state. Access is gated until a platform admin approves.
+
+**Flow:**
+
+```
+User signs up
+  → auth.users row created
+  → trigger handle_new_auth_user() fires
+    → public.users row created (role='cashier', active=false)
+    → shop_memberships row created (is_active=false)
+    → shops row created (is_active=false) [NEW: for self-registration]
+  → User sees "Pending Approval" screen
+  → Platform admin reviews → sets users.active=true, shop_memberships.is_active=true, shops.is_active=true
+  → User can now access POS
+```
+
+**DB changes:**
+
+```sql
+-- handle_new_auth_user() update: new users get is_active=false
+CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
+RETURNS TRIGGER
+SET search_path = ''
+AS $$
+DECLARE
+    v_username TEXT;
+    v_name TEXT;
+    v_shop_id UUID;
+    v_shop_name TEXT;
+BEGIN
+    v_username := COALESCE(
+        NEW.raw_user_meta_data ->> 'username',
+        split_part(NEW.email, '@', 1)
+    );
+
+    v_name := COALESCE(
+        NEW.raw_user_meta_data ->> 'name',
+        NEW.raw_user_meta_data ->> 'full_name',
+        split_part(NEW.email, '@', 1)
+    );
+
+    -- 1. Create user profile (inactive until approved)
+    INSERT INTO public.users (id, username, name, email, role, permissions, active)
+    VALUES (
+        NEW.id,
+        v_username,
+        v_name,
+        NEW.email,
+        'admin',                          -- Shop owner = admin of their shop
+        ARRAY['pos_access']::TEXT[],
+        false                             -- PENDING until approved
+    );
+
+    -- 2. Create shop for this user
+    v_shop_id := gen_random_uuid();
+    v_shop_name := COALESCE(
+        NEW.raw_user_meta_data ->> 'shop_name',
+        v_name || '''s Shop'
+    );
+
+    INSERT INTO public.shops (id, name, is_active)
+    VALUES (v_shop_id, v_shop_name, false);  -- PENDING until approved
+
+    -- 3. Create membership (inactive until approved)
+    INSERT INTO public.shop_memberships (user_id, shop_id, role, is_active)
+    VALUES (NEW.id, v_shop_id, 'admin', false);  -- PENDING
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+**Frontend gating** (`AppContent.tsx`):
+
+```typescript
+// After auth, before loadData():
+if (!state.shop.isActive) {
+  return <PendingApprovalScreen />;
+}
+```
+
+**Approval notification:**
+- UI state change: user sees "Your account is pending approval" screen with no POS access
+- Email notification (optional, via existing `notification_service_config`): "Your shop has been approved! You can now access the POS."
+- Admin sees pending shops in a management view (future UI, or Supabase Dashboard initially)
+
+### 4.2 Anti-Bot Strategy
+
+#### Mandatory Email Verification
+
+Supabase Auth already supports email confirmation. Enable it:
+
+```sql
+-- In Supabase Dashboard → Auth → Settings
+-- Require email confirmation before login
+auth.enable_email_confirmations = true
+```
+
+This means:
+- User signs up → receives confirmation email → clicks link → email verified
+- Only then does `handle_new_auth_user()` trigger create the profile
+- Unverified emails cannot log in
+
+**Frontend:** Show "Please verify your email" message after signup. AuthContext already handles `Email not confirmed` error (line 29 of AuthContext.tsx).
+
+#### Rate Limiting
+
+Supabase has built-in rate limiting on auth endpoints. Additional layers:
+
+| Layer | Mechanism | Config |
+|-------|-----------|--------|
+| **Supabase Auth** | Built-in brute-force protection | 30 attempts/hour per IP (default) |
+| **Edge Function** | Custom rate limiter for signup endpoint | 5 signups per IP per hour |
+| **RLS** | Policy-level: only authenticated users can read/write | Already enforced |
+| **CAPTCHA** | Supabase supports Turnstile/HCaptcha on auth | Enable in Dashboard → Auth → Security |
+
+**Recommended:** Enable Supabase's built-in CAPTCHA on signup (Dashboard → Auth → Security → Enable CAPTCHA).
+
+### 4.3 RLS Correction — Shop Admin Policy
+
+**Current state (migration `20260620000003`):**
+
+```sql
+-- Shops write: GLOBAL admin only (users.role = 'admin')
+CREATE POLICY "Shops write by global admin" ON shops
+  FOR ALL USING (
+    auth.role() = 'authenticated'
+    AND EXISTS (
+      SELECT 1 FROM public.users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+    )
+  );
+```
+
+This is too restrictive. Shop admins should manage their own shop settings.
+
+**Target state:**
+
+```sql
+-- Shops SELECT: members can view their shops
+CREATE POLICY "Shops viewable by own memberships" ON shops
+  FOR SELECT USING (
+    auth.role() = 'authenticated'
+    AND id IN (
+      SELECT shop_id FROM public.shop_memberships
+      WHERE user_id = auth.uid() AND is_active = true
+    )
+  );
+
+-- Shops UPDATE: shop admin can update their own shop
+CREATE POLICY "Shops update by shop admin" ON shops
+  FOR UPDATE USING (
+    auth.role() = 'authenticated'
+    AND id IN (
+      SELECT shop_id FROM public.shop_memberships
+      WHERE user_id = auth.uid()
+      AND role = 'admin'
+      AND is_active = true
+    )
+  );
+
+-- Shops INSERT: platform admin only (create shops for others)
+CREATE POLICY "Shops insert by platform admin" ON shops
+  FOR INSERT WITH CHECK (
+    auth.role() = 'authenticated'
+    AND EXISTS (
+      SELECT 1 FROM public.users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+      AND users.shop_id = shops.id  -- Must be their own shop
+    )
+  );
+
+-- Shops DELETE: platform admin only
+CREATE POLICY "Shops delete by platform admin" ON shops
+  FOR DELETE USING (
+    auth.role() = 'authenticated'
+    AND EXISTS (
+      SELECT 1 FROM public.users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+    )
+  );
+```
+
+**Impact on Settings UI:**
+
+```typescript
+// canEditSettings guard split into two:
+const canEditShopSettings = profile?.role === 'admin';  // Shop admin only
+const canEditPreferences = profile?.role === 'admin' || profile?.role === 'manager';
+```
+
+- Shop fields (name, address, currency, tax, invoice): admin only
+- Preference fields (theme, interface mode, printer, backup): admin or manager
+
+---
+
+## 5. Cleanup Policy
+
+### 5.1 pg_cron Setup
+
+Enable `pg_cron` extension in Supabase:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+```
+
+### 5.2 Inactive Shop Cleanup
+
+```sql
+-- Daily: soft-delete shops inactive > 90 days
+SELECT cron.schedule(
+  'cleanup-inactive-shops',
+  '0 2 * * *',  -- 2 AM daily
+  $$
+  UPDATE public.shops
+  SET is_active = false,
+      updated_at = now()
+  WHERE is_active = true
+    AND updated_at < now() - INTERVAL '90 days'
+    AND id != '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid;  -- Never delete default shop
+  $$
+);
+```
+
+### 5.3 Orphaned App Settings Cleanup
+
+```sql
+-- Weekly: delete app_settings rows with no matching shop
+SELECT cron.schedule(
+  'cleanup-orphaned-settings',
+  '0 3 * * 0',  -- 3 AM every Sunday
+  $$
+  DELETE FROM public.app_settings
+  WHERE shop_id NOT IN (SELECT id FROM public.shops);
+  $$
+);
+```
+
+### 5.4 Stale Draft Sales Cleanup
+
+Shop-configurable via `shops.draft_retention_days` (default 30):
+
+```sql
+-- Daily: delete draft sales older than shop's retention period
+SELECT cron.schedule(
+  'cleanup-stale-drafts',
+  '0 4 * * *',  -- 4 AM daily
+  $$
+  DELETE FROM public.sales
+  WHERE status = 'draft'
+    AND created_at < now() - (
+      SELECT COALESCE(draft_retention_days, 30)
+      FROM public.shops
+      WHERE id = sales.shop_id
+    ) * INTERVAL '1 day';
+  $$
+);
+```
+
+### 5.5 Expired Discounts
+
+Already handled by migration `20260619000001_deactivate_expired_discounts.sql`. No change needed.
+
+### 5.6 Stale Cart Data in Sales Tabs
+
+```sql
+-- Weekly: clear cart data in sales_tabs older than 30 days
+SELECT cron.schedule(
+  'cleanup-stale-carts',
+  '0 5 * * 0',  -- 5 AM every Sunday
+  $$
+  UPDATE public.sales_tabs
+  SET cart = '[]'::jsonb,
+      selected_customer_id = NULL
+  WHERE updated_at < now() - INTERVAL '30 days'
+    AND cart != '[]'::jsonb;
+  $$
+);
+```
+
+**Safety:** localStorage is primary cart persistence. DB cart is backup. Clearing DB cart does not affect active sessions.
+
+---
+
+## 6. Implementation Roadmap
+
+### Phase 1: Database Migration
+
+**Goal:** Schema changes + RLS correction. Zero frontend changes.
+
+| Step | Action | Migration |
+|------|--------|-----------|
+| 1.1 | Add 7 columns to `shops` | `ALTER TABLE shops ADD COLUMN ...` |
+| 1.2 | Add `draft_retention_days` to `shops` | `ALTER TABLE shops ADD COLUMN draft_retention_days INTEGER DEFAULT 30` |
+| 1.3 | Backfill default shop from `app_settings` | `UPDATE shops SET tax_rate = ..., currency = ...` |
+| 1.4 | Drop 10 columns from `app_settings` | `ALTER TABLE app_settings DROP COLUMN ...` |
+| 1.5 | Refactor `generate_invoice_number()` | Add `p_shop_id` parameter |
+| 1.6 | Update `auto_generate_invoice_number()` trigger | Pass `NEW.shop_id` |
+| 1.7 | Fix RLS: shops UPDATE by shop admin | Replace global admin policy |
+| 1.8 | Update `handle_new_auth_user()` trigger | New users get `is_active=false` |
+| 1.9 | Install `pg_cron` + schedule cleanup jobs | `CREATE EXTENSION pg_cron` |
+
+**Verification:** Run `npm run lint` + manual test: existing POS still works with default shop.
+
+### Phase 2: Service Layer Refactoring
+
+**Goal:** `shopsService` created, `settingsService` trimmed. No UI changes.
+
+| Step | Action |
+|------|--------|
+| 2.1 | Add `Shop` interface to `src/types/index.ts` |
+| 2.2 | Trim `AppSettings` interface (remove 10 fields) |
+| 2.3 | Create `shopsService` in `src/lib/services.ts` |
+| 2.4 | Trim `settingsService.get()` and `settingsService.update()` |
+| 2.5 | Update `useInvoiceGeneration()` to use `shopsService` |
+| 2.6 | Update `generateNextInvoiceNumber()` param from `settings` → `shop` |
+
+**Verification:** TypeScript compiles. Service tests pass.
+
+### Phase 3: State & UI Refactoring
+
+**Goal:** All components read from `state.shop` instead of `state.settings` for shop fields.
+
+| Step | Action |
+|------|--------|
+| 3.1 | Add `shop: Shop` to `AppState` + `SET_SHOP` action in SupabaseAppContext |
+| 3.2 | Update `loadData()` to call `shopsService.getByUserId()` |
+| 3.3 | Update `INCREMENT_INVOICE_COUNTER` reducer to write to `state.shop` |
+| 3.4 | Update `Header.tsx`: `storeName`/`storeLogo` → `shop.name`/`shop.logo` |
+| 3.5 | Update `ReceiptPrint.tsx`: 7 fields → `state.shop.*` |
+| 3.6 | Update `Cart.tsx`: `currency`/`taxRate` → `shop.*` |
+| 3.7 | Update `CheckoutModal.tsx`: `currency`/`taxRate` → `shop.*` |
+| 3.8 | Update `ProductGrid.tsx`: `currency` → `shop.currency` |
+| 3.9 | Update `InventoryManager.tsx`: `currency` → `shop.currency` |
+| 3.10 | Update `CustomerManager.tsx`/`CustomerDetailModal.tsx`: `currency` → `shop.currency` |
+| 3.11 | Update `TransactionsManager.tsx`: `currency` → `shop.currency` |
+| 3.12 | Update `ReportsManager.tsx`: `currency` → `shop.currency` |
+| 3.13 | Update `DiscountManager.tsx`/`DiscountModal.tsx`: `currency` → `shop.currency` |
+| 3.14 | Update `POSTerminal.tsx`: `taxRate` → `shop.taxRate` |
+| 3.15 | Update `Settings.tsx`: formData reads from `state.shop`, handleSubmit splits to `shopsService` + `settingsService` |
+| 3.16 | Update `useInvoiceStats()`: reads from `state.shop` |
+
+**Component dependency table:**
+
+| Component | Fields to change |
+|-----------|-----------------|
+| `Header.tsx` | `storeName`, `storeLogo` |
+| `ReceiptPrint.tsx` | `storeName`, `storeAddress`, `storePhone`, `storeEmail`, `storeLogo`, `currency`, `taxRate` |
+| `Cart.tsx` | `currency`, `taxRate`, `interfaceMode` (stays settings) |
+| `CheckoutModal.tsx` | `currency`, `taxRate`, `interfaceMode` (stays settings) |
+| `POSTerminal.tsx` | `taxRate` |
+| `ProductGrid.tsx` | `currency`, `interfaceMode` (stays settings) |
+| `InventoryManager.tsx` | `currency` |
+| `CustomerManager.tsx` | `currency` |
+| `CustomerDetailModal.tsx` | `currency` |
+| `TransactionsManager.tsx` | `currency` |
+| `ReportsManager.tsx` | `currency` |
+| `DiscountManager.tsx` | `currency` |
+| `DiscountModal.tsx` | `currency` |
+| `Settings.tsx` | All 17 fields split across `shop` + `settings` |
+
+**Verification:** Full manual POS flow: add product → cart → checkout → receipt. Check all currency displays, tax calculations, invoice numbers.
+
+### Phase 4: Governance Features
+
+**Goal:** Approval workflow, anti-bot, cleanup.
+
+| Step | Action |
+|------|--------|
+| 4.1 | Deploy updated `handle_new_auth_user()` trigger |
+| 4.2 | Enable email confirmation in Supabase Dashboard |
+| 4.3 | Enable CAPTCHA on signup in Supabase Dashboard |
+| 4.4 | Create `PendingApprovalScreen` component |
+| 4.5 | Add shop active check in `AppContent.tsx` |
+| 4.6 | Create admin approval UI (or document Dashboard workflow) |
+| 4.7 | Deploy pg_cron cleanup jobs |
+| 4.8 | Add `draft_retention_days` field to Settings UI |
+
+**Verification:** Signup flow → pending screen → admin approves → access granted. Cleanup jobs run on schedule.
+
+---
+
+## 7. Conflict Resolution
+
+| Conflict | Resolution |
+|----------|------------|
+| RLS write = global admin only → shop admin can't edit settings | Phase 1 Step 1.7: update RLS to shop-admin-scoped |
+| `INCREMENT_INVOICE_COUNTER` writes to `state.settings` | Phase 3 Step 3.3: move to `state.shop` |
+| `useInvoiceGeneration()` calls `settingsService.update()` | Phase 2 Step 2.5: change to `shopsService.update()` |
+| `generate_invoice_number()` no-arg reads `app_settings` | Phase 1 Step 1.5: add `p_shop_id` param, read `shops` |
+| Cart in localStorage + `sales_tabs.cart` | Cleanup cron safe: localStorage is primary |
+| `handle_new_auth_user()` creates active users | Phase 4 Step 4.1: set `is_active=false` for approval gate |
+| CheckoutModal hardcoded bank list | Deferred — banks are regional, not shop-specific |
+
+---
+
+## 8. Out of Scope
 
 - Shop switching UI (user belongs to one shop for now)
-- Shop creation/management UI (admin creates shops via Supabase Dashboard)
+- Shop creation/management UI beyond approval (admin uses Dashboard initially)
 - Receipt customization (custom footer text, show/hide elements)
 - Per-shop user role management (roles stay global in `users` table)
-- Exchange rate configuration (stays in `app_settings` — not shop-specific)
+- Exchange rate configuration (stays in `app_settings` — market data)
 - New Settings UI layout or sections (existing UI reused as-is)
-- `business_type` feature toggling (column added for future use only)
+- `business_type` feature toggling (column added for future use)
+- Multi-shop membership UI (user sees one shop)
+- Stripe/subscription billing integration (subscription_tier column unused for now)
