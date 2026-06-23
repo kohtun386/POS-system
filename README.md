@@ -1,11 +1,21 @@
 # CoffeeShop POS
 
-A multi-tenant, web-based point-of-sale platform for coffee shops, food courts, and small-to-medium restaurants. Built for speed — 3-item checkout in under 10 seconds on iPad.
+A multi-tenant, web-based point-of-sale platform built for coffee shops, food courts, and small-to-medium restaurants — with a focus on the Myanmar market. Supports 9 payment methods including KBZpay, WavePay, AYAPay, CBPay, and MPU. Installable as a PWA on iPad and Android. Multi-tenancy foundation in place: per-shop config, RLS-scoped data, and role-based access across 18 database tables.
 
 ![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6.svg)
 ![Supabase](https://img.shields.io/badge/Supabase-2.50-3ECF8E.svg)
+
+**Live Demo:** [https://pos-system-gilt-mu.vercel.app](https://pos-system-gilt-mu.vercel.app)
+
+---
+
+## Screenshots
+
+| POS Terminal | Checkout | Reports |
+|:---:|:---:|:---:|
+| ![POS Terminal](docs/screenshots/pos-terminal.png) | ![Checkout](docs/screenshots/checkout.png) | ![Reports](docs/screenshots/reports.png) |
 
 ---
 
