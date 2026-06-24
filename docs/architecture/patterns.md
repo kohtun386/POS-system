@@ -28,7 +28,7 @@ src/components/<domain>/
 
 **Domains using this pattern:** inventory (InventoryManager + ProductModal), customers (CustomerManager + CustomerModal), discounts (DiscountManager + DiscountModal), users (UserManager + UserModal), alerts (AlertManager + RecipientModal + TemplateModal + ServiceModal)
 
-**Source:** `CLAUDE.md`, `docs/prd.md`
+**Source:** `CLAUDE.md`, `docs/specs/prd.md`
 
 ### Modal Structure
 
@@ -362,4 +362,4 @@ Use `checkDiscountEligibility()` from SupabaseAppContext. Don't reimplement cond
 
 Use `motion.div` / `motion.button` with `whileHover`, `whileTap`, `animate`, `initial` props. Keep `transition={{ duration: 0.2 }}` consistent.
 
-**Source:** `CLAUDE.md`, `docs/design-system.md`, `src/index.css`
+**Source:** `CLAUDE.md`, `docs/architecture/design-system.md`, `src/index.css`

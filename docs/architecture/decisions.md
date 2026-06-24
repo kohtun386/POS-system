@@ -28,7 +28,7 @@ Synthesized from existing documentation. Each decision links to its source.
 
 **Why:** Custom POS UI needs full design control. Tailwind's utility classes map directly to the design system tokens. Custom palette gives the coffee shop brand identity. Dark mode via `class` strategy.
 
-**Source:** `CLAUDE.md`, `docs/design-system.md`
+**Source:** `CLAUDE.md`, `docs/architecture/design-system.md`
 
 ### Animations: Framer Motion
 
@@ -208,7 +208,7 @@ Synthesized from existing documentation. Each decision links to its source.
 
 **Why:** Coffee shop has intermittent connectivity. Cart persistence prevents lost sales during brief outages. Full offline checkout (Option C) deferred to post-beta based on real connectivity data.
 
-**Source:** `docs/roadmap.md`
+**Source:** `docs/specs/roadmap.md`
 
 ---
 
@@ -256,7 +256,7 @@ Synthesized from existing documentation. Each decision links to its source.
 
 **Why:** SECURITY DEFINER functions bypass RLS. If callable by authenticated users, they become privilege escalation vectors.
 
-**Source:** `docs/roadmap.md`
+**Source:** `docs/specs/roadmap.md`
 
 ### Function search_path Hardened
 
@@ -264,7 +264,7 @@ Synthesized from existing documentation. Each decision links to its source.
 
 **Why:** Prevents search-path injection attacks where a malicious schema is created to shadow expected functions.
 
-**Source:** `docs/roadmap.md`
+**Source:** `docs/specs/roadmap.md`
 
 ---
 
@@ -272,7 +272,7 @@ Synthesized from existing documentation. Each decision links to its source.
 
 | Topic | Status | Source |
 |-------|--------|--------|
-| i18n library (react-i18next vs react-intl vs custom) | Scoping needed | `docs/roadmap.md` |
-| Food costing module MVP details | Scoped, awaiting implementation | `docs/roadmap.md` |
-| Offline checkout queue (PWA Option C) | Post-beta, needs real connectivity data | `docs/roadmap.md` |
-| Sales tab sharing between baristas | Not on roadmap | `docs/roadmap.md` |
+| i18n library (react-i18next vs react-intl vs custom) | Scoping needed | `docs/specs/roadmap.md` |
+| Food costing module MVP details | Scoped, awaiting implementation | `docs/specs/roadmap.md` |
+| Offline checkout queue (PWA Option C) | Post-beta, needs real connectivity data | `docs/specs/roadmap.md` |
+| Sales tab sharing between baristas | Not on roadmap | `docs/specs/roadmap.md` |

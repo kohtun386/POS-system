@@ -261,7 +261,7 @@ src/
 
 **Dark mode:** Tailwind `class` strategy. Toggle via header button.
 
-**Full token catalog:** [`docs/design-system.md`](docs/design-system.md)
+**Full token catalog:** [`docs/architecture/design-system.md`](docs/architecture/design-system.md)
 
 ---
 
@@ -271,16 +271,16 @@ Documentation-Driven Development (DDD) workflow. Docs are source of truth.
 
 | Document | Path | Content |
 |----------|------|---------|
-| **PRD** | [`docs/prd.md`](docs/prd.md) | User personas, 21 features with acceptance criteria, glossary |
-| **Decisions** | [`docs/decisions.md`](docs/decisions.md) | Key technology decisions (stack, architecture, database, multi-tenancy, security) |
-| **Patterns** | [`docs/patterns.md`](docs/patterns.md) | Coding conventions and patterns (components, services, state, RLS, naming) |
+| **PRD** | [`docs/specs/prd.md`](docs/specs/prd.md) | User personas, 21 features with acceptance criteria, glossary |
+| **Decisions** | [`docs/architecture/decisions.md`](docs/architecture/decisions.md) | Key technology decisions (stack, architecture, database, multi-tenancy, security) |
+| **Patterns** | [`docs/architecture/patterns.md`](docs/architecture/patterns.md) | Coding conventions and patterns (components, services, state, RLS, naming) |
 | **Database** | [`docs/architecture/database.md`](docs/architecture/database.md) | Schema map, FK relationships, indexes, functions, RLS matrix |
 | **Auth** | [`docs/architecture/auth.md`](docs/architecture/auth.md) | Auth flow, role hierarchy, permission matrix, RLS patterns |
 | **State Management** | [`docs/architecture/state-management.md`](docs/architecture/state-management.md) | Provider tree, reducer actions, data flow diagrams |
-| **Design System** | [`docs/design-system.md`](docs/design-system.md) | Color tokens, typography, spacing, component catalog |
+| **Design System** | [`docs/architecture/design-system.md`](docs/architecture/design-system.md) | Color tokens, typography, spacing, component catalog |
 | **Deployment** | [`docs/architecture/deployment.md`](docs/architecture/deployment.md) | Env vars, build/deploy, PWA config, backup, troubleshooting |
-| **Roadmap** | [`docs/roadmap.md`](docs/roadmap.md) | Feature roadmap, technical debt register |
-| **Technical Debt** | [`docs/technical-debt.md`](docs/technical-debt.md) | any types, React Refresh warnings, color palette drift |
+| **Roadmap** | [`docs/specs/roadmap.md`](docs/specs/roadmap.md) | Feature roadmap, technical debt register |
+| **Technical Debt** | [`docs/specs/technical-debt.md`](docs/specs/technical-debt.md) | any types, React Refresh warnings, color palette drift |
 | **Multi-Tenancy** | [`docs/specs/multi-tenancy.md`](docs/specs/multi-tenancy.md) | Current shop_id foundation, dynamic shop configuration target, historical context |
 | **Inventory Alerts** | [`docs/specs/inventory-alerts.md`](docs/specs/inventory-alerts.md) | Alert system spec (5 alert types, email/SMS, templates) |
 | **Maintenance** | [`docs/ops/maintenance-checklist.md`](docs/ops/maintenance-checklist.md) | Monthly security & DB maintenance |
@@ -317,7 +317,7 @@ refactor: extract checkout payment logic to service
 
 ### PR Guidelines
 
-- Reference acceptance criteria from `docs/prd.md` (e.g., "Implements FR-POS-03")
+- Reference acceptance criteria from `docs/specs/prd.md` (e.g., "Implements FR-POS-03")
 - Include screenshots for UI changes
 - Run `npm run lint` before submitting
 - Update relevant docs if schema or behavior changes

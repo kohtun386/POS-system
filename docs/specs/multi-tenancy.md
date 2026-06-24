@@ -2,7 +2,7 @@
 
 **Status:** Current foundation implemented; dynamic shop configuration pending  
 **Last updated:** 2026-06-23  
-**Canonical companion spec:** `docs/superpowers/specs/2026-06-22-dynamic-shop-configuration-design.md`
+**Canonical companion spec:** `docs/specs/dynamic-shop-configuration.md`
 
 > CURRENT TRUTH: The project is no longer in the pre-migration "zero tenant isolation" state. The `shop_id` foundation exists. This document describes the current foundation and the remaining work needed to complete dynamic per-shop configuration.
 

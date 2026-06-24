@@ -164,15 +164,15 @@ Configuration in `eslint.config.js` — TypeScript-ESLint with React hooks plugi
 
 | Doc | What It Covers |
 |-----|----------------|
-| `docs/decisions.md` | Key technology decisions (stack, architecture, database, multi-tenancy, currency, PWA, auth, security) |
-| `docs/patterns.md` | Coding conventions and patterns (component structure, service layer, state updates, RLS, naming) |
+| `docs/architecture/decisions.md` | Key technology decisions (stack, architecture, database, multi-tenancy, currency, PWA, auth, security) |
+| `docs/architecture/patterns.md` | Coding conventions and patterns (component structure, service layer, state updates, RLS, naming) |
 | `docs/architecture/database.md` | Full database schema reference (tables, columns, types, indexes, functions) |
 | `docs/architecture/auth.md` | Auth flows, role hierarchy, permission matrix, RLS policy patterns |
 | `docs/architecture/state-management.md` | Provider tree, reducer actions, cart persistence, data loading |
 | `docs/architecture/deployment.md` | Environment variables, local dev, Supabase config, PWA, backup |
-| `docs/design-system.md` | Espresso & Copper tokens, component CSS classes, typography, animations |
-| `docs/prd.md` | User personas, functional requirements, acceptance criteria |
-| `docs/roadmap.md` | Short-term and long-term feature roadmap |
-| `docs/technical-debt.md` | Known debt (any types, React Refresh warnings, color drift) |
+| `docs/architecture/design-system.md` | Espresso & Copper tokens, component CSS classes, typography, animations |
+| `docs/specs/prd.md` | User personas, functional requirements, acceptance criteria |
+| `docs/specs/roadmap.md` | Short-term and long-term feature roadmap |
+| `docs/specs/technical-debt.md` | Known debt (any types, React Refresh warnings, color drift) |
 | `docs/specs/multi-tenancy.md` | Multi-tenant gap analysis and migration strategy |
 | `docs/specs/inventory-alerts.md` | Alert system specification (5 alert types, email/SMS, templates) |

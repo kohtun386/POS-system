@@ -151,7 +151,7 @@ Not blocking beta. Schedule after stabilization.
 
 ### Technical Debt Register
 
-→ See `docs/technical-debt.md` for full register:
+→ See `docs/specs/technical-debt.md` for full register:
 - `any` type cleanup: 73 errors, 17 files (3-4 hours)
 - React Refresh context warnings: 26 warnings, 6 files (1 hour)
 - Color palette drift: 20+ inline hex values, ~10 files (1-2 hours)

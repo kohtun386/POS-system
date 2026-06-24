@@ -5,7 +5,7 @@
 **Generated:** 2026-06-20
 **Reconciled:** 2026-06-23
 
-> **Multi-tenancy:** The `shop_id` foundation exists with a single default shop and no shop-switching UI yet. Dynamic shop configuration is the next milestone: `shops` owns business identity and POS behavior, while `app_settings` is trimmed to global/preferences-style settings. See `docs/specs/multi-tenancy.md` and `docs/superpowers/specs/2026-06-22-dynamic-shop-configuration-design.md`.
+> **Multi-tenancy:** The `shop_id` foundation exists with a single default shop and no shop-switching UI yet. Dynamic shop configuration is the next milestone: `shops` owns business identity and POS behavior, while `app_settings` is trimmed to global/preferences-style settings. See `docs/specs/multi-tenancy.md` and `docs/specs/dynamic-shop-configuration.md`.
 
 ---
 
