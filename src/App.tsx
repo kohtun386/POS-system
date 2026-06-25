@@ -91,7 +91,12 @@ function AppContent() {
         setCurrentView('pos');
         return <POSTerminal />;
       case 'settings':
-        return <Settings />;
+        // Only allow admin and manager to access settings
+        if (userRole === 'admin' || userRole === 'manager') {
+          return <Settings />;
+        }
+        setCurrentView('pos');
+        return <POSTerminal />;
       default:
         return <POSTerminal />;
     }
