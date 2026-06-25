@@ -158,6 +158,16 @@ export interface User {
   avatar?: string;
 }
 
+export interface Shop {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface AppSettings {
   storeName: string;
   storeAddress: string;
@@ -166,7 +176,7 @@ export interface AppSettings {
   storeLogo?: string;
   taxRate: number;
   currency: string;
-  baseCurrency: string; // Base currency for pricing
+  baseCurrency: string;
   interfaceMode: 'touch' | 'traditional';
   autoBackup: boolean;
   receiptPrinter: boolean;
@@ -175,8 +185,9 @@ export interface AppSettings {
   invoiceCounter: number;
   exchangeRateProvider?: 'fixer' | 'currencylayer' | 'exchangerate' | 'manual';
   exchangeRateApiKey?: string;
-  exchangeRateUpdateInterval?: number; // in minutes
+  exchangeRateUpdateInterval?: number;
 }
+
 
 export interface LoginCredentials {
   username: string;

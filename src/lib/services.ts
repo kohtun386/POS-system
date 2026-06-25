@@ -12,7 +12,8 @@ import {
   AlertTemplate,
   AlertConfiguration,
   AlertHistory,
-  NotificationServiceConfig
+  NotificationServiceConfig,
+  Shop
 } from '../types'
 
 // Products Service
@@ -1233,4 +1234,64 @@ export const notificationServiceConfigService = {
 
     if (error) throw error
   }
+}
+
+// Shop Memberships Service
+// Thin wrapper — resolves user's active shop via shop_memberships → shops join
+export const shopMembershipsService = {
+  async getShopByUserId(userId: string): Promise<Shop | null> {
+    const { data, error } = await supabase
+      .from('shop_memberships')
+      .select('shop:shops(*)')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .limit(1)
+      .single()
+
+    if (error) {
+      // PGRST116 = no rows found — graceful null
+      if (error.code === 'PGRST116') return null
+      throw error
+    }
+
+    const shop = (data as any).shop
+    if (!shop) return null
+
+    return {
+      id: shop.id,
+      name: shop.name || '',
+      address: shop.address || '',
+      phone: shop.phone || '',
+      email: shop.email || '',
+      createdAt: new Date(shop.created_at),
+      updatedAt: new Date(shop.updated_at),
+    }
+  },
+}
+
+// Shops Service
+export const shopsService = {
+  async getById(id: string): Promise<Shop> {
+    const { data, error } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) throw error
+
+    return {
+      id: data.id,
+      name: data.name || '',
+      address: data.address || '',
+      phone: data.phone || '',
+      email: data.email || '',
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    }
+  },
+
+  async getByUserId(userId: string): Promise<Shop | null> {
+    return shopMembershipsService.getShopByUserId(userId)
+  },
 }

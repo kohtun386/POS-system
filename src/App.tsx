@@ -4,6 +4,7 @@ import { AppProvider, useApp } from './context/SupabaseAppContext';
 import { CurrencyProvider } from './context/CurrencyContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LoadingSpinner } from './components/ui/LoadingComponents';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { LoginPage } from './components/auth/LoginPage';
 import { Header } from './components/layout/Header';
 
@@ -132,7 +133,9 @@ function App() {
       <AuthProvider>
         <AppProvider>
           <CurrencyProvider>
-            <AppContent />
+            <ErrorBoundary>
+              <AppContent />
+            </ErrorBoundary>
           </CurrencyProvider>
         </AppProvider>
       </AuthProvider>

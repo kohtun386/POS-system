@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
 import {
-  Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, AppliedDiscount, CardDetails
+  Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, AppliedDiscount, CardDetails, Shop
 } from '../types';
 import { useAuth } from './AuthContext';
 import {
@@ -10,9 +10,9 @@ import {
   discountsService,
   settingsService,
   usersService,
-  salesTabsService
+  salesTabsService,
+  shopMembershipsService
 } from '../lib/services';
-import { supabase } from '../lib/supabase';
 
 interface AppState {
   products: Product[];
@@ -27,6 +27,7 @@ interface AppState {
   salesTabs: SalesTab[];
   activeSalesTab: string;
   activeShopId: string;  // Current shop for multi-tenant scoping
+  shop: Shop | null;
   loading: boolean;
   error: string | null;
 }
@@ -64,7 +65,8 @@ type AppAction =
   | { type: 'REMOVE_SALES_TAB'; payload: string }
   | { type: 'SET_ACTIVE_SALES_TAB'; payload: string }
   | { type: 'SET_SALES_TABS'; payload: SalesTab[] }
-  | { type: 'SET_ACTIVE_SHOP'; payload: string };
+  | { type: 'SET_ACTIVE_SHOP'; payload: string }
+  | { type: 'SET_SHOP'; payload: Shop | null };
 
 const initialState: AppState = {
   products: [],
@@ -92,6 +94,7 @@ const initialState: AppState = {
   salesTabs: [],
   activeSalesTab: '',
   activeShopId: '',
+  shop: null,
   loading: false,
   error: null,
 };
@@ -224,6 +227,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, salesTabs: action.payload };
     case 'SET_ACTIVE_SHOP':
       return { ...state, activeShopId: action.payload };
+    case 'SET_SHOP':
+      return { ...state, shop: action.payload };
     default:
       return state;
   }
@@ -327,7 +332,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         settings,
         users,
         salesTabs,
-        shopMembership
+        shop
       ] = await Promise.all([
         productsService.getAll(),
         customersService.getAll(),
@@ -336,15 +341,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         settingsService.get(),
         usersService.getAll(),
         user ? salesTabsService.getByUserId(user.id) : Promise.resolve([]),
-        // Load user's active shop from shop_memberships
-        user ? supabase
-          .from('shop_memberships')
-          .select('shop_id')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .limit(1)
-          .single()
-          .then(r => r.data) : Promise.resolve(null)
+        // Load user's active shop via service layer
+        user ? shopMembershipsService.getShopByUserId(user.id) : Promise.resolve(null)
       ]);
 
       dispatch({ type: 'SET_PRODUCTS', payload: products });
@@ -356,8 +354,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_SALES_TABS', payload: salesTabs });
 
       // Set active shop
-      if (shopMembership?.shop_id) {
-        dispatch({ type: 'SET_ACTIVE_SHOP', payload: shopMembership.shop_id });
+      if (shop) {
+        dispatch({ type: 'SET_SHOP', payload: shop });
+        dispatch({ type: 'SET_ACTIVE_SHOP', payload: shop.id });
       }
 
       // Create initial sales tab if none exist
