@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
+import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { useTheme } from '../../context/ThemeContext';
 import { swalConfig } from '../../lib/sweetAlert';
 
@@ -17,6 +18,9 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
   const { state, dispatch } = useApp();
   const { signOut } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const inventoryEnabled = useFeatureFlag('inventory_tracking');
+  const customerEnabled = useFeatureFlag('customer_management');
+  const discountEnabled = useFeatureFlag('discount_engine');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
@@ -66,18 +70,18 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
       items.push({ id: 'transactions', label: 'Sales', icon: Receipt, color: 'text-[#22c55e]' });
     }
 
-    // Inventory - Manager and Admin can access
-    if (role === 'admin' || role === 'manager') {
+    // Inventory - Manager and Admin can access (feature-gated)
+    if ((role === 'admin' || role === 'manager') && inventoryEnabled) {
       items.push({ id: 'inventory', label: 'Inventory', icon: Package, color: 'text-[#9a693a]' });
     }
 
-    // Customers - Manager and Admin can access
-    if (role === 'admin' || role === 'manager') {
+    // Customers - Manager and Admin can access (feature-gated)
+    if ((role === 'admin' || role === 'manager') && customerEnabled) {
       items.push({ id: 'customers', label: 'Customers', icon: Users, color: 'text-[#f57323]' });
     }
 
-    // Discounts - Manager and Admin can access
-    if (role === 'admin' || role === 'manager') {
+    // Discounts - Manager and Admin can access (feature-gated)
+    if ((role === 'admin' || role === 'manager') && discountEnabled) {
       items.push({ id: 'discounts', label: 'Discounts', icon: Percent, color: 'text-[#e55c13]' });
     }
 
@@ -89,6 +93,11 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
     // Users - Admin only
     if (role === 'admin') {
       items.push({ id: 'users', label: 'Users', icon: User, color: 'text-[#7a4f2c]' });
+    }
+
+    // Feature Flags - Admin only
+    if (role === 'admin') {
+      items.push({ id: 'feature-flags', label: 'Feature Flags', icon: Settings, color: 'text-[#7a4f2c]' });
     }
 
     return items;

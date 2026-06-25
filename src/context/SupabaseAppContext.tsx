@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
 import {
-  Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, AppliedDiscount, CardDetails, Shop
+  Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, AppliedDiscount, CardDetails, Shop,
+  FeatureFlags
 } from '../types';
 import { useAuth } from './AuthContext';
 import {
@@ -11,7 +12,9 @@ import {
   settingsService,
   usersService,
   salesTabsService,
-  shopMembershipsService
+  shopMembershipsService,
+  featureDefinitionsService,
+  shopFeaturesService
 } from '../lib/services';
 
 interface AppState {
@@ -28,6 +31,7 @@ interface AppState {
   activeSalesTab: string;
   activeShopId: string;  // Current shop for multi-tenant scoping
   shop: Shop | null;
+  featureFlags: FeatureFlags;
   loading: boolean;
   error: string | null;
 }
@@ -66,7 +70,9 @@ type AppAction =
   | { type: 'SET_ACTIVE_SALES_TAB'; payload: string }
   | { type: 'SET_SALES_TABS'; payload: SalesTab[] }
   | { type: 'SET_ACTIVE_SHOP'; payload: string }
-  | { type: 'SET_SHOP'; payload: Shop | null };
+  | { type: 'SET_SHOP'; payload: Shop | null }
+  | { type: 'SET_FEATURE_FLAGS'; payload: FeatureFlags }
+  | { type: 'TOGGLE_FEATURE_FLAG'; payload: { key: string; enabled: boolean } };
 
 const initialState: AppState = {
   products: [],
@@ -95,6 +101,7 @@ const initialState: AppState = {
   activeSalesTab: '',
   activeShopId: '',
   shop: null,
+  featureFlags: {},
   loading: false,
   error: null,
 };
@@ -229,6 +236,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, activeShopId: action.payload };
     case 'SET_SHOP':
       return { ...state, shop: action.payload };
+    case 'SET_FEATURE_FLAGS':
+      return { ...state, featureFlags: action.payload };
+    case 'TOGGLE_FEATURE_FLAG':
+      return {
+        ...state,
+        featureFlags: { ...state.featureFlags, [action.payload.key]: action.payload.enabled }
+      };
     default:
       return state;
   }
@@ -332,7 +346,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         settings,
         users,
         salesTabs,
-        shop
+        shop,
+        featureDefinitions,
+        shopFeatures
       ] = await Promise.all([
         productsService.getAll(),
         customersService.getAll(),
@@ -342,7 +358,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         usersService.getAll(),
         user ? salesTabsService.getByUserId(user.id) : Promise.resolve([]),
         // Load user's active shop via service layer
-        user ? shopMembershipsService.getShopByUserId(user.id) : Promise.resolve(null)
+        user ? shopMembershipsService.getShopByUserId(user.id) : Promise.resolve(null),
+        featureDefinitionsService.getAll(),
+        shop ? shopFeaturesService.getByShopId(shop.id) : Promise.resolve([]),
       ]);
 
       dispatch({ type: 'SET_PRODUCTS', payload: products });
@@ -358,6 +376,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: 'SET_SHOP', payload: shop });
         dispatch({ type: 'SET_ACTIVE_SHOP', payload: shop.id });
       }
+
+      // Resolve feature flags
+      const resolvedFeatureFlags: FeatureFlags = {};
+      for (const def of featureDefinitions) {
+        const override = shopFeatures.find(o => o.featureKey === def.key);
+        resolvedFeatureFlags[def.key] = override ? override.enabled : def.defaultEnabled;
+      }
+      dispatch({ type: 'SET_FEATURE_FLAGS', payload: resolvedFeatureFlags });
 
       // Create initial sales tab if none exist
       if (salesTabs.length === 0 && user) {

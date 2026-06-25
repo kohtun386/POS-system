@@ -351,9 +351,49 @@ export interface AlertContext {
   configuration: AlertConfiguration;
 }
 
-export interface ProcessedAlert {
-  alert: InventoryAlert;
-  recipients: AlertRecipient[];
-  shouldSend: boolean;
-  reason?: string;
+// Feature Flags types
+export interface FeatureDefinition {
+  id: string;
+  key: string;
+  name: string;
+  description?: string;
+  category: string;
+  defaultEnabled: boolean;
+  subscriptionTier: 'free' | 'pro' | 'enterprise';
+  createdAt: Date;
 }
+
+export interface ShopFeature {
+  id: string;
+  shopId: string;
+  featureKey: string;
+  enabled: boolean;
+  updatedAt: Date;
+}
+
+export type FeatureFlags = Record<string, boolean>;
+
+// ================================================================
+// Feature Flags
+// ================================================================
+
+export interface FeatureDefinition {
+  id: string;
+  key: string;
+  name: string;
+  description?: string;
+  category: string;
+  defaultEnabled: boolean;
+  subscriptionTier: 'free' | 'pro' | 'enterprise';
+  createdAt: Date;
+}
+
+export interface ShopFeature {
+  id: string;
+  shopId: string;
+  featureKey: string;
+  enabled: boolean;
+  updatedAt: Date;
+}
+
+export type FeatureFlags = Record<string, boolean>;

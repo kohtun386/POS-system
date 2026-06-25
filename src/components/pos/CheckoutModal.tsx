@@ -4,6 +4,7 @@ import { X, CreditCard, Banknote, Smartphone, Check, Receipt, AlertCircle, Gift 
 import { Sale, CardDetails, AppliedDiscount, CartItem, Payment } from '../../types';
 import { useApp, checkDiscountEligibility, useInvoiceGeneration } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
+import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { ReceiptPrint } from './ReceiptPrint';
 import { salesService, customersService, productsService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
@@ -18,6 +19,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const { state, dispatch } = useApp();
   const { user } = useAuth();
   const generateInvoice = useInvoiceGeneration();
+  const creditEnabled = useFeatureFlag('credit_system');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [amountPaid, setAmountPaid] = useState('');
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -596,22 +598,24 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                         </span>
                       </button>
                     ))}
-                    <button
-                      onClick={() => {
-                        if (splitPaymentEnabled) {
-                          setPendingPayment(prev => ({ ...prev, method: 'credit' as Payment['method'] }));
-                        } else {
-                          setPaymentMethod('credit');
-                        }
-                      }}
-                      disabled={!splitPaymentEnabled && !canPayWithCredit}
-                      className={`${paymentBtnClasses('credit', !splitPaymentEnabled && !canPayWithCredit)} col-span-2 sm:col-span-3`}
-                    >
-                      <Receipt className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
-                      <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
-                        Credit
-                      </span>
-                    </button>
+                    {creditEnabled && (
+                      <button
+                        onClick={() => {
+                          if (splitPaymentEnabled) {
+                            setPendingPayment(prev => ({ ...prev, method: 'credit' as Payment['method'] }));
+                          } else {
+                            setPaymentMethod('credit');
+                          }
+                        }}
+                        disabled={!splitPaymentEnabled && !canPayWithCredit}
+                        className={`${paymentBtnClasses('credit', !splitPaymentEnabled && !canPayWithCredit)} col-span-2 sm:col-span-3`}
+                      >
+                        <Receipt className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
+                        <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
+                          Credit
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
 

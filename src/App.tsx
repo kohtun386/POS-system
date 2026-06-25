@@ -7,7 +7,7 @@ import { LoadingSpinner } from './components/ui/LoadingComponents';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { LoginPage } from './components/auth/LoginPage';
 import { Header } from './components/layout/Header';
-
+import { useFeatureFlag } from './hooks/useFeatureFlag';
 // Lazy-loaded route components for code-splitting
 const POSTerminal = lazy(() => import('./components/pos/POSTerminal').then(m => ({ default: m.POSTerminal })));
 const TransactionsManager = lazy(() => import('./components/transactions/TransactionsManager').then(m => ({ default: m.TransactionsManager })));
@@ -17,11 +17,15 @@ const ReportsManager = lazy(() => import('./components/reports/ReportsManager').
 const Settings = lazy(() => import('./components/settings/Settings').then(m => ({ default: m.Settings })));
 const DiscountManager = lazy(() => import('./components/discounts/DiscountManager').then(m => ({ default: m.DiscountManager })));
 const UserManager = lazy(() => import('./components/users/UserManager').then(m => ({ default: m.UserManager })));
+const FeatureFlagsManager = lazy(() => import('./components/settings/FeatureFlagsManager').then(m => ({ default: m.FeatureFlagsManager })));
 
 function AppContent() {
   const { user, loading } = useAuth();
   const { state } = useApp();
   const [currentView, setCurrentView] = useState('pos');
+  const inventoryEnabled = useFeatureFlag('inventory_tracking');
+  const customerEnabled = useFeatureFlag('customer_management');
+  const discountEnabled = useFeatureFlag('discount_engine');
 
   // Show loading spinner while auth is loading
   if (loading) {
@@ -57,15 +61,15 @@ function AppContent() {
         setCurrentView('pos');
         return <POSTerminal />;
       case 'inventory':
-        // Only allow admin and manager to access inventory
-        if (userRole === 'admin' || userRole === 'manager') {
+        // Only allow admin and manager to access inventory (feature-gated)
+        if ((userRole === 'admin' || userRole === 'manager') && inventoryEnabled) {
           return <InventoryManager />;
         }
         setCurrentView('pos');
         return <POSTerminal />;
       case 'customers':
-        // Only allow admin and manager to access customers
-        if (userRole === 'admin' || userRole === 'manager') {
+        // Only allow admin and manager to access customers (feature-gated)
+        if ((userRole === 'admin' || userRole === 'manager') && customerEnabled) {
           return <CustomerManager />;
         }
         setCurrentView('pos');
@@ -78,8 +82,8 @@ function AppContent() {
         setCurrentView('pos');
         return <POSTerminal />;
       case 'discounts':
-        // Only allow admin and manager to access discounts
-        if (userRole === 'admin' || userRole === 'manager') {
+        // Only allow admin and manager to access discounts (feature-gated)
+        if ((userRole === 'admin' || userRole === 'manager') && discountEnabled) {
           return <DiscountManager />;
         }
         setCurrentView('pos');
@@ -88,6 +92,13 @@ function AppContent() {
         // Only allow admin to access users
         if (userRole === 'admin') {
           return <UserManager />;
+        }
+        setCurrentView('pos');
+        return <POSTerminal />;
+      case 'feature-flags':
+        // Only allow admin to access feature flags
+        if (userRole === 'admin') {
+          return <FeatureFlagsManager />;
         }
         setCurrentView('pos');
         return <POSTerminal />;
