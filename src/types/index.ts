@@ -397,3 +397,87 @@ export interface ShopFeature {
 }
 
 export type FeatureFlags = Record<string, boolean>;
+// ================================================================
+// Recipe BOM Types
+// ================================================================
+
+export interface RawMaterial {
+  id: string;
+  shopId: string;
+  name: string;
+  sku?: string;
+  category: 'ingredient' | 'packaging' | 'consumable';
+  currentStock: number;
+  minimumStock: number;
+  baseUnit: string; // 'ml', 'g', 'l', 'kg', 'unit', 'oz'
+  costPerUnit?: number;
+  isActive: boolean;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Recipe {
+  id: string;
+  shopId: string;
+  productId: string;
+  productName: string;
+  servingSize: number;
+  servingUnit: string;
+  prepTimeSeconds?: number;
+  instructions?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface RecipeLine {
+  id: string;
+  shopId: string;
+  recipeId: string;
+  rawMaterialId: string;
+  rawMaterialName: string;
+  quantity: number; // in base_unit
+  recipeUnit?: string; // display unit for recipe authoring
+  recipeQuantity?: number; // display quantity
+  wastagePercent: number;
+  isOptional: boolean;
+  notes?: string;
+  createdAt: Date;
+}
+
+export interface ConsumptionLog {
+  id: string;
+  shopId: string;
+  saleId: string;
+  saleItemIndex?: number;
+  productId: string;
+  productName: string;
+  rawMaterialId: string;
+  rawMaterialName: string;
+  quantityConsumed: number;
+  quantityBase: number;
+  wastageAmount: number;
+  unit: string;
+  stockBefore: number;
+  stockAfter: number;
+  consumedAt: Date;
+}
+
+export interface UomConversion {
+  id: string;
+  fromUnit: string;
+  toUnit: string;
+  factor: number;
+}
+
+export interface StockCheckResult {
+  sufficient: boolean;
+  insufficientItems: Array<{
+    productName: string;
+    rawMaterialName: string;
+    needed: number;
+    available: number;
+    unit: string;
+  }>;
+}

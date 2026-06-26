@@ -6,8 +6,9 @@ import { useApp, checkDiscountEligibility, useInvoiceGeneration } from '../../co
 import { useAuth } from '../../context/AuthContext';
 import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { ReceiptPrint } from './ReceiptPrint';
-import { salesService, customersService, productsService } from '../../lib/services';
+import { salesService, customersService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
+import { checkStockAvailability } from '../../lib/inventoryUtils';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -344,26 +345,22 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         freeGifts: freeGifts.length > 0 ? freeGifts : undefined,
       };
 
+      // Pre-checkout stock validation (atomic trigger also checks, but this gives user-friendly errors)
+      const stockCheck = await checkStockAvailability(state.cart, state.activeShopId);
+      if (!stockCheck.sufficient) {
+        const errorLines = stockCheck.insufficientItems.map(
+          item => `• ${item.productName}: ${item.rawMaterialName} — need ${item.needed.toFixed(1)}${item.unit}, have ${item.available.toFixed(1)}${item.unit}`
+        ).join('\n');
+        swalConfig.error(`Insufficient stock:\n${errorLines}`);
+        setIsProcessing(false);
+        return;
+      }
+
       const savedSale = await salesService.create(sale);
       dispatch({ type: 'ADD_SALE', payload: savedSale });
 
-      for (const item of state.cart) {
-        try {
-          const product = state.products.find(p => p.id === item.product.id);
-          if (product && product.trackInventory) {
-            const quantityToDeduct = item.weight || item.quantity;
-            const updatedProduct = {
-              ...product,
-              stock: product.stock - quantityToDeduct,
-              updatedAt: new Date(),
-            };
-            await productsService.update(product.id, updatedProduct);
-            dispatch({ type: 'UPDATE_PRODUCT', payload: updatedProduct });
-          }
-        } catch (error) {
-          console.error(`Error updating inventory for product ${item.product.name}:`, error);
-        }
-      }
+      // Product stock is now deducted atomically by the deduct_raw_materials() trigger.
+      // No app-level stock update needed.
 
       if (salePayments.some(p => p.method === 'credit') && state.selectedCustomer) {
         try {

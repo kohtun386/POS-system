@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
 import {
   Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, AppliedDiscount, CardDetails, Shop,
-  FeatureFlags
+  FeatureFlags, RawMaterial, Recipe
 } from '../types';
 import { useAuth } from './AuthContext';
 import {
@@ -14,7 +14,9 @@ import {
   salesTabsService,
   shopMembershipsService,
   featureDefinitionsService,
-  shopFeaturesService
+  shopFeaturesService,
+  rawMaterialsService,
+  recipesService
 } from '../lib/services';
 
 interface AppState {
@@ -32,6 +34,8 @@ interface AppState {
   activeShopId: string;  // Current shop for multi-tenant scoping
   shop: Shop | null;
   featureFlags: FeatureFlags;
+  rawMaterials: RawMaterial[];
+  recipes: Recipe[];
   loading: boolean;
   error: string | null;
 }
@@ -72,7 +76,15 @@ type AppAction =
   | { type: 'SET_ACTIVE_SHOP'; payload: string }
   | { type: 'SET_SHOP'; payload: Shop | null }
   | { type: 'SET_FEATURE_FLAGS'; payload: FeatureFlags }
-  | { type: 'TOGGLE_FEATURE_FLAG'; payload: { key: string; enabled: boolean } };
+  | { type: 'TOGGLE_FEATURE_FLAG'; payload: { key: string; enabled: boolean } }
+  | { type: 'SET_RAW_MATERIALS'; payload: RawMaterial[] }
+  | { type: 'ADD_RAW_MATERIAL'; payload: RawMaterial }
+  | { type: 'UPDATE_RAW_MATERIAL'; payload: RawMaterial }
+  | { type: 'DELETE_RAW_MATERIAL'; payload: string }
+  | { type: 'SET_RECIPES'; payload: Recipe[] }
+  | { type: 'ADD_RECIPE'; payload: Recipe }
+  | { type: 'UPDATE_RECIPE'; payload: Recipe }
+  | { type: 'DELETE_RECIPE'; payload: string };
 
 const initialState: AppState = {
   products: [],
@@ -102,6 +114,8 @@ const initialState: AppState = {
   activeShopId: '',
   shop: null,
   featureFlags: {},
+  rawMaterials: [],
+  recipes: [],
   loading: false,
   error: null,
 };
@@ -243,6 +257,34 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         featureFlags: { ...state.featureFlags, [action.payload.key]: action.payload.enabled }
       };
+    case 'SET_RAW_MATERIALS':
+      return { ...state, rawMaterials: action.payload };
+    case 'ADD_RAW_MATERIAL':
+      return { ...state, rawMaterials: [...state.rawMaterials, action.payload] };
+    case 'UPDATE_RAW_MATERIAL':
+      return {
+        ...state,
+        rawMaterials: state.rawMaterials.map(rm => rm.id === action.payload.id ? action.payload : rm),
+      };
+    case 'DELETE_RAW_MATERIAL':
+      return {
+        ...state,
+        rawMaterials: state.rawMaterials.filter(rm => rm.id !== action.payload),
+      };
+    case 'SET_RECIPES':
+      return { ...state, recipes: action.payload };
+    case 'ADD_RECIPE':
+      return { ...state, recipes: [...state.recipes, action.payload] };
+    case 'UPDATE_RECIPE':
+      return {
+        ...state,
+        recipes: state.recipes.map(r => r.id === action.payload.id ? action.payload : r),
+      };
+    case 'DELETE_RECIPE':
+      return {
+        ...state,
+        recipes: state.recipes.filter(r => r.id !== action.payload),
+      };
     default:
       return state;
   }
@@ -348,7 +390,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         salesTabs,
         shop,
         featureDefinitions,
-        shopFeatures
+        shopFeatures,
+        rawMaterials,
+        recipes
       ] = await Promise.all([
         productsService.getAll(),
         customersService.getAll(),
@@ -361,6 +405,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         user ? shopMembershipsService.getShopByUserId(user.id) : Promise.resolve(null),
         featureDefinitionsService.getAll(),
         shop ? shopFeaturesService.getByShopId(shop.id) : Promise.resolve([]),
+        rawMaterialsService.getAll(),
+        recipesService.getAll(),
       ]);
 
       dispatch({ type: 'SET_PRODUCTS', payload: products });
@@ -370,6 +416,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_SETTINGS', payload: settings });
       dispatch({ type: 'SET_USERS', payload: users });
       dispatch({ type: 'SET_SALES_TABS', payload: salesTabs });
+      dispatch({ type: 'SET_RAW_MATERIALS', payload: rawMaterials });
+      dispatch({ type: 'SET_RECIPES', payload: recipes });
 
       // Set active shop
       if (shop) {
