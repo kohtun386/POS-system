@@ -20,7 +20,14 @@ import {
   Recipe,
   RecipeLine,
   ConsumptionLog,
-  UomConversion
+  UomConversion,
+  KitchenOrder,
+  KitchenOrderItem,
+  KitchenOrderItemsPayload,
+  KitchenOrderStatus,
+  KitchenStation,
+  PrintJob,
+  PrintJobStatus
 } from '../types'
 
 // Products Service
@@ -1917,5 +1924,197 @@ export const consumptionLogService = {
       byProduct: Array.from(byProductMap.values()),
       totalWastage,
     }
+  },
+}
+
+// ================================================================
+// Kitchen KDS Services
+// ================================================================
+
+/** Pack saleId + station into items JSONB, strip lineItems from top-level items */
+function packKitchenItems(items: KitchenOrderItem[], saleId?: string, station?: KitchenStation): KitchenOrderItemsPayload {
+  return { saleId, station, lineItems: items }
+}
+
+/** Unpack JSONB payload back to KitchenOrder fields */
+function unpackKitchenItems(payload: any): { items: KitchenOrderItem[]; saleId?: string; station?: KitchenStation } {
+  if (payload && typeof payload === 'object' && 'lineItems' in payload) {
+    return {
+      items: payload.lineItems as KitchenOrderItem[],
+      saleId: payload.saleId,
+      station: payload.station,
+    }
+  }
+  // Fallback for raw array (backwards compat)
+  return { items: (payload as KitchenOrderItem[]) || [] }
+}
+
+// Kitchen Orders Service
+export const kitchenOrdersService = {
+  async getAll(filters?: { status?: KitchenOrderStatus; station?: KitchenStation }): Promise<KitchenOrder[]> {
+    let query = supabase.from('kitchen_orders').select('*')
+    if (filters?.status) query = query.eq('status', filters.status)
+    const { data, error } = await query.order('created_at', { ascending: false })
+    if (error) throw error
+
+    return (data || []).map((row: any) => {
+      const unpacked = unpackKitchenItems(row.items)
+      return {
+        id: row.id,
+        shopId: row.shop_id,
+        saleId: unpacked.saleId,
+        station: unpacked.station,
+        items: unpacked.items,
+        status: row.status as KitchenOrderStatus,
+        startedAt: row.started_at ? new Date(row.started_at) : undefined,
+        completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
+        pickedUpAt: row.picked_up_at ? new Date(row.picked_up_at) : undefined,
+        createdAt: new Date(row.created_at),
+      }
+    }).filter(o => !filters?.station || o.station === filters.station)
+  },
+
+  async getById(id: string): Promise<KitchenOrder> {
+    const { data, error } = await supabase.from('kitchen_orders').select('*').eq('id', id).single()
+    if (error) throw error
+    const unpacked = unpackKitchenItems(data.items)
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      saleId: unpacked.saleId,
+      station: unpacked.station,
+      items: unpacked.items,
+      status: data.status as KitchenOrderStatus,
+      startedAt: data.started_at ? new Date(data.started_at) : undefined,
+      completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
+      pickedUpAt: data.picked_up_at ? new Date(data.picked_up_at) : undefined,
+      createdAt: new Date(data.created_at),
+    }
+  },
+
+  async create(input: { shopId: string; items: KitchenOrderItem[]; saleId?: string; station?: KitchenStation }): Promise<KitchenOrder> {
+    const packed = packKitchenItems(input.items, input.saleId, input.station)
+    const { data, error } = await supabase.from('kitchen_orders').insert({
+      shop_id: input.shopId,
+      items: packed,
+      status: 'pending',
+    }).select().single()
+    if (error) throw error
+    const unpacked = unpackKitchenItems(data.items)
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      saleId: unpacked.saleId,
+      station: unpacked.station,
+      items: unpacked.items,
+      status: data.status as KitchenOrderStatus,
+      startedAt: data.started_at ? new Date(data.started_at) : undefined,
+      completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
+      pickedUpAt: data.picked_up_at ? new Date(data.picked_up_at) : undefined,
+      createdAt: new Date(data.created_at),
+    }
+  },
+
+  async updateStatus(id: string, status: KitchenOrderStatus): Promise<KitchenOrder> {
+    const updateData: any = { status }
+    const now = new Date().toISOString()
+    if (status === 'in_progress') updateData.started_at = now
+    if (status === 'ready') updateData.completed_at = now
+    if (status === 'picked_up') updateData.picked_up_at = now
+
+    const { data, error } = await supabase.from('kitchen_orders').update(updateData).eq('id', id).select().single()
+    if (error) throw error
+    const unpacked = unpackKitchenItems(data.items)
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      saleId: unpacked.saleId,
+      station: unpacked.station,
+      items: unpacked.items,
+      status: data.status as KitchenOrderStatus,
+      startedAt: data.started_at ? new Date(data.started_at) : undefined,
+      completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
+      pickedUpAt: data.picked_up_at ? new Date(data.picked_up_at) : undefined,
+      createdAt: new Date(data.created_at),
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from('kitchen_orders').delete().eq('id', id)
+    if (error) throw error
+  },
+}
+
+// Print Jobs Service
+export const printJobsService = {
+  async getAll(filters?: { status?: PrintJobStatus }): Promise<PrintJob[]> {
+    let query = supabase.from('print_jobs').select('*')
+    if (filters?.status) query = query.eq('status', filters.status)
+    const { data, error } = await query.order('created_at', { ascending: false })
+    if (error) throw error
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      shopId: row.shop_id,
+      orderId: row.order_id,
+      status: row.status as PrintJobStatus,
+      configData: row.config_data || {},
+      createdAt: new Date(row.created_at),
+      completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
+    }))
+  },
+
+  async getById(id: string): Promise<PrintJob> {
+    const { data, error } = await supabase.from('print_jobs').select('*').eq('id', id).single()
+    if (error) throw error
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      orderId: data.order_id,
+      status: data.status as PrintJobStatus,
+      configData: data.config_data || {},
+      createdAt: new Date(data.created_at),
+      completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
+    }
+  },
+
+  async enqueue(input: { shopId: string; orderId: string; configData: Record<string, any> }): Promise<PrintJob> {
+    const { data, error } = await supabase.from('print_jobs').insert({
+      shop_id: input.shopId,
+      order_id: input.orderId,
+      status: 'pending',
+      config_data: input.configData,
+    }).select().single()
+    if (error) throw error
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      orderId: data.order_id,
+      status: data.status as PrintJobStatus,
+      configData: data.config_data || {},
+      createdAt: new Date(data.created_at),
+      completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
+    }
+  },
+
+  async updateStatus(id: string, status: PrintJobStatus): Promise<PrintJob> {
+    const updateData: any = { status }
+    if (status === 'completed' || status === 'failed') updateData.completed_at = new Date().toISOString()
+
+    const { data, error } = await supabase.from('print_jobs').update(updateData).eq('id', id).select().single()
+    if (error) throw error
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      orderId: data.order_id,
+      status: data.status as PrintJobStatus,
+      configData: data.config_data || {},
+      createdAt: new Date(data.created_at),
+      completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from('print_jobs').delete().eq('id', id)
+    if (error) throw error
   },
 }

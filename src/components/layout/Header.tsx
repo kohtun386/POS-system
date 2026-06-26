@@ -21,6 +21,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
   const inventoryEnabled = useFeatureFlag('inventory_tracking');
   const customerEnabled = useFeatureFlag('customer_management');
   const discountEnabled = useFeatureFlag('discount_engine');
+  const kitchenDisplayEnabled = useFeatureFlag('kitchen_display');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
@@ -98,6 +99,11 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
     // Feature Flags - Admin only
     if (role === 'admin') {
       items.push({ id: 'feature-flags', label: 'Feature Flags', icon: Settings, color: 'text-[#7a4f2c]' });
+    }
+
+    // Kitchen Display - All roles can access (feature-gated)
+    if (kitchenDisplayEnabled) {
+      items.push({ id: 'kitchen', label: 'Kitchen', icon: Monitor, color: 'text-[#22c55e]' });
     }
 
     return items;

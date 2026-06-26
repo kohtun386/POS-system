@@ -481,3 +481,48 @@ export interface StockCheckResult {
     unit: string;
   }>;
 }
+
+// ================================================================
+// Kitchen KDS Types
+// ================================================================
+
+export type KitchenStation = 'bar' | 'espresso' | 'food' | 'pastry';
+export type KitchenOrderStatus = 'pending' | 'in_progress' | 'ready' | 'picked_up' | 'cancelled';
+export type PrintJobStatus = 'pending' | 'printing' | 'completed' | 'failed';
+
+export interface KitchenOrderItem {
+  productName: string;
+  quantity: number;
+  productId?: string;
+  notes?: string;
+}
+
+/** Stored as JSONB in kitchen_orders.items — includes station + saleId metadata */
+export interface KitchenOrderItemsPayload {
+  saleId?: string;
+  station?: KitchenStation;
+  lineItems: KitchenOrderItem[];
+}
+
+export interface KitchenOrder {
+  id: string;
+  shopId: string;
+  saleId?: string;
+  station?: KitchenStation;
+  items: KitchenOrderItem[];
+  status: KitchenOrderStatus;
+  startedAt?: Date;
+  completedAt?: Date;
+  pickedUpAt?: Date;
+  createdAt: Date;
+}
+
+export interface PrintJob {
+  id: string;
+  shopId: string;
+  orderId: string;
+  status: PrintJobStatus;
+  configData: Record<string, any>;
+  createdAt: Date;
+  completedAt?: Date;
+}

@@ -18,6 +18,7 @@ const Settings = lazy(() => import('./components/settings/Settings').then(m => (
 const DiscountManager = lazy(() => import('./components/discounts/DiscountManager').then(m => ({ default: m.DiscountManager })));
 const UserManager = lazy(() => import('./components/users/UserManager').then(m => ({ default: m.UserManager })));
 const FeatureFlagsManager = lazy(() => import('./components/settings/FeatureFlagsManager').then(m => ({ default: m.FeatureFlagsManager })));
+const KitchenDisplay = lazy(() => import('./components/kitchen/KitchenDisplay').then(m => ({ default: m.KitchenDisplay })));
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -26,6 +27,7 @@ function AppContent() {
   const inventoryEnabled = useFeatureFlag('inventory_tracking');
   const customerEnabled = useFeatureFlag('customer_management');
   const discountEnabled = useFeatureFlag('discount_engine');
+  const kitchenDisplayEnabled = useFeatureFlag('kitchen_display');
 
   // Show loading spinner while auth is loading
   if (loading) {
@@ -106,6 +108,13 @@ function AppContent() {
         // Only allow admin and manager to access settings
         if (userRole === 'admin' || userRole === 'manager') {
           return <Settings />;
+        }
+        setCurrentView('pos');
+        return <POSTerminal />;
+      case 'kitchen':
+        // Kitchen display — all roles can access (feature-gated)
+        if (kitchenDisplayEnabled) {
+          return <KitchenDisplay />;
         }
         setCurrentView('pos');
         return <POSTerminal />;

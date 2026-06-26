@@ -6,9 +6,10 @@ import { useApp, checkDiscountEligibility, useInvoiceGeneration } from '../../co
 import { useAuth } from '../../context/AuthContext';
 import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { ReceiptPrint } from './ReceiptPrint';
-import { salesService, customersService } from '../../lib/services';
+import { salesService, customersService, kitchenOrdersService, printJobsService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
 import { checkStockAvailability } from '../../lib/inventoryUtils';
+import { groupByStation } from '../../lib/kitchenUtils';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const { user } = useAuth();
   const generateInvoice = useInvoiceGeneration();
   const creditEnabled = useFeatureFlag('credit_system');
+  const kitchenDisplayEnabled = useFeatureFlag('kitchen_display');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [amountPaid, setAmountPaid] = useState('');
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -361,6 +363,24 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
       // Product stock is now deducted atomically by the deduct_raw_materials() trigger.
       // No app-level stock update needed.
+
+      // Kitchen KDS: create kitchen orders per station (gated by feature flag)
+      if (kitchenDisplayEnabled && state.activeShopId) {
+        try {
+          const stationMap = groupByStation(state.cart)
+          for (const [station, items] of stationMap.entries()) {
+            await kitchenOrdersService.create({
+              shopId: state.activeShopId,
+              items,
+              saleId: savedSale.id,
+              station,
+            })
+          }
+        } catch (error) {
+          console.error('Error creating kitchen orders:', error)
+          // Non-fatal — sale already saved, don't block checkout
+        }
+      }
 
       if (salePayments.some(p => p.method === 'credit') && state.selectedCustomer) {
         try {
