@@ -158,6 +158,16 @@ export interface User {
   avatar?: string;
 }
 
+export interface Shop {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface AppSettings {
   storeName: string;
   storeAddress: string;
@@ -166,7 +176,7 @@ export interface AppSettings {
   storeLogo?: string;
   taxRate: number;
   currency: string;
-  baseCurrency: string; // Base currency for pricing
+  baseCurrency: string;
   interfaceMode: 'touch' | 'traditional';
   autoBackup: boolean;
   receiptPrinter: boolean;
@@ -175,8 +185,9 @@ export interface AppSettings {
   invoiceCounter: number;
   exchangeRateProvider?: 'fixer' | 'currencylayer' | 'exchangerate' | 'manual';
   exchangeRateApiKey?: string;
-  exchangeRateUpdateInterval?: number; // in minutes
+  exchangeRateUpdateInterval?: number;
 }
+
 
 export interface LoginCredentials {
   username: string;
@@ -340,9 +351,154 @@ export interface AlertContext {
   configuration: AlertConfiguration;
 }
 
-export interface ProcessedAlert {
-  alert: InventoryAlert;
-  recipients: AlertRecipient[];
-  shouldSend: boolean;
-  reason?: string;
+// Feature Flags types
+export interface FeatureDefinition {
+  id: string;
+  key: string;
+  name: string;
+  description?: string;
+  category: string;
+  defaultEnabled: boolean;
+  subscriptionTier: 'free' | 'pro' | 'enterprise';
+  createdAt: Date;
+}
+
+export interface ShopFeature {
+  id: string;
+  shopId: string;
+  featureKey: string;
+  enabled: boolean;
+  updatedAt: Date;
+}
+
+export type FeatureFlags = Record<string, boolean>;
+
+// ================================================================
+// Recipe BOM Types
+// ================================================================
+
+export interface RawMaterial {
+  id: string;
+  shopId: string;
+  name: string;
+  sku?: string;
+  category: 'ingredient' | 'packaging' | 'consumable';
+  currentStock: number;
+  minimumStock: number;
+  baseUnit: string; // 'ml', 'g', 'l', 'kg', 'unit', 'oz'
+  costPerUnit?: number;
+  isActive: boolean;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Recipe {
+  id: string;
+  shopId: string;
+  productId: string;
+  productName: string;
+  servingSize: number;
+  servingUnit: string;
+  prepTimeSeconds?: number;
+  instructions?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface RecipeLine {
+  id: string;
+  shopId: string;
+  recipeId: string;
+  rawMaterialId: string;
+  rawMaterialName: string;
+  quantity: number; // in base_unit
+  recipeUnit?: string; // display unit for recipe authoring
+  recipeQuantity?: number; // display quantity
+  wastagePercent: number;
+  isOptional: boolean;
+  notes?: string;
+  createdAt: Date;
+}
+
+export interface ConsumptionLog {
+  id: string;
+  shopId: string;
+  saleId: string;
+  saleItemIndex?: number;
+  productId: string;
+  productName: string;
+  rawMaterialId: string;
+  rawMaterialName: string;
+  quantityConsumed: number;
+  quantityBase: number;
+  wastageAmount: number;
+  unit: string;
+  stockBefore: number;
+  stockAfter: number;
+  consumedAt: Date;
+}
+
+export interface UomConversion {
+  id: string;
+  fromUnit: string;
+  toUnit: string;
+  factor: number;
+}
+
+export interface StockCheckResult {
+  sufficient: boolean;
+  insufficientItems: Array<{
+    productName: string;
+    rawMaterialName: string;
+    needed: number;
+    available: number;
+    unit: string;
+  }>;
+}
+
+// ================================================================
+// Kitchen KDS Types
+// ================================================================
+
+export type KitchenStation = 'bar' | 'espresso' | 'food' | 'pastry';
+export type KitchenOrderStatus = 'pending' | 'in_progress' | 'ready' | 'picked_up' | 'cancelled';
+export type PrintJobStatus = 'pending' | 'printing' | 'completed' | 'failed';
+
+export interface KitchenOrderItem {
+  productName: string;
+  quantity: number;
+  productId?: string;
+  notes?: string;
+}
+
+/** Stored as JSONB in kitchen_orders.items — includes station + saleId metadata */
+export interface KitchenOrderItemsPayload {
+  saleId?: string;
+  station?: KitchenStation;
+  lineItems: KitchenOrderItem[];
+}
+
+export interface KitchenOrder {
+  id: string;
+  shopId: string;
+  saleId?: string;
+  station?: KitchenStation;
+  items: KitchenOrderItem[];
+  status: KitchenOrderStatus;
+  startedAt?: Date;
+  completedAt?: Date;
+  pickedUpAt?: Date;
+  createdAt: Date;
+}
+
+export interface PrintJob {
+  id: string;
+  shopId: string;
+  orderId: string;
+  status: PrintJobStatus;
+  configData: Record<string, any>;
+  createdAt: Date;
+  completedAt?: Date;
 }

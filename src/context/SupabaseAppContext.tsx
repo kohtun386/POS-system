@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
 import {
-  Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, AppliedDiscount, CardDetails
+  Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, Shop,
+  FeatureFlags, RawMaterial, Recipe
 } from '../types';
 import { useAuth } from './AuthContext';
 import {
@@ -10,9 +11,13 @@ import {
   discountsService,
   settingsService,
   usersService,
-  salesTabsService
+  salesTabsService,
+  shopMembershipsService,
+  featureDefinitionsService,
+  shopFeaturesService,
+  rawMaterialsService,
+  recipesService
 } from '../lib/services';
-import { supabase } from '../lib/supabase';
 
 interface AppState {
   products: Product[];
@@ -27,6 +32,10 @@ interface AppState {
   salesTabs: SalesTab[];
   activeSalesTab: string;
   activeShopId: string;  // Current shop for multi-tenant scoping
+  shop: Shop | null;
+  featureFlags: FeatureFlags;
+  rawMaterials: RawMaterial[];
+  recipes: Recipe[];
   loading: boolean;
   error: string | null;
 }
@@ -64,7 +73,18 @@ type AppAction =
   | { type: 'REMOVE_SALES_TAB'; payload: string }
   | { type: 'SET_ACTIVE_SALES_TAB'; payload: string }
   | { type: 'SET_SALES_TABS'; payload: SalesTab[] }
-  | { type: 'SET_ACTIVE_SHOP'; payload: string };
+  | { type: 'SET_ACTIVE_SHOP'; payload: string }
+  | { type: 'SET_SHOP'; payload: Shop | null }
+  | { type: 'SET_FEATURE_FLAGS'; payload: FeatureFlags }
+  | { type: 'TOGGLE_FEATURE_FLAG'; payload: { key: string; enabled: boolean } }
+  | { type: 'SET_RAW_MATERIALS'; payload: RawMaterial[] }
+  | { type: 'ADD_RAW_MATERIAL'; payload: RawMaterial }
+  | { type: 'UPDATE_RAW_MATERIAL'; payload: RawMaterial }
+  | { type: 'DELETE_RAW_MATERIAL'; payload: string }
+  | { type: 'SET_RECIPES'; payload: Recipe[] }
+  | { type: 'ADD_RECIPE'; payload: Recipe }
+  | { type: 'UPDATE_RECIPE'; payload: Recipe }
+  | { type: 'DELETE_RECIPE'; payload: string };
 
 const initialState: AppState = {
   products: [],
@@ -92,6 +112,10 @@ const initialState: AppState = {
   salesTabs: [],
   activeSalesTab: '',
   activeShopId: '',
+  shop: null,
+  featureFlags: {},
+  rawMaterials: [],
+  recipes: [],
   loading: false,
   error: null,
 };
@@ -224,6 +248,43 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, salesTabs: action.payload };
     case 'SET_ACTIVE_SHOP':
       return { ...state, activeShopId: action.payload };
+    case 'SET_SHOP':
+      return { ...state, shop: action.payload };
+    case 'SET_FEATURE_FLAGS':
+      return { ...state, featureFlags: action.payload };
+    case 'TOGGLE_FEATURE_FLAG':
+      return {
+        ...state,
+        featureFlags: { ...state.featureFlags, [action.payload.key]: action.payload.enabled }
+      };
+    case 'SET_RAW_MATERIALS':
+      return { ...state, rawMaterials: action.payload };
+    case 'ADD_RAW_MATERIAL':
+      return { ...state, rawMaterials: [...state.rawMaterials, action.payload] };
+    case 'UPDATE_RAW_MATERIAL':
+      return {
+        ...state,
+        rawMaterials: state.rawMaterials.map(rm => rm.id === action.payload.id ? action.payload : rm),
+      };
+    case 'DELETE_RAW_MATERIAL':
+      return {
+        ...state,
+        rawMaterials: state.rawMaterials.filter(rm => rm.id !== action.payload),
+      };
+    case 'SET_RECIPES':
+      return { ...state, recipes: action.payload };
+    case 'ADD_RECIPE':
+      return { ...state, recipes: [...state.recipes, action.payload] };
+    case 'UPDATE_RECIPE':
+      return {
+        ...state,
+        recipes: state.recipes.map(r => r.id === action.payload.id ? action.payload : r),
+      };
+    case 'DELETE_RECIPE':
+      return {
+        ...state,
+        recipes: state.recipes.filter(r => r.id !== action.payload),
+      };
     default:
       return state;
   }
@@ -318,7 +379,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   async function loadData() {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      // Load all data in parallel
+      // Load most data in parallel — shop-dependent queries follow sequentially
       const [
         products,
         customers,
@@ -327,7 +388,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         settings,
         users,
         salesTabs,
-        shopMembership
+        shop,
+        featureDefinitions,
+        rawMaterials,
+        recipes
       ] = await Promise.all([
         productsService.getAll(),
         customersService.getAll(),
@@ -336,16 +400,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         settingsService.get(),
         usersService.getAll(),
         user ? salesTabsService.getByUserId(user.id) : Promise.resolve([]),
-        // Load user's active shop from shop_memberships
-        user ? supabase
-          .from('shop_memberships')
-          .select('shop_id')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .limit(1)
-          .single()
-          .then(r => r.data) : Promise.resolve(null)
+        // Load user's active shop via service layer
+        user ? shopMembershipsService.getShopByUserId(user.id) : Promise.resolve(null),
+        featureDefinitionsService.getAll(),
+        rawMaterialsService.getAll(),
+        recipesService.getAll(),
       ]);
+
+      // Load shop feature overrides AFTER shop is known (depends on shop.id)
+      const shopFeatures = shop
+        ? await shopFeaturesService.getByShopId(shop.id)
+        : [];
 
       dispatch({ type: 'SET_PRODUCTS', payload: products });
       dispatch({ type: 'SET_CUSTOMERS', payload: customers });
@@ -354,11 +419,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_SETTINGS', payload: settings });
       dispatch({ type: 'SET_USERS', payload: users });
       dispatch({ type: 'SET_SALES_TABS', payload: salesTabs });
+      dispatch({ type: 'SET_RAW_MATERIALS', payload: rawMaterials });
+      dispatch({ type: 'SET_RECIPES', payload: recipes });
 
       // Set active shop
-      if (shopMembership?.shop_id) {
-        dispatch({ type: 'SET_ACTIVE_SHOP', payload: shopMembership.shop_id });
+      if (shop) {
+        dispatch({ type: 'SET_SHOP', payload: shop });
+        dispatch({ type: 'SET_ACTIVE_SHOP', payload: shop.id });
       }
+
+      // Resolve feature flags
+      const resolvedFeatureFlags: FeatureFlags = {};
+      for (const def of featureDefinitions) {
+        const override = shopFeatures.find(o => o.featureKey === def.key);
+        resolvedFeatureFlags[def.key] = override ? override.enabled : def.defaultEnabled;
+      }
+      dispatch({ type: 'SET_FEATURE_FLAGS', payload: resolvedFeatureFlags });
 
       // Create initial sales tab if none exist
       if (salesTabs.length === 0 && user) {

@@ -4,9 +4,12 @@ import { X, CreditCard, Banknote, Smartphone, Check, Receipt, AlertCircle, Gift 
 import { Sale, CardDetails, AppliedDiscount, CartItem, Payment } from '../../types';
 import { useApp, checkDiscountEligibility, useInvoiceGeneration } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
+import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { ReceiptPrint } from './ReceiptPrint';
-import { salesService, customersService, productsService } from '../../lib/services';
+import { salesService, customersService, kitchenOrdersService, printJobsService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
+import { checkStockAvailability } from '../../lib/inventoryUtils';
+import { groupByStation } from '../../lib/kitchenUtils';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -18,6 +21,8 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const { state, dispatch } = useApp();
   const { user } = useAuth();
   const generateInvoice = useInvoiceGeneration();
+  const creditEnabled = useFeatureFlag('credit_system');
+  const kitchenDisplayEnabled = useFeatureFlag('kitchen_display');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [amountPaid, setAmountPaid] = useState('');
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -342,24 +347,38 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         freeGifts: freeGifts.length > 0 ? freeGifts : undefined,
       };
 
+      // Pre-checkout stock validation (atomic trigger also checks, but this gives user-friendly errors)
+      const stockCheck = await checkStockAvailability(state.cart, state.activeShopId);
+      if (!stockCheck.sufficient) {
+        const errorLines = stockCheck.insufficientItems.map(
+          item => `• ${item.productName}: ${item.rawMaterialName} — need ${item.needed.toFixed(1)}${item.unit}, have ${item.available.toFixed(1)}${item.unit}`
+        ).join('\n');
+        swalConfig.error(`Insufficient stock:\n${errorLines}`);
+        setIsProcessing(false);
+        return;
+      }
+
       const savedSale = await salesService.create(sale);
       dispatch({ type: 'ADD_SALE', payload: savedSale });
 
-      for (const item of state.cart) {
+      // Product stock is now deducted atomically by the deduct_raw_materials() trigger.
+      // No app-level stock update needed.
+
+      // Kitchen KDS: create kitchen orders per station (gated by feature flag)
+      if (kitchenDisplayEnabled && state.activeShopId) {
         try {
-          const product = state.products.find(p => p.id === item.product.id);
-          if (product && product.trackInventory) {
-            const quantityToDeduct = item.weight || item.quantity;
-            const updatedProduct = {
-              ...product,
-              stock: product.stock - quantityToDeduct,
-              updatedAt: new Date(),
-            };
-            await productsService.update(product.id, updatedProduct);
-            dispatch({ type: 'UPDATE_PRODUCT', payload: updatedProduct });
+          const stationMap = groupByStation(state.cart)
+          for (const [station, items] of stationMap.entries()) {
+            await kitchenOrdersService.create({
+              shopId: state.activeShopId,
+              items,
+              saleId: savedSale.id,
+              station,
+            })
           }
         } catch (error) {
-          console.error(`Error updating inventory for product ${item.product.name}:`, error);
+          console.error('Error creating kitchen orders:', error)
+          // Non-fatal — sale already saved, don't block checkout
         }
       }
 
@@ -596,22 +615,24 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                         </span>
                       </button>
                     ))}
-                    <button
-                      onClick={() => {
-                        if (splitPaymentEnabled) {
-                          setPendingPayment(prev => ({ ...prev, method: 'credit' as Payment['method'] }));
-                        } else {
-                          setPaymentMethod('credit');
-                        }
-                      }}
-                      disabled={!splitPaymentEnabled && !canPayWithCredit}
-                      className={`${paymentBtnClasses('credit', !splitPaymentEnabled && !canPayWithCredit)} col-span-2 sm:col-span-3`}
-                    >
-                      <Receipt className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
-                      <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
-                        Credit
-                      </span>
-                    </button>
+                    {creditEnabled && (
+                      <button
+                        onClick={() => {
+                          if (splitPaymentEnabled) {
+                            setPendingPayment(prev => ({ ...prev, method: 'credit' as Payment['method'] }));
+                          } else {
+                            setPaymentMethod('credit');
+                          }
+                        }}
+                        disabled={!splitPaymentEnabled && !canPayWithCredit}
+                        className={`${paymentBtnClasses('credit', !splitPaymentEnabled && !canPayWithCredit)} col-span-2 sm:col-span-3`}
+                      >
+                        <Receipt className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
+                        <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
+                          Credit
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
