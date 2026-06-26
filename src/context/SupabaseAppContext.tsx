@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
 import {
-  Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, AppliedDiscount, CardDetails, Shop,
+  Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, Shop,
   FeatureFlags, RawMaterial, Recipe
 } from '../types';
 import { useAuth } from './AuthContext';
@@ -379,7 +379,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   async function loadData() {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      // Load all data in parallel
+      // Load most data in parallel — shop-dependent queries follow sequentially
       const [
         products,
         customers,
@@ -390,7 +390,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         salesTabs,
         shop,
         featureDefinitions,
-        shopFeatures,
         rawMaterials,
         recipes
       ] = await Promise.all([
@@ -404,10 +403,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // Load user's active shop via service layer
         user ? shopMembershipsService.getShopByUserId(user.id) : Promise.resolve(null),
         featureDefinitionsService.getAll(),
-        shop ? shopFeaturesService.getByShopId(shop.id) : Promise.resolve([]),
         rawMaterialsService.getAll(),
         recipesService.getAll(),
       ]);
+
+      // Load shop feature overrides AFTER shop is known (depends on shop.id)
+      const shopFeatures = shop
+        ? await shopFeaturesService.getByShopId(shop.id)
+        : [];
 
       dispatch({ type: 'SET_PRODUCTS', payload: products });
       dispatch({ type: 'SET_CUSTOMERS', payload: customers });

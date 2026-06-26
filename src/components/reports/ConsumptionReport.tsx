@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
-import { BarChart3, Calendar, Package, TrendingDown, Filter } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { BarChart3, Package, TrendingDown, Filter } from 'lucide-react';
 import { ConsumptionLog } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
 import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { consumptionLogService } from '../../lib/services';
 
 export function ConsumptionReport() {
-  const { state } = useApp();
   const inventoryEnabled = useFeatureFlag('inventory_tracking');
   const [logs, setLogs] = useState<ConsumptionLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,9 +20,9 @@ export function ConsumptionReport() {
   useEffect(() => {
     if (!inventoryEnabled) return;
     loadLogs();
-  }, [inventoryEnabled, dateFrom, dateTo]);
+  }, [inventoryEnabled, dateFrom, dateTo, loadLogs]);
 
-  const loadLogs = async () => {
+  const loadLogs = useCallback(async () => {
     setIsLoading(true);
     try {
       const from = new Date(dateFrom);
@@ -32,21 +30,14 @@ export function ConsumptionReport() {
       const to = new Date(dateTo);
       to.setHours(23, 59, 59, 999);
 
-      const allLogs = await consumptionLogService.getByMaterialId('', { from, to });
-      // If no material filter, get all logs
-      if (allLogs.length === 0) {
-        const summary = await consumptionLogService.getSummary({ from, to });
-        // Fetch all logs without material filter
-        setLogs([]);
-      } else {
-        setLogs(allLogs);
-      }
+      const allLogs = await consumptionLogService.getAll({ from, to });
+      setLogs(allLogs);
     } catch (error) {
       console.error('Error loading consumption logs:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dateFrom, dateTo]);
 
   if (!inventoryEnabled) {
     return (

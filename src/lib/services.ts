@@ -1642,10 +1642,18 @@ export const recipesService = {
     const original = await supabase.from('recipes').select('*').eq('id', recipeId).single()
     if (original.error) throw original.error
 
+    // Fetch target product name so the new recipe shows the correct name
+    const { data: targetProduct } = await supabase
+      .from('products')
+      .select('name')
+      .eq('id', newProductId)
+      .maybeSingle()
+    const newProductName = targetProduct?.name || original.data.product_name
+
     const { data: newRecipe, error } = await supabase.from('recipes').insert({
       shop_id: original.data.shop_id,
       product_id: newProductId,
-      product_name: original.data.product_name,
+      product_name: newProductName,
       serving_size: original.data.serving_size,
       serving_unit: original.data.serving_unit,
       prep_time_seconds: original.data.prep_time_seconds,
@@ -1778,16 +1786,12 @@ export const recipeLinesService = {
     if (error) throw error
   },
 
-  async bulkReplace(recipeId: string, lines: Omit<RecipeLine, 'id' | 'createdAt'>[]): Promise<RecipeLine[]> {
-    // Delete existing lines
-    await supabase.from('recipe_lines').delete().eq('recipe_id', recipeId)
-
-    // Insert new lines
-    if (lines.length === 0) return []
-    const { data, error } = await supabase.from('recipe_lines').insert(
-      lines.map(line => ({
+  async bulkReplace(recipeId: string, lines: Omit<RecipeLine, 'id' | 'createdAt'>[]): Promise<void> {
+    // Atomic: RPC wraps DELETE + INSERT in a single Postgres transaction
+    const { error } = await supabase.rpc('replace_recipe_lines', {
+      p_recipe_id: recipeId,
+      p_lines: lines.map(line => ({
         shop_id: line.shopId,
-        recipe_id: line.recipeId,
         raw_material_id: line.rawMaterialId,
         raw_material_name: line.rawMaterialName,
         quantity: line.quantity,
@@ -1796,28 +1800,40 @@ export const recipeLinesService = {
         wastage_percent: line.wastagePercent,
         is_optional: line.isOptional,
         notes: line.notes,
-      }))
-    ).select()
+      })),
+    })
     if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      recipeId: row.recipe_id,
-      rawMaterialId: row.raw_material_id,
-      rawMaterialName: row.raw_material_name,
-      quantity: Number(row.quantity),
-      recipeUnit: row.recipe_unit,
-      recipeQuantity: row.recipe_quantity ? Number(row.recipe_quantity) : undefined,
-      wastagePercent: Number(row.wastage_percent),
-      isOptional: row.is_optional,
-      notes: row.notes,
-      createdAt: new Date(row.created_at),
-    }))
   },
 }
 
 // Consumption Log Service (read-only — trigger writes, never updated)
 export const consumptionLogService = {
+  async getAll(period?: { from: Date; to: Date }): Promise<ConsumptionLog[]> {
+    let query = supabase.from('consumption_log').select('*')
+    if (period) {
+      query = query.gte('consumed_at', period.from.toISOString()).lte('consumed_at', period.to.toISOString())
+    }
+    const { data, error } = await query.order('consumed_at', { ascending: false })
+    if (error) throw error
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      shopId: row.shop_id,
+      saleId: row.sale_id,
+      saleItemIndex: row.sale_item_index,
+      productId: row.product_id,
+      productName: row.product_name,
+      rawMaterialId: row.raw_material_id,
+      rawMaterialName: row.raw_material_name,
+      quantityConsumed: Number(row.quantity_consumed),
+      quantityBase: Number(row.quantity_base),
+      wastageAmount: Number(row.wastage_amount),
+      unit: row.unit,
+      stockBefore: Number(row.stock_before),
+      stockAfter: Number(row.stock_after),
+      consumedAt: new Date(row.consumed_at),
+    }))
+  },
+
   async getBySaleId(saleId: string): Promise<ConsumptionLog[]> {
     const { data, error } = await supabase
       .from('consumption_log')
@@ -1879,7 +1895,10 @@ export const consumptionLogService = {
     byProduct: Array<{ productId: string; productName: string; totalCost: number }>;
     totalWastage: number;
   }> {
-    let query = supabase.from('consumption_log').select('*')
+    // Join with raw_materials to get cost_per_unit
+    let query = supabase
+      .from('consumption_log')
+      .select('*, raw_materials!inner(cost_per_unit)')
     if (period) {
       query = query.gte('consumed_at', period.from.toISOString()).lte('consumed_at', period.to.toISOString())
     }
@@ -1889,6 +1908,7 @@ export const consumptionLogService = {
     const logs = data || []
     const byMaterialMap = new Map<string, { materialId: string; materialName: string; totalConsumed: number; unit: string }>()
     const byProductMap = new Map<string, { productId: string; productName: string; totalCost: number }>()
+    let totalCost = 0
     let totalWastage = 0
 
     for (const row of logs) {
@@ -1905,21 +1925,27 @@ export const consumptionLogService = {
         })
       }
 
+      const costPerUnit = Number((row as any).raw_materials?.cost_per_unit || 0)
+      const lineCost = Number(row.quantity_consumed) * costPerUnit
+
       const productId = row.product_id
       const productExisting = byProductMap.get(productId)
-      if (!productExisting) {
+      if (productExisting) {
+        productExisting.totalCost += lineCost
+      } else {
         byProductMap.set(productId, {
           productId,
           productName: row.product_name,
-          totalCost: 0,
+          totalCost: lineCost,
         })
       }
 
+      totalCost += lineCost
       totalWastage += Number(row.wastage_amount)
     }
 
     return {
-      totalCost: 0, // Would need cost_per_unit join
+      totalCost,
       byMaterial: Array.from(byMaterialMap.values()),
       byProduct: Array.from(byProductMap.values()),
       totalWastage,

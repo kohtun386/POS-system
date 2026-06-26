@@ -62,7 +62,6 @@ export function RawMaterialModal({ isOpen, onClose, onSave, material }: RawMater
     setIsSaving(true);
     try {
       await onSave({
-        shopId: '', // Will be set by parent
         name: name.trim(),
         sku: sku.trim() || undefined,
         category,

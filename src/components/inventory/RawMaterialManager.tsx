@@ -76,7 +76,6 @@ export function RawMaterialManager() {
     } catch (error) {
       console.error('Error saving raw material:', error);
       swalConfig.error('Failed to save raw material');
-      throw error;
     }
   };
 
@@ -240,7 +239,7 @@ export function RawMaterialManager() {
                   <td className="table-cell text-[#7d6b57] dark:text-[#c6bbab]">{material.minimumStock}</td>
                   <td className="table-cell text-[#7d6b57] dark:text-[#c6bbab]">{material.baseUnit}</td>
                   <td className="table-cell text-[#7d6b57] dark:text-[#c6bbab]">
-                    {material.costPerUnit ? `${state.settings.currency} ${material.costPerUnit.toFixed(4)}` : '—'}
+                    {material.costPerUnit !== undefined ? `${state.settings.currency} ${material.costPerUnit.toFixed(4)}` : '—'}
                   </td>
                   <td className="table-cell text-right">
                     <div className="flex justify-end space-x-1">

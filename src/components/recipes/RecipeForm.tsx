@@ -48,6 +48,10 @@ export function RecipeForm({ isOpen, onClose, recipe, product }: RecipeFormProps
           isOptional: line.isOptional,
           notes: line.notes || '',
         })));
+      }).catch(err => {
+        console.error('Error loading recipe lines:', err);
+        swalConfig.error('Failed to load recipe lines');
+        onClose();
       });
     } else if (isOpen) {
       setInstructions('');
@@ -148,7 +152,7 @@ export function RecipeForm({ isOpen, onClose, recipe, product }: RecipeFormProps
         quantity: parseFloat(line.quantity),
         recipeUnit: line.recipeUnit || undefined,
         recipeQuantity: line.recipeQuantity ? parseFloat(line.recipeQuantity) : undefined,
-        wastagePercent: parseFloat(line.wastagePercent) || 0,
+        wastagePercent: Math.min(100, Math.max(0, parseFloat(line.wastagePercent) || 0)),
         isOptional: line.isOptional,
         notes: line.notes || undefined,
       }));

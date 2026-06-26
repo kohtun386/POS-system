@@ -6,6 +6,7 @@ import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { recipesService } from '../../lib/services';
 import { RecipeForm } from './RecipeForm';
 import { swalConfig } from '../../lib/sweetAlert';
+import Swal from 'sweetalert2';
 
 export function RecipeManager() {
   const { state, dispatch } = useApp();
@@ -66,7 +67,7 @@ export function RecipeManager() {
   };
 
   const handleDuplicate = async (recipe: Recipe) => {
-    // Find a product without a recipe to duplicate to
+    // Find products without a recipe to duplicate to
     const availableProducts = state.products.filter(p =>
       !state.recipes.some(r => r.productId === p.id) && p.id !== recipe.productId
     );
@@ -76,11 +77,35 @@ export function RecipeManager() {
       return;
     }
 
-    const { value: selectedId } = await swalConfig.confirm(
-      'Duplicate Recipe',
-      `Select a product to create a duplicate recipe for:`,
-      'Duplicate'
-    );
+    // Build id → name map for the select dropdown
+    const productOptions: Record<string, string> = {};
+    for (const p of availableProducts) {
+      productOptions[p.id] = p.name;
+    }
+
+    const { value: selectedId } = await Swal.fire({
+      title: 'Duplicate Recipe',
+      text: 'Select a product to create a duplicate recipe for:',
+      input: 'select',
+      inputOptions: productOptions,
+      inputPlaceholder: 'Choose a product...',
+      showCancelButton: true,
+      confirmButtonColor: '#9a693a',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Duplicate',
+      cancelButtonText: 'Cancel',
+      background: '#ffffff',
+      color: '#374151',
+      customClass: {
+        popup: 'rounded-3xl shadow-2xl border border-gray-100',
+        title: 'text-gray-900 font-bold text-xl mb-2',
+        htmlContainer: 'text-gray-600 text-base',
+        confirmButton: 'bg-[#9a693a] hover:bg-[#7a4f2c] text-white font-medium py-3 px-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 mr-3',
+        cancelButton: 'bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-xl transition-all duration-200',
+        actions: 'gap-3 mt-6'
+      },
+      buttonsStyling: false
+    });
 
     if (selectedId) {
       try {

@@ -374,30 +374,6 @@ export interface ShopFeature {
 export type FeatureFlags = Record<string, boolean>;
 
 // ================================================================
-// Feature Flags
-// ================================================================
-
-export interface FeatureDefinition {
-  id: string;
-  key: string;
-  name: string;
-  description?: string;
-  category: string;
-  defaultEnabled: boolean;
-  subscriptionTier: 'free' | 'pro' | 'enterprise';
-  createdAt: Date;
-}
-
-export interface ShopFeature {
-  id: string;
-  shopId: string;
-  featureKey: string;
-  enabled: boolean;
-  updatedAt: Date;
-}
-
-export type FeatureFlags = Record<string, boolean>;
-// ================================================================
 // Recipe BOM Types
 // ================================================================
 
