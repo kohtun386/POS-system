@@ -45,3 +45,4 @@ slides/
 .agents/
 .codex/
 AGENTS.md
+*.Zone.Identifier
