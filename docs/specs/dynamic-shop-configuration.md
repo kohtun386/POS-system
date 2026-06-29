@@ -1,8 +1,9 @@
 # Dynamic Shop Configuration System — Design Spec
 
 **Date:** 2026-06-22
-**Status:** Active — reconciled 2026-06-23
+**Status:** Active — reconciled 2026-06-29 (aligned with VISION.md v3.0.0)
 **Scope:** Multi-tenant SaaS transition — global settings → per-shop configuration
+**Source of truth:** `docs/vision/VISION.md` v3.0.0
 
 ---
 
@@ -43,7 +44,7 @@ This spec defines the full transition to per-shop configuration using general Sa
 | `phone` | text | |
 | `email` | text | |
 | `owner_id` | uuid | |
-| `subscription_tier` | text | DEFAULT 'free', CHECK (free/pro/enterprise) |
+| `subscription_tier` | text | DEFAULT 'free', CHECK (free/growth/pro) |
 | `is_active` | boolean | DEFAULT true |
 | `created_at` | timestamptz | |
 | `updated_at` | timestamptz | |
@@ -53,7 +54,7 @@ This spec defines the full transition to per-shop configuration using general Sa
 | Column | Type | Default | Purpose |
 |--------|------|---------|---------|
 | `logo` | text | NULL | Store logo (base64 or URL) |
-| `business_type` | text | `'coffee_shop'` | Business category. CHECK: coffee_shop/pharmacy/retail/restaurant/other |
+| `business_type` | text | `'coffee_shop'` | Business category. CHECK: coffee_shop (v1), restaurant/food_court (v2). Permanently excluded: pharmacy, retail, supermarket, other. (VISION §2) |
 | `tax_rate` | numeric(5,4) | `0.0000` | Per-shop tax rate |
 | `currency` | text | `'USD'` | Display currency |
 | `base_currency` | text | `'USD'` | Base currency for pricing |
@@ -94,9 +95,10 @@ export interface Shop {
   email: string;
   logo?: string;
   ownerId?: string;
-  businessType: 'coffee_shop' | 'pharmacy' | 'retail' | 'restaurant' | 'other';
-  subscriptionTier: 'free' | 'pro' | 'enterprise';
+  businessType: 'coffee_shop' | 'restaurant' | 'food_court';
+  subscriptionTier: 'free' | 'growth' | 'pro';
   isActive: boolean;
+  dailyOrderLimit: number;
   // POS config (moved from app_settings)
   taxRate: number;
   currency: string;
@@ -130,11 +132,14 @@ shop.name ?? 'CoffeeShop POS'
 shop.address ?? ''
 shop.phone ?? ''
 shop.email ?? ''
-shop.currency ?? 'USD'
+shop.currency ?? 'MMK'
+shop.baseCurrency ?? 'MMK'
 shop.taxRate ?? 0
 shop.invoicePrefix ?? 'INV'
 shop.invoiceCounter ?? 1000
 shop.businessType ?? 'coffee_shop'
+shop.subscriptionTier ?? 'free'
+shop.dailyOrderLimit ?? 50
 shop.draftRetentionDays ?? 30
 ```
 
@@ -188,11 +193,12 @@ const initialState = {
     email: '',
     businessType: 'coffee_shop',
     taxRate: 0,
-    currency: 'LKR',
-    baseCurrency: 'USD',
+    currency: 'MMK',
+    baseCurrency: 'MMK',
     invoicePrefix: 'INV',
     invoiceCounter: 1000,
     subscriptionTier: 'free',
+    dailyOrderLimit: 50,
     isActive: true,
     draftRetentionDays: 30,
     createdAt: new Date(),
@@ -279,9 +285,10 @@ function mapShopRow(data: any): Shop {
     businessType: data.business_type || 'coffee_shop',
     subscriptionTier: data.subscription_tier || 'free',
     isActive: data.is_active ?? true,
+    dailyOrderLimit: data.daily_order_limit ?? 50,
     taxRate: data.tax_rate ?? 0,
-    currency: data.currency || 'USD',
-    baseCurrency: data.base_currency || 'USD',
+    currency: data.currency || 'MMK',
+    baseCurrency: data.base_currency || 'MMK',
     invoicePrefix: data.invoice_prefix || 'INV',
     invoiceCounter: data.invoice_counter ?? 1000,
     draftRetentionDays: data.draft_retention_days ?? 30,
@@ -484,8 +491,16 @@ if (!state.shop.isActive) {
 
 **Approval notification:**
 - UI state change: user sees "Your account is pending approval" screen with no POS access
-- Email notification (optional, via existing `notification_service_config`): "Your shop has been approved! You can now access the POS."
-- Authorized approver sees pending shops in a management view (future UI, or Supabase Dashboard initially)
+- Email notification: "Your shop has been approved! You can now access the POS."
+- Platform admin sees pending shops in Platform Admin UI (`PendingShopsList.tsx`)
+- Approval action: `supabase.functions.invoke('platform-admin-approve-shop', { shop_id })` — Edge Function activates user, membership, and shop using `service_role` key (VISION §17)
+
+**Edge Functions for approval (VISION §17.3):**
+| Function | Purpose |
+|----------|---------|
+| `platform-admin-approve-shop` | Activate shop + membership + user |
+| `platform-admin-reject-shop` | Deny pending shop application |
+| `platform-admin-update-subscription` | Change shop subscription_tier |
 
 ### 4.2 Anti-Bot Strategy
 
@@ -519,12 +534,15 @@ Supabase has built-in rate limiting on auth endpoints. Additional layers:
 
 **Recommended:** Enable Supabase's built-in CAPTCHA on signup (Dashboard → Auth → Security → Enable CAPTCHA).
 
-### 4.3 RLS Correction — Shop Admin Policy
+### 4.3 RLS Correction — Shop Admin Policy (VISION §4.3, §17)
+
+**Principle:** Platform admin operations bypass RLS entirely via Edge Functions using `service_role` key. RLS policies do NOT contain `OR users.role = 'platform_admin'`.
 
 **Historical problem (older RLS draft):**
 
 ```sql
--- Shops write: GLOBAL admin only (users.role = 'admin')
+-- OLD: Shops write: GLOBAL admin only (users.role = 'admin')
+-- This is too restrictive AND wrong — platform_admin should not be in RLS policies.
 CREATE POLICY "Shops write by global admin" ON shops
   FOR ALL USING (
     auth.role() = 'authenticated'
@@ -535,8 +553,6 @@ CREATE POLICY "Shops write by global admin" ON shops
     )
   );
 ```
-
-This is too restrictive. Shop admins should manage their own shop settings.
 
 **Target state:**
 
@@ -563,28 +579,10 @@ CREATE POLICY "Shops update by shop admin" ON shops
     )
   );
 
--- Shops INSERT: trusted signup/admin workflow only. A separate platform-admin role is not modeled yet.
-CREATE POLICY "Shops insert by platform admin" ON shops
-  FOR INSERT WITH CHECK (
-    auth.role() = 'authenticated'
-    AND EXISTS (
-      SELECT 1 FROM public.users
-      WHERE users.id = auth.uid()
-      AND users.role = 'admin'
-      AND users.shop_id = shops.id  -- Must be their own shop
-    )
-  );
-
--- Shops DELETE: trusted admin workflow only. Direct client delete should remain unavailable unless a platform-admin model is explicitly added.
-CREATE POLICY "Shops delete by platform admin" ON shops
-  FOR DELETE USING (
-    auth.role() = 'authenticated'
-    AND EXISTS (
-      SELECT 1 FROM public.users
-      WHERE users.id = auth.uid()
-      AND users.role = 'admin'
-    )
-  );
+-- Shops INSERT/DELETE: platform admin only, via Edge Function with service_role key.
+-- No client-facing RLS policy for INSERT or DELETE.
+-- Platform admin uses supabase.functions.invoke('platform-admin-approve-shop', ...) etc.
+-- Edge Functions bypass RLS using service_role key. (VISION §17)
 ```
 
 **Impact on Settings UI:**
@@ -593,6 +591,9 @@ CREATE POLICY "Shops delete by platform admin" ON shops
 // canEditSettings guard split into two:
 const canEditShopSettings = profile?.role === 'admin';  // Shop admin only
 const canEditPreferences = profile?.role === 'admin' || profile?.role === 'manager';
+
+// Platform admin operations are in a separate UI (src/components/platform/)
+// and use supabase.functions.invoke() only — never supabase.from()
 ```
 
 - Shop fields (name, address, currency, tax, invoice): admin only
@@ -800,14 +801,39 @@ SELECT cron.schedule(
 
 ---
 
-## 8. Out of Scope
+## 8. Subscription Tier Management (VISION §3)
+
+### 8.1 Tier Definitions
+
+| Tier | Price | Target Customer |
+|------|-------|-----------------|
+| **Free** | 0 MMK/month | Small shops, trial users |
+| **Growth** | 49,000 MMK/month | Mid-size shops, multi-staff |
+| **Pro** | 149,000 MMK/month | High-volume shops, owner needs insights |
+
+### 8.2 Billing Model (VISION §3.4)
+
+Manual High-Touch: Customer contacts Ko Htun → confirms tier → payment via KBZpay/AYApay/UABpay/MMQR → Ko Htun activates in Platform Admin UI.
+
+### 8.3 Grace Period (VISION §3.5)
+
+5 days after subscription expiry. Shop remains fully functional during grace. After grace: automatic downgrade to Free tier features. No data deleted.
+
+### 8.4 Daily Order Limits (VISION §16)
+
+| Tier | Daily Order Limit | Product Limit |
+|------|-------------------|---------------|
+| Free | 50/day | 50 products |
+| Growth | Unlimited | Unlimited |
+| Pro | Unlimited | Unlimited |
+
+Enforced server-side in the atomic `checkout_complete` RPC. Concurrent checkouts serialized at shop row level.
+
+## 9. Out of Scope
 
 - Shop switching UI (user belongs to one shop for now)
-- Shop creation/management UI beyond approval (admin uses Dashboard initially)
 - Receipt customization (custom footer text, show/hide elements)
-- Per-shop user role management (roles stay global in `users` table)
 - Moving exchange-rate API keys out of `app_settings` into Edge Function secrets/server-side env vars
 - New Settings UI layout or sections (existing UI reused as-is)
-- `business_type` feature toggling (column added for future use)
 - Multi-shop membership UI (user sees one shop)
-- Stripe/subscription billing integration (subscription_tier column unused for now)
+- Stripe/credit card billing integration (manual high-touch until 50+ paying customers)

@@ -1,8 +1,9 @@
 # Multi-Tenancy Architecture — CoffeeShop POS
 
-**Status:** Current foundation implemented; dynamic shop configuration pending  
-**Last updated:** 2026-06-23  
+**Status:** Current foundation implemented; dynamic shop configuration pending
+**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
 **Canonical companion spec:** `docs/specs/dynamic-shop-configuration.md`
+**Source of truth:** `docs/vision/VISION.md` v3.0.0
 
 > CURRENT TRUTH: The project is no longer in the pre-migration "zero tenant isolation" state. The `shop_id` foundation exists. This document describes the current foundation and the remaining work needed to complete dynamic per-shop configuration.
 
@@ -49,13 +50,15 @@ The current `shops` foundation is extended by the dynamic configuration spec wit
 | Column | Purpose |
 |---|---|
 | `logo` | Store logo, base64 or URL |
-| `business_type` | `coffee_shop`, `pharmacy`, `retail`, `restaurant`, or `other` |
+| `business_type` | `coffee_shop` (v1). v2 planned: `restaurant`, `food_court`. Permanently excluded: `pharmacy`, `retail`, `supermarket`, `other`. (VISION §2) |
 | `tax_rate` | Per-shop tax rate |
 | `currency` | Display currency |
 | `base_currency` | Base currency for pricing |
 | `invoice_prefix` | Invoice number prefix |
 | `invoice_counter` | Next invoice counter, DB-owned mutation |
 | `draft_retention_days` | Shop-specific draft cleanup retention, default 30 |
+| `subscription_tier` | `free`, `growth`, or `pro` (VISION §3.1) |
+| `daily_order_limit` | 50 for Free tier, unlimited for Growth/Pro (VISION §16) |
 
 ## 4. Target `app_settings` Shape
 
@@ -124,16 +127,150 @@ For self-registration, the pending user is intended to become the owner/admin of
 
 ## 7. Role Model
 
-Current implementation still uses `users.role` for much of the UI and RLS role gating. `shop_memberships.role` exists and is the long-term per-shop authority model.
+### 7.1 Four Roles (VISION §4.1)
 
-Canonical direction:
+| Role | Scope | Purpose |
+|------|-------|---------|
+| `platform_admin` | Cross-tenant | Platform operator (Ko Htun). Manages all shops, approves signups, activates subscriptions. |
+| `admin` | Per-shop | Shop owner. Full access to their shop's features, settings, and staff. |
+| `manager` | Per-shop | Shift supervisor. POS, inventory, reports, customer management. No user management or shop settings. |
+| `cashier` | Per-shop | Barista/staff. POS terminal only. |
 
-- `users.role` remains a compatibility/default role until fully migrated.
-- `shop_memberships.role` should govern shop-scoped authority over time.
-- Shop admins can update their own shop configuration.
-- A separate platform-admin role is not implemented unless explicitly modeled in a future spec.
+### 7.2 Authorization Source of Truth
 
-## 8. Remaining Work
+**`shop_memberships.role`** is the canonical source for shop-level authorization. A user's role at a specific shop is defined by their membership row.
+
+**`users.role`** is retained temporarily for backward compatibility only. Long-term target is to deprecate `users.role` in favor of `shop_memberships.role`.
+
+### 7.3 platform_admin Specifics (VISION §4.3)
+
+- **No shop_memberships row:** `platform_admin` does not have entries in `shop_memberships`. They operate cross-tenant.
+- **No RLS bypass in policies:** RLS policies do NOT contain `OR users.role = 'platform_admin'`. Platform admin bypasses RLS entirely via `service_role` key in Edge Functions.
+- **All operations via Edge Functions:** Every platform admin action routes through Supabase Edge Functions using the `service_role` key. Zero direct database access from the platform admin UI.
+
+### 7.4 Role Matrix
+
+| Operation | platform_admin | admin | manager | cashier |
+|-----------|:-:|:-:|:-:|:-:|
+| POS Terminal | ❌ | ✅ | ✅ | ✅ |
+| Manage Products | ❌ | ✅ | ✅ | ❌ |
+| Manage Inventory | ❌ | ✅ | ✅ | ❌ |
+| Manage Customers | ❌ | ✅ | ✅ | ❌ |
+| Manage Discounts | ❌ | ✅ | ✅ | ❌ |
+| View Reports | ❌ | ✅ | ✅ | ❌ |
+| Owner Insights | ❌ | ✅ | ❌ | ❌ |
+| Shop Settings | ❌ | ✅ | ❌ | ❌ |
+| Manage Staff | ❌ | ✅ | ❌ | ❌ |
+| Approve Signups | ✅ | ❌ | ❌ | ❌ |
+| Manage Subscriptions | ✅ | ❌ | ❌ | ❌ |
+| View All Tenants | ✅ | ❌ | ❌ | ❌ |
+
+### 7.5 Role Gating in RLS
+
+Current implementation uses `users.role` for RLS policy checks. The target is to use `shop_memberships.role` for shop-scoped operations:
+
+```sql
+-- Target pattern: shop_memberships.role for shop-scoped operations
+AND EXISTS (
+  SELECT 1 FROM public.shop_memberships sm
+  WHERE sm.user_id = auth.uid()
+    AND sm.shop_id = <table>.shop_id
+    AND sm.role IN ('admin', 'manager')
+    AND sm.is_active = true
+)
+```
+
+Platform admin operations bypass RLS entirely — they use Edge Functions with `service_role` key, not RLS policies.
+
+## 8. Subscription Tiers (VISION §3)
+
+### 8.1 Tier Definitions
+
+| Tier | Price | Target Customer |
+|------|-------|-----------------|
+| **Free** | 0 MMK/month | Small shops, trial users |
+| **Growth** | 49,000 MMK/month | Mid-size shops, multi-staff |
+| **Pro** | 149,000 MMK/month | High-volume shops, owner needs insights |
+
+### 8.2 Feature Gating Summary
+
+| Feature | Free | Growth | Pro |
+|---------|------|--------|-----|
+| POS Terminal | ✅ | ✅ | ✅ |
+| Product Management | ✅ (max 50) | ✅ (unlimited) | ✅ (unlimited) |
+| Daily Order Limit | 50/day | Unlimited | Unlimited |
+| Receipt Printing | ❌ | ✅ | ✅ |
+| Raw Material Tracking | ❌ | ✅ | ✅ |
+| Recipe Management | ❌ | ✅ | ✅ |
+| Cash Drawer / Shift Mgmt | ❌ | ✅ | ✅ |
+| Profit Margin Analytics | ❌ | ❌ | ✅ |
+| Owner Insights (P&L) | ❌ | ❌ | ✅ |
+
+### 8.3 Billing Model
+
+**Manual High-Touch** (VISION §3.4): Customer contacts Ko Htun → confirms tier → payment via KBZpay/AYApay/UABpay/MMQR → Ko Htun activates in Platform Admin UI.
+
+### 8.4 Grace Period
+
+5 days after subscription expiry. Shop remains fully functional during grace. After grace: automatic downgrade to Free tier features. No data deleted. (VISION §3.5)
+
+## 9. Platform Admin Console (VISION §17)
+
+### 9.1 Architecture
+
+Desktop-first UI. Edge Function only. Zero direct DB access.
+
+```
+Platform Admin UI (React)
+  → supabase.functions.invoke('platform-admin-...')
+    → Edge Function (service_role key)
+      → Direct Postgres access (bypasses RLS)
+        → Response returned to client
+```
+
+### 9.2 Edge Function Inventory
+
+| Function | Purpose |
+|----------|---------|
+| `platform-admin-approve-shop` | Activate shop + membership + user |
+| `platform-admin-reject-shop` | Deny pending shop application |
+| `platform-admin-update-subscription` | Change shop subscription_tier |
+| `platform-admin-list-shops` | List all shops with status |
+| `platform-admin-get-shop-detail` | Full shop + owner + membership info |
+| `platform-admin-manage-features` | Update feature_definitions rows |
+| `platform-admin-daily-stats` | Platform-wide metrics (MRR, active shops) |
+
+### 9.3 Client-Side Constraint
+
+Platform admin operations MUST use `supabase.functions.invoke()` only. Never use `supabase.from()` for platform admin operations.
+
+### 9.4 Component Tree
+
+```
+src/components/platform/
+  ├── PlatformDashboard.tsx      # Overview: pending shops, MRR, active count
+  ├── PendingShopsList.tsx       # Approval queue
+  ├── ShopDetail.tsx             # Full tenant view
+  ├── SubscriptionManager.tsx    # Tier changes, manual activation
+  ├── FeatureDefinitions.tsx     # Global feature catalog
+  └── PlatformLayout.tsx         # Admin-specific layout/nav
+```
+
+## 10. Daily Order Limit Enforcement (VISION §16)
+
+**Server-side enforcement** in the atomic checkout flow (not client-side). The daily order limit is checked during the `checkout_complete` RPC.
+
+Concurrent checkouts are serialized at the shop row level using database row locking. Two simultaneous checkouts cannot bypass the daily limit.
+
+| Tier | Daily Order Limit | Product Limit |
+|------|-------------------|---------------|
+| Free | 50/day | 50 products |
+| Growth | Unlimited | Unlimited |
+| Pro | Unlimited | Unlimited |
+
+When the server returns a `DAILY_LIMIT_REACHED` error, the client shows an upgrade prompt.
+
+## 11. Remaining Work
 
 Dynamic shop configuration is the next implementation milestone.
 
@@ -148,13 +285,13 @@ Required work:
 7. Update Settings UI to write shop fields through `shopsService` and preference fields through `settingsService`.
 8. Replace instant signup documentation and behavior with pending approval.
 9. Add or document the approval workflow.
+10. Implement platform admin Edge Functions (VISION §17.3).
+11. Implement subscription tier management and billing workflow (VISION §3.4).
 
-## 9. Out Of Scope For This Milestone
+## 12. Out Of Scope For This Milestone
 
 - Shop switching UI.
 - Multi-shop membership selector.
-- Billing/subscription enforcement.
-- Platform-admin console unless separately modeled.
 - Receipt layout customization beyond moving receipt data to `shops`.
 - Moving exchange-rate API keys to Edge Function secrets; this remains a documented follow-up.
 
@@ -163,3 +300,14 @@ Required work:
 ## Historical Context: Pre-2026-06-20 State
 
 The original version of this document described the app as single-tenant with no `shop_id` isolation. That was accurate before the shop_id foundation migration and ADR-003. It is retained here only as historical context: the risk it identified was resolved by adding `shops`, `shop_memberships`, default `shop_id` columns, and supporting indexes. Future work should use the current sections above as the source of truth.
+
+---
+
+## Document Dependencies
+
+- **Source of truth:** `docs/vision/VISION.md` v3.0.0
+- **Updated companion:** `docs/architecture/database.md` (shops, shop_memberships schema)
+- **Updated companion:** `docs/architecture/auth.md` (role model, RLS patterns)
+- **Updated companion:** `docs/architecture/state-management.md` (capabilities, checkout RPC)
+- **Depends on:** `docs/specs/dynamic-shop-configuration.md` (implementation spec)
+- **Depends on:** `docs/specs/feature-flags.md` (capability-based feature gating)

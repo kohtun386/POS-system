@@ -3,7 +3,7 @@
 **Supabase project:** `ejvvwnupiqytximrbmfw`
 **Last schema migration:** `20260620000001_shop_id_placeholder.sql`
 **Generated:** 2026-06-20
-**Reconciled:** 2026-06-23
+**Reconciled:** 2026-06-29 (aligned with VISION.md v3.0.0)
 
 > **Multi-tenancy:** The `shop_id` foundation exists with a single default shop and no shop-switching UI yet. Dynamic shop configuration is the next milestone: `shops` owns business identity and POS behavior, while `app_settings` is trimmed to global/preferences-style settings. See `docs/specs/multi-tenancy.md` and `docs/specs/dynamic-shop-configuration.md`.
 
@@ -76,6 +76,7 @@ Product catalog. Supports weight-based and unit-based pricing.
 | `price_per_unit` | decimal(10,2) | | Per-kg or per-lb price |
 | `unit` | text | `'piece'` | `'kg'`, `'lb'`, `'g'`, `'oz'`, `'l'`, `'ml'`, `'piece'` |
 | `track_inventory` | boolean | `true` | When false, stock not checked/deducted |
+| `product_type` | text | `'finished'` | CHECK: `'finished'` \| `'raw_material'`. Distinguishes menu items from ingredients (Recipe/BOM support, VISION.md v3.0.0 Section 10). |
 | `base_currency` | text | `'USD'` | Added in currency migration |
 | `price_in_base_currency` | decimal(10,2) | | |
 | `created_at` | timestamptz | `now()` | NOT NULL |
@@ -193,7 +194,7 @@ Staff profiles. Extends Supabase `auth.users`.
 | `username` | text NOT NULL | | UNIQUE |
 | `name` | text NOT NULL | | |
 | `email` | text NOT NULL | | |
-| `role` | text NOT NULL | `'cashier'` | CHECK: `'admin'` \| `'manager'` \| `'cashier'` |
+| `role` | text NOT NULL | `'cashier'` | CHECK: `'platform_admin'` \| `'admin'` \| `'manager'` \| `'cashier'`. 4 roles (VISION.md v3.0.0 Section 4). |
 | `permissions` | text[] | `'{}'` | Currently unused (role governs access) |
 | `active` | boolean | `true` | |
 | `last_login` | timestamptz | | |
@@ -201,7 +202,14 @@ Staff profiles. Extends Supabase `auth.users`.
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
-**Auto-creation:** `handle_new_auth_user()` trigger on `auth.users` INSERT creates a pending profile for self-registration. Instant active access is deprecated: new self-signups remain inactive until the user profile, shop membership, and shop are approved.
+**`users.role` note:** Retained for backward compatibility. The canonical role source is `shop_memberships.role`. The `platform_admin` role does NOT have a `shop_memberships` row — it operates cross-tenant via Edge Functions with `service_role` key.
+
+**Auto-creation:** `handle_new_auth_user()` trigger on `auth.users` INSERT creates:
+1. `public.users` row (active=false)
+2. `shops` row (is_active=false, business_type='coffee_shop', subscription_tier='free', daily_order_limit=50)
+3. `shop_memberships` row (role='admin', is_active=false)
+
+All three remain inactive until `platform_admin` approves via Edge Function. (VISION.md v3.0.0 Section 6)
 
 **Service:** `usersService` — full CRUD. `AuthContext.loadProfile()` reads directly via `supabase.from('users')`.
 
@@ -226,8 +234,10 @@ Transaction records. JSONB `items` stores cart snapshot at time of sale.
 | `card_details` | jsonb | | Bank, card type, last 4 digits (NO cardNumber — purged) |
 | `status` | text | `'completed'` | CHECK: `'pending'` \| `'completed'` \| `'refunded'` \| `'credit'` \| `'draft'` |
 | `cashier` | text | | Denormalized cashier name |
+| `cashier_id` | uuid FK | | → `users(id)`. Structured reference for shift tracking. Existing `cashier` text column retained for backward compat. |
 | `cashier_role` | text | | |
 | `receipt_number` | text | | |
+| `receipt_printed` | boolean | `false` | Whether receipt was printed for this sale (VISION.md v3.0.0 Section 9). |
 | `notes` | text | | |
 | `applied_discounts` | jsonb | `'[]'` | Array of AppliedDiscount objects |
 | `free_gifts` | jsonb | `'[]'` | Array of CartItem objects |
@@ -327,6 +337,10 @@ auth.users
 
 products
   ├── product_batches.product_id (CASCADE)
+  ├── recipes.product_id (finished product)
+  ├── recipe_items.ingredient_id (raw material)
+  ├── consumption_log.product_id (finished product)
+  ├── consumption_log.ingredient_id (raw material)
   └── discounts.free_gift_products (TEXT[] — no FK, soft reference)
 
 customers
@@ -334,7 +348,33 @@ customers
   └── sales_tabs.selected_customer_id (SET NULL)
 
 users
-  └── sales_tabs.user_id (CASCADE)
+  ├── sales_tabs.user_id (CASCADE)
+  ├── sales.cashier_id
+  └── cash_shifts.cashier_id
+
+shops
+  ├── shop_memberships.shop_id (CASCADE)
+  ├── shop_features.shop_id (CASCADE)
+  ├── recipes.shop_id
+  ├── consumption_log.shop_id
+  ├── print_jobs.shop_id
+  ├── cash_shifts.shop_id
+  ├── alert_recipients.shop_id
+  ├── alert_templates.shop_id
+  ├── alert_configurations.shop_id
+  ├── alert_history.shop_id
+  ├── notification_service_config.shop_id
+  └── (all 13 original tables via shop_id)
+
+recipes
+  └── recipe_items.recipe_id (CASCADE)
+
+sales
+  ├── consumption_log.sale_id
+  └── print_jobs.sale_id
+
+feature_definitions
+  └── shop_features.feature_key (CASCADE)
 ```
 
 **Soft references (no FK constraint):**
@@ -440,28 +480,64 @@ users
 | `convert_currency_amount(decimal, text, text)` | INVOKER, `search_path=''` | Converts amount using current rate | No — called from app |
 | `update_exchange_rate(text, text, decimal, text, boolean)` | INVOKER, `search_path=''` | Ends current rate, inserts new, records history | No — called from app |
 | `rls_auto_enable()` | SECURITY DEFINER | Auto-enables RLS. Revoked from client roles | Event trigger |
+| `checkout_complete(uuid, jsonb, jsonb, uuid)` | INVOKER, `search_path=''` | Atomic all-or-nothing checkout transaction. Race condition protection via `SELECT ... FOR UPDATE` on shops row. Checks `daily_order_limit`, generates invoice, inserts sale, deducts inventory (recipe-based), creates print jobs, updates customer stats, logs consumption. RAISES `DAILY_LIMIT_REACHED` if limit exceeded. | No — called via `supabase.rpc()` |
+| `current_shop_ids()` | INVOKER, `search_path=''` | Returns `uuid[]` of shop IDs where current user has active membership. Used in RLS policies for shop-scoped access. | No — called in RLS policies |
 
 ---
 
 ## 5. RLS Policy Summary
 
-**Pattern:** All tables have RLS enabled. Policies use role-aware pattern.
+**Pattern:** All tables have RLS enabled. Policies use shop-scoped role-aware pattern.
+
+**`platform_admin` rule:** NEVER appears in RLS policies. Platform admin bypasses RLS entirely via `service_role` key in Edge Functions. No `OR users.role = 'platform_admin'` in any policy. (VISION.md v3.0.0 Section 4.3)
+
+**RLS helper:** `current_shop_ids()` returns `uuid[]` of shops where the current user has active membership. Used in all shop-scoped policies.
 
 | Table | SELECT | INSERT | UPDATE | DELETE |
 |-------|--------|--------|--------|--------|
-| `app_settings` | All authenticated | admin/manager | admin/manager | admin/manager |
-| `categories` | All authenticated | admin/manager | admin/manager | admin/manager |
-| `customers` | All authenticated | admin/manager | admin/manager | admin/manager |
-| `suppliers` | All authenticated | admin/manager | admin/manager | admin/manager |
-| `products` | All authenticated | admin/manager | admin/manager | admin/manager |
-| `product_batches` | All authenticated | admin/manager | admin/manager | admin/manager |
-| `discounts` | All authenticated | admin/manager | admin/manager | admin/manager |
+| `app_settings` | Shop members | admin/manager | admin/manager | admin/manager |
+| `categories` | Shop members | admin/manager | admin/manager | admin/manager |
+| `customers` | Shop members | admin/manager | admin/manager | admin/manager |
+| `suppliers` | Shop members | admin/manager | admin/manager | admin/manager |
+| `products` | Shop members | admin/manager | admin/manager | admin/manager |
+| `product_batches` | Shop members | admin/manager | admin/manager | admin/manager |
+| `discounts` | Shop members | admin/manager | admin/manager | admin/manager |
 | `users` | All authenticated | All authenticated | Self OR admin | (none — no DELETE policy) |
-| `sales` | All authenticated | All authenticated | admin/manager | admin/manager |
+| `sales` | Shop members | Shop members | admin/manager | admin/manager |
 | `sales_tabs` | Own tabs only | Own tabs only | Own tabs only | Own tabs only |
-| `currency_config` | All authenticated | admin/manager | admin/manager | admin/manager |
-| `exchange_rates` | All authenticated | admin/manager | admin/manager | admin/manager |
-| `exchange_rate_history` | All authenticated | admin/manager | admin/manager | admin/manager |
+| `currency_config` | Shop members | admin/manager | admin/manager | admin/manager |
+| `exchange_rates` | Shop members | admin/manager | admin/manager | admin/manager |
+| `exchange_rate_history` | Shop members | admin/manager | admin/manager | admin/manager |
+| `feature_definitions` | All authenticated | (Edge Function only) | (Edge Function only) | (Edge Function only) |
+| `shop_features` | Shop members | admin only | admin only | admin only |
+| `recipes` | Shop members | admin/manager | admin/manager | admin/manager |
+| `recipe_items` | Shop members | admin/manager | admin/manager | admin/manager |
+| `consumption_log` | Shop members | (RPC only) | (none) | (none) |
+| `print_jobs` | Shop members | (RPC/Edge Function) | (Edge Function) | (none) |
+| `cash_shifts` | Shop members | cashier+ (own) | cashier+ (own) | admin/manager |
+
+**Shop-scoped SELECT policy pattern:**
+```sql
+CREATE POLICY "shop_member_select" ON <table>
+FOR SELECT USING (
+  shop_id = ANY(current_shop_ids())
+);
+```
+
+**Shop-scoped INSERT/UPDATE policy pattern (admin/manager):**
+```sql
+CREATE POLICY "shop_admin_write" ON <table>
+FOR INSERT WITH CHECK (
+  shop_id = ANY(current_shop_ids())
+  AND EXISTS (
+    SELECT 1 FROM shop_memberships
+    WHERE user_id = auth.uid()
+      AND shop_id = <table>.shop_id
+      AND role IN ('admin', 'manager')
+      AND is_active = true
+  )
+);
+```
 
 **Notable:**
 - `users` UPDATE: `(auth.uid() = id) OR EXISTS (admin user)` — self-edit or admin
@@ -469,7 +545,9 @@ users
 - `users` DELETE: No policy defined (implicit deny — no one can delete users via RLS)
 - `sales_tabs`: Only `user_id = auth.uid()` — complete user isolation
 - `sales`: Cashiers can INSERT (record transactions) but not UPDATE/DELETE
-- All admin/manager checks use `EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role IN ('admin', 'manager'))`
+- `consumption_log`: INSERT only via `checkout_complete` RPC (no direct client insert)
+- `print_jobs`: INSERT via `checkout_complete` RPC, UPDATE via Edge Function (pg_cron worker)
+- `feature_definitions`: Managed exclusively by `platform_admin` via Edge Functions
 
 ---
 
@@ -488,14 +566,16 @@ users
 | `email` | text | | Receipt/store email |
 | `logo` | text | | Store logo, base64 or URL |
 | `owner_id` | uuid | | Future: link to auth.users |
-| `business_type` | text | `'coffee_shop'` | CHECK target: `coffee_shop`, `pharmacy`, `retail`, `restaurant`, `other` |
+| `business_type` | text | `'coffee_shop'` | CHECK: `'coffee_shop'` only (v1). Restaurant/food_court are v2 planned. Pharmacy/retail/supermarket permanently excluded. |
 | `tax_rate` | numeric(5,4) | `0.0000` | Per-shop tax rate |
 | `currency` | text | `'USD'` | Per-shop display currency |
 | `base_currency` | text | `'USD'` | Per-shop base currency for pricing |
 | `invoice_prefix` | text | `'INV'` | Invoice prefix |
 | `invoice_counter` | integer | `1000` | Mutated only by atomic invoice DB function |
 | `draft_retention_days` | integer | `30` | Cleanup retention for draft sales |
-| `subscription_tier` | text | `'free'` | CHECK: `'free'` \| `'pro'` \| `'enterprise'` |
+| `subscription_tier` | text | `'free'` | CHECK: `'free'` \| `'growth'` \| `'pro'`. 3-tier model (VISION.md v3.0.0 Section 3). |
+| `daily_order_limit` | integer | `50` | Free tier: 50. Growth/Pro: NULL (unlimited). Enforced in `checkout_complete` RPC. |
+| `receipt_setting` | text | `'ask'` | CHECK: `'always'` \| `'ask'` \| `'never'`. Growth+ only. Controls post-checkout receipt prompt. |
 | `is_active` | boolean | `true` | Pending approval keeps this false |
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
@@ -663,3 +743,198 @@ All 7 new tables have RLS enabled with **temporary permissive policies** (`auth.
 | `alert_configurations` | All authenticated (full access) | SELECT: all authenticated. Write: admin/manager. |
 | `alert_history` | All authenticated (full access) | SELECT: all authenticated. Write: admin/manager. |
 | `notification_service_config` | All authenticated (full access) | SELECT: all authenticated. Write: admin/manager. |
+
+---
+
+## 7. Feature Flag, Recipe, Printer & Cash Drawer Tables
+
+> Added 2026-06-29. Aligned with VISION.md v3.0.0 Sections 5, 8, 9, 10, 12.
+
+### 7.1 `feature_definitions`
+
+Platform-level feature catalog. Managed exclusively by `platform_admin` via Edge Functions.
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `key` | text NOT NULL | | UNIQUE. e.g. `'printer_integration'`, `'recipe_bom'` |
+| `name` | text NOT NULL | | Human-readable name |
+| `description` | text | | |
+| `category` | text NOT NULL | `'general'` | |
+| `default_enabled` | boolean NOT NULL | `true` | |
+| `min_tier` | text NOT NULL | `'free'` | CHECK: `'free'` \| `'growth'` \| `'pro'` |
+| `applicable_types` | text[] | `'{coffee_shop}'` | Business types this feature applies to |
+| `created_at` | timestamptz NOT NULL | `now()` | |
+
+---
+
+### 7.2 `shop_features`
+
+Per-shop feature overrides. Only stores deviations from defaults.
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)` ON DELETE CASCADE |
+| `feature_key` | text NOT NULL | | → `feature_definitions(key)` ON DELETE CASCADE |
+| `enabled` | boolean NOT NULL | `true` | |
+| `updated_at` | timestamptz NOT NULL | `now()` | |
+
+**Constraint:** UNIQUE(`shop_id`, `feature_key`)
+
+---
+
+### 7.3 `recipes`
+
+Bill of Materials (BOM) header. Links a finished product to its recipe. Growth+ only (VISION.md v3.0.0 Section 10).
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)` |
+| `product_id` | uuid FK NOT NULL | | → `products(id)` — the finished product |
+| `name` | text NOT NULL | | Recipe name |
+| `notes` | text | | |
+| `is_active` | boolean | `true` | |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+| `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
+
+**Constraint:** UNIQUE(`shop_id`, `product_id`)
+
+---
+
+### 7.4 `recipe_items`
+
+Recipe line items. Each row is one ingredient in a recipe.
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `recipe_id` | uuid FK NOT NULL | | → `recipes(id)` ON DELETE CASCADE |
+| `ingredient_id` | uuid FK NOT NULL | | → `products(id)` — raw material product |
+| `quantity` | numeric(10,3) NOT NULL | | e.g. 18.000 grams |
+| `unit` | text NOT NULL | | CHECK: `'g'` \| `'ml'` \| `'pcs'` \| `'kg'` \| `'l'` |
+| `cost_per_unit` | numeric(10,2) NOT NULL | | Cost per 1 unit of ingredient |
+| `total_cost` | numeric(10,2) | | GENERATED ALWAYS AS (`quantity * cost_per_unit`) STORED |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+
+---
+
+### 7.5 `consumption_log`
+
+Logs actual ingredient consumption per sale. Used for COGS calculation. Inserted by `checkout_complete` RPC.
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)` |
+| `sale_id` | uuid FK NOT NULL | | → `sales(id)` |
+| `product_id` | uuid FK NOT NULL | | → `products(id)` — finished product sold |
+| `ingredient_id` | uuid FK NOT NULL | | → `products(id)` — raw material consumed |
+| `quantity` | numeric(10,3) NOT NULL | | Actual quantity consumed |
+| `unit` | text NOT NULL | | |
+| `cost` | numeric(10,2) NOT NULL | | Cost of consumed quantity |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+
+---
+
+### 7.6 `print_jobs`
+
+Print job queue for receipt and kitchen printers. Growth+ only (VISION.md v3.0.0 Section 8).
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)` |
+| `sale_id` | uuid FK NOT NULL | | → `sales(id)` |
+| `printer_type` | text NOT NULL | | CHECK: `'receipt'` \| `'kitchen'` |
+| `status` | text NOT NULL | `'pending'` | CHECK: `'pending'` \| `'printing'` \| `'completed'` \| `'failed'` |
+| `connection_type` | text NOT NULL | | CHECK: `'bluetooth'` \| `'network'` |
+| `printer_address` | text NOT NULL | | BT MAC address or IP:port |
+| `payload` | jsonb NOT NULL | | Formatted print content |
+| `is_reprint` | boolean | `false` | True if reprinted from history (VISION.md v3.0.0 Section 9.3) |
+| `retry_count` | integer | `0` | |
+| `error_message` | text | | |
+| `created_at` | timestamptz NOT NULL | `now()` | |
+| `completed_at` | timestamptz | | |
+
+---
+
+### 7.7 `cash_shifts`
+
+Cash drawer shift tracking. Growth+ only (VISION.md v3.0.0 Section 12).
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)` |
+| `cashier_id` | uuid FK NOT NULL | | → `users(id)` |
+| `opening_cash` | numeric(12,2) NOT NULL | | Physical count at shift start |
+| `closing_cash` | numeric(12,2) | | Physical count at shift end |
+| `expected_cash` | numeric(12,2) | | Opening + Cash Sales - Cash Refunds |
+| `variance` | numeric(12,2) | | Actual - Expected |
+| `status` | text NOT NULL | `'open'` | CHECK: `'open'` \| `'closed'` |
+| `opened_at` | timestamptz NOT NULL | `now()` | |
+| `closed_at` | timestamptz | | |
+
+---
+
+### 7.8 New Table Indexes
+
+| Index | Table | Column(s) | Type | Notes |
+|-------|-------|-----------|------|-------|
+| `idx_feature_definitions_key` | feature_definitions | `key` | B-tree (UNIQUE) | |
+| `idx_shop_features_shop_key` | shop_features | `shop_id, feature_key` | B-tree (UNIQUE) | |
+| `idx_recipes_shop_product` | recipes | `shop_id, product_id` | B-tree (UNIQUE) | |
+| `idx_recipe_items_recipe` | recipe_items | `recipe_id` | B-tree | |
+| `idx_recipe_items_ingredient` | recipe_items | `ingredient_id` | B-tree | |
+| `idx_consumption_log_sale` | consumption_log | `sale_id` | B-tree | |
+| `idx_consumption_log_daily` | consumption_log | `shop_id, created_at` | B-tree | Daily COGS queries |
+| `idx_print_jobs_pending` | print_jobs | `status` | Partial | `WHERE status = 'pending'` — pg_cron polling |
+| `idx_print_jobs_shop` | print_jobs | `shop_id` | B-tree | |
+| `idx_cash_shifts_shop_open` | cash_shifts | `shop_id, status` | Partial | `WHERE status = 'open'` |
+| `idx_cash_shifts_cashier` | cash_shifts | `cashier_id` | B-tree | |
+| `idx_sales_cashier_id` | sales | `cashier_id` | B-tree | Shift tracking |
+| `idx_sales_shop_created_status` | sales | `shop_id, created_at, status` | Composite | Daily limit check in `checkout_complete` |
+
+---
+
+## 8. Database Configuration
+
+### 8.1 Timezone
+
+```sql
+-- Timezone: Asia/Yangon (locked at database level)
+-- VISION.md v3.0.0 Decision #14
+ALTER DATABASE ejvvwnupiqytximrbmfw SET timezone = 'Asia/Yangon';
+
+-- Verify
+SHOW timezone;  -- Should return 'Asia/Yangon'
+```
+
+**Impact:** `CURRENT_DATE`, `now()`, and all `timestamptz` operations use Asia/Yangon. The daily order limit check in `checkout_complete` uses `CURRENT_DATE` which resolves to Asia/Yangon midnight.
+
+### 8.2 Search Path Security
+
+All user-defined functions use `SET search_path = ''` to prevent search path injection attacks. This is enforced in the function definition, not at the database level.
+
+---
+
+## 9. VISION.md v3.0.0 Consistency Checklist
+
+| VISION.md Decision | database.md Location |
+|--------------------|---------------------|
+| Business type = `coffee_shop` only | `shops.business_type` CHECK |
+| 3-tier: free/growth/pro | `shops.subscription_tier` CHECK |
+| Free: 50 orders/day | `shops.daily_order_limit` + `checkout_complete()` RPC |
+| Free: 50 products max | Client + server validation (no DB constraint) |
+| 4 roles | `users.role` CHECK + `shop_memberships.role` |
+| Feature flags (capability-based) | `feature_definitions` + `shop_features` |
+| Recipe/BOM (Growth+) | `recipes` + `recipe_items` + `consumption_log` |
+| Printer integration (Growth+) | `print_jobs` |
+| Receipt management | `shops.receipt_setting` + `print_jobs.is_reprint` |
+| Cash drawer (Growth+) | `cash_shifts` |
+| Checkout atomicity | `checkout_complete()` RPC |
+| Race condition protection | `SELECT ... FOR UPDATE` in `checkout_complete` |
+| Timezone: Asia/Yangon | `ALTER DATABASE SET timezone` |
+| platform_admin (Edge Function only) | `users.role` CHECK, not in RLS policies |

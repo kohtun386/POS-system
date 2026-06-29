@@ -1,6 +1,6 @@
 # State Management Architecture — CoffeeShop POS
 
-**Last updated:** 2026-06-23
+**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
 **Source of truth:** `src/context/SupabaseAppContext.tsx` (active), `src/context/AuthContext.tsx`, `src/context/ThemeContext.tsx`, `src/context/CurrencyContext.tsx`
 
 ---
@@ -56,14 +56,17 @@ interface AppState {
   salesTabs: SalesTab[];
   activeSalesTab: string;
   activeShopId: string;
+  capabilities: string[];  // Feature flags — flat list of capability keys
   loading: boolean;
   error: string | null;
 }
 ```
 
-`Shop` owns store name, address, phone, email, logo, tax rate, currency, base currency, invoice prefix/counter, business type, subscription status, and draft retention.
+`Shop` owns store name, address, phone, email, logo, tax rate, currency, base currency, invoice prefix/counter, business type, subscription tier, daily_order_limit, receipt_setting, and draft retention.
 
 `AppSettings` owns interface mode, auto backup, receipt printer, theme, and exchange-rate provider/key/update interval. It must not contain store identity, tax, currency, or invoice fields in the target architecture.
+
+`capabilities` is a flat string array of capability keys (e.g., `['pos', 'inventory', 'printer_integration', 'recipe_bom']`). Resolved server-side at login from subscription tier, business type, and per-shop overrides. Components check `capabilities.includes('key')` — never check `shop.subscriptionTier` or `shop.businessType` directly. (VISION.md v3.0.0 Section 5)
 
 ### 3.2 Action Types (25 actions)
 
@@ -111,6 +114,8 @@ interface AppState {
 | `SET_ACTIVE_SALES_TAB` | `string` (id) | Switch active tab + load its cart/customer |
 | **Shop** | | |
 | `SET_ACTIVE_SHOP` | `string` (shop_id) | Set active shop for multi-tenant scoping |
+| **Capabilities** | | |
+| `SET_CAPABILITIES` | `string[]` | Replace capabilities array (set at login) |
 
 ### 3.3 Cart Persistence
 
@@ -145,6 +150,8 @@ const [shop, products, customers, sales, discounts, settings, users, salesTabs] 
 ```
 
 All data queries run in parallel after auth/profile are available. Shop loading is required for business identity, POS configuration, and approval gating. If any critical query fails, error is dispatched. On logout, all state resets to initial.
+
+**Capability loading:** After shop loads, capabilities are resolved server-side and dispatched via `SET_CAPABILITIES`. The server reads `shop.subscription_tier`, `shop.business_type`, and `shop_features` to produce the flat capability array.
 
 If no sales tabs exist, initial tab auto-created:
 ```typescript
@@ -202,7 +209,7 @@ interface AuthContextType {
 
 ### 4.3 User Creation Flow
 
-Sign up → `supabase.auth.signUp()` → DB trigger `handle_new_auth_user()` creates profile → frontend fetches trigger-created row → sets profile.
+Sign up → `supabase.auth.signUp()` → DB trigger `handle_new_auth_user()` creates user + shop + membership → frontend fetches trigger-created row → sets profile.
 
 Admin creates user → saves admin session → signUp → trigger creates profile → restores admin session → UPDATES profile with chosen role.
 
@@ -269,40 +276,71 @@ interface CurrencyState {
 
 | Component | Reads | Dispatches |
 |-----------|-------|------------|
-| `POSTerminal` | `state.cart`, `state.activeSalesTab`, `state.currentUser`, `state.shop`, `state.settings` | `ADD_TO_CART`, `UPDATE_CART_ITEM`, `UPDATE_SALES_TAB`, `CLEAR_CART` |
-| `ProductGrid` | `state.products`, `state.shop`, `state.settings` | — |
+| `POSTerminal` | `state.cart`, `state.activeSalesTab`, `state.currentUser`, `state.shop`, `state.settings`, `state.capabilities` | `ADD_TO_CART`, `UPDATE_CART_ITEM`, `UPDATE_SALES_TAB`, `CLEAR_CART` |
+| `ProductGrid` | `state.products`, `state.shop`, `state.settings`, `state.capabilities` | — |
 | `Cart` | `state.cart`, `state.selectedCustomer`, `state.customers`, `state.shop`, `state.settings` | `UPDATE_CART_ITEM`, `REMOVE_FROM_CART`, `SET_SELECTED_CUSTOMER` |
-| `CheckoutModal` | `state.cart`, `state.selectedCustomer`, `state.discounts`, `state.products`, `state.shop`, `state.settings`, `state.currentUser` | `ADD_SALE`, `UPDATE_PRODUCT`, `UPDATE_CUSTOMER`, `CLEAR_CART` (invoice counter mutation removed — owned by atomic DB function) |
+| `CheckoutModal` | `state.cart`, `state.selectedCustomer`, `state.discounts`, `state.products`, `state.shop`, `state.settings`, `state.currentUser`, `state.capabilities` | `ADD_SALE`, `CLEAR_CART` (inventory deduction, customer stats, print jobs, consumption logging all handled by `checkout_complete` RPC) |
 | `SalesTabManager` | `state.salesTabs`, `state.activeSalesTab`, `state.cart`, `state.selectedCustomer` | `ADD_SALES_TAB`, `UPDATE_SALES_TAB`, `REMOVE_SALES_TAB`, `SET_ACTIVE_SALES_TAB` |
 
 ### 7.2 Management Components
 
 | Component | Reads | Dispatches |
 |-----------|-------|------------|
-| `InventoryManager` | `state.products` | — |
-| `ProductModal` | — | `ADD_PRODUCT`, `UPDATE_PRODUCT` |
+| `InventoryManager` | `state.products`, `state.capabilities` | — |
+| `ProductModal` | `state.capabilities` | `ADD_PRODUCT`, `UPDATE_PRODUCT` |
 | `CustomerManager` | `state.customers` | `DELETE_CUSTOMER` |
 | `CustomerModal` | — | `ADD_CUSTOMER`, `UPDATE_CUSTOMER` |
 | `DiscountManager` | `state.discounts` | `DELETE_DISCOUNT` |
 | `DiscountModal` | `state.products` (for free gift selection) | `ADD_DISCOUNT`, `UPDATE_DISCOUNT` |
-| `TransactionsManager` | `state.sales`, `state.shop` | — |
+| `TransactionsManager` | `state.sales`, `state.shop`, `state.capabilities` | — |
 | `ReportsManager` | `state.sales`, `state.products`, `state.customers`, `state.shop` | — |
 | `UserManager` | `state.users`, `state.currentUser` | `SET_USERS` |
 | `UserModal` | `state.users`, `state.currentUser` | `SET_USERS` |
-| `Settings` | `state.shop`, `state.settings`, `state.currentUser` | `SET_SHOP`, `SET_SETTINGS` |
+| `Settings` | `state.shop`, `state.settings`, `state.currentUser`, `state.capabilities` | `SET_SHOP`, `SET_SETTINGS` |
+| `RecipeManager` | `state.products`, `state.capabilities` | — |
+| `ShiftManager` | `state.capabilities` | — |
 
 ### 7.3 Layout Components
 
 | Component | Reads | Dispatches |
 |-----------|-------|------------|
-| `Header` | `state.currentUser`, `state.shop`, `state.settings`, `state.cart` | `SET_SETTINGS` (interface mode toggle) |
+| `Header` | `state.currentUser`, `state.shop`, `state.settings`, `state.cart`, `state.capabilities` | `SET_SETTINGS` (interface mode toggle) |
 | `LoginPage` | — | — (uses `useAuth()` only) |
+
+### 7.4 Capability-Based Feature Gating
+
+Components check `state.capabilities` to show/hide features. Never check `shop.subscriptionTier` or `shop.businessType` directly.
+
+```typescript
+// CORRECT — check capabilities
+const { state } = useApp();
+const canUsePrinter = state.capabilities.includes('printer_integration');
+const canUseRecipe = state.capabilities.includes('recipe_bom');
+const canUseCashDrawer = state.capabilities.includes('cash_drawer');
+const canUseOwnerInsights = state.capabilities.includes('owner_insights');
+
+// WRONG — never do this
+if (shop.subscriptionTier === 'pro') { ... }
+if (shop.businessType === 'coffee_shop') { ... }
+```
+
+**Common capability checks:**
+
+| Capability | Used By | Purpose |
+|------------|---------|---------|
+| `printer_integration` | CheckoutModal, TransactionsManager, Settings | Show/hide print buttons, receipt settings |
+| `recipe_bom` | InventoryManager, ProductModal, RecipeManager | Show/hide recipe management, raw materials |
+| `raw_materials` | InventoryManager, ProductModal | Show/hide raw material product type |
+| `cash_drawer` | Header, ShiftManager | Show/hide shift management nav |
+| `owner_insights` | Header, ReportsManager | Show/hide P&L dashboard, owner reports |
+| `profit_analytics` | ReportsManager | Show/hide profit margin analytics |
+| `waste_tracking` | InventoryManager | Show/hide waste tracking UI |
 
 ---
 
 ## 8. State Flow Diagrams
 
-### 8.1 Checkout Flow
+### 8.1 Checkout Flow (VISION.md v3.0.0 — Atomic RPC)
 
 ```
 Cart (user taps "Checkout")
@@ -320,28 +358,43 @@ CheckoutModal opens
   ├─ User clicks "Complete Payment"
   │   │
   │   ▼
-  │   generateInvoice() → DB-backed atomic invoice function/RPC for active shop
+  │   supabase.rpc('checkout_complete', {
+  │     p_shop_id: state.shop.id,
+  │     p_cart: cart,
+  │     p_payment: payment,
+  │     p_cashier_id: user.id
+  │   })
+  │   │
+  │   ├─ Error: DAILY_LIMIT_REACHED
+  │   │   └─ swalConfig.warning() with upgrade prompt
+  │   │
+  │   ├─ Error: other
+  │   │   └─ swalConfig.error() — entire transaction rolled back
   │   │
   │   ▼
-  │   salesService.create(sale) → dispatch ADD_SALE
+  │   Success (all steps atomic):
+  │     ✓ Sale created
+  │     ✓ Inventory deducted (recipe-based if Growth+)
+  │     ✓ Print jobs created (kitchen printer, if Growth+)
+  │     ✓ Customer stats updated
+  │     ✓ Consumption logged (COGS, if Growth+)
+  │     ✓ Daily order limit checked (race condition safe)
   │   │
   │   ▼
-  │   For each cart item with trackInventory:
-  │     productsService.update(id, { stock: stock - quantity }) → dispatch UPDATE_PRODUCT
+  │   dispatch({ type: 'ADD_SALE', payload: mapSale(data) })
+  │   dispatch({ type: 'CLEAR_CART' })
   │   │
   │   ▼
-  │   If customer selected:
-  │     customersService.update(id, { creditUsed, totalPurchases, lastPurchase }) → dispatch UPDATE_CUSTOMER
-  │   │
-  │   ▼
-  │   dispatch CLEAR_CART
-  │   │
-  │   ▼
-  │   setShowReceipt(true) → ReceiptPrint modal
+  │   If capabilities.includes('printer_integration'):
+  │     Show "Print Receipt?" prompt (based on shop.receipt_setting)
+  │   Else:
+  │     No print prompt (Free tier)
   │
   ▼
 onComplete(sale) → POSTerminal clears tab cart
 ```
+
+**Key difference from pre-v3.0.0:** No sequential JavaScript service calls. Single `supabase.rpc('checkout_complete', ...)` call handles everything atomically. All steps succeed together or all roll back together.
 
 ### 8.2 Sales Tab Switch Flow
 
@@ -381,6 +434,9 @@ supabase.auth.onAuthStateChange(event, session)
   │   ▼
   │   Promise.all([shop, products, customers, sales, discounts, settings, users, salesTabs])
   │   dispatch all → state populated
+  │   │
+  │   ▼
+  │   Resolve capabilities from server → dispatch SET_CAPABILITIES
   │
   ├─ SIGNED_OUT:
   │   setSession(null) → setUser(null) → setProfile(null)
@@ -395,6 +451,7 @@ supabase.auth.onAuthStateChange(event, session)
   │     dispatch SET_SALES_TABS([])
   │     dispatch CLEAR_CART
   │     dispatch SET_CURRENT_USER(null)
+  │     dispatch SET_CAPABILITIES([])
   │     setInitialized(false)
 ```
 
@@ -407,9 +464,13 @@ supabase.auth.onAuthStateChange(event, session)
 | Import from `AppContext.tsx` | Deprecated. Uses localStorage mock data. | Import from `SupabaseAppContext.tsx` |
 | Call `supabase.from()` in components | Bypasses service layer. No camelCase↔snake_case mapping. | Use service objects from `src/lib/services.ts` |
 | Mutate `state` directly | Breaks React rendering. Reducer won't fire. | Always `dispatch()` |
-| Duplicate stock deduction logic | `CheckoutModal` already handles it. Double-deduct = negative stock. | Let CheckoutModal handle inventory. |
+| Sequential JS service calls for checkout | Leaves data inconsistent if middle step fails. Double-deduction, duplicate invoices. | Use `supabase.rpc('checkout_complete', ...)` — single atomic transaction |
+| Duplicate stock deduction logic | `checkout_complete` RPC already handles inventory deduction, consumption logging, and print jobs. | Let the RPC handle everything. |
 | Build invoice number manually | Frontend counter increments can duplicate invoices under concurrency. | Use the DB-backed `useInvoiceGeneration()` path. |
 | Reimplement discount eligibility | `checkDiscountEligibility()` handles all 6 condition types. | Use exported utility function. |
+| Check `shop.subscriptionTier` in components | Couples component code to tier logic. Adding a new tier requires component changes. | Check `state.capabilities.includes('key')` |
+| Check `shop.businessType` in components | Couples component code to business type. Adding a new type requires component changes. | Check `state.capabilities.includes('key')` |
+| Read `feature_definitions` table client-side | Server resolves capabilities at login. Client only needs the flat array. | Use `state.capabilities` only |
 | `any` type in reducer payloads | Loses type safety. 73 lint errors already. | Use discriminated union (planned cleanup). |
 
 ---
@@ -418,7 +479,8 @@ supabase.auth.onAuthStateChange(event, session)
 
 | Change | Impact | Status |
 |--------|--------|--------|
-| `shop: Shop` in AppState | Business identity/POS config moves out of settings. | Dynamic shop configuration milestone |
 | Discriminated union for actions | Eliminates `payload: any`. Type-safe dispatch. | Planned (tech debt #1) |
 | Split context exports to separate files | Fixes React Refresh warnings (26 warnings, 6 files). | Planned (tech debt #2) |
 | Zustand or Redux Toolkit evaluation | Current useReducer pattern works but scales poorly with 25 actions. | Not started |
+| Owner Mobile state | Separate read-only state for owner mobile view (Pro tier). | v2 |
+| Offline queue state | IndexedDB-backed queue for cash-only offline transactions. | v2 |
