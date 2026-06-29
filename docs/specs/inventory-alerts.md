@@ -1,5 +1,9 @@
 # Inventory Alert System
 
+**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
+
+> **Tier requirement:** Low stock alerts and inventory tracking features are **Growth+ tier** only (VISION.md §10.4). Free tier shops can toggle `track_inventory` for basic stock counts but do not receive alerts, raw material tracking, recipe BOM, or COGS calculation. See [VISION.md §10](../vision/VISION.md) for full tier gating details.
+
 This document describes the comprehensive inventory alert system implemented for the POS system, providing automated email and SMS notifications for various inventory conditions.
 
 ## 🎯 Features
@@ -169,11 +173,15 @@ function App() {
 
 ### Alert Types
 
-- **Low Stock**: Triggers when `current_stock <= min_stock * threshold_percentage`
-- **Out of Stock**: Triggers when `current_stock = 0`
-- **Reorder Point**: Triggers when `current_stock <= min_stock`
-- **Expiry Warning**: Triggers based on product expiry dates
-- **Batch Expiry**: Triggers based on batch expiry dates
+| Alert Type | Trigger Condition | Min Tier |
+|------------|-------------------|----------|
+| **Low Stock** | `current_stock <= min_stock * threshold_percentage` | Growth+ |
+| **Out of Stock** | `current_stock = 0` | Growth+ |
+| **Reorder Point** | `current_stock <= min_stock` | Growth+ |
+| **Expiry Warning** | Based on product expiry dates | Growth+ |
+| **Batch Expiry** | Based on batch expiry dates | Growth+ |
+
+**Free tier:** Basic stock count tracking only (if `track_inventory` enabled). No alerts, no raw materials, no recipe BOM.
 
 ### Threshold Settings
 
@@ -205,8 +213,9 @@ Available variables for templates:
 
 ### Access Control
 
-- Implement proper user roles and permissions
-- Restrict alert management to authorized users
+- Alert management restricted to admin/manager roles (not cashier)
+- `platform_admin` bypasses RLS via Edge Functions (VISION.md §4.3)
+- `shop_memberships.role` is the canonical authorization source
 - Audit alert history regularly
 
 ### Data Privacy

@@ -1,7 +1,7 @@
 # CoffeeShop POS — Documentation Index
 
 > Master table of contents for all project documentation.
-> Last updated: 2026-06-23
+> Last updated: 2026-06-29 (aligned with VISION.md v3.0.0)
 
 ---
 
@@ -9,6 +9,7 @@
 
 | Document | Description | Audience |
 |----------|-------------|----------|
+| [VISION](vision/VISION.md) | Platform vision, 14 locked decisions, subscription tiers, role model, feature flags — **source of truth** | Everyone |
 | [Product Requirements (PRD)](specs/prd.md) | User personas, features, acceptance criteria, non-functional requirements | Everyone |
 | [Roadmap](specs/roadmap.md) | Short-term and long-term feature roadmap | Everyone |
 | [Key Decisions](architecture/decisions.md) | Technology decisions: stack, architecture, database, multi-tenancy, currency, PWA, auth | Developers |
@@ -22,7 +23,7 @@
 
 | Document | Description | Audience |
 |----------|-------------|----------|
-| [Database Architecture](architecture/database.md) | 13 tables, FK map, 30+ indexes, 9 functions, RLS matrix | Backend, Full-stack |
+| [Database Architecture](architecture/database.md) | 18+ tables, FK map, 30+ indexes, 9 functions, RLS matrix | Backend, Full-stack |
 | [Authentication](architecture/auth.md) | Auth flows, role hierarchy, permission matrix, RLS policy patterns, security posture | Backend, Full-stack |
 | [State Management](architecture/state-management.md) | Provider tree, 25 reducer actions, cart persistence, data loading, checkout/tab flows | Frontend |
 | [Deployment](architecture/deployment.md) | Env vars, local dev, Supabase config, build/deploy, PWA, monitoring, backup | DevOps, Full-stack |
@@ -33,11 +34,11 @@
 
 | Document | Description | Status |
 |----------|-------------|--------|
-| [Multi-Tenancy](specs/multi-tenancy.md) | Multi-tenant gap analysis and migration strategy | Planned |
+| [Multi-Tenancy](specs/multi-tenancy.md) | Multi-tenant schema with shop_id foundation, 4 roles, subscription tiers | Foundation complete, dynamic config pending |
 | [Inventory Alerts](specs/inventory-alerts.md) | Alert system: 5 alert types, email/SMS, templates, scheduling | Planned |
 | [Kitchen Workflow](specs/kitchen-workflow.md) | Kitchen Display System (KDS), real-time orders, print jobs, station routing | Planned |
 | [Recipe BOM](specs/recipe-bom.md) | Bill of Materials, raw materials, recipes, consumption logging, UoM conversion | Planned |
-| [Feature Flags](specs/feature-flags.md) | Feature flag system for progressive rollout, A/B testing, kill switches | Planned |
+| [Feature Flags](specs/feature-flags.md) | Capability-based per-shop feature toggling, subscription tier gating (Free/Growth/Pro) | Planned |
 
 ---
 

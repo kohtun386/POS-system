@@ -1,6 +1,8 @@
 # CoffeeShop POS
 
-A multi-tenant, web-based point-of-sale platform built for coffee shops, food courts, and small-to-medium restaurants — with a focus on the Myanmar market. Supports 9 payment methods including KBZpay, WavePay, AYAPay, CBPay, and MPU. Installable as a PWA on iPad and Android. Multi-tenancy foundation is in place with `shop_id` scoping and role-based access; dynamic per-shop configuration is specified and pending implementation.
+**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
+
+A multi-tenant, web-based point-of-sale platform built for coffee shops and tea shops — with a focus on the Myanmar market. Supports 9 payment methods including KBZpay, WavePay, AYAPay, CBPay, and MPU. Installable as a PWA on iPad and Android. 3-tier subscription model (Free/Growth/Pro) with tier-gated features. Multi-tenancy foundation is in place with `shop_id` scoping and role-based access; dynamic per-shop configuration is specified and pending implementation.
 
 ![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
@@ -30,13 +32,14 @@ A multi-tenant, web-based point-of-sale platform built for coffee shops, food co
 - Credit sales with customer credit limit tracking
 - Draft sales — save incomplete transactions, resume later
 - Multi-tab sales — serve multiple customers simultaneously
-- Receipt printing with @media print styles
+- Receipt printing via thermal printer (Bluetooth/Network — Growth+ tier; Free tier uses manual/no receipt)
 - Weight-based products (per-kg/lb/g pricing)
 
 ### Inventory Management
-- Product CRUD with image upload, batch tracking, SKU/barcode
+- Product CRUD with image upload, batch tracking, SKU/barcode (max 50 products on Free tier)
 - Stock auto-deduction on sale completion
-- Low-stock and out-of-stock indicators
+- Raw material tracking, recipe BOM, auto-deduction on sale, COGS calculation (Growth+)
+- Low-stock and out-of-stock indicators; low stock alerts (Growth+)
 - Inventory reports: value, turnover ratio, profit margin
 
 ### Customer Management
@@ -65,9 +68,27 @@ A multi-tenant, web-based point-of-sale platform built for coffee shops, food co
 - Base currency + display currency separation
 
 ### User Management & RBAC
-- 3 roles: Admin (full access), Manager (POS+inventory+reports), Cashier (POS only)
+- 4 roles: `platform_admin` (cross-tenant platform operator), Admin (full shop access), Manager (POS+inventory+reports), Cashier (POS only)
 - Role-based navigation — cashiers see POS only, managers see everything except user management
+- `platform_admin` bypasses RLS via Edge Functions with `service_role` key (no RLS bypass in policies)
+- `shop_memberships.role` is the canonical authorization source
 - RLS enforced at database level — not just UI
+
+### Subscription Tiers (Free / Growth / Pro)
+- **Free:** POS, products (max 50), customers, discounts, multi-currency, 50 orders/day limit
+- **Growth (49,000 MMK/month):** + Thermal printer, raw materials, recipe BOM, COGS, low stock alerts, cash drawer/shift management, unlimited orders
+- **Pro (149,000 MMK/month):** + Owner insights (P&L), profit analytics, waste tracking, WhatsApp daily report
+
+### Cash Drawer / Shift Management (Growth+)
+- Shift start/end with physical cash count
+- Variance calculation: expected vs actual cash
+- Variance alerts: green (≤1,000 MMK), yellow (≤10,000 MMK), red (>10,000 MMK)
+- Owner receives variance report
+
+### Owner Insights (Pro)
+- Daily P&L dashboard: Revenue, COGS, Gross Profit
+- WhatsApp/Viber daily report at 9:00 PM (Asia/Yangon)
+- Cash drawer variance alerts in real-time
 
 ### PWA
 - Installable on iPad ("Add to Home Screen") and Android
@@ -80,6 +101,19 @@ A multi-tenant, web-based point-of-sale platform built for coffee shops, food co
 - `shops` and `shop_memberships` tables for per-shop roles
 - RLS policies scoped via `current_shop_ids()` helper function
 - Schema foundation complete — UI for shop switching deferred
+
+### Platform Admin (Desktop-First)
+- Desktop-first UI for platform operator (Ko Htun)
+- Approve/reject shop signups, manage subscriptions, view platform metrics
+- All operations via `supabase.functions.invoke()` (Edge Functions with `service_role` key)
+- Zero direct database access from platform admin UI
+- Component tree: `src/components/platform/`
+
+### Daily Order Limits
+- Free tier: 50 orders/day, enforced server-side in atomic checkout transaction
+- Growth/Pro: unlimited orders
+- Race condition protection via database row locking
+- Client shows upgrade prompt when limit reached
 
 ---
 
@@ -168,6 +202,7 @@ src/
 │   ├── examples/        # Currency feature demo component
 │   ├── inventory/       # Product manager and modal
 │   ├── layout/          # Header with role-based navigation
+│   ├── platform/        # Platform admin: dashboard, pending shops, subscription manager
 │   ├── pos/             # POS terminal, product grid, cart, checkout, receipt, sales tabs
 │   ├── reports/         # Sales/customer/inventory reports with charts
 │   ├── settings/        # Store settings, logo upload, exchange rate manager
@@ -240,8 +275,9 @@ src/
 
 | Role | Access |
 |------|--------|
-| **Admin** | Everything: POS, transactions, inventory, customers, discounts, reports, users, settings |
-| **Manager** | POS, transactions, inventory, customers, discounts, reports, settings. No user management. |
+| **platform_admin** | Cross-tenant platform operator. Manages all shops, approves signups, activates subscriptions. All operations via Edge Functions (no direct DB access). |
+| **Admin** | Everything: POS, transactions, inventory, customers, discounts, reports, users, settings, owner insights |
+| **Manager** | POS, transactions, inventory, customers, discounts, reports, settings. No user management or owner insights. |
 | **Cashier** | POS terminal only. Redirected to POS if navigating elsewhere. |
 
 ---
@@ -271,6 +307,7 @@ Documentation-Driven Development (DDD) workflow. Docs are source of truth.
 
 | Document | Path | Content |
 |----------|------|---------|
+| **VISION** | [`docs/vision/VISION.md`](docs/vision/VISION.md) | Platform vision, 14 locked decisions, subscription tiers, role model, feature flags |
 | **PRD** | [`docs/specs/prd.md`](docs/specs/prd.md) | User personas, 21 features with acceptance criteria, glossary |
 | **Decisions** | [`docs/architecture/decisions.md`](docs/architecture/decisions.md) | Key technology decisions (stack, architecture, database, multi-tenancy, security) |
 | **Patterns** | [`docs/architecture/patterns.md`](docs/architecture/patterns.md) | Coding conventions and patterns (components, services, state, RLS, naming) |

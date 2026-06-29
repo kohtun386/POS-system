@@ -1,5 +1,7 @@
 # Product Roadmap — CoffeeShop POS
 
+**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
+
 Date: 2026-06-18
 Commits referenced: `8556dc3`, `25da4db`, `64e0082`
 
@@ -90,11 +92,11 @@ Features needed for beta in real coffee shop.
 
 ### 1. Localization (i18n) — English / Myanmar
 
-**Status:** Scoping needed.
+**Status:** Deferred to v2. English-first for v1 (technical stability per VISION.md §19).
 
 Coffee shop in Myanmar → baristas need Myanmar language UI. Customers may see receipts in either language. Owners likely prefer English for reports.
 
-**Scope questions to resolve:**
+**v2 Scope questions to resolve:**
 - Which UI surfaces need both languages? (All menus/labels vs. POS terminal only)
 - Receipt language — per-customer preference or global toggle?
 - What i18n library? `react-i18next` (most popular, 3.5M weekly downloads) vs. `react-intl` (FormatJS, heavier but ICU message format) vs. lightweight custom context
@@ -108,10 +110,12 @@ Coffee shop in Myanmar → baristas need Myanmar language UI. Customers may see 
 - No language-specific CSS needed (LTR for both)
 
 **Effort:** 2-3 days (library setup + key extraction + translation), after scope decision.
+**Priority:** v2 — English-first for v1 per VISION.md §19.
 
 ### 2. Food Costing Module — Ingredients, Recipes, Theoretical COGS
 
 **Status:** Scoping complete. MVP defined. Awaiting implementation.
+**Tier:** Growth+ feature (not available on Free tier per VISION.md §10). Free tier has finished product stock tracking only (if `track_inventory` enabled). No raw materials, no recipe BOM, no auto-deduction, no COGS.
 
 **Problem:** Coffee shop owners don't know true profit per drink. `Product.cost` is a single manual number — no ingredient-level breakdown, no automatic recalculation when vendor prices change.
 
@@ -143,7 +147,57 @@ Coffee shop in Myanmar → baristas need Myanmar language UI. Customers may see 
 
 **Effort:** 3-5 days (DB migration + types + services + 3 Manager/Modal component pairs + recipe cost computation + waste log).
 
----
+### 3. Platform Admin UI
+
+**Status:** Specified in VISION.md §17. Not yet implemented.
+
+Desktop-first UI for platform operator (Ko Htun). All operations via Edge Functions with `service_role` key — zero direct DB access.
+
+**Scope:**
+- Pending shop approval queue (approve/reject with reason)
+- Subscription tier management (manual activation via KBZpay/AYApay/UABpay/MMQR)
+- Shop detail view (owner, membership, status)
+- Platform-wide metrics (MRR, active shop count)
+- Feature definitions management
+
+**Component tree:** `src/components/platform/` — `PlatformDashboard`, `PendingShopsList`, `ShopDetail`, `SubscriptionManager`, `FeatureDefinitions`, `PlatformLayout`
+
+**Edge Functions:** `platform-admin-approve-shop`, `platform-admin-reject-shop`, `platform-admin-update-subscription`, `platform-admin-list-shops`, `platform-admin-get-shop-detail`, `platform-admin-manage-features`, `platform-admin-daily-stats`
+
+**Effort:** 3-5 days (Edge Functions + React UI + testing)
+
+### 4. Cash Drawer / Shift Management (Growth+)
+
+**Status:** Specified in VISION.md §12. Not yet implemented.
+
+Revenue-driving feature. Primary pain point: "I'm afraid my cashier will cheat me."
+
+**Scope:**
+- Shift start: cashier enters opening cash amount (physical count)
+- During shift: all sales recorded against active shift
+- Shift end: cashier enters actual cash count → system calculates variance
+- Variance thresholds: green (≤1,000 MMK), yellow (≤10,000 MMK), red (>10,000 MMK)
+- Owner receives variance report
+
+**DB table:** `cash_shifts` (shop_id, user_id, opening_cash, closing_cash, expected_cash, actual_cash, variance, started_at, ended_at)
+
+**Effort:** 2-3 days (DB migration + service + UI + integration with checkout)
+
+### 5. Owner Insights (Pro)
+
+**Status:** Specified in VISION.md §13. Not yet implemented.
+
+Owners need answers to two questions: "How much profit today?" and "Is my cashier stealing?"
+
+**Scope:**
+- Daily P&L dashboard: Revenue, COGS, Gross Profit (three numbers only)
+- WhatsApp/Viber daily report at 9:00 PM (Asia/Yangon)
+- Cash drawer variance alerts (red: >10,000 MMK)
+- Mobile-first responsive design (owner checks from phone)
+
+**Dependencies:** Requires Recipe BOM data for COGS calculation. Requires Cash Drawer for variance alerts.
+
+**Effort:** 2-3 days (P&L computation + WhatsApp Business API integration + mobile UI)
 
 ## Long-Term — Technical Debt & Future Scope
 
@@ -170,15 +224,34 @@ Historical note: this section originally described the pre-2026-06-20 state when
 
 ---
 
-## Priority Order
+## Subscription Model (VISION.md §3)
+
+| Tier | Price | Key Features | Limits |
+|------|-------|-------------|--------|
+| **Free** | 0 MMK/month | POS, products, customers, discounts, multi-currency | 50 products, 50 orders/day, no printer, no recipe/inventory |
+| **Growth** | 49,000 MMK/month | + Thermal printer, raw materials, recipe BOM, COGS, low stock alerts, cash drawer | Unlimited |
+| **Pro** | 149,000 MMK/month | + Owner insights (P&L), profit analytics, waste tracking, WhatsApp daily report | Unlimited |
+
+**Grace period:** 5 days after subscription expiry, then auto-downgrade to Free features. No data deleted.
+**Billing:** Manual high-touch via KBZpay/AYApay/UABpay/MMQR.
+
+---
+
+## Priority Order (Aligned with VISION.md v3.0.0)
 
 ```
-1. i18n scoping + impl                ← NEXT (2-3 days, needed for Myanmar beta)
-2. Food Costing module                ← HIGH (3-5 days, profit tracking for beta)
-3. Security Audit Phase 2             ← PRE-LAUNCH (app_settings single-row, alert tables, partial index)
-4. React Refresh warnings             ← POST-BETA (1 hour, dev experience)
-5. Color palette formalization        ← POST-BETA (1-2 hours, visual polish)
-6. any type cleanup                   ← POST-BETA (3-4 hours, type safety)
-7. Dynamic shop configuration         ← NEXT ARCHITECTURE MILESTONE
-8. Monthly maintenance checklist      ← See docs/ops/maintenance-checklist.md
+1. Dynamic shop configuration         ← NEXT ARCHITECTURE MILESTONE (shops owns business identity)
+2. Platform Admin UI                  ← HIGH (approve signups, manage subscriptions — vision §17)
+3. Capability-based feature flags     ← HIGH (server resolves capabilities, client checks array — vision §5)
+4. Checkout atomicity (RPC)           ← HIGH (single atomic checkout_complete RPC — vision §11)
+5. Thermal printer integration        ← GROWTH+ (Bluetooth/Network, client-side receipt, async kitchen — vision §8)
+6. Recipe BOM / Raw Materials         ← GROWTH+ (ingredient tracking, auto-deduction, COGS — vision §10)
+7. Cash Drawer / Shift Management     ← GROWTH+ (shift start/end, variance tracking — vision §12)
+8. Owner Insights (P&L)               ← PRO (daily P&L, WhatsApp report, variance alerts — vision §13)
+9. Security Audit Phase 2             ← PRE-LAUNCH (app_settings single-row, alert tables, partial index)
+10. i18n (Myanmar language)           ← v2 (English-first for v1 — vision §19)
+11. React Refresh warnings            ← POST-BETA (1 hour, dev experience)
+12. Color palette formalization       ← POST-BETA (1-2 hours, visual polish)
+13. any type cleanup                  ← POST-BETA (3-4 hours, type safety)
+14. Monthly maintenance checklist     ← See docs/ops/maintenance-checklist.md
 ```

@@ -1,5 +1,7 @@
 # Coding Conventions & Patterns — CoffeeShop POS
 
+**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
+
 Synthesized from existing documentation. Each pattern links to its source.
 
 ---
@@ -108,6 +110,24 @@ is_weight_based: product.isWeightBased,
 | `alertHistoryService` | alert_history | Read-only (getAll, getByProduct) |
 | `notificationServiceConfigService` | notification_service_config | configData JSONB |
 
+### Platform Admin Service Pattern
+
+Platform admin operations MUST use `supabase.functions.invoke()` — never `supabase.from()`. This ensures the `service_role` key stays server-side in Edge Functions and RLS policies remain clean.
+
+```ts
+// ✅ Correct — platform admin via Edge Function
+const { data, error } = await supabase.functions.invoke('platform-admin-approve-shop', {
+  body: { shopId, userId }
+});
+
+// ❌ Wrong — direct DB access bypasses the security model
+await supabase.from('shops').update({ is_active: true }).eq('id', shopId);
+```
+
+Edge Function inventory: `platform-admin-approve-shop`, `platform-admin-reject-shop`, `platform-admin-update-subscription`, `platform-admin-list-shops`, `platform-admin-get-shop-detail`, `platform-admin-manage-features`, `platform-admin-daily-stats`.
+
+**Source:** `docs/vision/VISION.md` §17
+
 **Source:** `CLAUDE.md`, `src/lib/services.ts`
 
 ---
@@ -154,6 +174,10 @@ Cart auto-saved to `localStorage` under `CART_STORAGE_KEY = 'coffeepos_cart'` on
 
 All policies include `shop_id IN (SELECT public.current_shop_ids())` scoping.
 
+**Authorization source of truth:** `shop_memberships.role` is the canonical source for shop-level authorization. `users.role` is retained temporarily for backward compatibility.
+
+**platform_admin:** Does NOT appear in RLS policies. Platform admin bypasses RLS entirely via `service_role` key in Edge Functions. See `docs/vision/VISION.md` §4.3.
+
 ### Pattern 1: Standard (Most Tables)
 
 ```sql
@@ -172,6 +196,8 @@ CREATE POLICY "... write by shop admin/manager" ON <table>
     AND EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND users.role IN ('admin', 'manager'))
   );
 ```
+
+**Note:** The `users.role` check above is legacy. Long-term target is to check `shop_memberships.role` instead. Platform admin operations bypass these policies via Edge Functions.
 
 **Used by:** app_settings, categories, suppliers, product_batches, discounts, currency tables, alert tables
 
@@ -213,7 +239,17 @@ Separate INSERT, UPDATE, DELETE policies for finer control. Same role gating as 
 
 Frontend calls `supabase.auth.signUp()`. DB trigger `handle_new_auth_user()` creates a pending profile/shop/membership skeleton for self-registration. Instant active access is deprecated: the user sees Pending Approval until `users.active`, `shop_memberships.is_active`, and `shops.is_active` are true. Never INSERT into `users` directly from components.
 
-**Source:** `docs/architecture/auth.md`
+**Pending Approval Flow:**
+1. User signs up → Supabase Auth creates auth user
+2. DB trigger creates inactive user profile, shop, and membership
+3. User signs in after email verification → app shows "Your shop is pending approval"
+4. Platform admin reviews in Platform Admin UI → Approve or Reject
+5. Approval: Edge Function activates user, membership, and shop; sets subscription to Free tier
+6. Rejection: Edge Function sends rejection email with reason
+
+**Rule:** No instant access. All signups require manual approval by `platform_admin`.
+
+**Source:** `docs/architecture/auth.md`, `docs/vision/VISION.md` §6.3
 
 ### Admin Create User: Session Save/Restore
 
@@ -303,6 +339,55 @@ const invoiceNumber = await generateInvoice();  // async — DB function owns co
 ```
 
 **Source:** `CLAUDE.md`
+
+---
+
+## Checkout Atomicity Pattern
+
+Checkout MUST use a single atomic RPC call — no sequential JavaScript service calls.
+
+```ts
+// ✅ Correct — atomic RPC
+const { data, error } = await supabase.rpc('checkout_complete', {
+  p_shop_id: shopId,
+  p_items: cartItems,
+  p_payment_method: paymentMethod,
+  // ... other params
+});
+
+// ❌ Wrong — sequential calls leave inconsistent state on partial failure
+await salesService.create(saleData);
+await productsService.updateStock(items);
+await customersService.updateStats(customerId, total);
+```
+
+**Why:** If step 2 fails after step 1 commits, the database is left in an inconsistent state. The atomic RPC wraps all steps (sale creation, inventory deduction, kitchen order, customer stats, consumption logging) in a single database transaction.
+
+**Source:** `docs/vision/VISION.md` §11
+
+---
+
+## Capability-Based Feature Flags
+
+The server resolves all feature logic. The client receives a flat list of capability strings. No tier/type conditionals exist in component code.
+
+```ts
+// ✅ Correct — check capabilities array
+if (capabilities.includes('printer_integration')) { /* show printer UI */ }
+if (capabilities.includes('recipe_bom')) { /* show recipe tab */ }
+
+// ❌ Wrong — checking tier/type directly in components
+if (shop.subscriptionTier === 'growth') { /* ... */ }
+if (shop.businessType === 'coffee_shop') { /* ... */ }
+```
+
+**Resolution flow:** At login, server reads shop's subscription tier, business type, and per-shop overrides → resolves into `capabilities: string[]` → returns to client.
+
+**Two gates (server-side only):**
+1. Subscription tier — features below shop's tier level are disabled
+2. Business type defaults — different types get different default capability sets
+
+**Source:** `docs/vision/VISION.md` §5
 
 ---
 

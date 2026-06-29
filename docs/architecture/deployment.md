@@ -1,7 +1,7 @@
 # Deployment Architecture — CoffeeShop POS
 
 **Supabase project ref:** `ejvvwnupiqytximrbmfw`
-**Last updated:** 2026-06-19
+**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
 
 ---
 
@@ -132,7 +132,7 @@ Enabled in migrations:
 
 ### 3.4 RLS Status
 
-All 13 tables have RLS enabled. See `docs/architecture/database.md` for full policy matrix.
+All tables (18+) have RLS enabled. See `docs/architecture/database.md` for full policy matrix.
 
 ---
 
@@ -223,9 +223,67 @@ npm run build
 
 ---
 
-## 5. Supabase MCP / CLI Access
+## 5. Edge Functions (Platform Admin)
 
-### 5.1 MCP Configuration
+Platform admin operations use Supabase Edge Functions with the `service_role` key — zero direct database access from the platform admin UI (VISION.md §17).
+
+### 5.1 Architecture
+
+```
+Platform Admin UI (React)
+  → supabase.functions.invoke('platform-admin-...')
+    → Edge Function (service_role key)
+      → Direct Postgres access (bypasses RLS)
+        → Response returned to client
+```
+
+**Why:** `service_role` key never exposed to client bundle. RLS policies remain clean — no `OR role = 'platform_admin'` exceptions.
+
+### 5.2 Edge Function Inventory
+
+| Function | Purpose |
+|----------|---------|
+| `platform-admin-approve-shop` | Activate shop + membership + user |
+| `platform-admin-reject-shop` | Deny pending shop application |
+| `platform-admin-update-subscription` | Change shop subscription_tier |
+| `platform-admin-list-shops` | List all shops with status |
+| `platform-admin-get-shop-detail` | Full shop + owner + membership info |
+| `platform-admin-manage-features` | Update feature_definitions rows |
+| `platform-admin-daily-stats` | Platform-wide metrics (MRR, active shops) |
+
+### 5.3 Deploying Edge Functions
+
+```bash
+# Serve locally for development
+supabase functions serve platform-admin-approve-shop
+
+# Deploy to production
+supabase functions deploy platform-admin-approve-shop
+
+# Deploy all functions
+supabase functions deploy
+```
+
+### 5.4 Subscription Billing Architecture
+
+**Model:** Manual High-Touch (VISION.md §3.4)
+
+No automated billing integration (no Stripe, no payment gateway). Billing flow:
+
+1. Customer contacts Ko Htun (phone/Viber/WhatsApp)
+2. Ko Htun confirms tier and duration
+3. Customer transfers payment via KBZpay / AYApay / UABpay / MMQR
+4. Ko Htun verifies payment receipt
+5. Ko Htun activates subscription in Platform Admin UI (`platform-admin-update-subscription`)
+6. Customer notified
+
+**Grace period:** 5 days after subscription expiry. Shop remains fully functional. After grace, automatic downgrade to Free tier features. No data deleted.
+
+---
+
+## 6. Supabase MCP / CLI Access
+
+### 6.1 MCP Configuration
 
 Supabase MCP tools available via `.mcp.json` (gitignored). Requires `SUPABASE_ACCESS_TOKEN` environment variable.
 
@@ -237,7 +295,7 @@ Tools available:
 - `list_migrations` — View migration history
 - `get_logs` — Query service logs
 
-### 5.2 CLI Configuration
+### 6.2 CLI Configuration
 
 ```bash
 # Login
@@ -257,9 +315,9 @@ supabase functions deploy <name>    # Deploy Edge Function
 
 ---
 
-## 6. Monitoring & Logs
+## 7. Monitoring & Logs
 
-### 6.1 Supabase Dashboard Logs
+### 7.1 Supabase Dashboard Logs
 
 | Log Type | Location | Use |
 |----------|----------|-----|
@@ -268,13 +326,13 @@ supabase functions deploy <name>    # Deploy Edge Function
 | Auth logs | Dashboard → Authentication → Logs | Login attempts, signups, failures |
 | Edge Function logs | Dashboard → Logs → Edge Functions | Function execution, errors |
 
-### 6.2 Vercel Analytics (if deployed on Vercel)
+### 7.2 Vercel Analytics (if deployed on Vercel)
 
 - Web Vitals: LCP, FID, CLS
 - Page load times
 - Geographic distribution
 
-### 6.3 Maintenance Schedule
+### 7.3 Maintenance Schedule
 
 See `docs/ops/maintenance-checklist.md` for monthly routine:
 - Week 1: Auth audit
@@ -284,13 +342,13 @@ See `docs/ops/maintenance-checklist.md` for monthly routine:
 
 ---
 
-## 7. Backup & Recovery
+## 8. Backup & Recovery
 
-### 7.1 Supabase Automatic Backups
+### 8.1 Supabase Automatic Backups
 
 Supabase Pro plan: daily automatic backups, 7-day retention. Check Dashboard → Database → Backups.
 
-### 7.2 Manual Backup
+### 8.2 Manual Backup
 
 ```bash
 pg_dump \
@@ -310,7 +368,7 @@ gpg --symmetric --cipher-algo AES256 coffee-pos-backup-$(date +%Y-%m-%d).dump
 # Upload to off-site storage (S3, Google Drive)
 ```
 
-### 7.3 Restore
+### 8.3 Restore
 
 ```bash
 gpg --decrypt backup.dump.gpg | pg_restore --host=localhost --dbname=test_restore
@@ -318,7 +376,7 @@ gpg --decrypt backup.dump.gpg | pg_restore --host=localhost --dbname=test_restor
 
 ---
 
-## 8. Security Considerations
+## 9. Security Considerations
 
 | Concern | Mitigation |
 |---------|-----------|
@@ -332,7 +390,7 @@ gpg --decrypt backup.dump.gpg | pg_restore --host=localhost --dbname=test_restor
 
 ---
 
-## 9. Troubleshooting
+## 10. Troubleshooting
 
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|

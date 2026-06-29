@@ -1,7 +1,7 @@
 # Product Requirements Document — CoffeeShop POS v1
 
 **Status:** Draft
-**Last updated:** 2026-06-23
+**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
 **Supersedes:** Nothing (new document)
 **Governs:** All v1 feature work. Every PR must reference acceptance criteria from this doc.
 
@@ -9,13 +9,14 @@
 
 ## 1. Product Overview
 
-CoffeeShop POS is a multi-tenant, web-based point-of-sale platform for fast-paced F&B environments: coffee shops, food courts, small-to-medium restaurants, and retail kiosks.
+CoffeeShop POS is a multi-tenant, web-based point-of-sale platform for fast-paced F&B environments: coffee shops and tea shops.
 
 **v1 focus:** High-speed retail checkout workflow. Barista adds products → cart → checkout → receipt. Under 10 seconds for a 3-item order on iPad.
 
 **Architecture foundation (in progress):**
 - Multi-tenant schema with `shop_id` foundation on tenant-scoped tables
-- Role-based access control (admin / manager / cashier)
+- Role-based access control (platform_admin / admin / manager / cashier)
+- 3-tier subscription model (Free / Growth / Pro) with capability-based feature flags
 - Modular component structure (Manager + Modal pattern per domain)
 - Supabase backend with RLS-enforced tenant isolation and pending dynamic per-shop configuration
 
@@ -310,10 +311,13 @@ Acceptance Criteria:
 > As an Owner, I want different roles to see different navigation items and access different features, so that baristas can't modify inventory or see financial reports.
 
 Acceptance Criteria:
+- `platform_admin`: Cross-tenant platform operator. Manages all shops, approves signups, activates subscriptions. All operations via Edge Functions with `service_role` key. No direct DB access. Desktop-first UI.
 - Cashier: POS only. Navigation shows POS only. Redirected to POS if accessing other views.
-- Manager: POS, Transactions, Inventory, Customers, Discounts, Reports, Settings. No User Management.
-- Admin: All features including User Management.
+- Manager: POS, Transactions, Inventory, Customers, Discounts, Reports, Settings. No User Management or Owner Insights.
+- Admin: All features including User Management and Owner Insights (Pro tier).
+- `shop_memberships.role` is the canonical authorization source (not `users.role`).
 - RLS enforced at database level (not just UI). Cashier calling Supabase API directly cannot read/write beyond their role.
+- `platform_admin` does NOT appear in RLS policies — bypasses via Edge Functions.
 
 ---
 
@@ -333,6 +337,48 @@ Acceptance Criteria:
 - Invoice generation is atomic and database-owned per shop
 - No UI for shop switching in this milestone
 - Existing single-shop operation unchanged for default shop users after migration
+
+---
+
+### 3.11 Subscription Tiers
+
+**FR-SUB-01: 3-tier subscription model**
+> As a platform operator, I want shops to have subscription tiers (Free/Growth/Pro) with tier-gated features, so that the platform can monetize progressively.
+
+Acceptance Criteria:
+- Three tiers: Free (0 MMK/month), Growth (49,000 MMK/month), Pro (149,000 MMK/month)
+- `shops.subscription_tier` stores current tier
+- Free tier limits: max 50 products, 50 orders/day, no printer, no recipe/inventory tracking
+- Growth tier: thermal printer, raw materials, recipe BOM, COGS, low stock alerts, cash drawer, unlimited orders
+- Pro tier: + owner insights (P&L), profit analytics, waste tracking, WhatsApp daily report
+- Grace period: 5 days after subscription expiry, then auto-downgrade to Free features
+- Manual high-touch billing via KBZpay/AYApay/UABpay/MMQR (no automated billing)
+- Tier managed by platform_admin via Platform Admin UI
+
+### 3.12 Daily Order Limit
+
+**FR-LIMIT-01: Server-side order limit enforcement**
+> As a platform operator, I want Free tier shops limited to 50 orders/day, so that the platform can drive upgrades.
+
+Acceptance Criteria:
+- Free tier: 50 orders/day enforced server-side in the atomic checkout transaction
+- Growth/Pro: unlimited orders
+- Race condition protection: concurrent checkouts serialized at shop row level via database row locking
+- Client-side: when server returns `DAILY_LIMIT_REACHED` error, show upgrade prompt
+- Limit reset at midnight (Asia/Yangon timezone)
+
+### 3.13 Checkout Atomicity
+
+**FR-CHK-01: Atomic checkout via single RPC**
+> As a system, I need checkout to be a single atomic transaction, so that partial failures don't leave inconsistent data.
+
+Acceptance Criteria:
+- Checkout uses `supabase.rpc('checkout_complete', ...)` — single atomic RPC call
+- All steps succeed together or all roll back: sale creation, inventory deduction, kitchen order, customer stats, consumption logging
+- No sequential JavaScript service calls for checkout
+- Inventory deduction failure (insufficient stock) rolls back entire checkout
+- Free tier: finished product stock check only (if `track_inventory` enabled)
+- Growth+: raw material stock check via recipe BOM
 
 ---
 
@@ -387,7 +433,7 @@ Acceptance Criteria:
 
 | Requirement | Status |
 |-------------|--------|
-| Myanmar language | Roadmap item (2-3 days with react-i18next) |
+| Myanmar language | v2 — English-first for v1 (technical stability) |
 | RTL support | Not needed (Myanmar is LTR) |
 | Multi-currency | Implemented (11 currencies, exchange rates, CurrencyContext) |
 
@@ -395,25 +441,28 @@ Acceptance Criteria:
 
 ## 5. Out of Scope (v1)
 
-| Feature | Reason | Deferred To |
-|---------|--------|-------------|
+| Feature | Reason | Tier / Version |
+|---------|--------|----------------|
 | Supplier management UI | `suppliers` table exists but no frontend CRUD | v2 |
-| Recipe/ingredient costing | 4-table schema designed (docs/specs/food-costing.md) but not implemented | v2 |
-| Kitchen display system (KDS) | Requires real-time order queue + screen management | v3 |
-| Table management | Restaurant floor plan + table assignment | v3 |
+| Recipe/ingredient costing | 4-table schema designed (docs/specs/recipe-bom.md) | **Growth+ tier** (not v2) |
+| Raw material tracking | Ingredient inventory with auto-deduction | **Growth+ tier** |
+| Kitchen display system (KDS) | Requires real-time order queue + screen management | v3 (printer-first is v1 Growth+) |
+| Table management | Restaurant floor plan + table assignment | v2 (restaurant/food_court business types) |
 | Delivery integration | Grab/Foodpanda API integration | v3 |
 | Loyalty program | Points, tiers, rewards engine | v2 |
 | Multi-shop UI | Shop selector, shop management screens, invite flow | After `shop_id` migration |
 | Offline checkout queue | Queue sales when offline, sync when online | Post-beta (PWA Option C) |
 | Barcode scanner hardware | Software-only; hardware integration deferred | v2 |
-| Receipt printer hardware | Browser print dialog only; ESC/POS direct print deferred | v2 |
+| Thermal receipt printer | Bluetooth/Network printer support | **Growth+ tier** (Free tier: manual/no receipt) |
+| USB printer support | WebUSB via Android Chrome | v2 only |
 | Audit logging | `activity_log` table designed but not implemented | v2 |
 | Email/SMS alert delivery | Alert tables exist in code but not in DB; no actual sending | v2 |
-| Multi-language UI | react-i18next planned, not implemented | v2 |
+| Multi-language UI | react-i18next planned, not implemented | **v2 — English-first for v1** |
 | Custom report builder | Fixed 3 report types only | v3 |
 | Payment gateway integration | Manual card entry only; no Stripe/2C2P | v3 |
 | Inventory purchase orders | No PO workflow | v3 |
 | User permissions granularity | Role-based only; no per-feature permission flags | v2 |
+| Myanmar language UI | English-first for technical stability | v2 |
 
 ---
 
@@ -435,7 +484,9 @@ Acceptance Criteria:
 | **Free Gift** | `discounts.type: 'free_gift'` | Discount that adds product(s) to cart at $0. Products specified in `free_gift_products` array. |
 | **Applied Discount** | `sales.applied_discounts` (JSONB) | Snapshot of discounts applied at sale time. Preserves history even if discount later deleted. |
 | **Active Shop** | `shop_memberships` | Shop user is currently operating in. Determined by active membership for now; shop selector deferred. All queries scoped to this shop. |
-| **Shop Membership** | `shop_memberships` | User-to-shop link with per-shop role. User can be admin at Shop A, cashier at Shop B in the long-term model. |
+| **Shop Membership** | `shop_memberships` | User-to-shop link with per-shop role. User can be admin at Shop A, cashier at Shop B in the long-term model. `shop_memberships.role` is the canonical authorization source. |
+| **Platform Admin** | `users.role = 'platform_admin'` | Cross-tenant platform operator (Ko Htun). Manages all shops, approves signups, activates subscriptions. Operates via Edge Functions only — no direct DB access, no RLS bypass in policies. |
+| **Subscription Tier** | `shops.subscription_tier` | Shop's current plan: `free`, `growth`, or `pro`. Determines feature access and limits. Managed by platform_admin. |
 | **RLS** | Row Level Security | Postgres feature. Policies filter rows at query level. Supabase enforces on every API call. |
 | **SECURITY DEFINER** | Function attribute | Function runs with owner privileges, bypassing RLS. Used for triggers only. Client roles revoked. |
 | **Invoice Number** | `sales.invoice_number` | Formatted as `{prefix}-{counter}` (e.g., `INV-001001`). Auto-generated by DB trigger if empty. |
@@ -468,5 +519,8 @@ Acceptance Criteria:
 | FR-USR-01 | User management | CRUD with roles, self-edit prevention, admin-only. |
 | FR-SET-01 | Settings | Shop config in `shops`; global preferences/exchange settings in `app_settings`. |
 | FR-AUTH-01 | Auth | Email/password, pending approval, sign up/in/out, friendly errors. |
-| FR-AUTH-02 | RBAC | Role-based nav + RLS enforcement. |
+| FR-AUTH-02 | RBAC | 4 roles (platform_admin/admin/manager/cashier), role-based nav + RLS enforcement. |
 | FR-MT-01 | Multi-tenancy | shop_id foundation, dynamic shop config, DB-owned invoices, no shop switching UI yet. |
+| FR-SUB-01 | Subscription tiers | 3-tier model (Free/Growth/Pro), tier-gated features, 5-day grace period, manual billing. |
+| FR-LIMIT-01 | Daily order limit | 50/day Free, server-side enforcement, race condition protection, upgrade prompt. |
+| FR-CHK-01 | Checkout atomicity | Single RPC (`checkout_complete`), all-or-nothing transaction, no sequential JS calls. |
