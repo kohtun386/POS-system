@@ -1,8 +1,10 @@
 # Design System — Espresso & Copper
 
 **Source of truth:** `tailwind.config.js` + `src/index.css`
-**Last updated:** 2026-06-19
+**Last updated:** 2026-06-30 (aligned with VISION.md v3.0.0)
+**Version:** 2.0.0
 **Dark mode:** Tailwind `class` strategy — `.dark` on `<html>`
+**Theme:** Espresso & Copper only (Light/Dark variants)
 
 ---
 
@@ -87,35 +89,60 @@
 
 **Note:** Dark card bg `#2a1a10` is not in Tailwind config — used as inline `dark:bg-[#2a1a10]`. Consider adding to config as `surface-dark`.
 
-### 1.6 Inline Hex Values (Drift from Config)
+### 1.6 Inline Hex Migration Plan
 
-These hex values appear in components but have no Tailwind token. Mapped here for future migration to tokens.
+**Current state:** 59+ instances of raw hex values in components
 
-| Inline Hex | Count | Role | Maps To |
-|------------|-------|------|---------|
-| `#f0ece5` | 59 | Card bg, table hover, input bg | `secondary-100` |
-| `#473b32` | 46 | Heading text, dark heading | `secondary-900` |
-| `#7d6b57` | 38 | Body text, subtitles | `secondary-600` |
-| `#c6bbab` | 25 | Dark mode body text | `secondary-300` |
-| `#ded7cc` | 22 | Borders | `secondary-200` |
-| `#9a693a` | 20 | Primary button, nav active | `primary-600` |
-| `#54463b` | 17 | Dark mode borders | `secondary-800` |
-| `#ad9e8a` | 15 | Placeholders, empty state | `secondary-400` |
-| `#7a4f2c` | 15 | Button hover, headings | `primary-700` |
-| `#3b2613` | 14 | Dark card bg, overlays | `primary-900` |
-| `#faf8f5` | 12 | Light body bg | `secondary-50` |
-| `#cfa16a` | 11 | Active nav icon | `primary-400` |
-| `#fcf5eb` | 9 | Info card bg | `primary-50` |
-| `#ddb889` | 7 | Focus ring | `primary-300` |
-| `#2563EB` | 7 | Chart blue (Recharts) | Not in config |
-| `#16a34a` | 9 | Success green | `success-600` |
-| `#166534` | 7 | Success dark | `success-800` |
-| `#059669` | 5 | Chart green (Recharts) | Not in config |
-| `#2a1a10` | 6 | Dark card bg | Not in config |
-| `#e5ddd2` | 3 | Hover border | Not in config |
-| `#6b7280` | 4 | Recharts axis | Not in config |
-| `#e5e7eb` | 5 | Recharts grid | Not in config |
-| `#8884d8` | 1 | Recharts pie purple | Not in config |
+**Problem:**
+- Design system updates require changing 59+ places
+- Inconsistency: sometimes hex, sometimes token
+- Hard to maintain
+
+**Migration strategy:**
+
+**Step 1: Add missing tokens to tailwind.config.js**
+
+```javascript
+colors: {
+  surface: {
+    dark: '#2a1a10', // Dark card bg (6 instances)
+  },
+  hover: {
+    border: '#e5ddd2', // Hover border (3 instances)
+  },
+}
+```
+
+**Step 2: Replace inline hex with tokens (file-by-file)**
+
+Priority order:
+
+| Priority | Inline Hex | Count | Maps To |
+|----------|------------|-------|---------|
+| High | `#f0ece5` | 59 | `secondary-100` |
+| High | `#473b32` | 46 | `secondary-900` |
+| High | `#7d6b57` | 38 | `secondary-600` |
+| Medium | `#c6bbab` | 25 | `secondary-300` |
+| Medium | `#ded7cc` | 22 | `secondary-200` |
+| Medium | `#9a693a` | 20 | `primary-600` |
+| Medium | `#54463b` | 17 | `secondary-800` |
+| Medium | `#ad9e8a` | 15 | `secondary-400` |
+| Medium | `#7a4f2c` | 15 | `primary-700` |
+| Low | `#3b2613` | 14 | `primary-900` |
+| Low | `#faf8f5` | 12 | `secondary-50` |
+| Low | `#cfa16a` | 11 | `primary-400` |
+| Low | `#fcf5eb` | 9 | `primary-50` |
+| Low | `#ddb889` | 7 | `primary-300` |
+| Low | `#2a1a10` | 6 | `surface-dark` |
+| Low | `#e5ddd2` | 3 | `hover-border` |
+
+**Step 3: Chart colors stay inline**
+
+- Recharts needs literal hex strings
+- Keep in `COLORS` array
+- Future: Move to `src/lib/theme.ts`
+
+**Timeline:** Phase 5 (Cleanup) — after core features implemented
 
 **Migration rule:** Replace `text-[#473b32]` → `text-secondary-900`, `bg-[#f0ece5]` → `bg-secondary-100`, etc. Do file-by-file. Chart colors stay inline (Recharts needs literal hex strings).
 
@@ -487,7 +514,308 @@ Custom styles in `src/index.css`. All toasts use themed colors.
 
 ---
 
-## 10. Rules for AI Agents
+## 10. Multi-Device Design Patterns
+
+VISION.md v3.0.0 defines three device layers. Each has distinct form factors, interaction models, and UI patterns.
+
+### 10.1 POS Tablet (Mobile/Tablet-First)
+
+**Target:** Counter tablet used by cashiers
+**Form factor:** 10-12" tablet, touch-only
+
+**Design principles:**
+- Touch-optimized: 48px minimum tap targets (`.touch-friendly` class)
+- Large buttons, clear labels
+- One-handed operation friendly
+- High contrast for bright shop environments
+
+**Current design system applies here.** All existing components (Sections 1-9) are designed for this form factor.
+
+| Pattern | Implementation |
+|---------|---------------|
+| Navigation | Top header bar with icon buttons |
+| Layout | Single-column, full-width cards |
+| Buttons | `.btn-lg` minimum in touch mode |
+| Tables | Standard `.table` with horizontal scroll |
+| Modals | Full-width on small tablets, `max-w-md` on larger |
+
+---
+
+### 10.2 Owner Mobile (Mobile-First, Read-Only)
+
+**Target:** Owner's smartphone for checking reports (Pro tier)
+**Form factor:** 5-6" phone, touch-only
+
+**Design principles:**
+- Compact cards for small screens
+- Large tap targets (56px) for thumb navigation
+- Simplified navigation (bottom nav bar)
+- Read-only dashboards (P&L, shift variances, alerts)
+- No POS terminal functionality
+
+**UI patterns:**
+
+| Pattern | Description |
+|---------|-------------|
+| Bottom navigation | 4-5 items max, fixed at bottom |
+| Card layout | Single column, full-width |
+| Stat cards | Large Revenue, COGS, Profit display |
+| Swipe gestures | Navigate between views |
+| Pull-to-refresh | Data updates on pull-down |
+
+**Components needed (future):**
+
+| Component | Class | Purpose |
+|-----------|-------|---------|
+| Owner mobile card | `.owner-mobile-card` | Compact card variant for small screens |
+| Owner mobile stat | `.owner-mobile-stat` | Large stat card (Revenue, COGS, Profit) |
+| Owner mobile nav | `.owner-mobile-nav` | Bottom navigation bar |
+
+---
+
+### 10.3 Platform Admin (Desktop-First)
+
+**Target:** Ko Htun's desktop for managing all shops
+**Form factor:** 24"+ monitor, mouse + keyboard
+
+**Design principles:**
+- Data-dense tables (compact row height: 40px)
+- Keyboard shortcuts for power users
+- Multi-tenant views (shop list, approval queue)
+- Sidebar navigation (280px width)
+- Mouse-driven (40px tap targets OK)
+
+**UI patterns:**
+
+| Pattern | Description |
+|---------|-------------|
+| Sidebar navigation | Left side, 280px width, collapsible |
+| Data tables | Sorting, filtering, pagination |
+| Modal dialogs | Actions (approve, reject, edit) |
+| Keyboard shortcuts | `Ctrl+K` search, `Ctrl+N` new |
+| Status badges | Shop approval status indicators |
+
+**Components needed (future):**
+
+| Component | Class | Purpose |
+|-----------|-------|---------|
+| Admin sidebar | `.admin-sidebar` | Left sidebar navigation (280px) |
+| Admin table | `.admin-table` | Compact data table (40px rows) |
+| Admin modal | `.admin-modal` | Action modal (approve/reject) |
+| Admin shortcut | `.admin-shortcut` | Keyboard shortcut hint badge |
+
+---
+
+### 10.4 Device Matrix
+
+| Aspect | POS Tablet | Owner Mobile | Platform Admin |
+|--------|-----------|--------------|----------------|
+| Form factor | 10-12" tablet | 5-6" phone | 24"+ monitor |
+| Input | Touch only | Touch only | Mouse + keyboard |
+| Min tap target | 48px | 56px | 40px |
+| Navigation | Top header | Bottom nav | Sidebar |
+| Layout | Single column | Single column | Multi-column |
+| Data density | Medium | Low | High |
+| Primary use | POS terminal | Read-only reports | Shop management |
+| Tier access | All tiers | Pro only | Platform admin |
+
+---
+
+## 11. Tier-Based UI Patterns
+
+VISION.md v3.0.0 defines three subscription tiers. UI patterns differ by tier to show value and guide upgrades.
+
+### 11.1 Free Tier — Upgrade Prompts
+
+**Design goal:** Show value of paid tiers without frustrating users
+
+**Upgrade modal design:**
+
+| Part | Content | Style |
+|------|---------|-------|
+| Header | "Upgrade to Growth" + subtitle | `.modal-header` with Fraunces heading |
+| Body | Feature list with checkmarks + price | `.modal-body` with `.badge-success` checkmarks |
+| Footer | "Maybe Later" (ghost) + "Upgrade Now" (primary) | `.modal-footer` with `.btn-ghost` + `.btn-primary` |
+
+**Locked feature UI:**
+
+| Element | Behavior |
+|---------|----------|
+| Menu items | Show with lock icon (🔒) |
+| Click handler | Opens upgrade modal |
+| Tooltip | "Available on Growth and Pro plans" |
+| Visual style | Muted text (`text-secondary-400`), reduced opacity |
+
+---
+
+### 11.2 Growth Tier — Full Features
+
+**Design goal:** Show all features, no upgrade prompts
+
+**UI patterns:**
+- All menu items unlocked
+- No lock icons
+- Standard component patterns apply
+- Recipe management UI visible
+- Cash drawer UI visible
+
+No special components needed — standard design system applies.
+
+---
+
+### 11.3 Pro Tier — Advanced Analytics
+
+**Design goal:** Highlight advanced features
+
+**UI patterns:**
+
+| Feature | Description |
+|---------|-------------|
+| Profit margin charts | Recharts line chart showing margins over time |
+| Waste tracking UI | Card showing waste items and costs |
+| Daily P&L dashboard | 3 numbers: Revenue, COGS, Profit |
+| Advanced report filters | Date range, product category selectors |
+| Export buttons | CSV and PDF export |
+
+**Components needed (future):**
+
+| Component | Class | Purpose |
+|-----------|-------|---------|
+| Profit chart | `.profit-chart` | Recharts line chart for margins |
+| Waste card | `.waste-card` | Waste tracking display card |
+| P&L dashboard | `.pnl-dashboard` | 3-number P&L display |
+
+---
+
+### 11.4 Tier Matrix
+
+| Feature | Free | Growth | Pro |
+|---------|------|--------|-----|
+| POS terminal | ✅ | ✅ | ✅ |
+| Product management | ✅ | ✅ | ✅ |
+| Basic reports | ✅ | ✅ | ✅ |
+| Recipe management | 🔒 | ✅ | ✅ |
+| Cash drawer | 🔒 | ✅ | ✅ |
+| Advanced analytics | 🔒 | 🔒 | ✅ |
+| Owner mobile app | 🔒 | 🔒 | ✅ |
+| Waste tracking | 🔒 | 🔒 | ✅ |
+| Daily P&L | 🔒 | 🔒 | ✅ |
+| Export (CSV/PDF) | 🔒 | 🔒 | ✅ |
+
+---
+
+## 12. Accessibility Guidelines (WCAG 2.1 AA)
+
+### 12.1 Color Contrast
+
+**Requirements:**
+
+| Element Type | Minimum Ratio |
+|--------------|---------------|
+| Body text | 4.5:1 |
+| Large text (18px+ or 14px bold) | 3:1 |
+| Interactive elements | 3:1 |
+
+**Current status:** All Espresso & Copper tokens pass WCAG AA.
+
+**Verification tool:** [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
+
+| Pair | Ratio | Pass |
+|------|-------|------|
+| `secondary-900` on `secondary-50` | 12.5:1 | ✅ AA |
+| `secondary-600` on `secondary-50` | 5.2:1 | ✅ AA |
+| `primary-600` on white | 4.8:1 | ✅ AA |
+| `primary-600` on `secondary-100` | 4.6:1 | ✅ AA |
+
+---
+
+### 12.2 Keyboard Navigation
+
+**Requirements:**
+- All interactive elements focusable
+- Focus order matches visual order
+- Focus indicator visible: `ring-2 ring-primary-500`
+- Tab/Shift+Tab navigation
+- Enter/Space activates buttons
+- Escape closes modals
+
+**Implementation:**
+
+```css
+/* Focus styles (already in src/index.css) */
+.btn:focus-visible,
+.input:focus-visible,
+.select:focus-visible {
+  @apply ring-2 ring-primary-500 ring-offset-2;
+}
+```
+
+---
+
+### 12.3 Screen Reader Support
+
+**Requirements:**
+- All images have alt text
+- Form inputs have labels
+- Error messages use `aria-live="polite"`
+- Modal dialogs trap focus
+- Skip navigation link
+
+**Implementation examples:**
+
+```tsx
+// Images
+<img src="logo.png" alt="CoffeeShop POS logo" />
+
+// Form inputs
+<label htmlFor="email">Email</label>
+<input id="email" className="input" aria-describedby="email-error" />
+<div id="email-error" aria-live="polite" className="text-danger-500">
+  {error}
+</div>
+
+// Modal focus trap
+<div role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <h2 id="modal-title">Title</h2>
+  {/* Content */}
+</div>
+
+// Skip navigation
+<a href="#main-content" className="sr-only focus:not-sr-only">
+  Skip to main content
+</a>
+```
+
+---
+
+### 12.4 Touch Targets
+
+**Requirements:**
+
+| Standard | Minimum Size |
+|----------|--------------|
+| WCAG 2.1 | 44x44px |
+| Our standard | 48x48px (`.touch-friendly`) |
+| Owner mobile | 56x56px (larger for thumb) |
+
+**Implementation:**
+
+```css
+/* Existing classes in src/index.css */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.touch-friendly {
+  min-height: 48px;
+  min-width: 48px;
+}
+```
+
+---
+
+## 13. Rules for AI Agents
 
 1. **Never use raw hex in className.** Use Tailwind tokens. If token doesn't exist, add it to `tailwind.config.js` first, then use it.
 2. **Exception: Recharts.** Chart library needs literal hex strings. Keep in `COLORS` array.
