@@ -17,7 +17,6 @@ const ReportsManager = lazy(() => import('./components/reports/ReportsManager').
 const Settings = lazy(() => import('./components/settings/Settings').then(m => ({ default: m.Settings })));
 const DiscountManager = lazy(() => import('./components/discounts/DiscountManager').then(m => ({ default: m.DiscountManager })));
 const UserManager = lazy(() => import('./components/users/UserManager').then(m => ({ default: m.UserManager })));
-const FeatureFlagsManager = lazy(() => import('./components/settings/FeatureFlagsManager').then(m => ({ default: m.FeatureFlagsManager })));
 const KitchenDisplay = lazy(() => import('./components/kitchen/KitchenDisplay').then(m => ({ default: m.KitchenDisplay })));
 
 function AppContent() {
@@ -97,15 +96,6 @@ function AppContent() {
         }
         setCurrentView('pos');
         return <POSTerminal />;
-      /* 
-      case 'feature-flags':
-        // Only allow admin to access feature flags
-        if (userRole === 'admin') {
-          return <FeatureFlagsManager />;
-        }
-        setCurrentView('pos');
-        return <POSTerminal />;
-      */
       case 'settings':
         // Only allow admin and manager to access settings
         if (userRole === 'admin' || userRole === 'manager') {

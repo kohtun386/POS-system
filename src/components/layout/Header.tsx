@@ -96,13 +96,6 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
       items.push({ id: 'users', label: 'Users', icon: User, color: 'text-[#7a4f2c]' });
     }
 
-    // Feature Flags - Disabled for production
-    /*
-    if (role === 'admin') {
-      items.push({ id: 'feature-flags', label: 'Feature Flags', icon: Settings, color: 'text-[#7a4f2c]' });
-    }
-    */
-
     // Kitchen Display - All roles can access (feature-gated)
     if (kitchenDisplayEnabled) {
       items.push({ id: 'kitchen', label: 'Kitchen', icon: Monitor, color: 'text-[#22c55e]' });
