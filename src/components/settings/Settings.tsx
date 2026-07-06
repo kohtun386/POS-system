@@ -99,9 +99,9 @@ export function Settings() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-8">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
+      <div className="card overflow-hidden">
+        <div className="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-[#fcf5eb] to-[#f0ece5]">
+          <h1 className="text-3xl font-bold text-[#473b32]">System Settings</h1>
           <p className="text-gray-600 mt-2">Configure your POS system preferences and store information</p>
           {!canEditSettings && (
             <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center space-x-3">
@@ -115,10 +115,10 @@ export function Settings() {
 
         <form onSubmit={handleSubmit} className="p-8 space-y-10">
           {/* Store Information */}
-          <div className="space-y-6">
+          <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-blue-100 p-2 rounded-xl">
-                <Store className="h-6 w-6 text-blue-600" />
+              <div className="bg-[#fcf5eb] p-2 rounded-xl">
+                <Store className="h-6 w-6 text-[#9a693a]" />
               </div>
               <h2 className="text-xl font-bold text-gray-900 font-fraunces">Store Information</h2>
             </div>
@@ -137,7 +137,7 @@ export function Settings() {
                       onChange={handleChange}
                       disabled={!canEditSettings}
                       required
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      className={`input ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                     />
                   </div>
 
@@ -151,7 +151,7 @@ export function Settings() {
                       value={formData.storePhone}
                       onChange={handleChange}
                       disabled={!canEditSettings}
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      className={`input ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                     />
                   </div>
 
@@ -165,7 +165,7 @@ export function Settings() {
                       value={formData.storeEmail}
                       onChange={handleChange}
                       disabled={!canEditSettings}
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      className={`input ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                     />
                   </div>
 
@@ -178,7 +178,7 @@ export function Settings() {
                       value={formData.currency}
                       onChange={handleChange}
                       disabled={!canEditSettings || isLoadingCurrencies}
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings || isLoadingCurrencies ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      className={`select ${!canEditSettings || isLoadingCurrencies ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                     >
                       {isLoadingCurrencies ? (
                         <option>Loading currencies...</option>
@@ -204,7 +204,7 @@ export function Settings() {
                       value={formData.baseCurrency}
                       onChange={handleChange}
                       disabled={!canEditSettings || isLoadingCurrencies}
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings || isLoadingCurrencies ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      className={`select ${!canEditSettings || isLoadingCurrencies ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                     >
                       {isLoadingCurrencies ? (
                         <option>Loading currencies...</option>
@@ -232,7 +232,7 @@ export function Settings() {
                     onChange={handleChange}
                     disabled={!canEditSettings}
                     rows={3}
-                    className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                    className={`textarea ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   />
                 </div>
               </div>
@@ -248,10 +248,10 @@ export function Settings() {
           </div>
 
           {/* Financial Settings */}
-          <div className="space-y-6">
+          <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-green-100 p-2 rounded-xl">
-                <DollarSign className="h-6 w-6 text-green-600" />
+              <div className="bg-[#dcfce7] p-2 rounded-xl">
+                <DollarSign className="h-6 w-6 text-[#16a34a]" />
               </div>
               <h2 className="text-xl font-bold text-gray-900 font-fraunces">Financial Settings</h2>
             </div>
@@ -268,17 +268,17 @@ export function Settings() {
                   value={formData.taxRate}
                   onChange={handleChange}
                   disabled={!canEditSettings}
-                  className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  className={`input ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 />
               </div>
             </div>
           </div>
 
           {/* Invoice Settings */}
-          <div className="space-y-6">
+          <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-purple-100 p-2 rounded-xl">
-                <FileText className="h-6 w-6 text-purple-600" />
+              <div className="bg-[#fef3c7] p-2 rounded-xl">
+                <FileText className="h-6 w-6 text-[#d97706]" />
               </div>
               <h2 className="text-xl font-bold text-gray-900 font-fraunces">Invoice Settings</h2>
             </div>
@@ -294,7 +294,7 @@ export function Settings() {
                   value={formData.invoicePrefix}
                   onChange={handleChange}
                   disabled={!canEditSettings}
-                  className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  className={`input ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   placeholder="INV"
                 />
               </div>
@@ -309,7 +309,7 @@ export function Settings() {
                   value={formData.invoiceCounter}
                   onChange={handleChange}
                   disabled={!canEditSettings}
-                  className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  className={`input ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 />
                 <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="text-xs text-blue-700">
@@ -323,10 +323,10 @@ export function Settings() {
           </div>
 
           {/* System Preferences */}
-          <div className="space-y-6">
+          <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-purple-100 p-2 rounded-xl">
-                <Globe className="h-6 w-6 text-purple-600" />
+              <div className="bg-[#ede9fe] p-2 rounded-xl">
+                <Globe className="h-6 w-6 text-[#7c3aed]" />
               </div>
               <h2 className="text-xl font-bold text-gray-900 font-fraunces">System Preferences</h2>
             </div>
@@ -341,7 +341,7 @@ export function Settings() {
                   value={formData.theme}
                   onChange={handleChange}
                   disabled={!canEditSettings}
-                  className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  className={`select ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 >
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
@@ -352,10 +352,10 @@ export function Settings() {
           </div>
 
           {/* Hardware Settings */}
-          <div className="space-y-6">
+          <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-orange-100 p-2 rounded-xl">
-                <Printer className="h-6 w-6 text-orange-600" />
+              <div className="bg-[#fed7aa] p-2 rounded-xl">
+                <Printer className="h-6 w-6 text-[#ea580c]" />
               </div>
               <h2 className="text-xl font-bold text-gray-900 font-fraunces">Hardware Settings</h2>
             </div>
@@ -394,10 +394,10 @@ export function Settings() {
           </div>
 
           {/* Current User Info */}
-          <div className="space-y-6">
+          <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-red-100 p-2 rounded-xl">
-                <Users className="h-6 w-6 text-red-600" />
+              <div className="bg-[#fce7f3] p-2 rounded-xl">
+                <Users className="h-6 w-6 text-[#db2777]" />
               </div>
               <h2 className="text-xl font-bold text-gray-900 font-fraunces">Current User</h2>
             </div>
@@ -422,14 +422,11 @@ export function Settings() {
           </div>
 
           {/* Save Button */}
-          <div className="flex justify-end pt-8 border-t border-gray-200">
+          <div className="sticky bottom-6 flex justify-end pt-8 border-t border-gray-200">
             <button
               type="submit"
               disabled={!canEditSettings}
-              className={`flex items-center space-x-3 px-8 py-4 rounded-xl transition-all duration-200 font-semibold shadow-lg ${canEditSettings
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
+              className={`btn btn-primary btn-lg flex items-center space-x-3 ${!canEditSettings ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <Save className="h-5 w-5" />
               <span>{canEditSettings ? 'Save Settings' : 'Access Denied'}</span>

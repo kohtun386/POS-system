@@ -257,7 +257,7 @@ function ProductCard({ product, onAddToCart, isTouchMode, currency }: ProductCar
 
   return (
     <div
-      className={`card card-hover cursor-pointer transition-all duration-200 ${
+      className={`card card-hover cursor-pointer transition-all duration-200 hover:border-[#ddb889]/60 ${
         isLowStock && !isOutOfStock ? 'border-[#fcd3a0] bg-[#fef7ee]/50' : ''
       } ${isOutOfStock ? 'border-[#fecaca] bg-[#fef2f2]/50 opacity-75' : ''} ${
         isTouchMode ? 'p-4' : 'p-3'
@@ -266,7 +266,7 @@ function ProductCard({ product, onAddToCart, isTouchMode, currency }: ProductCar
     >
       <div className="flex flex-col h-full">
         {/* Product Image */}
-        <div className={`bg-[#f0ece5] dark:bg-[#3b2613] rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden aspect-square`}>
+        <div className={`bg-[#f0ece5] dark:bg-[#3b2613] rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden aspect-[4/3] max-h-[140px]`}>
           {product.image ? (
             <img
               src={product.image}
@@ -301,13 +301,13 @@ function ProductCard({ product, onAddToCart, isTouchMode, currency }: ProductCar
 
         {/* Product Info */}
         <div className="flex-1 space-y-2">
-          <h3 className={`font-semibold text-[#473b32] dark:text-[#f0ece5] line-clamp-2 ${
+          <h3 className={`font-medium text-[#473b32] dark:text-[#f0ece5] line-clamp-2 ${
             isTouchMode ? 'text-base' : 'text-sm'
           }`}>
             {product.name}
           </h3>
 
-          <p className={`text-[#7d6b57] dark:text-[#c6bbab] ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
+          <p className="text-xs text-[#7d6b57] dark:text-[#c6bbab]">
             SKU: {product.sku}
           </p>
 
@@ -316,14 +316,22 @@ function ProductCard({ product, onAddToCart, isTouchMode, currency }: ProductCar
               {currency} {product.isWeightBased ? product.pricePerUnit?.toFixed(2) : product.price.toFixed(2)}
               {product.isWeightBased && <span className="text-xs text-[#7d6b57] dark:text-[#c6bbab]">/{product.unit}</span>}
             </span>
-            <span className={`text-[#7d6b57] dark:text-[#c6bbab] ${
-              isLowStock ? 'text-[#e55c13] font-medium' : ''
-            } ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
-              {shouldTrackInventory
-                ? `Stock: ${product.stock}${product.isWeightBased ? product.unit : ''}`
-                : 'Unlimited stock'
-              }
-            </span>
+            {shouldTrackInventory ? (
+              <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${
+                isOutOfStock
+                  ? 'bg-[#fecaca] text-[#b91c1c] px-2 py-0.5 rounded-full'
+                  : isLowStock
+                    ? 'bg-[#fed7aa] text-[#e55c13] px-2 py-0.5 rounded-full'
+                    : 'text-[#16a34a]'
+              }`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${
+                  isOutOfStock ? 'bg-[#b91c1c]' : isLowStock ? 'bg-[#e55c13]' : 'bg-[#16a34a]'
+                }`} />
+                {isOutOfStock ? 'Out' : `${product.stock}${product.isWeightBased ? product.unit : ''}`}
+              </span>
+            ) : (
+              <span className="text-xs text-[#7d6b57] dark:text-[#c6bbab]">Unlimited</span>
+            )}
           </div>
         </div>
 
@@ -335,7 +343,7 @@ function ProductCard({ product, onAddToCart, isTouchMode, currency }: ProductCar
           }}
           disabled={isOutOfStock}
           className={`btn btn-primary w-full mt-4 disabled:bg-[#ded7cc] disabled:cursor-not-allowed flex items-center justify-center space-x-2 ${
-            isTouchMode ? 'btn-lg touch-friendly' : 'btn-md'
+            isTouchMode ? 'btn-lg touch-friendly' : 'btn-md py-2.5'
           }`}
         >
           {product.isWeightBased ? <Scale className={`${isTouchMode ? 'h-5 w-5' : 'h-4 w-4'}`} /> : <Plus className={`${isTouchMode ? 'h-5 w-5' : 'h-4 w-4'}`} />}

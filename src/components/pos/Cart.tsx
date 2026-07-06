@@ -87,9 +87,9 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
       isTouchMode ? 'w-full md:w-64 lg:w-96' : 'w-full md:w-64 lg:w-80'
     }`}>
       {/* Cart Header */}
-      <div className="p-4 lg:p-6 border-b border-[#ded7cc] dark:border-[#54463b] flex-shrink-0">
+      <div className="p-4 lg:p-6 border-b-2 border-[#9a693a]/20 flex-shrink-0">
         <div className="flex items-center justify-between mb-6">
-          <h2 className={`font-bold font-fraunces text-[#473b32] dark:text-[#f0ece5] ${isTouchMode ? 'text-xl' : 'text-lg'}`}>
+          <h2 className={`font-bold font-dm-sans text-lg text-[#473b32] dark:text-[#f0ece5]`}>
             Shopping Cart
           </h2>
           <div className="flex items-center space-x-2">
@@ -172,11 +172,11 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
       <div className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6 space-y-4 cart-scrollbar">
         {state.cart.length === 0 ? (
           <div className="text-center py-12">
-            <div className="bg-[#f0ece5] dark:bg-[#3b2613] p-6 rounded-3xl inline-block mb-4">
-              <ShoppingCart className="h-12 w-12 text-[#ad9e8a]" />
+            <div className="bg-[#f0ece5] dark:bg-[#3b2613] p-6 rounded-3xl inline-block mb-4 animate-pulse-gentle">
+              <ShoppingCart className="h-16 w-16 text-[#ad9e8a]" />
             </div>
-            <p className="text-[#7d6b57] dark:text-[#c6bbab] font-medium">Cart is empty</p>
-            <p className="text-[#ad9e8a] text-sm mt-1">Add products to get started</p>
+            <p className="text-[#7d6b57] dark:text-[#c6bbab] font-medium">Your cart is empty</p>
+            <p className="text-[#ad9e8a] text-sm mt-1">Tap a product to add it here</p>
           </div>
         ) : (
           <AnimatePresence initial={false}>
@@ -211,7 +211,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="border-t border-[#ded7cc] dark:border-[#54463b] p-4 lg:p-6 space-y-6 bg-[#f0ece5]/50 dark:bg-[#2a1a10] flex-shrink-0"
+            className="border-t border-[#ded7cc] dark:border-[#54463b] p-4 lg:p-6 space-y-6 bg-gradient-to-r from-[#fcf5eb] to-[#faf8f5] dark:bg-[#2a1a10] flex-shrink-0"
           >
           <div className="space-y-3">
             <div className="flex justify-between text-[#7d6b57] dark:text-[#c6bbab]">
@@ -228,9 +228,9 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
               <span>Tax ({state.settings.taxRate}%):</span>
               <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {taxAmount.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-xl font-bold text-[#473b32] dark:text-[#f0ece5] pt-3 border-t border-[#ded7cc] dark:border-[#54463b]">
+            <div className="flex justify-between text-2xl font-bold text-[#9a693a] dark:text-[#cfa16a] pt-3 border-t border-[#ded7cc] dark:border-[#54463b]">
               <span>Total:</span>
-              <span className="text-[#9a693a] dark:text-[#cfa16a]">{state.settings.currency} {total.toFixed(2)}</span>
+              <span>{state.settings.currency} {total.toFixed(2)}</span>
             </div>
           </div>
 
@@ -238,7 +238,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
             <button
               onClick={onCheckout}
               disabled={state.cart.length === 0}
-              className={`btn btn-primary w-full ${
+              className={`btn btn-accent w-full shadow-lg ${
                 isTouchMode ? 'btn-lg touch-friendly' : 'btn-lg'
               }`}
             >

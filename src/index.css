@@ -272,6 +272,26 @@
     @apply bg-[#fcf5eb] text-[#7a4f2c] font-semibold shadow-soft;
     @apply dark:bg-[#3b2613]/50 dark:text-[#ddb889];
   }
+
+  /* Settings section card */
+  .settings-section {
+    @apply card p-6 space-y-6;
+  }
+
+  /* Quantity stepper buttons */
+  .qty-btn {
+    @apply inline-flex items-center justify-center rounded-xl border border-[#ded7cc] bg-[#faf8f5];
+    @apply hover:bg-[#f0ece5] active:scale-95 transition-all duration-150;
+    @apply dark:bg-[#2a1a10] dark:border-[#54463b] dark:hover:bg-[#3b2613];
+    min-width: 40px;
+    min-height: 40px;
+  }
+  @media (hover: none) and (pointer: coarse) {
+    .qty-btn {
+      min-width: 48px;
+      min-height: 48px;
+    }
+  }
 }
 
 @layer utilities {
@@ -456,13 +476,34 @@
   }
 }
 
-/* Focus styles for accessibility */
-.focus-visible {
+/* Focus styles for accessibility — keyboard-only */
+*:focus-visible {
   outline: 2px solid #b8854a;
   outline-offset: 2px;
+  border-radius: 0.5rem;
 }
-.dark .focus-visible {
+.dark *:focus-visible {
   outline-color: #cfa16a;
+}
+
+/* Skeleton loading pulse */
+.skeleton {
+  @apply bg-[#ded7cc]/40 rounded-2xl animate-pulse;
+  position: relative;
+  overflow: hidden;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 1.5s infinite;
+}
+.dark .skeleton {
+  @apply bg-[#54463b]/30;
+}
+.dark .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
 }
 
 /* Loading shimmer */
