@@ -283,8 +283,8 @@
     @apply inline-flex items-center justify-center rounded-xl border border-[#ded7cc] bg-[#faf8f5];
     @apply hover:bg-[#f0ece5] active:scale-95 transition-all duration-150;
     @apply dark:bg-[#2a1a10] dark:border-[#54463b] dark:hover:bg-[#3b2613];
-    min-width: 40px;
-    min-height: 40px;
+    min-width: 44px;
+    min-height: 44px;
   }
   @media (hover: none) and (pointer: coarse) {
     .qty-btn {
@@ -337,6 +337,10 @@
   .touch-target {
     min-height: 44px;
     min-width: 44px;
+  }
+  .touch-target-lg {
+    min-height: 48px;
+    min-width: 48px;
   }
   @media (hover: none) and (pointer: coarse) {
     .touch-friendly {
@@ -484,6 +488,42 @@
 }
 .dark *:focus-visible {
   outline-color: #cfa16a;
+}
+
+/* Skip to main content link for keyboard users */
+.skip-link {
+  @apply absolute -top-full left-4 z-[100] px-4 py-3 bg-[#9a693a] text-white font-semibold rounded-b-xl;
+  @apply transition-transform duration-200;
+}
+.skip-link:focus {
+  @apply top-0;
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-pulse-gentle,
+  .animate-bounce-gentle,
+  .animate-steam {
+    animation: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  .btn-primary,
+  .btn-accent,
+  .btn-success {
+    border: 2px solid ButtonText;
+  }
+  .card {
+    border: 1px solid CanvasText;
+  }
 }
 
 /* Skeleton loading pulse */

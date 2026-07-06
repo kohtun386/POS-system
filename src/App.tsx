@@ -117,8 +117,9 @@ function AppContent() {
 
   return (
     <div className="h-dvh bg-[#faf8f5] dark:bg-[#1f1309] flex flex-col">
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <Header currentView={currentView} onViewChange={setCurrentView} />
-      <main className="flex-1 min-h-0 overflow-y-auto">
+      <main id="main-content" className="flex-1 min-h-0 overflow-y-auto" role="main">
         {state.loading ? (
           <div className="flex items-center justify-center h-full">
             <LoadingSpinner size="lg" text="Loading..." />

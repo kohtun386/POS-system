@@ -158,6 +158,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
               onClick={toggleTheme}
               className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-2xl bg-[#f0ece5]/50 hover:bg-[#e5ddd2]/50 transition-all duration-300 text-sm font-medium"
               title={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
+              aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
             >
               {isDark ? (
                 <Sun className="h-4 w-4 text-[#f57323]" />
@@ -174,6 +175,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
               onClick={toggleInterfaceMode}
               className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-2xl bg-[#f0ece5]/50 hover:bg-[#e5ddd2]/50 transition-all duration-300 text-sm font-medium"
               title={`Switch to ${state.settings.interfaceMode === 'touch' ? 'Traditional' : 'Touch'} Mode`}
+              aria-label={`Switch to ${state.settings.interfaceMode === 'touch' ? 'traditional' : 'touch'} mode`}
             >
               {state.settings.interfaceMode === 'touch' ? (
                 <Monitor className="h-4 w-4 text-[#7d6b57]" />
@@ -194,7 +196,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
             )}
 
             {/* Notifications */}
-            <button className="btn-ghost p-2 rounded-2xl transition-all duration-300 relative">
+            <button className="btn-ghost p-2 rounded-2xl transition-all duration-300 relative" aria-label="Notifications">
               <Bell className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-[#e55c13] rounded-full animate-pulse"></span>
             </button>
@@ -219,6 +221,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                   <button
                     onClick={() => onViewChange('settings')}
                     className="p-2 rounded-2xl text-[#7d6b57] hover:text-[#473b32] hover:bg-[#f0ece5]/50 transition-all duration-300"
+                    aria-label="Settings"
                   >
                     <Settings className="h-4 w-4" />
                   </button>
@@ -226,6 +229,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                   <button
                     onClick={handleLogout}
                     className="p-2 rounded-2xl text-[#7d6b57] hover:text-[#dc2626] hover:bg-[#fee2e2] transition-all duration-300"
+                    aria-label="Sign out"
                   >
                     <LogOut className="h-4 w-4" />
                   </button>
@@ -237,6 +241,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
               className="xl:hidden p-2 rounded-2xl text-[#7d6b57] hover:text-[#473b32] hover:bg-[#f0ece5]/50 transition-all duration-300"
+              aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
             >
               {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>

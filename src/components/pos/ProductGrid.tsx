@@ -144,7 +144,30 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
 
         {/* Product Grid */}
         <div className="flex-1 p-4 lg:p-6 overflow-auto">
-          {filteredProducts.length === 0 ? (
+          {filteredProducts.length === 0 && state.products.length === 0 && searchTerm === '' && selectedCategory === 'All' ? (
+            <div className={`grid gap-4 lg:gap-6 ${
+              isTouchMode
+                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
+            }`}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className={`card ${isTouchMode ? 'p-4' : 'p-3'}`}>
+                  <div className="flex flex-col h-full">
+                    <div className="skeleton aspect-[4/3] max-h-[140px] rounded-2xl mb-4" />
+                    <div className="flex-1 space-y-2">
+                      <div className="skeleton h-4 w-3/4 rounded-lg" />
+                      <div className="skeleton h-3 w-1/2 rounded-lg" />
+                      <div className="flex items-center justify-between">
+                        <div className="skeleton h-4 w-1/4 rounded-lg" />
+                        <div className="skeleton h-3 w-1/6 rounded-lg" />
+                      </div>
+                    </div>
+                    <div className="skeleton h-10 w-full rounded-2xl mt-3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64">
               <div className="bg-[#f0ece5] dark:bg-[#3b2613] p-6 rounded-3xl mb-4">
                 <Package className="h-16 w-16 text-[#ad9e8a]" />
