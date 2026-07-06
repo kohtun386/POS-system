@@ -88,16 +88,35 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
     }`}>
       {/* Cart Header */}
       <div className="p-4 lg:p-6 border-b-2 border-[#9a693a]/20 flex-shrink-0">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className={`font-bold font-dm-sans text-lg text-[#473b32] dark:text-[#f0ece5]`}>
-            Shopping Cart
-          </h2>
-          <div className="flex items-center space-x-2">
-            <ShoppingCart className="h-5 w-5 text-[#ad9e8a]" />
-            <span className="badge badge-info">
-              {state.cart.length} items
-            </span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <ShoppingCart className="h-5 w-5 text-[#9a693a]" />
+              {state.cart.length > 0 && (
+                <motion.span
+                  key={state.cart.length}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-2 -right-2 bg-[#f57323] text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center"
+                >
+                  {state.cart.reduce((sum, item) => sum + item.quantity, 0)}
+                </motion.span>
+              )}
+            </div>
+            <h2 className="font-bold text-lg text-[#473b32] dark:text-[#f0ece5]">
+              Cart
+            </h2>
           </div>
+          {state.cart.length > 0 && (
+            <button
+              onClick={() => {
+                state.cart.forEach((_, i) => dispatch({ type: 'REMOVE_FROM_CART', payload: 0 }));
+              }}
+              className="text-xs text-[#ad9e8a] hover:text-[#dc2626] transition-colors px-2 py-1 rounded-lg hover:bg-[#fee2e2]"
+            >
+              Clear all
+            </button>
+          )}
         </div>
 
         {/* Customer Selection */}
@@ -213,24 +232,31 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="border-t border-[#ded7cc] dark:border-[#54463b] p-4 lg:p-6 space-y-6 bg-gradient-to-r from-[#fcf5eb] to-[#faf8f5] dark:bg-[#2a1a10] flex-shrink-0"
           >
-          <div className="space-y-3">
-            <div className="flex justify-between text-[#7d6b57] dark:text-[#c6bbab]">
-              <span>Subtotal:</span>
-              <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {subtotal.toFixed(2)}</span>
+          <div className="space-y-2.5">
+            <div className="flex justify-between text-sm">
+              <span className="text-[#7d6b57] dark:text-[#c6bbab]">Subtotal</span>
+              <span className="font-medium text-[#473b32] dark:text-[#f0ece5] tabular-nums">{state.settings.currency} {subtotal.toFixed(2)}</span>
             </div>
             {totalDiscount > 0 && (
-              <div className="flex justify-between text-[#16a34a]">
-                <span>Discount:</span>
-                <span className="font-medium">-{state.settings.currency} {totalDiscount.toFixed(2)}</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-[#16a34a]">Discount</span>
+                <span className="font-medium text-[#16a34a] tabular-nums">-{state.settings.currency} {totalDiscount.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between text-[#7d6b57] dark:text-[#c6bbab]">
-              <span>Tax ({state.settings.taxRate}%):</span>
-              <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {taxAmount.toFixed(2)}</span>
+            <div className="flex justify-between text-sm">
+              <span className="text-[#7d6b57] dark:text-[#c6bbab]">Tax ({state.settings.taxRate}%)</span>
+              <span className="font-medium text-[#473b32] dark:text-[#f0ece5] tabular-nums">{state.settings.currency} {taxAmount.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-2xl font-bold text-[#9a693a] dark:text-[#cfa16a] pt-3 border-t border-[#ded7cc] dark:border-[#54463b]">
-              <span>Total:</span>
-              <span>{state.settings.currency} {total.toFixed(2)}</span>
+            <div className="flex justify-between items-baseline pt-3 mt-1 border-t-2 border-[#9a693a]/15">
+              <span className="text-base font-semibold text-[#473b32] dark:text-[#f0ece5]">Total</span>
+              <motion.span
+                key={total.toFixed(2)}
+                initial={{ scale: 1.1 }}
+                animate={{ scale: 1 }}
+                className="text-2xl font-bold text-[#9a693a] dark:text-[#cfa16a] tabular-nums"
+              >
+                {state.settings.currency} {total.toFixed(2)}
+              </motion.span>
             </div>
           </div>
 
@@ -319,44 +345,47 @@ function CartItemCard({ item, index, onUpdateQuantity, onRemove, onApplyDiscount
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => onUpdateQuantity(index, item.quantity - 1)}
-            className={`btn btn-secondary ${
-              isTouchMode ? 'touch-friendly' : 'w-8 h-8'
-            } flex items-center justify-center`}
+            className="qty-btn"
+            aria-label="Decrease quantity"
           >
-            <Minus className="h-4 w-4" />
+            <Minus className="h-4 w-4 text-[#7d6b57]" />
           </button>
           <motion.span
             key={item.quantity}
-            initial={{ scale: 1.3 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`font-medium min-w-[2rem] text-center text-[#473b32] dark:text-[#f0ece5] ${
-            isTouchMode ? 'text-lg' : 'text-base'
-          }`}
+            initial={{ scale: 1.3, color: '#f57323' }}
+            animate={{ scale: 1, color: '#473b32' }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className={`font-bold min-w-[2.5rem] text-center tabular-nums ${
+              isTouchMode ? 'text-xl' : 'text-lg'
+            }`}
           >
             {item.quantity}
           </motion.span>
           <button
             onClick={() => onUpdateQuantity(index, item.quantity + 1)}
-            className={`btn btn-secondary ${
-              isTouchMode ? 'touch-friendly' : 'w-8 h-8'
-            } flex items-center justify-center`}
+            className="qty-btn"
+            aria-label="Increase quantity"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 text-[#7d6b57]" />
           </button>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setShowDiscountInput(!showDiscountInput)}
-            className="text-[#9a693a] dark:text-[#cfa16a] hover:text-[#7a4f2c] p-2 rounded-lg hover:bg-[#fcf5eb] dark:hover:bg-[#3b2613] transition-colors"
+            className={`p-1.5 rounded-lg transition-colors ${
+              showDiscountInput
+                ? 'bg-[#fcf5eb] text-[#9a693a] dark:bg-[#3b2613] dark:text-[#cfa16a]'
+                : 'text-[#ad9e8a] hover:text-[#9a693a] hover:bg-[#fcf5eb] dark:hover:bg-[#3b2613]'
+            }`}
+            aria-label="Apply discount"
           >
             <Percent className="h-4 w-4" />
           </button>
-          <span className={`font-semibold text-[#473b32] dark:text-[#f0ece5] ${isTouchMode ? 'text-base' : 'text-sm'}`}>
+          <span className={`font-bold text-[#473b32] dark:text-[#f0ece5] tabular-nums ${isTouchMode ? 'text-base' : 'text-sm'}`}>
             {currency} {item.subtotal.toFixed(2)}
           </span>
         </div>

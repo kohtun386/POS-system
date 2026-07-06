@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { Search, Plus, Package, Scale, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { Search, Plus, Package, Scale, X, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { Product } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 
@@ -16,6 +16,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
   const categoriesRef = useRef<HTMLDivElement>(null);
   const [showLeftScroll, setShowLeftScroll] = useState(false);
   const [showRightScroll, setShowRightScroll] = useState(false);
+  const [recentlyAdded, setRecentlyAdded] = useState<string | null>(null);
 
   const filteredProducts = state.products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -60,14 +61,16 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
     }
   };
 
-  const handleProductClick = (product: Product) => {
+  const handleProductClick = useCallback((product: Product) => {
     if (product.isWeightBased) {
       setShowWeightModal(product);
       setWeight('');
     } else {
       onAddToCart(product);
+      setRecentlyAdded(product.id);
+      setTimeout(() => setRecentlyAdded(null), 600);
     }
-  };
+  }, [onAddToCart]);
 
   const handleWeightSubmit = () => {
     if (showWeightModal && weight && parseFloat(weight) > 0) {
@@ -162,6 +165,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
                   onAddToCart={handleProductClick}
                   isTouchMode={isTouchMode}
                   currency={state.settings.currency}
+                  isRecentlyAdded={recentlyAdded === product.id}
                 />
               ))}
             </div>
@@ -248,9 +252,10 @@ interface ProductCardProps {
   onAddToCart: (product: Product) => void;
   isTouchMode: boolean;
   currency: string;
+  isRecentlyAdded?: boolean;
 }
 
-function ProductCard({ product, onAddToCart, isTouchMode, currency }: ProductCardProps) {
+function ProductCard({ product, onAddToCart, isTouchMode, currency, isRecentlyAdded }: ProductCardProps) {
   const shouldTrackInventory = product.trackInventory !== false;
   const isLowStock = shouldTrackInventory ? product.stock <= product.minStock : false;
   const isOutOfStock = shouldTrackInventory ? product.stock === 0 : false;
@@ -342,12 +347,22 @@ function ProductCard({ product, onAddToCart, isTouchMode, currency }: ProductCar
             if (!isOutOfStock) onAddToCart(product);
           }}
           disabled={isOutOfStock}
-          className={`btn btn-primary w-full mt-4 disabled:bg-[#ded7cc] disabled:cursor-not-allowed flex items-center justify-center space-x-2 ${
-            isTouchMode ? 'btn-lg touch-friendly' : 'btn-md py-2.5'
-          }`}
+          className={`btn w-full mt-3 transition-all duration-200 flex items-center justify-center gap-2 ${
+            isRecentlyAdded
+              ? 'btn-success'
+              : isOutOfStock
+                ? 'bg-[#ded7cc] text-[#7d6b57] cursor-not-allowed dark:bg-[#54463b] dark:text-[#c6bbab]'
+                : 'btn-primary'
+          } ${isTouchMode ? 'btn-lg touch-friendly' : 'btn-md py-2.5'}`}
         >
-          {product.isWeightBased ? <Scale className={`${isTouchMode ? 'h-5 w-5' : 'h-4 w-4'}`} /> : <Plus className={`${isTouchMode ? 'h-5 w-5' : 'h-4 w-4'}`} />}
-          <span>{isOutOfStock ? 'Out of Stock' : product.isWeightBased ? 'Enter Weight' : 'Add to Cart'}</span>
+          {isRecentlyAdded ? (
+            <Check className={`${isTouchMode ? 'h-5 w-5' : 'h-4 w-4'}`} />
+          ) : product.isWeightBased ? (
+            <Scale className={`${isTouchMode ? 'h-5 w-5' : 'h-4 w-4'}`} />
+          ) : (
+            <Plus className={`${isTouchMode ? 'h-5 w-5' : 'h-4 w-4'}`} />
+          )}
+          <span>{isRecentlyAdded ? 'Added!' : isOutOfStock ? 'Out of Stock' : product.isWeightBased ? 'Enter Weight' : 'Add to Cart'}</span>
         </button>
       </div>
     </div>
