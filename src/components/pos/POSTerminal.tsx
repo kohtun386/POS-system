@@ -3,7 +3,7 @@ import { ProductGrid } from './ProductGrid';
 import { Cart } from './Cart';
 import { CheckoutModal } from './CheckoutModal';
 import { SalesTabManager } from './SalesTabManager';
-import { Product, Sale } from '../../types';
+import { Product } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
 import { salesService } from '../../lib/services';
@@ -15,7 +15,6 @@ export function POSTerminal() {
   const { state, dispatch } = useApp();
   const { user } = useAuth();
   const [showCheckout, setShowCheckout] = useState(false);
-  const [_lastSale, setLastSale] = useState<Sale | null>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
   useEffect(() => {
@@ -80,8 +79,7 @@ export function POSTerminal() {
     setShowCheckout(true);
   };
 
-  const handleCheckoutComplete = (sale: Sale) => {
-    setLastSale(sale);
+  const handleCheckoutComplete = () => {
     setShowCheckout(false);
 
     // Clear current tab after successful checkout

@@ -6,7 +6,7 @@ import { useApp, checkDiscountEligibility, useInvoiceGeneration } from '../../co
 import { useAuth } from '../../context/AuthContext';
 import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { ReceiptPrint } from './ReceiptPrint';
-import { salesService, customersService, kitchenOrdersService, printJobsService } from '../../lib/services';
+import { salesService, customersService, kitchenOrdersService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
 import { checkStockAvailability } from '../../lib/inventoryUtils';
 import { groupByStation } from '../../lib/kitchenUtils';

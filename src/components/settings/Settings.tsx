@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Store, DollarSign, Printer, Users, Globe, FileText, Lock, RefreshCw, Settings as SettingsIcon } from 'lucide-react';
+import { Save, Store, DollarSign, Printer, Users, Globe, FileText, Lock } from 'lucide-react';
 import { useApp, useInvoiceStats } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
 import { LogoUpload } from './LogoUpload';
 import { swalConfig } from '../../lib/sweetAlert';
-import { CurrencyUtils, getSupportedCurrencies } from '../../lib/currencyUtils';
-import { exchangeRateService, testExchangeRateConnection } from '../../lib/exchangeRateService';
+import { getSupportedCurrencies } from '../../lib/currencyUtils';
 import { CurrencyConfig } from '../../types';
-import { ExchangeRateManager } from './ExchangeRateManager';
 
 export function Settings() {
   const { state, dispatch } = useApp();
@@ -28,16 +26,11 @@ export function Settings() {
     theme: state.settings.theme || 'light',
     invoicePrefix: state.settings.invoicePrefix || 'INV',
     invoiceCounter: state.settings.invoiceCounter?.toString() || '1000',
-    exchangeRateProvider: state.settings.exchangeRateProvider || 'exchangerate',
-    exchangeRateApiKey: state.settings.exchangeRateApiKey || '',
-    exchangeRateUpdateInterval: state.settings.exchangeRateUpdateInterval?.toString() || '60',
   });
 
   // Currency-related state
   const [supportedCurrencies, setSupportedCurrencies] = useState<CurrencyConfig[]>([]);
   const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const [exchangeRateStatus, setExchangeRateStatus] = useState<any>(null);
 
   // Check if user has permission to change settings
   const canEditSettings = profile?.role === 'admin' || profile?.role === 'manager';
@@ -45,7 +38,6 @@ export function Settings() {
   // Load supported currencies on component mount
   useEffect(() => {
     loadSupportedCurrencies();
-    loadExchangeRateStatus();
   }, []);
 
   // Load supported currencies
@@ -59,49 +51,6 @@ export function Settings() {
       swalConfig.error('Failed to load supported currencies');
     } finally {
       setIsLoadingCurrencies(false);
-    }
-  };
-
-  // Load exchange rate service status
-  const loadExchangeRateStatus = () => {
-    const status = exchangeRateService.getStatus();
-    setExchangeRateStatus(status);
-  };
-
-  // Test exchange rate API connection
-  const handleTestConnection = async () => {
-    setIsTestingConnection(true);
-    try {
-      const success = await testExchangeRateConnection();
-      if (success) {
-        swalConfig.success('Exchange rate API connection successful!');
-        loadExchangeRateStatus();
-      } else {
-        swalConfig.error('Exchange rate API connection failed. Check your API key and settings.');
-      }
-    } catch (error) {
-      console.error('Error testing connection:', error);
-      swalConfig.error('Failed to test exchange rate API connection');
-    } finally {
-      setIsTestingConnection(false);
-    }
-  };
-
-  // Update exchange rates manually
-  const handleUpdateRates = async () => {
-    try {
-      swalConfig.loading('Updating exchange rates...');
-      const success = await exchangeRateService.updateExchangeRates();
-      if (success) {
-        swalConfig.success('Exchange rates updated successfully!');
-        loadExchangeRateStatus();
-      } else {
-        swalConfig.warning('Exchange rates updated with fallback rates. Check your API configuration.');
-        loadExchangeRateStatus();
-      }
-    } catch (error) {
-      console.error('Error updating rates:', error);
-      swalConfig.error('Failed to update exchange rates');
     }
   };
 
@@ -134,7 +83,6 @@ export function Settings() {
         ...formData,
         taxRate: parseFloat(formData.taxRate),
         invoiceCounter: parseInt(formData.invoiceCounter),
-        exchangeRateUpdateInterval: parseInt(formData.exchangeRateUpdateInterval),
       };
 
       await settingsService.update(updatedSettings);
@@ -324,142 +272,6 @@ export function Settings() {
                 />
               </div>
             </div>
-          </div>
-
-          {/* Exchange Rate Settings */}
-          <div className="space-y-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-yellow-100 p-2 rounded-xl">
-                <RefreshCw className="h-6 w-6 text-yellow-600" />
-              </div>
-              <h2 className="text-xl font-bold text-gray-900 font-fraunces">Exchange Rate Settings</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Exchange Rate Provider
-                </label>
-                <select
-                  name="exchangeRateProvider"
-                  value={formData.exchangeRateProvider}
-                  onChange={handleChange}
-                  disabled={!canEditSettings}
-                  className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                >
-                  <option value="exchangerate">ExchangeRate-API (Free)</option>
-                  <option value="fixer">Fixer.io (Paid)</option>
-                  <option value="currencylayer">CurrencyLayer (Paid)</option>
-                  <option value="manual">Manual Rates Only</option>
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Choose your exchange rate data provider
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  API Key (Optional)
-                </label>
-                <input
-                  type="password"
-                  name="exchangeRateApiKey"
-                  value={formData.exchangeRateApiKey}
-                  onChange={handleChange}
-                  disabled={!canEditSettings}
-                  placeholder="Enter API key for paid providers"
-                  className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Required for Fixer.io and CurrencyLayer
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Update Interval (Minutes)
-                </label>
-                <input
-                  type="number"
-                  name="exchangeRateUpdateInterval"
-                  value={formData.exchangeRateUpdateInterval}
-                  onChange={handleChange}
-                  disabled={!canEditSettings}
-                  min="5"
-                  max="1440"
-                  className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditSettings ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  How often to update exchange rates (5-1440 minutes)
-                </p>
-              </div>
-            </div>
-
-            {/* Exchange Rate Status and Controls */}
-            {exchangeRateStatus && (
-              <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Exchange Rate Status</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Provider</p>
-                    <p className="font-semibold capitalize">{exchangeRateStatus.provider}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Update Interval</p>
-                    <p className="font-semibold">{exchangeRateStatus.updateInterval} minutes</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Last Update</p>
-                    <p className="font-semibold">
-                      {exchangeRateStatus.lastUpdateTime
-                        ? new Date(exchangeRateStatus.lastUpdateTime).toLocaleString()
-                        : 'Never'
-                      }
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={handleTestConnection}
-                    disabled={!canEditSettings || isTestingConnection}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${canEditSettings && !isTestingConnection
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
-                  >
-                    <SettingsIcon className="h-4 w-4" />
-                    <span>{isTestingConnection ? 'Testing...' : 'Test Connection'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleUpdateRates}
-                    disabled={!canEditSettings || exchangeRateStatus.isUpdating}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${canEditSettings && !exchangeRateStatus.isUpdating
-                        ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
-                  >
-                    <RefreshCw className={`h-4 w-4 ${exchangeRateStatus.isUpdating ? 'animate-spin' : ''}`} />
-                    <span>{exchangeRateStatus.isUpdating ? 'Updating...' : 'Update Rates Now'}</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Exchange Rate Management */}
-          <div className="space-y-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-yellow-100 p-2 rounded-xl">
-                <RefreshCw className="h-6 w-6 text-yellow-600" />
-              </div>
-              <h2 className="text-xl font-bold text-gray-900 font-fraunces">Exchange Rate Management</h2>
-            </div>
-
-            <ExchangeRateManager />
           </div>
 
           {/* Invoice Settings */}

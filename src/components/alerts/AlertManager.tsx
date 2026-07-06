@@ -67,7 +67,7 @@ export function AlertManager() {
             setConfigurations(configurationsData);
             setHistory(historyData);
             setServices(servicesData);
-        } catch (_error) {
+        } catch (error) {
             console.error('Error loading alert data:', error);
             swalConfig.error('Failed to load alert data');
         } finally {
@@ -86,7 +86,7 @@ export function AlertManager() {
             const successfulAlerts = results.filter(r => r.shouldSend).length;
 
             swalConfig.success(`Alert check completed! ${successfulAlerts}/${totalAlerts} alerts sent successfully.`);
-        } catch (_error) {
+        } catch (error) {
             console.error('Error running alert check:', error);
             swalConfig.error('Failed to run alert check');
         } finally {
@@ -357,7 +357,7 @@ function RecipientsTab({
                 await alertRecipientsService.delete(id);
                 onUpdate();
                 swalConfig.success('Recipient deleted successfully!');
-            } catch (_error) {
+            } catch {
                 swalConfig.error('Failed to delete recipient');
             }
         }
@@ -471,7 +471,7 @@ function TemplatesTab({
                 await alertTemplatesService.delete(id);
                 onUpdate();
                 swalConfig.success('Template deleted successfully!');
-            } catch (_error) {
+            } catch {
                 swalConfig.error('Failed to delete template');
             }
         }
@@ -567,7 +567,7 @@ function ConfigurationTab({
             await alertConfigurationsService.update(id, { isEnabled });
             onUpdate();
             swalConfig.success('Configuration updated successfully!');
-        } catch (_error) {
+        } catch {
             swalConfig.error('Failed to update configuration');
         }
     };
@@ -577,7 +577,7 @@ function ConfigurationTab({
             await alertConfigurationsService.update(id, updates);
             onUpdate();
             swalConfig.success('Configuration updated successfully!');
-        } catch (_error) {
+        } catch {
             swalConfig.error('Failed to update configuration');
         }
     };
@@ -715,7 +715,7 @@ function ServicesTab({
                 await notificationServiceConfigService.delete(id);
                 onUpdate();
                 swalConfig.success('Service deleted successfully!');
-            } catch (_error) {
+            } catch {
                 swalConfig.error('Failed to delete service');
             }
         }
