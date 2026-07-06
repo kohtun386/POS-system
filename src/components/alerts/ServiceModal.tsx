@@ -14,7 +14,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
     const [formData, setFormData] = useState({
         serviceName: 'sendgrid',
         serviceType: 'email' as 'email' | 'sms' | 'both',
-        configData: {} as Record<string, any>,
+        configData: {} as Record<string, string | number | boolean>,
         isActive: true,
         isDefault: false,
     });
@@ -68,7 +68,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
         }
     };
 
-    const serviceOptions = [
+    const serviceOptions: Array<{ value: string; label: string; type: 'email' | 'sms' | 'both'; description: string; icon: React.ReactNode; fields: Array<{ key: string; label: string; type: string; required: boolean }> }> = [
         {
             value: 'sendgrid',
             label: 'SendGrid',
@@ -162,7 +162,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                                             onChange={(e) => setFormData(prev => ({
                                                 ...prev,
                                                 serviceName: e.target.value,
-                                                serviceType: option.type as any,
+                                                serviceType: option.type,
                                                 configData: {} // Reset config when changing service
                                             }))}
                                             className="sr-only"

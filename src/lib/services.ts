@@ -1,3 +1,14 @@
+// Raw DB row shape for product_batches
+interface RawProductBatch {
+  id: string;
+  batch_number: string;
+  manufacturing_date: string;
+  expiry_date: string;
+  quantity: number;
+  cost_price: number;
+  supplier_info: string;
+}
+
 import { supabase } from './supabase'
 import {
   Product,
@@ -5,6 +16,11 @@ import {
   Customer,
   Sale,
   Discount,
+  DiscountCondition,
+  CartItem,
+  AppliedDiscount,
+  Payment,
+  CardDetails,
   User,
   AppSettings,
   SalesTab,
@@ -74,7 +90,7 @@ export const productsService = {
 
     if (error) throw error
 
-    return data.map((batch: any) => ({
+    return data.map((batch: RawProductBatch) => ({
       id: batch.id,
       batchNumber: batch.batch_number,
       manufacturingDate: new Date(batch.manufacturing_date),
@@ -218,7 +234,7 @@ export const productsService = {
       isWeightBased: data.is_weight_based ?? false,
       pricePerUnit: data.price_per_unit || undefined,
       unit: data.unit || undefined,
-      batches: data.product_batches?.map((batch: any) => ({
+      batches: data.product_batches?.map((batch: RawProductBatch) => ({
         id: batch.id,
         batchNumber: batch.batch_number,
         manufacturingDate: new Date(batch.manufacturing_date),
@@ -294,7 +310,7 @@ export const customersService = {
 
   async update(id: string, customer: Partial<Customer>): Promise<Customer> {
     // Only include fields that are actually provided
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
 
     if (customer.name !== undefined) updateData.name = customer.name;
     if (customer.email !== undefined) updateData.email = customer.email;
@@ -369,21 +385,21 @@ export const salesService = {
       invoiceNumber: sale.invoice_number,
       customerId: sale.customer_id || undefined,
       customerName: sale.customer_name || undefined,
-      items: sale.items as any[],
+      items: sale.items as CartItem[],
       subtotal: sale.subtotal || 0,
       discountAmount: sale.discount_amount || 0,
       taxAmount: sale.tax_amount || 0,
       total: sale.total || 0,
-      paymentMethod: sale.payment_method as any,
-      payments: sale.payments as any,
-      cardDetails: sale.card_details as any,
-      status: sale.status as any,
+      paymentMethod: sale.payment_method as Sale['paymentMethod'],
+      payments: sale.payments as Payment[] | undefined,
+      cardDetails: sale.card_details as CardDetails | undefined,
+      status: sale.status as Sale['status'],
       cashier: sale.cashier || '',
       timestamp: new Date(sale.created_at),
       receiptNumber: sale.receipt_number || undefined,
       notes: sale.notes || undefined,
-      appliedDiscounts: sale.applied_discounts as any,
-      freeGifts: sale.free_gifts as any
+      appliedDiscounts: sale.applied_discounts as AppliedDiscount[] | undefined,
+      freeGifts: sale.free_gifts as CartItem[] | undefined
     }))
 
     return {
@@ -425,20 +441,20 @@ export const salesService = {
       invoiceNumber: data.invoice_number,
       customerId: data.customer_id || undefined,
       customerName: data.customer_name || undefined,
-      items: data.items as any[],
+      items: data.items as CartItem[],
       subtotal: data.subtotal || 0,
       discountAmount: data.discount_amount || 0,
       taxAmount: data.tax_amount || 0,
       total: data.total || 0,
-      paymentMethod: data.payment_method as any,
-      cardDetails: data.card_details as any,
-      status: data.status as any,
+      paymentMethod: data.payment_method as Sale['paymentMethod'],
+      cardDetails: data.card_details as CardDetails | undefined,
+      status: data.status as Sale['status'],
       cashier: data.cashier || '',
       timestamp: new Date(data.created_at),
       receiptNumber: data.receipt_number || undefined,
       notes: data.notes || undefined,
-      appliedDiscounts: data.applied_discounts as any,
-      freeGifts: data.free_gifts as any
+      appliedDiscounts: data.applied_discounts as AppliedDiscount[] | undefined,
+      freeGifts: data.free_gifts as CartItem[] | undefined
     }
   },
 
@@ -466,9 +482,9 @@ export const discountsService = {
       id: discount.id,
       name: discount.name,
       description: discount.description || '',
-      type: discount.type as any,
+      type: discount.type as Discount['type'],
       value: discount.value || 0,
-      conditions: discount.conditions as any,
+      conditions: discount.conditions as DiscountCondition[],
       freeGiftProducts: discount.free_gift_products || undefined,
       minAmount: discount.min_amount || undefined,
       maxDiscount: discount.max_discount || undefined,
@@ -506,9 +522,9 @@ export const discountsService = {
       id: data.id,
       name: data.name,
       description: data.description || '',
-      type: data.type as any,
+      type: data.type as Discount['type'],
       value: data.value || 0,
-      conditions: data.conditions as any,
+      conditions: data.conditions as DiscountCondition[],
       freeGiftProducts: data.free_gift_products || undefined,
       minAmount: data.min_amount || undefined,
       maxDiscount: data.max_discount || undefined,
@@ -547,9 +563,9 @@ export const discountsService = {
       id: data.id,
       name: data.name,
       description: data.description || '',
-      type: data.type as any,
+      type: data.type as Discount['type'],
       value: data.value || 0,
-      conditions: data.conditions as any,
+      conditions: data.conditions as DiscountCondition[],
       freeGiftProducts: data.free_gift_products || undefined,
       minAmount: data.min_amount || undefined,
       maxDiscount: data.max_discount || undefined,
@@ -591,13 +607,13 @@ export const settingsService = {
       taxRate: data.tax_rate || 0,
       currency: data.currency || 'USD',
       baseCurrency: data.base_currency || 'USD',
-      interfaceMode: data.interface_mode as any || 'touch',
+      interfaceMode: data.interface_mode as AppSettings['interfaceMode'] || 'touch',
       autoBackup: data.auto_backup ?? true,
       receiptPrinter: data.receipt_printer ?? true,
-      theme: data.theme as any || 'light',
+      theme: data.theme as AppSettings['theme'] || 'light',
       invoicePrefix: data.invoice_prefix || 'INV',
       invoiceCounter: data.invoice_counter || 1000,
-      exchangeRateProvider: data.exchange_rate_provider as any || 'exchangerate',
+      exchangeRateProvider: data.exchange_rate_provider as AppSettings['exchangeRateProvider'] || 'exchangerate',
       exchangeRateApiKey: data.exchange_rate_api_key || undefined,
       exchangeRateUpdateInterval: data.exchange_rate_update_interval || 60
     }
@@ -650,13 +666,13 @@ export const settingsService = {
       taxRate: data.tax_rate || 0,
       currency: data.currency || 'USD',
       baseCurrency: data.base_currency || 'USD',
-      interfaceMode: data.interface_mode as any || 'touch',
+      interfaceMode: data.interface_mode as AppSettings['interfaceMode'] || 'touch',
       autoBackup: data.auto_backup ?? true,
       receiptPrinter: data.receipt_printer ?? true,
-      theme: data.theme as any || 'light',
+      theme: data.theme as AppSettings['theme'] || 'light',
       invoicePrefix: data.invoice_prefix || 'INV',
       invoiceCounter: data.invoice_counter || 1000,
-      exchangeRateProvider: data.exchange_rate_provider as any || 'exchangerate',
+      exchangeRateProvider: data.exchange_rate_provider as AppSettings['exchangeRateProvider'] || 'exchangerate',
       exchangeRateApiKey: data.exchange_rate_api_key || undefined,
       exchangeRateUpdateInterval: data.exchange_rate_update_interval || 60
     }
@@ -678,7 +694,7 @@ export const usersService = {
       username: user.username,
       name: user.name,
       email: user.email,
-      role: user.role as any,
+      role: user.role as User['role'],
       permissions: user.permissions || [],
       active: user.active ?? true,
       lastLogin: user.last_login ? new Date(user.last_login) : undefined,
@@ -708,7 +724,7 @@ export const usersService = {
       username: data.username,
       name: data.name,
       email: data.email,
-      role: data.role as any,
+      role: data.role as User['role'],
       permissions: data.permissions || [],
       active: data.active ?? true,
       lastLogin: data.last_login ? new Date(data.last_login) : undefined,
@@ -740,7 +756,7 @@ export const usersService = {
       username: data.username,
       name: data.name,
       email: data.email,
-      role: data.role as any,
+      role: data.role as User['role'],
       permissions: data.permissions || [],
       active: data.active ?? true,
       lastLogin: data.last_login ? new Date(data.last_login) : undefined,
@@ -775,7 +791,7 @@ export const salesTabsService = {
     return data.map(tab => ({
       id: tab.id,
       name: tab.name,
-      cart: tab.cart as any[] || [],
+      cart: tab.cart as CartItem[] || [],
       selectedCustomer: tab.selected_customer ? {
         id: tab.selected_customer.id,
         name: tab.selected_customer.name,
@@ -810,7 +826,7 @@ export const salesTabsService = {
     return {
       id: data.id,
       name: data.name,
-      cart: data.cart as any[] || [],
+      cart: data.cart as CartItem[] || [],
       selectedCustomer: tab.selectedCustomer,
       createdAt: new Date(data.created_at)
     }
@@ -833,7 +849,7 @@ export const salesTabsService = {
     return {
       id: data.id,
       name: data.name,
-      cart: data.cart as any[] || [],
+      cart: data.cart as CartItem[] || [],
       selectedCustomer: tab.selectedCustomer || null,
       createdAt: new Date(data.created_at)
     }

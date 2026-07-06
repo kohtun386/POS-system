@@ -507,7 +507,7 @@ export function ReportsManager() {
                 <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
                 <YAxis stroke="#6b7280" fontSize={12} />
                 <Tooltip 
-                  formatter={(value: any, name: string) => [
+                  formatter={(value: string | number | (string | number)[], name: string) => [
                     name === 'sales' ? `${state.settings.currency} ${Number(value).toFixed(2)}` : value,
                     name === 'sales' ? 'Sales' : 'Transactions'
                   ]}
@@ -596,7 +596,7 @@ export function ReportsManager() {
                 <XAxis dataKey="name" stroke="#6b7280" fontSize={12} />
                 <YAxis stroke="#6b7280" fontSize={12} />
                 <Tooltip 
-                  formatter={(value: any, name: string) => [
+                  formatter={(value: string | number | (string | number)[], name: string) => [
                     name === 'spending' ? `${state.settings.currency} ${Number(value).toFixed(2)}` : value,
                     name === 'spending' ? 'Total Spent' : 'Transactions'
                   ]}

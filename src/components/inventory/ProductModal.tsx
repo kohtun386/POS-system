@@ -260,7 +260,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
     setBatches(prev => [...prev, newBatch]);
   };
 
-  const updateBatch = (index: number, field: keyof ProductBatch, value: any) => {
+  const updateBatch = (index: number, field: keyof ProductBatch, value: string | number | Date | boolean) => {
     setBatches(prev => prev.map((batch, i) => 
       i === index ? { ...batch, [field]: value } : batch
     ));

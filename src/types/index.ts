@@ -86,7 +86,7 @@ export interface Discount {
 
 export interface DiscountCondition {
   type: 'min_amount' | 'specific_products' | 'payment_method' | 'customer_tier' | 'card_type' | 'bank_name';
-  value: any;
+  value: string | number | string[];
   operator?: 'equals' | 'greater_than' | 'less_than' | 'in_array';
   minQuantity?: number; // For specific_products condition - minimum quantity required
 }
@@ -325,7 +325,7 @@ export interface NotificationServiceConfig {
   id: string;
   serviceName: string; // sendgrid, twilio, aws_ses, etc.
   serviceType: 'email' | 'sms' | 'both';
-  configData: Record<string, any>; // API keys, endpoints, etc.
+  configData: Record<string, string | number | boolean>; // API keys, endpoints, etc.
   isActive: boolean;
   isDefault: boolean;
   createdAt: Date;
@@ -498,7 +498,7 @@ export interface PrintJob {
   shopId: string;
   orderId: string;
   status: PrintJobStatus;
-  configData: Record<string, any>;
+  configData: Record<string, string | number | boolean>;
   createdAt: Date;
   completedAt?: Date;
 }

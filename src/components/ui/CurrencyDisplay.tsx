@@ -18,12 +18,11 @@ export function CurrencyDisplay({
     showSymbol = true,
     showCode = false,
     className = '',
-    precision,
     baseCurrency,
     convertFromBase = false
 }: CurrencyDisplayProps) {
     const { format } = useCurrencyFormat();
-    const { convert, getRate } = useCurrencyConversion();
+    const { convert } = useCurrencyConversion();
     const [displayAmount, setDisplayAmount] = useState<number>(amount);
     const [formattedAmount, setFormattedAmount] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +34,7 @@ export function CurrencyDisplay({
 
             try {
                 let finalAmount = amount;
-                let targetCurrency = currency;
+                const targetCurrency = currency;
 
                 // Convert from base currency if needed
                 if (convertFromBase && baseCurrency && targetCurrency && baseCurrency !== targetCurrency) {
@@ -100,7 +99,7 @@ export function SimpleCurrencyDisplay({ amount, currency = 'USD', className = ''
                 const { formatCurrency } = await import('../../lib/currencyUtils');
                 const formatted = await formatCurrency(amount, currency);
                 setFormatted(formatted);
-            } catch (error) {
+            } catch {
                 // Fallback formatting
                 const symbol = currency === 'USD' ? '$' : currency;
                 setFormatted(`${symbol}${amount.toFixed(2)}`);

@@ -199,7 +199,7 @@ export function AlertManager() {
                     ].map(({ id, label, icon: Icon }) => (
                         <button
                             key={id}
-                            onClick={() => setActiveTab(id as any)}
+                            onClick={() => setActiveTab(id as typeof activeTab)}
                             className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${activeTab === id
                                     ? 'bg-blue-500 text-white'
                                     : 'text-gray-600 hover:bg-gray-100'
@@ -273,7 +273,16 @@ function OverviewTab({
     loading
 }: {
     configurations: AlertConfiguration[];
-    stats: any;
+    stats: {
+      totalRecipients: number;
+      activeRecipients: number;
+      totalTemplates: number;
+      activeTemplates: number;
+      totalAlerts: number;
+      sentAlerts: number;
+      failedAlerts: number;
+      pendingAlerts: number;
+    };
     onRunCheck: () => void;
     loading: boolean;
 }) {
@@ -635,7 +644,7 @@ function HistoryTab({
 
                 <select
                     value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value as any)}
+                    onChange={(e) => setFilterStatus(e.target.value as 'all' | 'sent' | 'failed' | 'pending')}
                     className="select min-w-[150px]"
                 >
                     <option value="all">All Status</option>

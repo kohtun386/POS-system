@@ -28,9 +28,9 @@ export function LoginPage() {
       } else {
         await signIn(credentials.email, credentials.password);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Errors are now handled by the AuthContext with SweetAlert2 toasts
-      console.debug('Login error handled by AuthContext:', error.message);
+      console.debug('Login error handled by AuthContext:', error instanceof Error ? error.message : 'Unknown error');
     }
   };
 

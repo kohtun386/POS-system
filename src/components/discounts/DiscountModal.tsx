@@ -170,7 +170,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
     }]);
   };
 
-  const updateCondition = (index: number, field: keyof DiscountCondition, value: any) => {
+  const updateCondition = (index: number, field: keyof DiscountCondition, value: string | number | string[]) => {
     setConditions(prev => prev.map((condition, i) => {
       if (i === index) {
         const updatedCondition = { ...condition, [field]: value };

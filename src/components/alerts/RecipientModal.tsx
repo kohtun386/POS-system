@@ -144,7 +144,7 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
                                 </label>
                                 <select
                                     value={formData.role}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as any }))}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'admin' | 'manager' | 'cashier' }))}
                                     className="select"
                                 >
                                     <option value="admin">Admin</option>

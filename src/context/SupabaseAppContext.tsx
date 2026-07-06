@@ -229,14 +229,15 @@ function appReducer(state: AppState, action: AppAction): AppState {
           tab.id === action.payload.id ? { ...tab, ...action.payload.updates } : tab
         ),
       };
-    case 'REMOVE_SALES_TAB':
+    case 'REMOVE_SALES_TAB': {
       const remainingTabs = state.salesTabs.filter(tab => tab.id !== action.payload);
       return {
         ...state,
         salesTabs: remainingTabs,
         activeSalesTab: remainingTabs.length > 0 ? remainingTabs[0].id : '',
       };
-    case 'SET_ACTIVE_SALES_TAB':
+    }
+    case 'SET_ACTIVE_SALES_TAB': {
       const activeTab = state.salesTabs.find(tab => tab.id === action.payload);
       return {
         ...state,
@@ -244,6 +245,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         cart: activeTab?.cart || [],
         selectedCustomer: activeTab?.selectedCustomer || null,
       };
+    }
     case 'SET_SALES_TABS':
       return { ...state, salesTabs: action.payload };
     case 'SET_ACTIVE_SHOP':
@@ -448,9 +450,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
 
       dispatch({ type: 'SET_ERROR', payload: null });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading data:', error);
-      dispatch({ type: 'SET_ERROR', payload: error.message });
+      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Unknown error' });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -514,9 +516,9 @@ function checkCondition(
     case 'min_amount':
       return total >= condition.value;
 
-    case 'specific_products':
+    case 'specific_products': {
       if (!Array.isArray(condition.value)) return false;
-      const requiredProducts = condition.value;
+      const requiredProducts = condition.value as string[];
       const minQuantity = condition.minQuantity || 1;
 
       for (const productId of requiredProducts) {
@@ -526,6 +528,7 @@ function checkCondition(
         }
       }
       return true;
+    }
 
     case 'payment_method':
       return paymentMethod === condition.value;
@@ -577,11 +580,11 @@ export function useInvoiceGeneration() {
 }
 
 // Utility functions for invoice counter management
-export function resetInvoiceCounter(dispatch: any, newCounter: number = 0) {
+export function resetInvoiceCounter(dispatch: React.Dispatch<AppAction>, newCounter: number = 0) {
   dispatch({ type: 'INCREMENT_INVOICE_COUNTER', payload: newCounter });
 }
 
-export function setInvoicePrefix(dispatch: any, prefix: string) {
+export function setInvoicePrefix(dispatch: React.Dispatch<AppAction>, prefix: string) {
   dispatch({ type: 'SET_SETTINGS', payload: { invoicePrefix: prefix } });
 }
 

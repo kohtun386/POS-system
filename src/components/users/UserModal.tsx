@@ -140,8 +140,8 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
       }
 
       onClose();
-    } catch (error: any) {
-      swalConfig.error(`Error ${user ? 'updating' : 'creating'} user: ${error.message}`);
+    } catch (error) {
+      swalConfig.error(`Error ${user ? 'updating' : 'creating'} user: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }

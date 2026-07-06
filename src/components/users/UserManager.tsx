@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, UserCheck, UserX, Crown, Shield, User } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, UserCheck, Crown, Shield, User } from 'lucide-react';
 import { User as UserType } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 import { usersService } from '../../lib/services';
@@ -38,8 +38,8 @@ export function UserManager() {
         await usersService.delete(userId);
         dispatch({ type: 'SET_USERS', payload: state.users.filter(u => u.id !== userId) });
         swalConfig.success('User deleted successfully!');
-      } catch (error: any) {
-        swalConfig.error(`Error deleting user: ${error.message}`);
+      } catch (error) {
+        swalConfig.error(`Error deleting user: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setLoading(false);
         swalConfig.close();
@@ -67,8 +67,8 @@ export function UserManager() {
         payload: state.users.map(u => u.id === user.id ? updatedUser : u)
       });
       swalConfig.success(`User ${user.active ? 'deactivated' : 'activated'} successfully!`);
-    } catch (error: any) {
-      swalConfig.error(`Error updating user: ${error.message}`);
+    } catch (error) {
+      swalConfig.error(`Error updating user: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
       swalConfig.close();
@@ -100,7 +100,6 @@ export function UserManager() {
   const activeUsers = state.users.filter(u => u.active).length;
   const adminUsers = state.users.filter(u => u.role === 'admin').length;
   const managerUsers = state.users.filter(u => u.role === 'manager').length;
-  const cashierUsers = state.users.filter(u => u.role === 'cashier').length;
 
   return (
     <div className="p-4 lg:p-6 space-y-6 bg-gray-50 min-h-full">

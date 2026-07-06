@@ -204,7 +204,7 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
                                             name="channel"
                                             value={option.value}
                                             checked={formData.channel === option.value}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, channel: e.target.value as any }))}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, channel: e.target.value as 'email' | 'sms' | 'both' }))}
                                             className="sr-only"
                                         />
                                         <div className="flex items-center space-x-2">

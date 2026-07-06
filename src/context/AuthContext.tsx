@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           username: data.username,
           name: data.name,
           email: data.email,
-          role: data.role as any,
+          role: data.role as User['role'],
           permissions: data.permissions || [],
           active: data.active ?? true,
           lastLogin: data.last_login ? new Date(data.last_login) : undefined,
@@ -132,11 +132,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Show success toast with our styled config
       swalConfig.success('Welcome back! You have successfully signed in.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLoading(false)
-      
+      const message = error instanceof Error ? error.message : 'Unknown error';
       // Show error toast with our styled config
-      swalConfig.error(`Sign In Failed: ${getAuthErrorMessage(error.message)}`);
+      swalConfig.error(`Sign In Failed: ${getAuthErrorMessage(message)}`);
       throw error
     }
   }
@@ -177,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             username: profileData.username,
             name: profileData.name,
             email: profileData.email,
-            role: profileData.role as any,
+            role: profileData.role as User['role'],
             permissions: profileData.permissions || [],
             active: profileData.active ?? true,
             lastLogin: profileData.last_login ? new Date(profileData.last_login) : undefined,
@@ -185,16 +185,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           })
         }
       }
-      
+
       setLoading(false)
-      
+
       // Show success toast with our styled config
       swalConfig.success('Account Created! Your account has been created successfully.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLoading(false)
-      
+      const message = error instanceof Error ? error.message : 'Unknown error';
       // Show error toast with our styled config
-      swalConfig.error(`Sign Up Failed: ${getAuthErrorMessage(error.message)}`);
+      swalConfig.error(`Sign Up Failed: ${getAuthErrorMessage(message)}`);
       throw error
     }
   }
@@ -207,24 +207,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Show success toast with our styled config
       swalConfig.success('Signed Out! You have been successfully signed out.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLoading(false)
-      
+      const message = error instanceof Error ? error.message : 'Unknown error';
       // Show error toast with our styled config
-      swalConfig.error(`Sign Out Failed: ${getAuthErrorMessage(error.message)}`);
+      swalConfig.error(`Sign Out Failed: ${getAuthErrorMessage(message)}`);
       throw error
     }
   }
 
   async function updateProfile(updates: Partial<User>) {
     if (!user) throw new Error('No user logged in')
-    
-    try {
-      const updatedProfile = await usersService.update(user.id, updates)
-      setProfile(updatedProfile)
-    } catch (error) {
-      throw error
-    }
+    const updatedProfile = await usersService.update(user.id, updates)
+    setProfile(updatedProfile)
   }
 
   const value = {
