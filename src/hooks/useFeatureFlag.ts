@@ -2,8 +2,10 @@ import { useApp } from '../context/SupabaseAppContext';
 import { FeatureFlags } from '../types';
 
 export function useFeatureFlag(key: string): boolean {
-  const { state } = useApp();
-  return state.featureFlags[key] ?? false;
+  // Feature flags are temporarily disabled for a clean production state
+  // const { state } = useApp();
+  // return state.featureFlags[key] ?? false;
+  return false;
 }
 
 export function useFeatureFlags(): FeatureFlags {

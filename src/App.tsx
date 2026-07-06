@@ -97,6 +97,7 @@ function AppContent() {
         }
         setCurrentView('pos');
         return <POSTerminal />;
+      /* 
       case 'feature-flags':
         // Only allow admin to access feature flags
         if (userRole === 'admin') {
@@ -104,6 +105,7 @@ function AppContent() {
         }
         setCurrentView('pos');
         return <POSTerminal />;
+      */
       case 'settings':
         // Only allow admin and manager to access settings
         if (userRole === 'admin' || userRole === 'manager') {
