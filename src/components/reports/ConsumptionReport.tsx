@@ -5,7 +5,7 @@ import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { consumptionLogService } from '../../lib/services';
 
 export function ConsumptionReport() {
-  const inventoryEnabled = useFeatureFlag('inventory_tracking');
+  const inventoryEnabled = useFeatureFlag('inventory');
   const [logs, setLogs] = useState<ConsumptionLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState(() => {

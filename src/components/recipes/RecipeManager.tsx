@@ -10,7 +10,7 @@ import Swal from 'sweetalert2';
 
 export function RecipeManager() {
   const { state, dispatch } = useApp();
-  const inventoryEnabled = useFeatureFlag('inventory_tracking');
+  const inventoryEnabled = useFeatureFlag('inventory');
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);

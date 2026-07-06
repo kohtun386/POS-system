@@ -24,9 +24,9 @@ function AppContent() {
   const { user, loading } = useAuth();
   const { state } = useApp();
   const [currentView, setCurrentView] = useState('pos');
-  const inventoryEnabled = useFeatureFlag('inventory_tracking');
+  const inventoryEnabled = useFeatureFlag('inventory');
   const customerEnabled = useFeatureFlag('customer_management');
-  const discountEnabled = useFeatureFlag('discount_engine');
+  const discountEnabled = useFeatureFlag('discounts');
   const kitchenDisplayEnabled = useFeatureFlag('kitchen_display');
 
   // Show loading spinner while auth is loading

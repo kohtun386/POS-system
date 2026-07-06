@@ -18,9 +18,9 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
   const { state, dispatch } = useApp();
   const { signOut } = useAuth();
   const { isDark, toggleTheme } = useTheme();
-  const inventoryEnabled = useFeatureFlag('inventory_tracking');
+  const inventoryEnabled = useFeatureFlag('inventory');
   const customerEnabled = useFeatureFlag('customer_management');
-  const discountEnabled = useFeatureFlag('discount_engine');
+  const discountEnabled = useFeatureFlag('discounts');
   const kitchenDisplayEnabled = useFeatureFlag('kitchen_display');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);

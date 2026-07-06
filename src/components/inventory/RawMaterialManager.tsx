@@ -9,7 +9,7 @@ import { swalConfig } from '../../lib/sweetAlert';
 
 export function RawMaterialManager() {
   const { state, dispatch } = useApp();
-  const inventoryEnabled = useFeatureFlag('inventory_tracking');
+  const inventoryEnabled = useFeatureFlag('inventory');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showModal, setShowModal] = useState(false);
