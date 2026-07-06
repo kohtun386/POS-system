@@ -23,7 +23,12 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.env.*
+!.env.example
 supabase-mcp-server-supabase-0.8.2.tgz
+
+# Supabase seed files (contain dev credentials)
+supabase/seed.sql
 .vercel
 
 # MCP and Claude config (may contain env var references exposing project architecture)
@@ -47,3 +52,6 @@ slides/
 AGENTS.md
 *.Zone.Identifier
 master-execution-plan.md
+
+# Supabase remote schema dumps (never commit these — they contain insecure grants)
+*_remote_schema.sql
