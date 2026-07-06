@@ -55,3 +55,7 @@ master-execution-plan.md
 
 # Supabase remote schema dumps (never commit these — they contain insecure grants)
 *_remote_schema.sql
+
+# Playwright MCP session logs and test artifacts
+.playwright-mcp/
+*.png
