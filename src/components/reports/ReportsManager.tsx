@@ -203,7 +203,7 @@ export function ReportsManager() {
     });
   }, [state.products, filteredSales, reportType]);
 
-  const COLORS = ['#2563EB', '#059669', '#D97706', '#DC2626', '#7C3AED', '#EC4899'];
+  const COLORS = ['#9a693a', '#f57323', '#16a34a', '#dc2626', '#7c3aed', '#ec4899'];
 
   const exportReport = () => {
     let csvHeader = '';
@@ -251,12 +251,12 @@ export function ReportsManager() {
   };
 
   return (
-    <div className="p-4 lg:p-6 space-y-6 bg-gray-50 min-h-full">
+    <div className="p-4 lg:p-6 space-y-6 bg-[#faf8f5] dark:bg-[#1f1309] min-h-full">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Reports & Analytics</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl lg:text-3xl font-bold text-[#473b32] dark:text-[#f0ece5]">Reports & Analytics</h1>
+          <p className="text-[#7d6b57] dark:text-[#c6bbab] mt-1">
             {format(validStartDate, 'MMM dd, yyyy')} - {format(validEndDate, 'MMM dd, yyyy')}
           </p>
         </div>
@@ -274,8 +274,8 @@ export function ReportsManager() {
       <div className="card p-4 lg:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 gap-4">
           <div className="flex items-center space-x-2">
-            <BarChart3 className="h-5 w-5 text-gray-400" />
-            <span className="font-medium text-gray-700">Report Filters</span>
+            <BarChart3 className="h-5 w-5 text-[#ad9e8a]" />
+            <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">Report Filters</span>
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
@@ -337,10 +337,10 @@ export function ReportsManager() {
       {/* Summary Cards */}
       {reportType === 'sales' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <div className="stat-card bg-gradient-to-br from-green-500 to-green-600">
+          <div className="stat-card bg-gradient-to-br from-[#9a693a] to-[#7a4f2c]">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-green-100 text-sm font-medium">Total Revenue</p>
+                <p className="text-white/80 text-sm font-medium">Total Revenue</p>
                 <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {totalRevenue.toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
@@ -349,10 +349,10 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-blue-500 to-blue-600">
+          <div className="stat-card bg-gradient-to-br from-[#f57323] to-[#e55c13]">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Transactions</p>
+                <p className="text-white/80 text-sm font-medium">Transactions</p>
                 <p className="text-2xl lg:text-3xl font-bold">{totalTransactions}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
@@ -361,10 +361,10 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-purple-500 to-purple-600">
+          <div className="stat-card bg-gradient-to-br from-[#16a34a] to-[#15803d]">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-purple-100 text-sm font-medium">Avg. Transaction</p>
+                <p className="text-white/80 text-sm font-medium">Avg. Transaction</p>
                 <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {averageTransaction.toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
@@ -373,10 +373,10 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-orange-500 to-orange-600">
+          <div className="stat-card bg-gradient-to-br from-[#7c3aed] to-[#6d28d9]">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-orange-100 text-sm font-medium">Total Discounts</p>
+                <p className="text-white/80 text-sm font-medium">Total Discounts</p>
                 <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {totalDiscounts.toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
@@ -389,10 +389,10 @@ export function ReportsManager() {
 
       {reportType === 'customers' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <div className="stat-card bg-gradient-to-br from-blue-500 to-blue-600">
+          <div className="stat-card bg-gradient-to-br from-[#9a693a] to-[#7a4f2c]">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Total Customers</p>
+                <p className="text-white/80 text-sm font-medium">Total Customers</p>
                 <p className="text-2xl lg:text-3xl font-bold">{state.customers.length}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
@@ -401,10 +401,10 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-green-500 to-green-600">
+          <div className="stat-card bg-gradient-to-br from-[#f57323] to-[#e55c13]">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-green-100 text-sm font-medium">Active Customers</p>
+                <p className="text-white/80 text-sm font-medium">Active Customers</p>
                 <p className="text-xl lg:text-2xl font-bold">{customerData.filter(c => c.totalTransactions > 0).length}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
@@ -413,10 +413,10 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-purple-500 to-purple-600">
+          <div className="stat-card bg-gradient-to-br from-[#16a34a] to-[#15803d]">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-purple-100 text-sm font-medium">Avg. Customer Value</p>
+                <p className="text-white/80 text-sm font-medium">Avg. Customer Value</p>
                 <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {(customerData.reduce((sum, c) => sum + c.totalSpent, 0) / Math.max(customerData.filter(c => c.totalTransactions > 0).length, 1)).toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
@@ -425,12 +425,12 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-orange-500 to-orange-600">
+          <div className="stat-card bg-gradient-to-br from-[#7c3aed] to-[#6d28d9]">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-orange-100 text-sm font-medium">Top Customer</p>
+                <p className="text-white/80 text-sm font-medium">Top Customer</p>
                 <p className="text-lg lg:text-xl font-bold">{customerData[0]?.name || 'N/A'}</p>
-                <p className="text-orange-100 text-xs">{customerData[0] ? `${state.settings.currency} ${customerData[0].totalSpent.toFixed(2)}` : ''}</p>
+                <p className="text-white/80 text-xs">{customerData[0] ? `${state.settings.currency} ${customerData[0].totalSpent.toFixed(2)}` : ''}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -442,10 +442,10 @@ export function ReportsManager() {
 
       {reportType === 'inventory' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <div className="stat-card bg-gradient-to-br from-blue-500 to-blue-600">
+          <div className="stat-card bg-gradient-to-br from-[#9a693a] to-[#7a4f2c]">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Total Products</p>
+                <p className="text-white/80 text-sm font-medium">Total Products</p>
                 <p className="text-2xl lg:text-3xl font-bold">{state.products.length}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
@@ -454,10 +454,10 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-red-500 to-red-600">
+          <div className="stat-card bg-gradient-to-br from-[#f57323] to-[#e55c13]">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-red-100 text-sm font-medium">Low Stock Items</p>
+                <p className="text-white/80 text-sm font-medium">Low Stock Items</p>
                 <p className="text-xl lg:text-2xl font-bold">{inventoryData.filter(item => item.stockStatus === 'Low Stock' || item.stockStatus === 'Out of Stock').length}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
@@ -466,10 +466,10 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-green-500 to-green-600">
+          <div className="stat-card bg-gradient-to-br from-[#16a34a] to-[#15803d]">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-green-100 text-sm font-medium">Total Stock Value</p>
+                <p className="text-white/80 text-sm font-medium">Total Stock Value</p>
                 <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {inventoryData.reduce((sum, item) => sum + item.stockValue, 0).toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
@@ -478,10 +478,10 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-purple-500 to-purple-600">
+          <div className="stat-card bg-gradient-to-br from-[#7c3aed] to-[#6d28d9]">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-purple-100 text-sm font-medium">Potential Revenue</p>
+                <p className="text-white/80 text-sm font-medium">Potential Revenue</p>
                 <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {inventoryData.reduce((sum, item) => sum + item.potentialRevenue, 0).toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
@@ -497,7 +497,7 @@ export function ReportsManager() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Sales Trend */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
               <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
               Sales Trend
             </h3>
@@ -512,8 +512,8 @@ export function ReportsManager() {
                     name === 'sales' ? 'Sales' : 'Transactions'
                   ]}
                   contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
+                    backgroundColor: '#faf8f5',
+                    border: '1px solid #ded7cc',
                     borderRadius: '12px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
@@ -522,20 +522,20 @@ export function ReportsManager() {
                 <Line 
                   type="monotone" 
                   dataKey="sales" 
-                  stroke="#2563EB" 
+                  stroke="#9a693a" 
                   strokeWidth={3} 
                   name="Sales"
-                  dot={{ fill: '#2563EB', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#2563EB', strokeWidth: 2 }}
+                  dot={{ fill: '#9a693a', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: '#9a693a', strokeWidth: 2 }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="transactions" 
-                  stroke="#059669" 
+                  stroke="#16a34a" 
                   strokeWidth={3} 
                   name="Transactions"
-                  dot={{ fill: '#059669', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#059669', strokeWidth: 2 }}
+                  dot={{ fill: '#16a34a', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: '#16a34a', strokeWidth: 2 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -543,7 +543,7 @@ export function ReportsManager() {
 
           {/* Category Distribution */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
               <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
               Sales by Category
             </h3>
@@ -566,8 +566,8 @@ export function ReportsManager() {
                 <Tooltip 
                   formatter={(value: any) => [`${state.settings.currency} ${Number(value).toFixed(2)}`, 'Revenue']}
                   contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
+                    backgroundColor: '#faf8f5',
+                    border: '1px solid #ded7cc',
                     borderRadius: '12px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
@@ -582,7 +582,7 @@ export function ReportsManager() {
         <div className="grid grid-cols-1 gap-6">
           {/* Customer Spending Chart */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
               <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
               Top Customer Spending
             </h3>
@@ -601,8 +601,8 @@ export function ReportsManager() {
                     name === 'spending' ? 'Total Spent' : 'Transactions'
                   ]}
                   contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
+                    backgroundColor: '#faf8f5',
+                    border: '1px solid #ded7cc',
                     borderRadius: '12px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
@@ -611,11 +611,11 @@ export function ReportsManager() {
                 <Line 
                   type="monotone" 
                   dataKey="spending" 
-                  stroke="#2563EB" 
+                  stroke="#9a693a" 
                   strokeWidth={3} 
                   name="Total Spent"
-                  dot={{ fill: '#2563EB', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#2563EB', strokeWidth: 2 }}
+                  dot={{ fill: '#9a693a', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: '#9a693a', strokeWidth: 2 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -627,7 +627,7 @@ export function ReportsManager() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Stock Status Chart */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
               <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
               Stock Status Distribution
             </h3>
@@ -647,15 +647,15 @@ export function ReportsManager() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  <Cell fill="#059669" />
-                  <Cell fill="#D97706" />
+                  <Cell fill="#16a34a" />
+                  <Cell fill="#f57323" />
                   <Cell fill="#DC2626" />
                 </Pie>
                 <Tooltip 
                   formatter={(value: any) => [value, 'Products']}
                   contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
+                    backgroundColor: '#faf8f5',
+                    border: '1px solid #ded7cc',
                     borderRadius: '12px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
@@ -666,7 +666,7 @@ export function ReportsManager() {
 
           {/* Category Stock Value */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
               <DollarSign className="h-5 w-5 mr-2 text-green-600" />
               Stock Value by Category
             </h3>
@@ -694,8 +694,8 @@ export function ReportsManager() {
                 <Tooltip 
                   formatter={(value: any) => [`${state.settings.currency} ${Number(value).toFixed(2)}`, 'Stock Value']}
                   contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
+                    backgroundColor: '#faf8f5',
+                    border: '1px solid #ded7cc',
                     borderRadius: '12px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
@@ -709,8 +709,8 @@ export function ReportsManager() {
       {/* Data Tables */}
       {reportType === 'sales' && (
         <div className="card overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center font-fraunces">
+          <div className="px-6 py-4 border-b border-[#ded7cc] dark:border-[#54463b]">
+            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] flex items-center font-fraunces">
               <ShoppingCart className="h-5 w-5 mr-2 text-green-600" />
               Top Selling Products
             </h3>
@@ -726,15 +726,15 @@ export function ReportsManager() {
                   <th className="table-header-cell">Avg. Price</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-[#ded7cc] dark:divide-[#54463b]">
                 {topProducts.map((product, index) => (
                   <tr key={index} className="table-row">
                     <td className="table-cell">
-                      <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full font-bold text-sm">
+                      <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-[#9a693a] to-[#7a4f2c] text-white rounded-full font-bold text-sm">
                         {index + 1}
                       </div>
                     </td>
-                    <td className="table-cell font-semibold text-gray-900">
+                    <td className="table-cell font-semibold text-[#473b32] dark:text-[#f0ece5]">
                       {product.name}
                     </td>
                     <td className="table-cell">
@@ -743,7 +743,7 @@ export function ReportsManager() {
                     <td className="table-cell font-semibold text-green-600">
                       {state.settings.currency} {product.revenue.toFixed(2)}
                     </td>
-                    <td className="table-cell text-gray-600">
+                    <td className="table-cell text-[#7d6b57] dark:text-[#c6bbab]">
                       {state.settings.currency} {(product.revenue / product.quantity).toFixed(2)}
                     </td>
                   </tr>
@@ -756,8 +756,8 @@ export function ReportsManager() {
 
       {reportType === 'customers' && (
         <div className="card overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center font-fraunces">
+          <div className="px-6 py-4 border-b border-[#ded7cc] dark:border-[#54463b]">
+            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] flex items-center font-fraunces">
               <Users className="h-5 w-5 mr-2 text-blue-600" />
               Customer Analytics
             </h3>
@@ -774,15 +774,15 @@ export function ReportsManager() {
                   <th className="table-header-cell">Last Purchase</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-[#ded7cc] dark:divide-[#54463b]">
                 {customerData.slice(0, 20).map((customer) => (
                   <tr key={customer.id} className="table-row">
                     <td className="table-cell">
                       <div className="flex items-center">
-                        <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full font-bold text-sm mr-3">
+                        <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-[#9a693a] to-[#7a4f2c] text-white rounded-full font-bold text-sm mr-3">
                           {customer.name.charAt(0).toUpperCase()}
                         </div>
-                        <span className="font-semibold text-gray-900">{customer.name}</span>
+                        <span className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{customer.name}</span>
                       </div>
                     </td>
                     <td className="table-cell font-semibold text-green-600">
@@ -794,10 +794,10 @@ export function ReportsManager() {
                     <td className="table-cell">
                       <span className="badge badge-secondary">{customer.totalItems}</span>
                     </td>
-                    <td className="table-cell text-gray-600">
+                    <td className="table-cell text-[#7d6b57] dark:text-[#c6bbab]">
                       {state.settings.currency} {customer.avgTransactionValue.toFixed(2)}
                     </td>
-                    <td className="table-cell text-gray-600">
+                    <td className="table-cell text-[#7d6b57] dark:text-[#c6bbab]">
                       {format(customer.lastPurchase, 'MMM dd, yyyy')}
                     </td>
                   </tr>
@@ -810,8 +810,8 @@ export function ReportsManager() {
 
       {reportType === 'inventory' && (
         <div className="card overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center font-fraunces">
+          <div className="px-6 py-4 border-b border-[#ded7cc] dark:border-[#54463b]">
+            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] flex items-center font-fraunces">
               <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
               Inventory Analytics
             </h3>
@@ -832,16 +832,16 @@ export function ReportsManager() {
                   <th className="table-header-cell">Margin</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-[#ded7cc] dark:divide-[#54463b]">
                 {inventoryData.slice(0, 50).map((item) => (
                   <tr key={item.id} className="table-row">
                     <td className="table-cell">
                       <div className="flex items-center">
-                        <span className="font-semibold text-gray-900">{item.name}</span>
+                        <span className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{item.name}</span>
                         {!item.active && <span className="ml-2 badge badge-error text-xs">Inactive</span>}
                       </div>
                     </td>
-                    <td className="table-cell font-mono text-sm text-gray-600">{item.sku}</td>
+                    <td className="table-cell font-mono text-sm text-[#7d6b57] dark:text-[#c6bbab]">{item.sku}</td>
                     <td className="table-cell">
                       <span className="badge badge-secondary">{item.category}</span>
                     </td>
