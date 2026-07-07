@@ -37,16 +37,6 @@ supabase/seed.sql
 .claude/plans/
 opencode.json
 
-# Presentations (local use only)
-slides/
-opencode.json
-
-# Presentation files (local use only)
-slides/
-opencode.json
-
-# Presentations (local use only)
-slides/
 .agents/
 .codex/
 AGENTS.md
