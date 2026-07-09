@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
 import {
   Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, Shop,
-  FeatureFlags, CashShift, RawMaterial, Recipe
+  FeatureFlags, CashShift
 } from '../types';
 import { useAuth } from './AuthContext';
 import {
@@ -15,8 +15,6 @@ import {
   shopMembershipsService,
   featureDefinitionsService,
   shopFeaturesService,
-  rawMaterialsService,
-  recipesService,
   cashShiftsService,
   resolveCapabilitiesRpc
 } from '../lib/services';
@@ -39,8 +37,6 @@ interface AppState {
   featureFlags: FeatureFlags;
   capabilities: string[];
   cashShifts: CashShift[];
-  rawMaterials: RawMaterial[];
-  recipes: Recipe[];
   loading: boolean;
   error: string | null;
 }
@@ -85,15 +81,7 @@ type AppAction =
   | { type: 'SET_CAPABILITIES'; payload: string[] }
   | { type: 'SET_CASH_SHIFTS'; payload: CashShift[] }
   | { type: 'ADD_CASH_SHIFT'; payload: CashShift }
-  | { type: 'UPDATE_CASH_SHIFT'; payload: CashShift }
-  | { type: 'SET_RAW_MATERIALS'; payload: RawMaterial[] }
-  | { type: 'ADD_RAW_MATERIAL'; payload: RawMaterial }
-  | { type: 'UPDATE_RAW_MATERIAL'; payload: RawMaterial }
-  | { type: 'DELETE_RAW_MATERIAL'; payload: string }
-  | { type: 'SET_RECIPES'; payload: Recipe[] }
-  | { type: 'ADD_RECIPE'; payload: Recipe }
-  | { type: 'UPDATE_RECIPE'; payload: Recipe }
-  | { type: 'DELETE_RECIPE'; payload: string };
+  | { type: 'UPDATE_CASH_SHIFT'; payload: CashShift };
 
 const initialState: AppState = {
   products: [],
@@ -125,8 +113,6 @@ const initialState: AppState = {
   featureFlags: {},
   capabilities: ['pos'],  // Minimal default so POS always works
   cashShifts: [],
-  rawMaterials: [],
-  recipes: [],
   loading: false,
   error: null,
 };
@@ -281,34 +267,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         cashShifts: state.cashShifts.map(cs => cs.id === action.payload.id ? action.payload : cs),
       };
-    case 'SET_RAW_MATERIALS':
-      return { ...state, rawMaterials: action.payload };
-    case 'ADD_RAW_MATERIAL':
-      return { ...state, rawMaterials: [...state.rawMaterials, action.payload] };
-    case 'UPDATE_RAW_MATERIAL':
-      return {
-        ...state,
-        rawMaterials: state.rawMaterials.map(rm => rm.id === action.payload.id ? action.payload : rm),
-      };
-    case 'DELETE_RAW_MATERIAL':
-      return {
-        ...state,
-        rawMaterials: state.rawMaterials.filter(rm => rm.id !== action.payload),
-      };
-    case 'SET_RECIPES':
-      return { ...state, recipes: action.payload };
-    case 'ADD_RECIPE':
-      return { ...state, recipes: [...state.recipes, action.payload] };
-    case 'UPDATE_RECIPE':
-      return {
-        ...state,
-        recipes: state.recipes.map(r => r.id === action.payload.id ? action.payload : r),
-      };
-    case 'DELETE_RECIPE':
-      return {
-        ...state,
-        recipes: state.recipes.filter(r => r.id !== action.payload),
-      };
     default:
       return state;
   }
@@ -413,9 +371,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         users,
         salesTabs,
         shop,
-        featureDefinitions,
-        rawMaterials,
-        recipes
+        featureDefinitions
       ] = await Promise.all([
         productsService.getAll(),
         customersService.getAll(),
@@ -427,8 +383,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // Load user's active shop via service layer
         user ? shopMembershipsService.getShopByUserId(user.id) : Promise.resolve(null),
         featureDefinitionsService.getAll(),
-        rawMaterialsService.getAll(),
-        recipesService.getAll(),
       ]);
 
       // Load shop feature overrides + cash shifts AFTER shop is known (depends on shop.id)
@@ -444,8 +398,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_SETTINGS', payload: settings });
       dispatch({ type: 'SET_USERS', payload: users });
       dispatch({ type: 'SET_SALES_TABS', payload: salesTabs });
-      dispatch({ type: 'SET_RAW_MATERIALS', payload: rawMaterials });
-      dispatch({ type: 'SET_RECIPES', payload: recipes });
 
       // Set active shop
       if (shop) {

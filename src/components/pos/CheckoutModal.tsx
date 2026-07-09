@@ -346,10 +346,10 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
       };
 
       // Pre-checkout stock validation (atomic trigger also checks, but this gives user-friendly errors)
-      const stockCheck = await checkStockAvailability(state.cart, state.activeShopId);
+      const stockCheck = await checkStockAvailability(state.cart);
       if (!stockCheck.sufficient) {
         const errorLines = stockCheck.insufficientItems.map(
-          item => `• ${item.productName}: ${item.rawMaterialName} — need ${item.needed.toFixed(1)}${item.unit}, have ${item.available.toFixed(1)}${item.unit}`
+          item => `• ${item.productName}: need ${item.needed}, have ${item.available}`
         ).join('\n');
         swalConfig.error(`Insufficient stock:\n${errorLines}`);
         setIsProcessing(false);

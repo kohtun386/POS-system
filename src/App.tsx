@@ -20,8 +20,6 @@ const Settings = lazy(() => import('./components/settings/Settings').then(m => (
 const DiscountManager = lazy(() => import('./components/discounts/DiscountManager').then(m => ({ default: m.DiscountManager })));
 const UserManager = lazy(() => import('./components/users/UserManager').then(m => ({ default: m.UserManager })));
 const FeatureFlagsManager = lazy(() => import('./components/settings/FeatureFlagsManager').then(m => ({ default: m.FeatureFlagsManager })));
-const RawMaterialManager = lazy(() => import('./components/inventory/RawMaterialManager').then(m => ({ default: m.RawMaterialManager })));
-const RecipeManager = lazy(() => import('./components/recipes/RecipeManager').then(m => ({ default: m.RecipeManager })));
 const AlertManager = lazy(() => import('./components/alerts/AlertManager').then(m => ({ default: m.AlertManager })));
 
 function AppContent() {
@@ -31,8 +29,6 @@ function AppContent() {
   const inventoryEnabled = useCapability('inventory');
   const customerEnabled = useCapability('customer_management');
   const discountEnabled = useCapability('discounts');
-  const recipeBomEnabled = useCapability('recipe_bom');
-  const rawMaterialsEnabled = useCapability('raw_materials');
 
   // Show loading spinner while auth is loading
   if (loading) {
@@ -83,20 +79,6 @@ function AppContent() {
         // Only allow admin and manager to access inventory (feature-gated)
         if ((userRole === 'admin' || userRole === 'manager') && inventoryEnabled) {
           return <InventoryManager />;
-        }
-        setCurrentView('pos');
-        return <POSTerminal />;
-      case 'raw-materials':
-        // Only allow admin and manager to access raw materials (feature-gated)
-        if ((userRole === 'admin' || userRole === 'manager') && inventoryEnabled && rawMaterialsEnabled) {
-          return <RawMaterialManager />;
-        }
-        setCurrentView('pos');
-        return <POSTerminal />;
-      case 'recipes':
-        // Only allow admin and manager to access recipes (feature-gated)
-        if ((userRole === 'admin' || userRole === 'manager') && inventoryEnabled && recipeBomEnabled) {
-          return <RecipeManager />;
         }
         setCurrentView('pos');
         return <POSTerminal />;

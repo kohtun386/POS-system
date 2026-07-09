@@ -6,7 +6,6 @@ import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { UpgradePrompt } from '../ui/UpgradePrompt';
 import { OwnerInsights } from './OwnerInsights';
 import { ProfitMarginAnalytics } from './ProfitMarginAnalytics';
-import { WasteTracking } from './WasteTracking';
 import { WhatsAppReportConfig } from './WhatsAppReportConfig';
 
 export function ReportsManager() {
@@ -295,7 +294,6 @@ export function ReportsManager() {
               <option value="customers">Customer Report</option>
               <option value="owner-insights" disabled={!hasProReports}>Owner Insights {hasProReports ? '' : '(Pro)'}</option>
               <option value="profit-margin" disabled={!hasProReports}>Profit Margin {hasProReports ? '' : '(Pro)'}</option>
-              <option value="waste" disabled={!hasProReports}>Waste Tracking {hasProReports ? '' : '(Pro)'}</option>
               <option value="whatsapp" disabled={!hasProReports}>WhatsApp Reports {hasProReports ? '' : '(Pro)'}</option>
             </select>
 
@@ -929,15 +927,6 @@ export function ReportsManager() {
           ? <ProfitMarginAnalytics dateRange={dateRange} />
           : <div className="space-y-4">
               <UpgradePrompt feature="Profit Margin Analytics" tier="pro" onClose={() => setReportType('sales')} />
-            </div>
-      )}
-
-      {/* Pro: Waste Tracking */}
-      {reportType === 'waste' && (
-        hasProReports
-          ? <WasteTracking />
-          : <div className="space-y-4">
-              <UpgradePrompt feature="Waste Tracking" tier="pro" onClose={() => setReportType('sales')} />
             </div>
       )}
 

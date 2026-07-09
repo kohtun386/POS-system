@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   User, Settings, LogOut, ShoppingCart, Monitor, Smartphone, Bell, Menu, X, Percent,
-  Receipt, Package, Users, BarChart3, Sun, Moon, ChefHat, Leaf
+  Receipt, Package, Users, BarChart3, Sun, Moon
 } from 'lucide-react';
 import { useApp, useCapability } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -20,8 +20,6 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
   const inventoryEnabled = useCapability('inventory');
   const customerEnabled = useCapability('customer_management');
   const discountEnabled = useCapability('discounts');
-  const recipeBomEnabled = useCapability('recipe_bom');
-  const rawMaterialsEnabled = useCapability('raw_materials');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
@@ -74,16 +72,6 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
     // Inventory - Manager and Admin can access (feature-gated)
     if ((role === 'admin' || role === 'manager') && inventoryEnabled) {
       items.push({ id: 'inventory', label: 'Inventory', icon: Package, color: 'text-[#9a693a]' });
-    }
-
-    // Raw Materials - Manager and Admin can access (feature-gated)
-    if ((role === 'admin' || role === 'manager') && inventoryEnabled && rawMaterialsEnabled) {
-      items.push({ id: 'raw-materials', label: 'Raw Materials', icon: Leaf, color: 'text-[#22c55e]' });
-    }
-
-    // Recipes - Manager and Admin can access (feature-gated)
-    if ((role === 'admin' || role === 'manager') && inventoryEnabled && recipeBomEnabled) {
-      items.push({ id: 'recipes', label: 'Recipes', icon: ChefHat, color: 'text-[#f57323]' });
     }
 
     // Customers - Manager and Admin can access (feature-gated)

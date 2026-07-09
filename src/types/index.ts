@@ -132,9 +132,6 @@ export interface Sale {
   notes?: string;
   appliedDiscounts?: AppliedDiscount[];
   freeGifts?: CartItem[];
-  transactionCurrency?: string;
-  baseCurrencyAmount?: number;
-  exchangeRateUsed?: number;
 }
 
 export interface AppliedDiscount {
@@ -174,8 +171,6 @@ export interface Shop {
   ownerId?: string;
   businessType: 'coffee_shop';
   taxRate: number;
-  currency: string;
-  baseCurrency: string;
   invoicePrefix: string;
   invoiceCounter: number;
   draftRetentionDays: number;
@@ -194,78 +189,18 @@ export interface AppSettings {
   storeEmail: string;
   storeLogo?: string;
   taxRate: number;
-  currency: string;
-  baseCurrency: string;
   interfaceMode: 'touch' | 'traditional';
   autoBackup: boolean;
   receiptPrinter: boolean;
   theme: 'light' | 'dark' | 'auto';
   invoicePrefix: string;
   invoiceCounter: number;
-  exchangeRateProvider?: 'fixer' | 'currencylayer' | 'exchangerate' | 'manual';
-  exchangeRateApiKey?: string;
-  exchangeRateUpdateInterval?: number;
 }
 
 
 export interface LoginCredentials {
   username: string;
   password: string;
-}
-
-// Currency-related interfaces
-export interface CurrencyConfig {
-  id: string;
-  code: string;
-  name: string;
-  symbol: string;
-  symbolPosition: 'before' | 'after';
-  decimalPlaces: number;
-  isActive: boolean;
-  isBaseCurrency: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ExchangeRate {
-  id: string;
-  baseCurrency: string;
-  targetCurrency: string;
-  rate: number;
-  source: 'api' | 'manual' | 'fallback';
-  isManualOverride: boolean;
-  effectiveFrom: Date;
-  effectiveTo?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ExchangeRateHistory {
-  id: string;
-  baseCurrency: string;
-  targetCurrency: string;
-  rate: number;
-  previousRate?: number;
-  changePercentage?: number;
-  source: 'api' | 'manual' | 'fallback';
-  isManualOverride: boolean;
-  recordedAt: Date;
-}
-
-export interface CurrencyConversion {
-  originalAmount: number;
-  convertedAmount: number;
-  fromCurrency: string;
-  toCurrency: string;
-  exchangeRate: number;
-  timestamp: Date;
-}
-
-// Enhanced Sale interface with currency support
-export interface SaleWithCurrency extends Sale {
-  transactionCurrency: string;
-  baseCurrencyAmount?: number;
-  exchangeRateUsed?: number;
 }
 
 // Inventory Alert System Types
@@ -422,124 +357,10 @@ export interface ShopFeature {
 export type FeatureFlags = Record<string, boolean>;
 
 // ================================================================
-// Recipe BOM Types
+// Print Job Types (kept — used by printJobsService for Growth+ receipt printing)
 // ================================================================
 
-export interface RawMaterial {
-  id: string;
-  shopId: string;
-  name: string;
-  sku?: string;
-  category: 'ingredient' | 'packaging' | 'consumable';
-  currentStock: number;
-  minimumStock: number;
-  baseUnit: string; // 'ml', 'g', 'l', 'kg', 'unit', 'oz'
-  costPerUnit?: number;
-  isActive: boolean;
-  notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface Recipe {
-  id: string;
-  shopId: string;
-  productId: string;
-  productName: string;
-  servingSize: number;
-  servingUnit: string;
-  prepTimeSeconds?: number;
-  instructions?: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface RecipeLine {
-  id: string;
-  shopId: string;
-  recipeId: string;
-  rawMaterialId: string;
-  rawMaterialName: string;
-  quantity: number; // in base_unit
-  recipeUnit?: string; // display unit for recipe authoring
-  recipeQuantity?: number; // display quantity
-  wastagePercent: number;
-  isOptional: boolean;
-  notes?: string;
-  createdAt: Date;
-}
-
-export interface ConsumptionLog {
-  id: string;
-  shopId: string;
-  saleId: string;
-  saleItemIndex?: number;
-  productId: string;
-  productName: string;
-  rawMaterialId: string;
-  rawMaterialName: string;
-  quantityConsumed: number;
-  quantityBase: number;
-  wastageAmount: number;
-  unit: string;
-  stockBefore: number;
-  stockAfter: number;
-  consumedAt: Date;
-}
-
-export interface UomConversion {
-  id: string;
-  fromUnit: string;
-  toUnit: string;
-  factor: number;
-}
-
-export interface StockCheckResult {
-  sufficient: boolean;
-  insufficientItems: Array<{
-    productName: string;
-    rawMaterialName: string;
-    needed: number;
-    available: number;
-    unit: string;
-  }>;
-}
-
-// ================================================================
-// Kitchen KDS Types
-// ================================================================
-
-export type KitchenStation = 'bar' | 'espresso' | 'food' | 'pastry';
-export type KitchenOrderStatus = 'pending' | 'in_progress' | 'ready' | 'picked_up' | 'cancelled';
 export type PrintJobStatus = 'pending' | 'printing' | 'completed' | 'failed';
-
-export interface KitchenOrderItem {
-  productName: string;
-  quantity: number;
-  productId?: string;
-  notes?: string;
-}
-
-/** Stored as JSONB in kitchen_orders.items — includes station + saleId metadata */
-export interface KitchenOrderItemsPayload {
-  saleId?: string;
-  station?: KitchenStation;
-  lineItems: KitchenOrderItem[];
-}
-
-export interface KitchenOrder {
-  id: string;
-  shopId: string;
-  saleId?: string;
-  station?: KitchenStation;
-  items: KitchenOrderItem[];
-  status: KitchenOrderStatus;
-  startedAt?: Date;
-  completedAt?: Date;
-  pickedUpAt?: Date;
-  createdAt: Date;
-}
 
 export interface PrintJob {
   id: string;
