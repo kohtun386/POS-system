@@ -19,31 +19,20 @@ const ReportsManager = lazy(() => import('./components/reports/ReportsManager').
 const Settings = lazy(() => import('./components/settings/Settings').then(m => ({ default: m.Settings })));
 const DiscountManager = lazy(() => import('./components/discounts/DiscountManager').then(m => ({ default: m.DiscountManager })));
 const UserManager = lazy(() => import('./components/users/UserManager').then(m => ({ default: m.UserManager })));
-<<<<<<< HEAD
-const KitchenDisplay = lazy(() => import('./components/kitchen/KitchenDisplay').then(m => ({ default: m.KitchenDisplay })));
-=======
 const FeatureFlagsManager = lazy(() => import('./components/settings/FeatureFlagsManager').then(m => ({ default: m.FeatureFlagsManager })));
 const RawMaterialManager = lazy(() => import('./components/inventory/RawMaterialManager').then(m => ({ default: m.RawMaterialManager })));
 const RecipeManager = lazy(() => import('./components/recipes/RecipeManager').then(m => ({ default: m.RecipeManager })));
 const AlertManager = lazy(() => import('./components/alerts/AlertManager').then(m => ({ default: m.AlertManager })));
->>>>>>> feature/vision-v3-migration
 
 function AppContent() {
   const { user, loading, profile, isPendingApproval } = useAuth();
   const { state } = useApp();
   const [currentView, setCurrentView] = useState('pos');
-<<<<<<< HEAD
-  const inventoryEnabled = useFeatureFlag('inventory');
-  const customerEnabled = useFeatureFlag('customer_management');
-  const discountEnabled = useFeatureFlag('discounts');
-  const kitchenDisplayEnabled = useFeatureFlag('kitchen_display');
-=======
   const inventoryEnabled = useCapability('inventory');
   const customerEnabled = useCapability('customer_management');
   const discountEnabled = useCapability('discounts');
   const recipeBomEnabled = useCapability('recipe_bom');
   const rawMaterialsEnabled = useCapability('raw_materials');
->>>>>>> feature/vision-v3-migration
 
   // Show loading spinner while auth is loading
   if (loading) {

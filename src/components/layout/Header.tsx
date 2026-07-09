@@ -17,18 +17,11 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
   const { state, dispatch } = useApp();
   const { signOut } = useAuth();
   const { isDark, toggleTheme } = useTheme();
-<<<<<<< HEAD
-  const inventoryEnabled = useFeatureFlag('inventory');
-  const customerEnabled = useFeatureFlag('customer_management');
-  const discountEnabled = useFeatureFlag('discounts');
-  const kitchenDisplayEnabled = useFeatureFlag('kitchen_display');
-=======
   const inventoryEnabled = useCapability('inventory');
   const customerEnabled = useCapability('customer_management');
   const discountEnabled = useCapability('discounts');
   const recipeBomEnabled = useCapability('recipe_bom');
   const rawMaterialsEnabled = useCapability('raw_materials');
->>>>>>> feature/vision-v3-migration
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
@@ -118,15 +111,9 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
       items.push({ id: 'users', label: 'Users', icon: User, color: 'text-[#7a4f2c]' });
     }
 
-<<<<<<< HEAD
-    // Kitchen Display - All roles can access (feature-gated)
-    if (kitchenDisplayEnabled) {
-      items.push({ id: 'kitchen', label: 'Kitchen', icon: Monitor, color: 'text-[#22c55e]' });
-=======
     // Feature Flags - Admin only
     if (role === 'admin') {
       items.push({ id: 'feature-flags', label: 'Feature Flags', icon: Settings, color: 'text-[#7a4f2c]' });
->>>>>>> feature/vision-v3-migration
     }
 
     return items;

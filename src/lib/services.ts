@@ -18,16 +18,9 @@ import {
   Sale,
   Discount,
   DiscountCondition,
-<<<<<<< HEAD
-  CartItem,
-  AppliedDiscount,
-  Payment,
-  CardDetails,
-=======
   Payment,
   CardDetails,
   AppliedDiscount,
->>>>>>> feature/vision-v3-migration
   User,
   AppSettings,
   SalesTab,
@@ -503,11 +496,7 @@ export const salesService = {
       invoiceNumber: sale.invoice_number,
       customerId: sale.customer_id || undefined,
       customerName: sale.customer_name || undefined,
-<<<<<<< HEAD
-      items: sale.items as CartItem[],
-=======
       items: (sale.items as CartItem[]) || [],
->>>>>>> feature/vision-v3-migration
       subtotal: sale.subtotal || 0,
       discountAmount: sale.discount_amount || 0,
       taxAmount: sale.tax_amount || 0,
@@ -521,11 +510,7 @@ export const salesService = {
       receiptNumber: sale.receipt_number || undefined,
       notes: sale.notes || undefined,
       appliedDiscounts: sale.applied_discounts as AppliedDiscount[] | undefined,
-<<<<<<< HEAD
-      freeGifts: sale.free_gifts as CartItem[] | undefined
-=======
       freeGifts: sale.free_gifts as CartItem[] | undefined,
->>>>>>> feature/vision-v3-migration
     }))
 
     return {
@@ -567,11 +552,7 @@ export const salesService = {
       invoiceNumber: data.invoice_number,
       customerId: data.customer_id || undefined,
       customerName: data.customer_name || undefined,
-<<<<<<< HEAD
-      items: data.items as CartItem[],
-=======
       items: (data.items as CartItem[]) || [],
->>>>>>> feature/vision-v3-migration
       subtotal: data.subtotal || 0,
       discountAmount: data.discount_amount || 0,
       taxAmount: data.tax_amount || 0,
@@ -584,11 +565,7 @@ export const salesService = {
       receiptNumber: data.receipt_number || undefined,
       notes: data.notes || undefined,
       appliedDiscounts: data.applied_discounts as AppliedDiscount[] | undefined,
-<<<<<<< HEAD
-      freeGifts: data.free_gifts as CartItem[] | undefined
-=======
       freeGifts: data.free_gifts as CartItem[] | undefined,
->>>>>>> feature/vision-v3-migration
     }
   },
 
@@ -670,11 +647,7 @@ export const discountsService = {
       description: discount.description || '',
       type: discount.type as Discount['type'],
       value: discount.value || 0,
-<<<<<<< HEAD
-      conditions: discount.conditions as DiscountCondition[],
-=======
       conditions: (discount.conditions as DiscountCondition[]) || [],
->>>>>>> feature/vision-v3-migration
       freeGiftProducts: discount.free_gift_products || undefined,
       minAmount: discount.min_amount || undefined,
       maxDiscount: discount.max_discount || undefined,
@@ -714,11 +687,7 @@ export const discountsService = {
       description: data.description || '',
       type: data.type as Discount['type'],
       value: data.value || 0,
-<<<<<<< HEAD
-      conditions: data.conditions as DiscountCondition[],
-=======
       conditions: (data.conditions as DiscountCondition[]) || [],
->>>>>>> feature/vision-v3-migration
       freeGiftProducts: data.free_gift_products || undefined,
       minAmount: data.min_amount || undefined,
       maxDiscount: data.max_discount || undefined,
@@ -759,11 +728,7 @@ export const discountsService = {
       description: data.description || '',
       type: data.type as Discount['type'],
       value: data.value || 0,
-<<<<<<< HEAD
-      conditions: data.conditions as DiscountCondition[],
-=======
       conditions: (data.conditions as DiscountCondition[]) || [],
->>>>>>> feature/vision-v3-migration
       freeGiftProducts: data.free_gift_products || undefined,
       minAmount: data.min_amount || undefined,
       maxDiscount: data.max_discount || undefined,
@@ -805,15 +770,6 @@ export const settingsService = {
       taxRate: data.tax_rate || 0,
       currency: data.currency || 'USD',
       baseCurrency: data.base_currency || 'USD',
-<<<<<<< HEAD
-      interfaceMode: data.interface_mode as AppSettings['interfaceMode'] || 'touch',
-      autoBackup: data.auto_backup ?? true,
-      receiptPrinter: data.receipt_printer ?? true,
-      theme: data.theme as AppSettings['theme'] || 'light',
-      invoicePrefix: data.invoice_prefix || 'INV',
-      invoiceCounter: data.invoice_counter || 1000,
-      exchangeRateProvider: data.exchange_rate_provider as AppSettings['exchangeRateProvider'] || 'exchangerate',
-=======
       interfaceMode: (data.interface_mode as AppSettings['interfaceMode']) || 'touch',
       autoBackup: data.auto_backup ?? true,
       receiptPrinter: data.receipt_printer ?? true,
@@ -821,7 +777,6 @@ export const settingsService = {
       invoicePrefix: data.invoice_prefix || 'INV',
       invoiceCounter: data.invoice_counter || 1000,
       exchangeRateProvider: (data.exchange_rate_provider as AppSettings['exchangeRateProvider']) || 'exchangerate',
->>>>>>> feature/vision-v3-migration
       exchangeRateApiKey: data.exchange_rate_api_key || undefined,
       exchangeRateUpdateInterval: data.exchange_rate_update_interval || 60
     }
@@ -874,15 +829,6 @@ export const settingsService = {
       taxRate: data.tax_rate || 0,
       currency: data.currency || 'USD',
       baseCurrency: data.base_currency || 'USD',
-<<<<<<< HEAD
-      interfaceMode: data.interface_mode as AppSettings['interfaceMode'] || 'touch',
-      autoBackup: data.auto_backup ?? true,
-      receiptPrinter: data.receipt_printer ?? true,
-      theme: data.theme as AppSettings['theme'] || 'light',
-      invoicePrefix: data.invoice_prefix || 'INV',
-      invoiceCounter: data.invoice_counter || 1000,
-      exchangeRateProvider: data.exchange_rate_provider as AppSettings['exchangeRateProvider'] || 'exchangerate',
-=======
       interfaceMode: (data.interface_mode as AppSettings['interfaceMode']) || 'touch',
       autoBackup: data.auto_backup ?? true,
       receiptPrinter: data.receipt_printer ?? true,
@@ -890,7 +836,6 @@ export const settingsService = {
       invoicePrefix: data.invoice_prefix || 'INV',
       invoiceCounter: data.invoice_counter || 1000,
       exchangeRateProvider: (data.exchange_rate_provider as AppSettings['exchangeRateProvider']) || 'exchangerate',
->>>>>>> feature/vision-v3-migration
       exchangeRateApiKey: data.exchange_rate_api_key || undefined,
       exchangeRateUpdateInterval: data.exchange_rate_update_interval || 60
     }
@@ -1009,11 +954,7 @@ export const salesTabsService = {
     return data.map(tab => ({
       id: tab.id,
       name: tab.name,
-<<<<<<< HEAD
-      cart: tab.cart as CartItem[] || [],
-=======
       cart: (tab.cart as CartItem[]) || [],
->>>>>>> feature/vision-v3-migration
       selectedCustomer: tab.selected_customer ? {
         id: tab.selected_customer.id,
         name: tab.selected_customer.name,
@@ -1048,11 +989,7 @@ export const salesTabsService = {
     return {
       id: data.id,
       name: data.name,
-<<<<<<< HEAD
-      cart: data.cart as CartItem[] || [],
-=======
       cart: (data.cart as CartItem[]) || [],
->>>>>>> feature/vision-v3-migration
       selectedCustomer: tab.selectedCustomer,
       createdAt: new Date(data.created_at)
     }
@@ -1075,11 +1012,7 @@ export const salesTabsService = {
     return {
       id: data.id,
       name: data.name,
-<<<<<<< HEAD
-      cart: data.cart as CartItem[] || [],
-=======
       cart: (data.cart as CartItem[]) || [],
->>>>>>> feature/vision-v3-migration
       selectedCustomer: tab.selectedCustomer || null,
       createdAt: new Date(data.created_at)
     }

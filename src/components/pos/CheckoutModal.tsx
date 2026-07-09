@@ -5,12 +5,8 @@ import { Sale, CardDetails, AppliedDiscount, CartItem, Payment } from '../../typ
 import { useApp, checkDiscountEligibility, useCapability } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
 import { ReceiptPrint } from './ReceiptPrint';
-<<<<<<< HEAD
-import { salesService, customersService, kitchenOrdersService } from '../../lib/services';
-=======
 import { UpgradePrompt } from '../ui/UpgradePrompt';
 import { checkoutService, DailyLimitError } from '../../lib/services';
->>>>>>> feature/vision-v3-migration
 import { swalConfig } from '../../lib/sweetAlert';
 import { checkStockAvailability } from '../../lib/inventoryUtils';
 

@@ -10,12 +10,8 @@ import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 export function RecipeManager() {
   const { state, dispatch } = useApp();
-<<<<<<< HEAD
-  const inventoryEnabled = useFeatureFlag('inventory');
-=======
   const inventoryEnabled = useCapability('inventory');
   const recipeBomEnabled = useCapability('recipe_bom');
->>>>>>> feature/vision-v3-migration
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);

@@ -547,16 +547,13 @@ export interface PrintJob {
   saleId: string;
   printerType: 'receipt' | 'kitchen';
   status: PrintJobStatus;
-<<<<<<< HEAD
   configData: Record<string, string | number | boolean>;
-=======
   connectionType: 'bluetooth' | 'network';
   printerAddress: string;
   payload: Record<string, any>;
   isReprint: boolean;
   retryCount: number;
   errorMessage?: string;
->>>>>>> feature/vision-v3-migration
   createdAt: Date;
   completedAt?: Date;
 }

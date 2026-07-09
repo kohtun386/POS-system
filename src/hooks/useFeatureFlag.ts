@@ -8,8 +8,6 @@ export function useFeatureFlag(key: string): boolean {
   const { state } = useApp();
   return state.capabilities.includes(key);
 }
-<<<<<<< HEAD
-=======
 
 /**
  * @deprecated Use `state.capabilities` (string[]) from useApp() instead.
@@ -23,4 +21,3 @@ export function useFeatureFlags(): FeatureFlags {
   }
   return flags;
 }
->>>>>>> feature/vision-v3-migration

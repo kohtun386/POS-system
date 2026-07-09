@@ -9,12 +9,8 @@ import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 export function RawMaterialManager() {
   const { state, dispatch } = useApp();
-<<<<<<< HEAD
-  const inventoryEnabled = useFeatureFlag('inventory');
-=======
   const inventoryEnabled = useCapability('inventory');
   const rawMaterialsEnabled = useCapability('raw_materials');
->>>>>>> feature/vision-v3-migration
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showModal, setShowModal] = useState(false);
