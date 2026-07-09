@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import { Sale } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp, useCapability } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 
@@ -162,6 +162,8 @@ function ReceiptContent({ sale }: { sale: Sale }) {
 }
 
 export function ReceiptPrint({ sale, onClose }: ReceiptPrintProps) {
+  const canPrint = useCapability('printer_integration');
+
   const handlePrint = () => {
     window.print();
   };
@@ -189,9 +191,11 @@ export function ReceiptPrint({ sale, onClose }: ReceiptPrintProps) {
             <button onClick={onClose} className="btn btn-secondary btn-md">
               Close
             </button>
-            <button onClick={handlePrint} className="btn btn-primary btn-md">
-              Print Receipt
-            </button>
+            {canPrint && (
+              <button onClick={handlePrint} className="btn btn-primary btn-md">
+                Print Receipt
+              </button>
+            )}
           </div>
         </div>
       </div>

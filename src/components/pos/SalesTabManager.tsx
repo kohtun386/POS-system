@@ -1,12 +1,16 @@
 import { Plus, X } from 'lucide-react';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp, useCapability } from '../../context/SupabaseAppContext';
 import { SalesTab } from '../../types';
 import { salesTabsService } from '../../lib/services';
 import { useAuth } from '../../context/AuthContext';
+import { useState } from 'react';
+import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 export function SalesTabManager() {
   const { state, dispatch } = useApp();
   const { user } = useAuth();
+  const canManageTabs = useCapability('multi_tab_sales');
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const createNewTab = async () => {
     if (!user) return;
@@ -152,14 +156,30 @@ export function SalesTabManager() {
       </div>
 
       {/* Add New Sale Button */}
-      <div className="p-1 border-t border-[#ded7cc] dark:border-[#54463b]">
+      <div className="p-1 border-t border-[#ded7cc] dark:border-[#54463b] relative">
         <button
-          onClick={createNewTab}
-          className="w-12 h-10 bg-gradient-to-r from-[#9a693a] to-[#b8854a] hover:from-[#b8854a] hover:to-[#cfa16a] text-white rounded-md transition-all duration-300 flex items-center justify-center mx-auto shadow-soft"
-          title="Add New Sale"
+          onClick={() => {
+            if (!canManageTabs) {
+              setShowUpgrade(true);
+              return;
+            }
+            createNewTab();
+          }}
+          disabled={!canManageTabs}
+          className={`w-12 h-10 rounded-md transition-all duration-300 flex items-center justify-center mx-auto shadow-soft ${
+            canManageTabs
+              ? 'bg-gradient-to-r from-[#9a693a] to-[#b8854a] hover:from-[#b8854a] hover:to-[#cfa16a] text-white'
+              : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+          }`}
+          title={canManageTabs ? 'Add New Sale' : 'Multi-tab sales disabled'}
         >
           <Plus className="h-4 w-4" />
         </button>
+        {showUpgrade && (
+          <div className="absolute left-14 bottom-0 z-50 w-64">
+            <UpgradePrompt feature="Multi-tab sales" tier="free" onClose={() => setShowUpgrade(false)} />
+          </div>
+        )}
       </div>
     </div>
   );

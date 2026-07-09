@@ -596,7 +596,9 @@ Functions that run with owner privileges (bypass RLS). Must be carefully control
 |----------|-------------|-------|
 | `handle_new_auth_user()` | `anon`, `authenticated` | Trigger-only. Client cannot call via RPC. Creates user + shop + membership on signup. |
 | `rls_auto_enable()` | `anon`, `authenticated` | Event trigger. Client cannot call via RPC |
-| `checkout_complete()` | None (INVOKER) | Called via `supabase.rpc()`. Uses `search_path=''`. Contains `SELECT ... FOR UPDATE` for race condition protection. |
+| `checkout_complete()` | None (SECURITY DEFINER) | Called via `supabase.rpc()`. Uses `search_path='public'`. Contains `SELECT ... FOR UPDATE` for race condition protection. Handles all stock deduction inline. |
+| `is_platform_admin()` | None (SECURITY DEFINER) | Checks if current user has platform_admin role. Used in RLS policies for cross-tenant access. |
+| `replace_recipe_lines()` | None (SECURITY DEFINER) | Atomically replaces all recipe lines for a recipe. Used by recipe BOM management. |
 
 **Guard:** Any new SECURITY DEFINER function MUST have `REVOKE EXECUTE ... FROM anon, authenticated` immediately after creation.
 
@@ -624,7 +626,7 @@ Functions that run with owner privileges (bypass RLS). Must be carefully control
 - `platform_admin` never appears in RLS policies — bypasses via `service_role` key in Edge Functions
 - Card data purged (`cardNumber` stripped from `card_details` and `payments` JSONB)
 - `users` not publicly readable (fixed in security audit)
-- All functions use `SET search_path = ''` (prevents search-path injection)
+- Most functions use `SET search_path = ''` (prevents search-path injection); `checkout_complete()` uses `SET search_path = 'public'`
 - SECURITY DEFINER functions revoked from client roles
 - `service_role` key removed from client bundle
 - `.env` in `.gitignore`

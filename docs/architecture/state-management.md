@@ -68,7 +68,7 @@ interface AppState {
 
 `capabilities` is a flat string array of capability keys (e.g., `['pos', 'inventory', 'printer_integration', 'recipe_bom']`). Resolved server-side at login from subscription tier, business type, and per-shop overrides. Components check `capabilities.includes('key')` — never check `shop.subscriptionTier` or `shop.businessType` directly. (VISION.md v3.0.0 Section 5)
 
-### 3.2 Action Types (25 actions)
+### 3.2 Action Types (54 actions)
 
 | Action | Payload | Behavior |
 |--------|---------|----------|
@@ -481,6 +481,6 @@ supabase.auth.onAuthStateChange(event, session)
 |--------|--------|--------|
 | Discriminated union for actions | Eliminates `payload: any`. Type-safe dispatch. | Planned (tech debt #1) |
 | Split context exports to separate files | Fixes React Refresh warnings (26 warnings, 6 files). | Planned (tech debt #2) |
-| Zustand or Redux Toolkit evaluation | Current useReducer pattern works but scales poorly with 25 actions. | Not started |
+| Zustand or Redux Toolkit evaluation | Current useReducer pattern works but scales poorly with 54 actions. | Not started |
 | Owner Mobile state | Separate read-only state for owner mobile view (Pro tier). | v2 |
 | Offline queue state | IndexedDB-backed queue for cash-only offline transactions. | v2 |

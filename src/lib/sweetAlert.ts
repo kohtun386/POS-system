@@ -215,6 +215,33 @@ export const swalConfig = {
         }
       }
     });
+  },
+
+  // Prompt dialog (input + confirm)
+  prompt: async (title: string, placeholder: string = 'Enter reason') => {
+    const result = await Swal.fire({
+      title,
+      input: 'textarea',
+      inputPlaceholder: placeholder,
+      inputAttributes: { rows: 3 },
+      showCancelButton: true,
+      confirmButtonColor: '#9a693a',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Submit',
+      cancelButtonText: 'Cancel',
+      background: '#ffffff',
+      color: '#374151',
+      customClass: {
+        popup: 'rounded-3xl shadow-2xl border border-gray-100',
+        title: 'text-gray-900 font-bold text-xl mb-4',
+        input: 'w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white',
+        confirmButton: 'bg-[#9a693a] hover:bg-[#7a4f2c] text-white font-medium py-3 px-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 mr-3',
+        cancelButton: 'bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-xl transition-all duration-200',
+        actions: 'gap-3 mt-6'
+      },
+      buttonsStyling: false,
+    });
+    return result;
   }
 };
 

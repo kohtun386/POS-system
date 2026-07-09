@@ -1,11 +1,17 @@
 import { useState, useMemo } from 'react';
 import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
 import { DollarSign, ShoppingCart, Users, TrendingUp, Download, BarChart3 } from 'lucide-react';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp, useCapability } from '../../context/SupabaseAppContext';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { UpgradePrompt } from '../ui/UpgradePrompt';
+import { OwnerInsights } from './OwnerInsights';
+import { ProfitMarginAnalytics } from './ProfitMarginAnalytics';
+import { WasteTracking } from './WasteTracking';
+import { WhatsAppReportConfig } from './WhatsAppReportConfig';
 
 export function ReportsManager() {
   const { state } = useApp();
+  const hasProReports = useCapability('advanced_reports');
   const [dateRange, setDateRange] = useState('7');
   const [reportType, setReportType] = useState('sales');
   const [startDateInput, setStartDateInput] = useState('');
@@ -287,6 +293,10 @@ export function ReportsManager() {
               <option value="sales">Sales Report</option>
               <option value="inventory">Inventory Report</option>
               <option value="customers">Customer Report</option>
+              <option value="owner-insights" disabled={!hasProReports}>Owner Insights {hasProReports ? '' : '(Pro)'}</option>
+              <option value="profit-margin" disabled={!hasProReports}>Profit Margin {hasProReports ? '' : '(Pro)'}</option>
+              <option value="waste" disabled={!hasProReports}>Waste Tracking {hasProReports ? '' : '(Pro)'}</option>
+              <option value="whatsapp" disabled={!hasProReports}>WhatsApp Reports {hasProReports ? '' : '(Pro)'}</option>
             </select>
 
             <select
@@ -335,6 +345,9 @@ export function ReportsManager() {
       </div>
 
       {/* Summary Cards */}
+      {reportType === 'sales' && !hasProReports && (
+        <UpgradePrompt feature="Profit analytics" tier="pro" onClose={() => {}} />
+      )}
       {reportType === 'sales' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           <div className="stat-card bg-gradient-to-br from-[#9a693a] to-[#7a4f2c]">
@@ -387,6 +400,9 @@ export function ReportsManager() {
         </div>
       )}
 
+      {reportType === 'customers' && !hasProReports && (
+        <UpgradePrompt feature="Owner insights" tier="pro" onClose={() => {}} />
+      )}
       {reportType === 'customers' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           <div className="stat-card bg-gradient-to-br from-[#9a693a] to-[#7a4f2c]">
@@ -440,6 +456,9 @@ export function ReportsManager() {
         </div>
       )}
 
+      {reportType === 'inventory' && !hasProReports && (
+        <UpgradePrompt feature="Waste tracking" tier="pro" onClose={() => {}} />
+      )}
       {reportType === 'inventory' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           <div className="stat-card bg-gradient-to-br from-[#9a693a] to-[#7a4f2c]">
@@ -893,6 +912,42 @@ export function ReportsManager() {
             </table>
           </div>
         </div>
+      )}
+
+      {/* Pro: Owner Insights */}
+      {reportType === 'owner-insights' && (
+        hasProReports
+          ? <OwnerInsights dateRange={dateRange} />
+          : <div className="space-y-4">
+              <UpgradePrompt feature="Owner Insights" tier="pro" onClose={() => setReportType('sales')} />
+            </div>
+      )}
+
+      {/* Pro: Profit Margin Analytics */}
+      {reportType === 'profit-margin' && (
+        hasProReports
+          ? <ProfitMarginAnalytics dateRange={dateRange} />
+          : <div className="space-y-4">
+              <UpgradePrompt feature="Profit Margin Analytics" tier="pro" onClose={() => setReportType('sales')} />
+            </div>
+      )}
+
+      {/* Pro: Waste Tracking */}
+      {reportType === 'waste' && (
+        hasProReports
+          ? <WasteTracking />
+          : <div className="space-y-4">
+              <UpgradePrompt feature="Waste Tracking" tier="pro" onClose={() => setReportType('sales')} />
+            </div>
+      )}
+
+      {/* Pro: WhatsApp Reports */}
+      {reportType === 'whatsapp' && (
+        hasProReports
+          ? <WhatsAppReportConfig />
+          : <div className="space-y-4">
+              <UpgradePrompt feature="WhatsApp Daily Reports" tier="pro" onClose={() => setReportType('sales')} />
+            </div>
       )}
     </div>
   );

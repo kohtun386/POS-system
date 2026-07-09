@@ -62,7 +62,7 @@ Synthesized from existing documentation and VISION.md v3.0.0. Each decision link
 
 ### State Management: useReducer (not Redux/Zustand)
 
-**What:** Single `useReducer` in `SupabaseAppContext.tsx` holds all app state. 25 action types. No external state library.
+**What:** Single `useReducer` in `SupabaseAppContext.tsx` holds all app state. 54 action types. No external state library.
 
 **Why:** App complexity doesn't justify Redux overhead. useReducer provides predictable state transitions with dispatch. Cart, products, customers, sales, users, discounts, settings, and sales tabs all in one reducer. Simpler mental model for a small team.
 
@@ -70,7 +70,7 @@ Synthesized from existing documentation and VISION.md v3.0.0. Each decision link
 
 ### Service Layer Pattern (not direct Supabase calls)
 
-**What:** 12 service objects in `src/lib/services.ts`. All DB access through services, never `supabase.from()` in components.
+**What:** 24 service objects in `src/lib/services.ts`. All DB access through services, never `supabase.from()` in components.
 
 **Why:** Centralizes camelCase ↔ snake_case mapping. Single place to change query logic. Components stay focused on UI. Services are testable independently.
 

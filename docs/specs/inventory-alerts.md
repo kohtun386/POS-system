@@ -80,7 +80,8 @@ Service functions for:
 Run the SQL migration to create the alert system tables:
 
 ```sql
--- Execute the contents of SupaBase/inventory_alerts_schema.sql
+-- Migration: supabase/migrations/20260703000001_inventory_alerts_schema.sql
+-- Applied automatically via `supabase db push` or branch creation
 ```
 
 ### 2. Service Configuration

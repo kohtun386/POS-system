@@ -169,12 +169,49 @@ The Tailwind config never defined a full color scale. Components needed semantic
 
 ---
 
-## Summary
+## 4. Migration Return Type Change Requires DROP FUNCTION
 
-| Issue | Count | Severity | Effort |
-|---|---|---|---|
-| `any` types | 73 errors across 17 files | Medium — erodes type safety, no runtime impact | 3-4 hours |
-| React Refresh warnings | 26 warnings across 6 files | Low — dev experience only, no production impact | 1 hour |
-| Color palette drift | ~10 files, 20+ hex values | Low — visual inconsistency, no functional impact | 1-2 hours |
+**Migration:** `20260704000005_fix_checkout_return_invoice_number.sql`
+**Severity:** High — blocks `supabase db reset`
+**Date identified:** 2026-07-05
+**Status:** ✅ Resolved (2026-07-05) — `DROP FUNCTION IF EXISTS` added to migration
 
-**Recommended order:** React Refresh splits → Color palette formalization → `any` type cleanup (safest to riskiest, each builds confidence).
+### Problem
+
+PostgreSQL does not allow changing a function's return type with `CREATE OR REPLACE`. The migration attempts to change `checkout_complete` from `RETURNS UUID` to `RETURNS JSONB`, but uses only `CREATE OR REPLACE FUNCTION`, which fails with:
+
+```
+ERROR: cannot change return type of existing function (SQLSTATE 42P13)
+```
+
+This blocks `supabase db reset` and prevents fresh database setup.
+
+### Root Cause
+
+PostgreSQL requires `DROP FUNCTION` before changing return types. The `CREATE OR REPLACE` keyword only allows changing the function body, not its signature.
+
+### Fix Required
+
+Add `DROP FUNCTION IF EXISTS` before the `CREATE OR REPLACE`:
+
+```sql
+-- Drop existing function first (PostgreSQL requires DROP to change return type)
+DROP FUNCTION IF EXISTS checkout_complete(UUID, JSONB, JSONB, UUID);
+
+CREATE OR REPLACE FUNCTION checkout_complete(
+  p_shop_id UUID,
+  p_sale_data JSONB,
+  p_payments JSONB,
+  p_cashier_id UUID
+)
+RETURNS JSONB
+...
+```
+
+### Prevention
+
+Add to `docs/architecture/database.md`:
+
+> **Rule:** When changing a function's return type, always `DROP FUNCTION` first. `CREATE OR REPLACE` only updates the function body, not its signature.
+
+**Effort:** Low (1 line fix + doc update)

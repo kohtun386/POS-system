@@ -1,8 +1,8 @@
-# Feature Flags — Capability-Based Per-Shop Feature Toggling
+# Feature Flags — Implementation Guide
 
 **Status:** Spec complete, implementation pending
-**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
-**Source of truth:** `docs/vision/VISION.md` v3.0.0 Section 5
+**Last updated:** 2026-07-04 (reconciled with TIER-SPEC.md)
+**Canonical source of truth:** `docs/TIER-SPEC.md` — this document describes implementation details only.
 **Depends on:** Multi-tenancy foundation (`docs/specs/multi-tenancy.md`), Dynamic shop configuration (`docs/specs/dynamic-shop-configuration.md`)
 
 ---
@@ -18,9 +18,10 @@ Features like receipt printing, recipe BOM, cash drawer management, and owner in
 | Architecture | **Capability-based, server-side resolution** | Server resolves all feature logic. Client receives flat `capabilities: string[]`. No tier/type conditionals in component code. (VISION §5.1) |
 | Granularity | Capability strings, not boolean flags | Simpler client contract. Components check `capabilities.includes('key')`. |
 | Resolution | At login time | Server reads shop's subscription tier, business type, and per-shop overrides. Returns flat capability list. (VISION §5.2) |
-| Two gates | Subscription tier + business type defaults | Both are server-side. Features below tier level are disabled regardless of overrides. (VISION §5.3) |
+| Two gates | Subscription tier + business type defaults | Both are server-side. Default resolution checks tier level first, but per-shop overrides can bypass tier gates. (TIER-SPEC §3.3) |
 | Storage | Dedicated tables (`feature_definitions`, `shop_features`) | Queryable across shops, referential integrity, admin UI is straightforward |
 | Override | Per-shop `shop_features` table | Only rows that deviate from default are stored |
+| Override precedence | **Flexible** | Platform admins can override tier gates — e.g., enable a Pro feature on a Free shop for trials. `shop_features` always wins over `feature_definitions` defaults. (TIER-SPEC §3.3) |
 | Platform admin | Edge Function only | `feature_definitions` writable by `platform_admin` via `service_role` key. No RLS bypass. (VISION §4.3) |
 
 ## 3. Schema
@@ -50,47 +51,84 @@ CREATE TABLE feature_definitions (
 | `default_enabled` | BOOLEAN | Default state for new shops |
 | `subscription_tier` | TEXT | Minimum tier required: `free`, `growth`, `pro` (VISION §3.1) |
 
-### 3.2 Capability Keys (VISION §5.5)
+### 3.2 Capability Keys (TIER-SPEC §2 — Canonical)
 
-| Capability | Description | Min Tier | Business Types |
-|------------|-------------|----------|----------------|
-| `pos` | POS terminal | free | all |
-| `inventory` | Stock tracking | free | all |
-| `discounts` | Discount engine | free | all |
-| `multi_currency` | Multi-currency support | free | all |
-| `draft_sales` | Draft/pending sales | free | all |
-| `customer_management` | Customer records | free | all |
-| `printer_integration` | Thermal printer | growth | all |
-| `recipe_bom` | Recipe/BOM costing | growth | all |
-| `raw_materials` | Raw material tracking | growth | all |
-| `staff_accounts` | Multiple staff logins | growth | all |
-| `cash_drawer` | Shift start/end | growth | all |
-| `owner_insights` | P&L, shift mgmt | pro | all |
-| `profit_analytics` | Profit margin analytics | pro | all |
-| `waste_tracking` | Waste tracking | pro | all |
+**Free Tier (always available):**
+
+| Capability | Description | Notes |
+|------------|-------------|-------|
+| `pos` | POS terminal | Implicit — always available, no DB row needed (TIER-SPEC §2.3) |
+| `inventory` | Stock tracking | |
+| `discounts` | Discount engine | |
+| `multi_currency` | ~~Multi-currency support~~ **DEAD** — Myanmar market is MMK-only | |
+| `draft_sales` | Draft/pending sales | |
+| `customer_management` | Customer records | |
+| `batch_tracking` | Batch/lot tracking | Embedded in ProductModal, no standalone component |
+| `weight_based_products` | Per-unit pricing | Embedded in ProductModal, no standalone component |
+| `credit_system` | Customer credit tracking | Embedded in POS, no standalone component |
+| `multi_tab_sales` | Multi-tab POS workflow | Embedded in SalesTabManager, no standalone component |
+
+**Growth Tier (adds operational tools):**
+
+| Capability | Description | Notes |
+|------------|-------------|-------|
+| `printer_integration` | Thermal printer | Bluetooth/Network |
+| `staff_accounts` | Multiple staff logins | |
+| `cash_drawer` | Shift start/end | Shift management, variance tracking |
+| `recipe_bom` | Recipe/BOM costing | |
+| `raw_materials` | Raw material tracking | |
+
+**Pro Tier (adds analytics):**
+
+| Capability | Description | Notes |
+|------------|-------------|-------|
+| `advanced_reports` | Consolidated Pro reports gate | Gates owner_insights, profit_analytics, waste_tracking |
+| `owner_insights` | P&L dashboard, WhatsApp reports | |
+| `profit_analytics` | Profit margin analytics | |
+| `waste_tracking` | Waste tracking | |
+
+**Dead/Reserved Keys (DB rows only — no UI or code reference):**
+
+| Capability | DB Tier | Status | Reason |
+|------------|---------|--------|--------|
+| `kitchen_display` | pro | **DEAD** | Out of scope for Myanmar market. No KDS screens used — kitchen routing handled via `printer_integration` (Growth tier). Component code deleted 2026-07-04. |
+| `online_ordering` | pro | **DEAD** | VISION §19: "NOT Building" in v1 |
+| `supplier_management` | pro | **DEAD** | No component exists |
+
+Dead keys stay in the DB for forward compatibility but are never checked in code. Do not gate new features on them.
 
 ### 3.3 Seed Data
 
 ```sql
 INSERT INTO feature_definitions (key, name, category, default_enabled, subscription_tier) VALUES
-  -- Free tier capabilities
-  ('pos',                 'POS Terminal',           'pos',        true,  'free'),
+  -- Free tier capabilities (always available)
   ('inventory',           'Stock Tracking',          'inventory',  true,  'free'),
   ('discounts',           'Discount Engine',         'pos',        true,  'free'),
   ('multi_currency',      'Multi-Currency Support',  'general',    true,  'free'),
   ('draft_sales',         'Draft Sales',             'pos',        true,  'free'),
   ('customer_management', 'Customer Management',     'customers',  true,  'free'),
+  ('batch_tracking',      'Batch/Lot Tracking',      'inventory',  true,  'free'),
+  ('weight_based_products','Weight-Based Products',  'inventory',  true,  'free'),
+  ('credit_system',       'Customer Credit System',  'customers',  true,  'free'),
+  ('multi_tab_sales',     'Multi-Tab Sales',         'pos',        true,  'free'),
   -- Growth tier capabilities
-  ('printer_integration', 'Thermal Printer',         'pos',        false, 'growth'),
+  ('printer_integration', 'Thermal Printer',         'pos',        true,  'growth'),
+  ('staff_accounts',      'Multiple Staff Accounts', 'general',    true,  'growth'),
+  ('cash_drawer',         'Cash Drawer / Shift Mgmt','pos',        true,  'growth'),
   ('recipe_bom',          'Recipe/BOM Costing',      'inventory',  false, 'growth'),
   ('raw_materials',       'Raw Material Tracking',   'inventory',  false, 'growth'),
-  ('staff_accounts',      'Multiple Staff Accounts', 'general',    false, 'growth'),
-  ('cash_drawer',         'Cash Drawer / Shift Mgmt','pos',        false, 'growth'),
   -- Pro tier capabilities
-  ('owner_insights',      'Owner Insights (P&L)',    'general',    false, 'pro'),
-  ('profit_analytics',    'Profit Margin Analytics', 'inventory',  false, 'pro'),
-  ('waste_tracking',      'Waste Tracking',          'inventory',  false, 'pro');
+  ('advanced_reports',    'Advanced Reports',        'reports',    false, 'pro'),
+  ('owner_insights',      'Owner Insights (P&L)',    'reports',    false, 'pro'),
+  ('profit_analytics',    'Profit Margin Analytics', 'reports',    false, 'pro'),
+  ('waste_tracking',      'Waste Tracking',          'inventory',  false, 'pro'),
+  -- Dead/Reserved keys (DB rows only, no UI or code reference)
+  ('kitchen_display',     'Kitchen Display',         'kitchen',    false, 'pro'),
+  ('online_ordering',     'Online Ordering',         'general',    false, 'pro'),
+  ('supplier_management', 'Supplier Management',     'general',    false, 'pro');
 ```
+
+> **Note:** `pos` is implicit (always available) and has no DB row (TIER-SPEC §2.3). Dead keys are included for forward compatibility but never referenced in code.
 
 ### 3.4 `shop_features` — Per-Shop Overrides
 
@@ -161,20 +199,17 @@ Login time
 Server reads: shop.subscription_tier, shop.business_type, shop_features overrides
   │
   ▼
-Gate 1: Subscription Tier
-  → Features below shop's tier level are disabled
-  → Free shops cannot access Growth+ features regardless of overrides
+For each feature_definitions row:
   │
-  ▼
-Gate 2: Business Type Defaults
-  → Different business types get different default capability sets
-  → Coffee shops get POS + inventory + discounts
-  → Restaurants (v2) additionally get table management
+  ├─ Check per-shop override (shop_features)
+  │   → If override exists: use override value (ENABLED or DISABLED)
+  │   → Overrides ALWAYS win — can enable Growth/Pro features on Free shops (TIER-SPEC §3.3)
   │
-  ▼
-Per-Shop Overrides
-  → shop_features table: enable/disable specific capabilities
-  → Cannot override tier gate (Free shop cannot enable Growth features)
+  ├─ If no override: check tier gate
+  │   → Feature's subscription_tier level ≤ shop's tier level? → use default_enabled
+  │   → Feature's subscription_tier level > shop's tier level? → disabled
+  │
+  └─ Append enabled features to capabilities array
   │
   ▼
 Result: flat string[] → ['pos', 'inventory', 'discounts', 'multi_currency', ...]
@@ -183,11 +218,19 @@ Result: flat string[] → ['pos', 'inventory', 'discounts', 'multi_currency', ..
 Returned to client, stored in AppState.capabilities
 ```
 
+**Override Precedence (TIER-SPEC §3.3):**
+```
+shop_features override > feature_definitions.default_enabled + tier gate
+```
+Platform admins can override tier gates — e.g., enable a Pro feature on a Free shop for trials.
+
 ### 4.2 Resolution Implementation
 
-```typescript
-// Supabase Edge Function or RPC: resolve_capabilities(p_shop_id UUID)
-// Returns: text[] of capability keys
+```sql
+-- Supabase Edge Function or RPC: resolve_capabilities(p_shop_id UUID)
+-- Returns: text[] of capability keys
+-- Precedence: shop_features override > feature_definitions tier gate + default_enabled
+-- (TIER-SPEC §3.3 — Flexible model: overrides CAN beat tier gates)
 
 CREATE OR REPLACE FUNCTION resolve_capabilities(p_shop_id UUID)
 RETURNS TEXT[]
@@ -195,16 +238,14 @@ SET search_path = ''
 AS $$
 DECLARE
   v_tier TEXT;
-  v_business_type TEXT;
   v_capabilities TEXT[] := '{}';
   v_def RECORD;
   v_override BOOLEAN;
   v_tier_level INTEGER;
   v_def_tier_level INTEGER;
 BEGIN
-  -- Get shop tier and business type
-  SELECT subscription_tier, business_type
-  INTO v_tier, v_business_type
+  -- Get shop tier
+  SELECT subscription_tier INTO v_tier
   FROM public.shops
   WHERE id = p_shop_id;
 
@@ -222,31 +263,28 @@ BEGIN
     FROM public.feature_definitions
     ORDER BY key
   LOOP
-    -- Gate 1: Subscription tier check
-    v_def_tier_level := CASE v_def.subscription_tier
-      WHEN 'free' THEN 0
-      WHEN 'growth' THEN 1
-      WHEN 'pro' THEN 2
-      ELSE 0
-    END;
-
-    IF v_tier_level < v_def_tier_level THEN
-      -- Shop tier too low — skip this capability
-      CONTINUE;
-    END IF;
-
-    -- Check per-shop override
+    -- Check per-shop override FIRST (overrides always win)
     SELECT enabled INTO v_override
     FROM public.shop_features
     WHERE shop_id = p_shop_id AND feature_key = v_def.key;
 
-    -- Use override if exists, otherwise use default
     IF v_override IS NOT NULL THEN
+      -- Override exists: use it regardless of tier gate
       IF v_override THEN
         v_capabilities := array_append(v_capabilities, v_def.key);
       END IF;
-    ELSIF v_def.default_enabled THEN
-      v_capabilities := array_append(v_capabilities, v_def.key);
+    ELSE
+      -- No override: apply tier gate
+      v_def_tier_level := CASE v_def.subscription_tier
+        WHEN 'free' THEN 0
+        WHEN 'growth' THEN 1
+        WHEN 'pro' THEN 2
+        ELSE 0
+      END;
+
+      IF v_tier_level >= v_def_tier_level AND v_def.default_enabled THEN
+        v_capabilities := array_append(v_capabilities, v_def.key);
+      END IF;
     END IF;
   END LOOP;
 
@@ -428,46 +466,57 @@ A new component `FeatureDefinitions.tsx` accessible only to `platform_admin` via
 
 ## 9. Feature Gate Summary by Tier
 
-### 9.1 Free Tier Capabilities
+> Derived from `TIER-SPEC.md §2.1` — canonical source.
+
+### 9.1 Free Tier (10 features)
 
 | Capability | Available | Notes |
 |------------|-----------|-------|
-| `pos` | ✅ | POS terminal |
-| `inventory` | ✅ | Basic stock tracking (finished products only) |
+| `pos` | ✅ | POS terminal (implicit, no DB row) |
+| `inventory` | ✅ | Stock tracking |
 | `discounts` | ✅ | Discount engine |
-| `multi_currency` | ✅ | Multi-currency support |
+| `multi_currency` | ⚠️ | ~~Multi-currency support~~ **DEAD** — Myanmar market is MMK-only |
 | `draft_sales` | ✅ | Draft/pending sales |
 | `customer_management` | ✅ | Customer records |
-| `printer_integration` | ❌ | No printer hardware |
-| `recipe_bom` | ❌ | No recipe management |
-| `raw_materials` | ❌ | No raw material tracking |
-| `staff_accounts` | ❌ | Single user only |
-| `cash_drawer` | ❌ | No shift management |
-| `owner_insights` | ❌ | No P&L dashboard |
-| `profit_analytics` | ❌ | No profit margins |
-| `waste_tracking` | ❌ | No waste logging |
+| `batch_tracking` | ✅ | Embedded in ProductModal |
+| `weight_based_products` | ✅ | Embedded in ProductModal |
+| `credit_system` | ✅ | Embedded in POS |
+| `multi_tab_sales` | ✅ | Embedded in SalesTabManager |
 
-### 9.2 Growth Tier Capabilities
+### 9.2 Growth Tier (15 features)
 
 All Free capabilities PLUS:
 
 | Capability | Available | Notes |
 |------------|-----------|-------|
 | `printer_integration` | ✅ | Bluetooth/Network thermal printer |
-| `recipe_bom` | ✅ | Recipe/BOM costing |
-| `raw_materials` | ✅ | Raw material tracking |
 | `staff_accounts` | ✅ | Multiple staff logins |
 | `cash_drawer` | ✅ | Shift start/end, variance tracking |
+| `recipe_bom` | ✅ | Recipe/BOM costing |
+| `raw_materials` | ✅ | Raw material tracking |
 
-### 9.3 Pro Tier Capabilities
+### 9.3 Pro Tier (19 active features)
 
 All Growth capabilities PLUS:
 
 | Capability | Available | Notes |
 |------------|-----------|-------|
-| `owner_insights` | ✅ | Daily P&L, WhatsApp reports |
+| `advanced_reports` | ✅ | Consolidated Pro reports gate |
+| `owner_insights` | ✅ | P&L dashboard, WhatsApp reports |
 | `profit_analytics` | ✅ | Profit margin analytics |
 | `waste_tracking` | ✅ | Waste tracking |
+
+### 9.4 Dead/Reserved Keys (3 keys — DB only)
+
+| Capability | DB Tier | Reason |
+|------------|---------|--------|
+| `kitchen_display` | pro | Out of scope for Myanmar market. No KDS screens — kitchen routing via `printer_integration` (Growth). Code deleted 2026-07-04. |
+| `online_ordering` | pro | VISION §19: "NOT Building" in v1 |
+| `supplier_management` | pro | No component exists |
+
+### 9.5 Platform Admin Override
+
+Platform admins can override tier gates via `shop_features` — e.g., enable `owner_insights` (Pro) on a Free shop for trials. Overrides always win over tier defaults (TIER-SPEC §3.3).
 
 ## 10. Migration
 
@@ -503,7 +552,8 @@ ALTER TABLE shop_features ENABLE ROW LEVEL SECURITY;
 
 ## Related Documents
 
-- [VISION.md](../vision/VISION.md) — Section 5: Feature Flag Architecture (source of truth)
+- **[TIER-SPEC.md](../TIER-SPEC.md)** — **Canonical source of truth** for tier definitions, capability mapping, and override rules
+- [VISION.md](../vision/VISION.md) — Section 5: Feature Flag Architecture (business vision)
 - [Multi-Tenancy](multi-tenancy.md) — shop_id foundation, subscription tiers, role model
 - [Dynamic Shop Configuration](dynamic-shop-configuration.md) — shops table, subscription_tier column
 - [Database Architecture](../architecture/database.md) — feature_definitions, shop_features schema

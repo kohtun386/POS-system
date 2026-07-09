@@ -1,27 +1,36 @@
 import { useState } from 'react';
 import { Plus, Search, Edit, Trash2, ChefHat, Copy } from 'lucide-react';
 import { Recipe, Product } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
-import { useFeatureFlag } from '../../hooks/useFeatureFlag';
+import { useApp, useCapability } from '../../context/SupabaseAppContext';
 import { recipesService } from '../../lib/services';
 import { RecipeForm } from './RecipeForm';
 import { swalConfig } from '../../lib/sweetAlert';
 import Swal from 'sweetalert2';
+import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 export function RecipeManager() {
   const { state, dispatch } = useApp();
+<<<<<<< HEAD
   const inventoryEnabled = useFeatureFlag('inventory');
+=======
+  const inventoryEnabled = useCapability('inventory');
+  const recipeBomEnabled = useCapability('recipe_bom');
+>>>>>>> feature/vision-v3-migration
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  if (!inventoryEnabled) {
+  if (!inventoryEnabled || !recipeBomEnabled) {
     return (
       <div className="p-6 text-center">
         <ChefHat className="h-12 w-12 mx-auto text-[#ad9e8a] mb-4" />
-        <h2 className="text-lg font-semibold text-[#473b32] dark:text-[#f0ece5]">Inventory Tracking Disabled</h2>
-        <p className="text-[#7d6b57] dark:text-[#c6bbab] mt-2">Enable the inventory_tracking feature flag to manage recipes.</p>
+        <h2 className="text-lg font-semibold text-[#473b32] dark:text-[#f0ece5]">
+          {!inventoryEnabled ? 'Inventory Tracking Disabled' : 'Recipe Management Disabled'}
+        </h2>
+        <div className="mt-2 max-w-md mx-auto">
+          <UpgradePrompt feature="Recipe management" tier="growth" onClose={() => {}} />
+        </div>
       </div>
     );
   }

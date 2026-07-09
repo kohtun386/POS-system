@@ -2,14 +2,17 @@ import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, CreditCard, Banknote, Smartphone, Check, Receipt, AlertCircle, Gift } from 'lucide-react';
 import { Sale, CardDetails, AppliedDiscount, CartItem, Payment } from '../../types';
-import { useApp, checkDiscountEligibility, useInvoiceGeneration } from '../../context/SupabaseAppContext';
+import { useApp, checkDiscountEligibility, useCapability } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
-import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { ReceiptPrint } from './ReceiptPrint';
+<<<<<<< HEAD
 import { salesService, customersService, kitchenOrdersService } from '../../lib/services';
+=======
+import { UpgradePrompt } from '../ui/UpgradePrompt';
+import { checkoutService, DailyLimitError } from '../../lib/services';
+>>>>>>> feature/vision-v3-migration
 import { swalConfig } from '../../lib/sweetAlert';
 import { checkStockAvailability } from '../../lib/inventoryUtils';
-import { groupByStation } from '../../lib/kitchenUtils';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -20,9 +23,7 @@ interface CheckoutModalProps {
 export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProps) {
   const { state, dispatch } = useApp();
   const { user } = useAuth();
-  const generateInvoice = useInvoiceGeneration();
-  const creditEnabled = useFeatureFlag('credit_system');
-  const kitchenDisplayEnabled = useFeatureFlag('kitchen_display');
+  const creditEnabled = useCapability('credit_system');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [amountPaid, setAmountPaid] = useState('');
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -43,6 +44,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
     holderName: '',
   });
   const [cardNumberInput, setCardNumberInput] = useState('');
+  const [upgradePrompt, setUpgradePrompt] = useState<{ feature: string; tier: 'growth' | 'pro' } | null>(null);
 
   // Sri Lankan banks list
   const sriLankanBanks = [
@@ -316,8 +318,6 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
       await new Promise(resolve => setTimeout(resolve, 400));
 
-      const invoiceNumber = await generateInvoice();
-
       const salePayments: Payment[] = payments.length > 0 ? payments : [{
         id: Date.now().toString(),
         method: paymentMethod as Payment['method'],
@@ -325,9 +325,11 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         cardDetails: paymentMethod === 'card' ? { ...cardDetails as CardDetails, id: Date.now().toString() } : undefined
       }];
 
+      // Invoice number is generated server-side by checkout_complete RPC.
+      // The RPC returns {sale_id, invoice_number} and the service fetches the full row.
       const sale: Sale = {
         id: Date.now().toString(),
-        invoiceNumber,
+        invoiceNumber: '',
         customerId: state.selectedCustomer?.id,
         customerName: state.selectedCustomer?.name,
         items: state.cart,
@@ -341,7 +343,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         status: salePayments.some(p => p.method === 'credit') ? 'credit' : 'completed',
         cashier: user?.user_metadata?.full_name || user?.email || 'Unknown',
         timestamp: new Date(),
-        receiptNumber: invoiceNumber,
+        receiptNumber: '',
         notes: salePayments.some(p => p.method === 'credit') ? creditNotes : undefined,
         appliedDiscounts,
         freeGifts: freeGifts.length > 0 ? freeGifts : undefined,
@@ -358,56 +360,25 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         return;
       }
 
-      const savedSale = await salesService.create(sale);
+      // Atomic checkout via RPC (handles sale, invoice, kitchen orders, stock deduction, customer update)
+      let savedSale: Sale;
+      try {
+        savedSale = await checkoutService.complete(
+          state.activeShopId!,
+          sale,
+          salePayments,
+          user?.id || '',
+        );
+      } catch (err: unknown) {
+        console.error('Checkout RPC error:', err);
+        if (err instanceof DailyLimitError) {
+          setUpgradePrompt({ feature: 'Daily sales', tier: 'growth' });
+          setIsProcessing(false);
+          return;
+        }
+        throw err;
+      }
       dispatch({ type: 'ADD_SALE', payload: savedSale });
-
-      // Product stock is now deducted atomically by the deduct_raw_materials() trigger.
-      // No app-level stock update needed.
-
-      // Kitchen KDS: create kitchen orders per station (gated by feature flag)
-      if (kitchenDisplayEnabled && state.activeShopId) {
-        try {
-          const stationMap = groupByStation(state.cart)
-          for (const [station, items] of stationMap.entries()) {
-            await kitchenOrdersService.create({
-              shopId: state.activeShopId,
-              items,
-              saleId: savedSale.id,
-              station,
-            })
-          }
-        } catch (error) {
-          console.error('Error creating kitchen orders:', error)
-          // Non-fatal — sale already saved, don't block checkout
-        }
-      }
-
-      if (salePayments.some(p => p.method === 'credit') && state.selectedCustomer) {
-        try {
-          const updatedCustomer = {
-            ...state.selectedCustomer,
-            creditUsed: state.selectedCustomer.creditUsed + total,
-            totalPurchases: state.selectedCustomer.totalPurchases + total,
-            lastPurchase: new Date(),
-          };
-          await customersService.update(updatedCustomer.id, updatedCustomer);
-          dispatch({ type: 'UPDATE_CUSTOMER', payload: updatedCustomer });
-        } catch (error) {
-          console.error('Error updating customer for credit payment:', error);
-        }
-      } else if (state.selectedCustomer) {
-        try {
-          const updatedCustomer = {
-            ...state.selectedCustomer,
-            totalPurchases: state.selectedCustomer.totalPurchases + total,
-            lastPurchase: new Date(),
-          };
-          await customersService.update(updatedCustomer.id, updatedCustomer);
-          dispatch({ type: 'UPDATE_CUSTOMER', payload: updatedCustomer });
-        } catch (error) {
-          console.error('Error updating customer purchase history:', error);
-        }
-      }
 
       dispatch({ type: 'CLEAR_CART' });
 
@@ -895,6 +866,14 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         <ReceiptPrint
           sale={completedSale}
           onClose={handleCloseModal}
+        />
+      )}
+
+      {upgradePrompt && (
+        <UpgradePrompt
+          feature={upgradePrompt.feature}
+          tier={upgradePrompt.tier}
+          onClose={() => setUpgradePrompt(null)}
         />
       )}
     </>

@@ -526,17 +526,21 @@ export const consumptionLogService = {
 ## RLS Policies
 
 ```sql
--- raw_materials: authenticated users can read, admin/manager can modify
+-- raw_materials: shop-scoped access via current_shop_ids()
 ALTER TABLE raw_materials ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated read raw_materials" ON raw_materials FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Shop members read raw_materials" ON raw_materials FOR SELECT
+  USING (shop_id = ANY(current_shop_ids()));
 CREATE POLICY "Admin manage raw_materials" ON raw_materials FOR ALL
-  USING (EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role IN ('admin', 'manager')));
+  USING (shop_id = ANY(current_shop_ids()))
+  WITH CHECK (shop_id = ANY(current_shop_ids()));
 
 -- recipes: same pattern
 ALTER TABLE recipes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated read recipes" ON recipes FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Shop members read recipes" ON recipes FOR SELECT
+  USING (shop_id = ANY(current_shop_ids()));
 CREATE POLICY "Admin manage recipes" ON recipes FOR ALL
-  USING (EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role IN ('admin', 'manager')));
+  USING (shop_id = ANY(current_shop_ids()))
+  WITH CHECK (shop_id = ANY(current_shop_ids()));
 
 -- recipe_lines: inherit from recipes (same roles)
 ALTER TABLE recipe_lines ENABLE ROW LEVEL SECURITY;

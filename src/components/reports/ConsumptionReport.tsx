@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BarChart3, Package, TrendingDown, Filter } from 'lucide-react';
 import { ConsumptionLog } from '../../types';
-import { useFeatureFlag } from '../../hooks/useFeatureFlag';
+import { useCapability } from '../../context/SupabaseAppContext';
 import { consumptionLogService } from '../../lib/services';
 
 export function ConsumptionReport() {
+<<<<<<< HEAD
   const inventoryEnabled = useFeatureFlag('inventory');
+=======
+  const inventoryEnabled = useCapability('inventory');
+>>>>>>> feature/vision-v3-migration
   const [logs, setLogs] = useState<ConsumptionLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState(() => {

@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Store, DollarSign, Printer, Users, Globe, FileText, Lock } from 'lucide-react';
+<<<<<<< HEAD
 import { useApp, useInvoiceStats } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
 import { LogoUpload } from './LogoUpload';
 import { swalConfig } from '../../lib/sweetAlert';
 import { getSupportedCurrencies } from '../../lib/currencyUtils';
 import { CurrencyConfig } from '../../types';
+=======
+import { useApp, useInvoiceStats, useCapability } from '../../context/SupabaseAppContext';
+import { useAuth } from '../../context/AuthContext';
+import { LogoUpload } from './LogoUpload';
+import { swalConfig } from '../../lib/sweetAlert';
+import { UpgradePrompt } from '../ui/UpgradePrompt';
+>>>>>>> feature/vision-v3-migration
 
 export function Settings() {
   const { state, dispatch } = useApp();
@@ -19,8 +27,6 @@ export function Settings() {
     storeEmail: state.settings.storeEmail || '',
     storeLogo: state.settings.storeLogo,
     taxRate: state.settings.taxRate.toString(),
-    currency: state.settings.currency,
-    baseCurrency: state.settings.baseCurrency || 'USD',
     receiptPrinter: state.settings.receiptPrinter,
     autoBackup: state.settings.autoBackup,
     theme: state.settings.theme || 'light',
@@ -28,6 +34,7 @@ export function Settings() {
     invoiceCounter: state.settings.invoiceCounter?.toString() || '1000',
   });
 
+<<<<<<< HEAD
   // Currency-related state
   const [supportedCurrencies, setSupportedCurrencies] = useState<CurrencyConfig[]>([]);
   const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
@@ -53,6 +60,11 @@ export function Settings() {
       setIsLoadingCurrencies(false);
     }
   };
+=======
+  // Check if user has permission to change settings
+  const canEditSettings = profile?.role === 'admin' || profile?.role === 'manager';
+  const canPrint = useCapability('printer_integration');
+>>>>>>> feature/vision-v3-migration
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (!canEditSettings) return;
@@ -170,6 +182,7 @@ export function Settings() {
                   </div>
 
                   <div>
+<<<<<<< HEAD
                     <label className="block text-sm font-semibold text-[#473b32] dark:text-[#f0ece5] mb-2">
                       Display Currency
                     </label>
@@ -218,6 +231,19 @@ export function Settings() {
                     </select>
                     <p className="text-xs text-[#7d6b57] dark:text-[#c6bbab] mt-1">
                       Base currency for product pricing and exchange rate calculations
+=======
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Currency
+                    </label>
+                    <input
+                      type="text"
+                      value="MMK (Myanmar Kyat)"
+                      disabled
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-100 cursor-not-allowed"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Myanmar market — MMK only
+>>>>>>> feature/vision-v3-migration
                     </p>
                   </div>
                 </div>
@@ -361,14 +387,26 @@ export function Settings() {
             </div>
 
             <div className="space-y-4">
+<<<<<<< HEAD
               <label className={`flex items-center p-4 border border-[#ded7cc] dark:border-[#54463b] rounded-xl transition-colors ${!canEditSettings ? 'bg-[#faf8f5] dark:bg-[#1f1309] cursor-not-allowed' : 'hover:bg-[#faf8f5] dark:bg-[#1f1309] cursor-pointer'}`}>
+=======
+              {!canPrint && (
+                <UpgradePrompt feature="Receipt printing" tier="growth" onClose={() => {}} />
+              )}
+              <label className={`flex items-center p-4 border border-gray-200 rounded-xl transition-colors ${!canEditSettings || !canPrint ? 'bg-gray-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
+>>>>>>> feature/vision-v3-migration
                 <input
                   type="checkbox"
                   name="receiptPrinter"
-                  checked={formData.receiptPrinter}
+                  checked={formData.receiptPrinter && canPrint}
                   onChange={handleChange}
+<<<<<<< HEAD
                   disabled={!canEditSettings}
                   className="rounded border-[#ded7cc] dark:border-[#54463b] text-[#9a693a] focus:ring-[#9a693a] h-5 w-5"
+=======
+                  disabled={!canEditSettings || !canPrint}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-5 w-5"
+>>>>>>> feature/vision-v3-migration
                 />
                 <div className="ml-4">
                   <span className="text-sm font-semibold text-[#473b32] dark:text-[#f0ece5]">Enable Receipt Printer</span>

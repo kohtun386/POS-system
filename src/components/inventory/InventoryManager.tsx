@@ -4,6 +4,7 @@ import { Product } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 import { ProductModal } from './ProductModal';
 import { swalConfig } from '../../lib/sweetAlert';
+import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 export function InventoryManager() {
   const { state } = useApp();
@@ -13,6 +14,8 @@ export function InventoryManager() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [sortBy, setSortBy] = useState<'name' | 'stock' | 'price'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const atProductLimit = state.products.length >= 50;
 
   const categories = ['All', ...Array.from(new Set(state.products.map((p: Product) => p.category)))];
 
@@ -92,13 +95,26 @@ export function InventoryManager() {
           <p className="text-gray-600 mt-1">Manage your products and stock levels</p>
         </div>
         
-        <button
-          onClick={handleAddProduct}
-          className="btn btn-primary btn-lg"
-        >
-          <Plus className="h-5 w-5" />
-          <span>Add Product</span>
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => {
+              if (atProductLimit) {
+                setShowUpgrade(true);
+                return;
+              }
+              handleAddProduct();
+            }}
+            className={`btn btn-lg ${atProductLimit ? 'btn-secondary opacity-60' : 'btn-primary'}`}
+          >
+            <Plus className="h-5 w-5" />
+            <span>Add Product {atProductLimit && `(${state.products.length}/50)`}</span>
+          </button>
+          {showUpgrade && (
+            <div className="absolute right-0 top-full mt-2 z-50 w-72">
+              <UpgradePrompt feature="More than 50 products" tier="growth" onClose={() => setShowUpgrade(false)} />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}

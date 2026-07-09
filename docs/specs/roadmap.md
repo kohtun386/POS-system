@@ -43,7 +43,7 @@ Commits referenced: `8556dc3`, `25da4db`, `64e0082`
 
 3. **Currency tables RLS** — `currency_config`, `exchange_rates`, `exchange_rate_history` had blanket `auth.role()='authenticated'` FOR ALL policies. Cashiers could modify exchange rates. Now role-gated: SELECT for all authenticated, write for admin/manager only.
 
-4. **Function search_path** — All 7 public functions (`update_updated_at_column`, `generate_invoice_number`, `update_customer_stats`, `auto_generate_invoice_number`, `get_current_exchange_rate`, `convert_currency_amount`, `update_exchange_rate`) received `SET search_path = ''`. Eliminates search-path injection vector (Supabase advisory #0011).
+4. **Function search_path** — All 7 public functions (`update_updated_at_column`, `generate_invoice_number`, `update_customer_stats`, `auto_generate_invoice_number`, `get_current_exchange_rate`, `convert_currency_amount`, `update_exchange_rate`) received `SET search_path = ''`. Eliminates search-path injection vector (Supabase advisory #0011). **Note:** `update_customer_stats` and `auto_generate_invoice_number` were later dropped in m38/m39 (invoice generation and customer stats now handled inside `checkout_complete()` RPC).
 
 **Remaining (manual):** Leaked password protection enabled in Supabase Dashboard → Authentication → Settings.
 

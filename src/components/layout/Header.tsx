@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
   User, Settings, LogOut, ShoppingCart, Monitor, Smartphone, Bell, Menu, X, Percent,
-  Receipt, Package, Users, BarChart3, Sun, Moon
+  Receipt, Package, Users, BarChart3, Sun, Moon, ChefHat, Leaf
 } from 'lucide-react';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp, useCapability } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
-import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { useTheme } from '../../context/ThemeContext';
 import { swalConfig } from '../../lib/sweetAlert';
 
@@ -18,10 +17,18 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
   const { state, dispatch } = useApp();
   const { signOut } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+<<<<<<< HEAD
   const inventoryEnabled = useFeatureFlag('inventory');
   const customerEnabled = useFeatureFlag('customer_management');
   const discountEnabled = useFeatureFlag('discounts');
   const kitchenDisplayEnabled = useFeatureFlag('kitchen_display');
+=======
+  const inventoryEnabled = useCapability('inventory');
+  const customerEnabled = useCapability('customer_management');
+  const discountEnabled = useCapability('discounts');
+  const recipeBomEnabled = useCapability('recipe_bom');
+  const rawMaterialsEnabled = useCapability('raw_materials');
+>>>>>>> feature/vision-v3-migration
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
@@ -76,6 +83,16 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
       items.push({ id: 'inventory', label: 'Inventory', icon: Package, color: 'text-[#9a693a]' });
     }
 
+    // Raw Materials - Manager and Admin can access (feature-gated)
+    if ((role === 'admin' || role === 'manager') && inventoryEnabled && rawMaterialsEnabled) {
+      items.push({ id: 'raw-materials', label: 'Raw Materials', icon: Leaf, color: 'text-[#22c55e]' });
+    }
+
+    // Recipes - Manager and Admin can access (feature-gated)
+    if ((role === 'admin' || role === 'manager') && inventoryEnabled && recipeBomEnabled) {
+      items.push({ id: 'recipes', label: 'Recipes', icon: ChefHat, color: 'text-[#f57323]' });
+    }
+
     // Customers - Manager and Admin can access (feature-gated)
     if ((role === 'admin' || role === 'manager') && customerEnabled) {
       items.push({ id: 'customers', label: 'Customers', icon: Users, color: 'text-[#f57323]' });
@@ -91,14 +108,25 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
       items.push({ id: 'reports', label: 'Reports', icon: BarChart3, color: 'text-[#cfa16a]' });
     }
 
+    // Alerts - Manager and Admin can access
+    if (role === 'admin' || role === 'manager') {
+      items.push({ id: 'alerts', label: 'Alerts', icon: Bell, color: 'text-[#e55c13]' });
+    }
+
     // Users - Admin only
     if (role === 'admin') {
       items.push({ id: 'users', label: 'Users', icon: User, color: 'text-[#7a4f2c]' });
     }
 
+<<<<<<< HEAD
     // Kitchen Display - All roles can access (feature-gated)
     if (kitchenDisplayEnabled) {
       items.push({ id: 'kitchen', label: 'Kitchen', icon: Monitor, color: 'text-[#22c55e]' });
+=======
+    // Feature Flags - Admin only
+    if (role === 'admin') {
+      items.push({ id: 'feature-flags', label: 'Feature Flags', icon: Settings, color: 'text-[#7a4f2c]' });
+>>>>>>> feature/vision-v3-migration
     }
 
     return items;

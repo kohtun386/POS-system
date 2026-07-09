@@ -124,11 +124,17 @@ export interface Sale {
   cardDetails?: CardDetails;
   status: 'pending' | 'completed' | 'refunded' | 'credit' | 'draft';
   cashier: string;
+  cashierId?: string;
+  cashierRole?: 'platform_admin' | 'admin' | 'manager' | 'cashier';
   timestamp: Date;
   receiptNumber: string;
+  receiptPrinted?: boolean;
   notes?: string;
   appliedDiscounts?: AppliedDiscount[];
   freeGifts?: CartItem[];
+  transactionCurrency?: string;
+  baseCurrencyAmount?: number;
+  exchangeRateUsed?: number;
 }
 
 export interface AppliedDiscount {
@@ -151,7 +157,7 @@ export interface User {
   username: string;
   name: string;
   email: string;
-  role: 'admin' | 'manager' | 'cashier';
+  role: 'platform_admin' | 'admin' | 'manager' | 'cashier';
   permissions: string[];
   active: boolean;
   lastLogin?: Date;
@@ -164,6 +170,19 @@ export interface Shop {
   address: string;
   phone: string;
   email: string;
+  logo?: string;
+  ownerId?: string;
+  businessType: 'coffee_shop';
+  taxRate: number;
+  currency: string;
+  baseCurrency: string;
+  invoicePrefix: string;
+  invoiceCounter: number;
+  draftRetentionDays: number;
+  subscriptionTier: 'free' | 'growth' | 'pro';
+  dailyOrderLimit?: number;
+  receiptSetting: 'always' | 'ask' | 'never';
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -351,6 +370,34 @@ export interface AlertContext {
   configuration: AlertConfiguration;
 }
 
+// ================================================================
+// Cash Shift Types (VISION §12)
+// ================================================================
+
+export interface CashShift {
+  id: string;
+  shopId: string;
+  cashierId: string;
+  openingCash: number;
+  closingCash?: number;
+  expectedCash?: number;
+  variance?: number;
+  status: 'open' | 'closed';
+  openedAt: Date;
+  closedAt?: Date;
+}
+
+// ================================================================
+// Capability Resolution Types (VISION §5)
+// ================================================================
+
+export interface CapabilityResolution {
+  capabilities: string[];
+  shop: Shop;
+  features: FeatureDefinition[];
+  overrides: ShopFeature[];
+}
+
 // Feature Flags types
 export interface FeatureDefinition {
   id: string;
@@ -359,7 +406,7 @@ export interface FeatureDefinition {
   description?: string;
   category: string;
   defaultEnabled: boolean;
-  subscriptionTier: 'free' | 'pro' | 'enterprise';
+  subscriptionTier: 'free' | 'growth' | 'pro';
   createdAt: Date;
 }
 
@@ -371,6 +418,7 @@ export interface ShopFeature {
   updatedAt: Date;
 }
 
+/** @deprecated Use `capabilities: string[]` instead. Kept for backward compat during migration. */
 export type FeatureFlags = Record<string, boolean>;
 
 // ================================================================
@@ -496,9 +544,19 @@ export interface KitchenOrder {
 export interface PrintJob {
   id: string;
   shopId: string;
-  orderId: string;
+  saleId: string;
+  printerType: 'receipt' | 'kitchen';
   status: PrintJobStatus;
+<<<<<<< HEAD
   configData: Record<string, string | number | boolean>;
+=======
+  connectionType: 'bluetooth' | 'network';
+  printerAddress: string;
+  payload: Record<string, any>;
+  isReprint: boolean;
+  retryCount: number;
+  errorMessage?: string;
+>>>>>>> feature/vision-v3-migration
   createdAt: Date;
   completedAt?: Date;
 }

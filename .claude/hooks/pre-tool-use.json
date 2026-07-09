@@ -1,0 +1,5 @@
+{
+  "triggers": ["Bash(supabase db *)", "Bash(docker exec * psql *)"],
+  "action": "inject_prompt",
+  "prompt": "⚠️ DB COMMAND INTERCEPTED\n\nBefore proceeding, you MUST:\n1. Call @db-guardian to validate this operation\n2. Wait for schema safety report\n3. Only run DB command if guardian says 'Safe' or 'Caution'\n4. Log result in .harness/guardian-log.md\n\n❌ Do NOT skip guardian check - this violates CLAUDE.md rules"
+}

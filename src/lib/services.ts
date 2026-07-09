@@ -14,13 +14,20 @@ import {
   Product,
   ProductBatch,
   Customer,
+  CartItem,
   Sale,
   Discount,
   DiscountCondition,
+<<<<<<< HEAD
   CartItem,
   AppliedDiscount,
   Payment,
   CardDetails,
+=======
+  Payment,
+  CardDetails,
+  AppliedDiscount,
+>>>>>>> feature/vision-v3-migration
   User,
   AppSettings,
   SalesTab,
@@ -32,11 +39,12 @@ import {
   Shop,
   FeatureDefinition,
   ShopFeature,
+  CashShift,
+  CapabilityResolution,
   RawMaterial,
   Recipe,
   RecipeLine,
   ConsumptionLog,
-  UomConversion,
   KitchenOrder,
   KitchenOrderItem,
   KitchenOrderItemsPayload,
@@ -45,6 +53,116 @@ import {
   PrintJob,
   PrintJobStatus
 } from '../types'
+
+// ================================================================
+// Error Classes
+// ================================================================
+
+export class DailyLimitError extends Error {
+  constructor(message = 'Daily order limit reached. Upgrade to Growth.') {
+    super(message)
+    this.name = 'DailyLimitError'
+  }
+}
+
+// ================================================================
+// Helper: map DB row → Shop (shared by shopsService + shopMembershipsService)
+// ================================================================
+
+function mapShopRow(row: any): Shop {
+  return {
+    id: row.id,
+    name: row.name || '',
+    address: row.address || '',
+    phone: row.phone || '',
+    email: row.email || '',
+    logo: row.logo || undefined,
+    ownerId: row.owner_id || undefined,
+    businessType: row.business_type || 'coffee_shop',
+    taxRate: Number(row.tax_rate ?? 0),
+    currency: row.currency || 'MMK',
+    baseCurrency: row.base_currency || 'MMK',
+    invoicePrefix: row.invoice_prefix || 'INV',
+    invoiceCounter: row.invoice_counter ?? 0,
+    draftRetentionDays: row.draft_retention_days ?? 30,
+    subscriptionTier: row.subscription_tier || 'free',
+    dailyOrderLimit: row.daily_order_limit ?? undefined,
+    receiptSetting: row.receipt_setting || 'ask',
+    isActive: row.is_active ?? true,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  }
+}
+
+// ================================================================
+// Capability Resolution (VISION §5)
+// ================================================================
+
+const TIER_HIERARCHY: Record<string, number> = { free: 0, growth: 1, pro: 2 }
+
+/**
+ * Resolve capabilities for a shop based on subscription tier + overrides.
+ *
+ * Precedence (TIER-SPEC §3.3 — Flexible model):
+ *   1. Per-shop override (shop_features) — ALWAYS wins, can beat tier gate
+ *   2. Tier gate + default_enabled — fallback when no override exists
+ *
+ * A platform admin can enable a Pro feature on a Free shop for trials.
+ * Returns flat string[] of capability keys the shop can access.
+ */
+export function resolveCapabilities(
+  shop: Shop,
+  definitions: FeatureDefinition[],
+  overrides: ShopFeature[]
+): string[] {
+  const shopTierLevel = TIER_HIERARCHY[shop.subscriptionTier] ?? 0
+
+  // Build override map: feature_key → enabled
+  const overrideMap = new Map<string, boolean>()
+  for (const o of overrides) {
+    overrideMap.set(o.featureKey, o.enabled)
+  }
+
+  const caps: string[] = []
+
+  for (const def of definitions) {
+    // Check per-shop override FIRST (overrides always win — TIER-SPEC §3.3)
+    const override = overrideMap.get(def.key)
+
+    if (override !== undefined) {
+      // Override exists: use it regardless of tier gate
+      if (override) {
+        caps.push(def.key)
+      }
+    } else {
+      // No override: apply tier gate + default
+      const defTierLevel = TIER_HIERARCHY[def.subscriptionTier] ?? 0
+      if (shopTierLevel >= defTierLevel && def.defaultEnabled) {
+        caps.push(def.key)
+      }
+    }
+  }
+
+  return caps
+}
+
+/**
+ * Server-side capability resolution via RPC (VISION §5).
+ * Returns flat string[] of capability keys for a shop.
+ * Precedence: shop_features override > feature_definitions tier gate.
+ */
+export async function resolveCapabilitiesRpc(shopId: string): Promise<string[]> {
+  const { data, error } = await supabase.rpc('resolve_capabilities', {
+    p_shop_id: shopId,
+  })
+
+  if (error) {
+    console.error('Failed to resolve capabilities via RPC:', error)
+    throw error
+  }
+
+  return data ?? []
+}
 
 // Products Service
 export const productsService = {
@@ -385,7 +503,11 @@ export const salesService = {
       invoiceNumber: sale.invoice_number,
       customerId: sale.customer_id || undefined,
       customerName: sale.customer_name || undefined,
+<<<<<<< HEAD
       items: sale.items as CartItem[],
+=======
+      items: (sale.items as CartItem[]) || [],
+>>>>>>> feature/vision-v3-migration
       subtotal: sale.subtotal || 0,
       discountAmount: sale.discount_amount || 0,
       taxAmount: sale.tax_amount || 0,
@@ -399,7 +521,11 @@ export const salesService = {
       receiptNumber: sale.receipt_number || undefined,
       notes: sale.notes || undefined,
       appliedDiscounts: sale.applied_discounts as AppliedDiscount[] | undefined,
+<<<<<<< HEAD
       freeGifts: sale.free_gifts as CartItem[] | undefined
+=======
+      freeGifts: sale.free_gifts as CartItem[] | undefined,
+>>>>>>> feature/vision-v3-migration
     }))
 
     return {
@@ -441,7 +567,11 @@ export const salesService = {
       invoiceNumber: data.invoice_number,
       customerId: data.customer_id || undefined,
       customerName: data.customer_name || undefined,
+<<<<<<< HEAD
       items: data.items as CartItem[],
+=======
+      items: (data.items as CartItem[]) || [],
+>>>>>>> feature/vision-v3-migration
       subtotal: data.subtotal || 0,
       discountAmount: data.discount_amount || 0,
       taxAmount: data.tax_amount || 0,
@@ -454,7 +584,11 @@ export const salesService = {
       receiptNumber: data.receipt_number || undefined,
       notes: data.notes || undefined,
       appliedDiscounts: data.applied_discounts as AppliedDiscount[] | undefined,
+<<<<<<< HEAD
       freeGifts: data.free_gifts as CartItem[] | undefined
+=======
+      freeGifts: data.free_gifts as CartItem[] | undefined,
+>>>>>>> feature/vision-v3-migration
     }
   },
 
@@ -466,6 +600,58 @@ export const salesService = {
 
     if (error) throw error
   }
+}
+
+// Checkout Service — atomic checkout via RPC (VISION §11)
+export const checkoutService = {
+  async complete(shopId: string, saleData: any, payments: any, cashierId: string): Promise<Sale> {
+    const { data: rpcResult, error } = await supabase.rpc('checkout_complete', {
+      p_shop_id: shopId,
+      p_sale_data: saleData,
+      p_payments: payments,
+      p_cashier_id: cashierId,
+    })
+
+    if (error) {
+      if (error.message?.includes('DAILY_LIMIT_REACHED')) {
+        throw new DailyLimitError()
+      }
+      throw error
+    }
+
+    // RPC returns JSONB {sale_id, invoice_number}; extract sale_id for row fetch.
+    const saleId = rpcResult?.sale_id ?? rpcResult
+    const { data: row, error: fetchError } = await supabase
+      .from('sales')
+      .select('*')
+      .eq('id', saleId)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    return {
+      id: row.id,
+      invoiceNumber: row.invoice_number,
+      customerId: row.customer_id || undefined,
+      customerName: row.customer_name || undefined,
+      items: (row.items as CartItem[]) || [],
+      subtotal: row.subtotal || 0,
+      discountAmount: row.discount_amount || 0,
+      taxAmount: row.tax_amount || 0,
+      total: row.total || 0,
+      paymentMethod: row.payment_method as Sale['paymentMethod'],
+      payments: row.payments as Payment[] | undefined,
+      cardDetails: row.card_details as CardDetails | undefined,
+      status: row.status as Sale['status'],
+      cashier: row.cashier || '',
+      cashierId: row.cashier_id || undefined,
+      timestamp: new Date(row.created_at),
+      receiptNumber: row.receipt_number || undefined,
+      notes: row.notes || undefined,
+      appliedDiscounts: row.applied_discounts as AppliedDiscount[] | undefined,
+      freeGifts: row.free_gifts as CartItem[] | undefined,
+    }
+  },
 }
 
 // Discounts Service
@@ -484,7 +670,11 @@ export const discountsService = {
       description: discount.description || '',
       type: discount.type as Discount['type'],
       value: discount.value || 0,
+<<<<<<< HEAD
       conditions: discount.conditions as DiscountCondition[],
+=======
+      conditions: (discount.conditions as DiscountCondition[]) || [],
+>>>>>>> feature/vision-v3-migration
       freeGiftProducts: discount.free_gift_products || undefined,
       minAmount: discount.min_amount || undefined,
       maxDiscount: discount.max_discount || undefined,
@@ -524,7 +714,11 @@ export const discountsService = {
       description: data.description || '',
       type: data.type as Discount['type'],
       value: data.value || 0,
+<<<<<<< HEAD
       conditions: data.conditions as DiscountCondition[],
+=======
+      conditions: (data.conditions as DiscountCondition[]) || [],
+>>>>>>> feature/vision-v3-migration
       freeGiftProducts: data.free_gift_products || undefined,
       minAmount: data.min_amount || undefined,
       maxDiscount: data.max_discount || undefined,
@@ -565,7 +759,11 @@ export const discountsService = {
       description: data.description || '',
       type: data.type as Discount['type'],
       value: data.value || 0,
+<<<<<<< HEAD
       conditions: data.conditions as DiscountCondition[],
+=======
+      conditions: (data.conditions as DiscountCondition[]) || [],
+>>>>>>> feature/vision-v3-migration
       freeGiftProducts: data.free_gift_products || undefined,
       minAmount: data.min_amount || undefined,
       maxDiscount: data.max_discount || undefined,
@@ -607,6 +805,7 @@ export const settingsService = {
       taxRate: data.tax_rate || 0,
       currency: data.currency || 'USD',
       baseCurrency: data.base_currency || 'USD',
+<<<<<<< HEAD
       interfaceMode: data.interface_mode as AppSettings['interfaceMode'] || 'touch',
       autoBackup: data.auto_backup ?? true,
       receiptPrinter: data.receipt_printer ?? true,
@@ -614,6 +813,15 @@ export const settingsService = {
       invoicePrefix: data.invoice_prefix || 'INV',
       invoiceCounter: data.invoice_counter || 1000,
       exchangeRateProvider: data.exchange_rate_provider as AppSettings['exchangeRateProvider'] || 'exchangerate',
+=======
+      interfaceMode: (data.interface_mode as AppSettings['interfaceMode']) || 'touch',
+      autoBackup: data.auto_backup ?? true,
+      receiptPrinter: data.receipt_printer ?? true,
+      theme: (data.theme as AppSettings['theme']) || 'light',
+      invoicePrefix: data.invoice_prefix || 'INV',
+      invoiceCounter: data.invoice_counter || 1000,
+      exchangeRateProvider: (data.exchange_rate_provider as AppSettings['exchangeRateProvider']) || 'exchangerate',
+>>>>>>> feature/vision-v3-migration
       exchangeRateApiKey: data.exchange_rate_api_key || undefined,
       exchangeRateUpdateInterval: data.exchange_rate_update_interval || 60
     }
@@ -666,6 +874,7 @@ export const settingsService = {
       taxRate: data.tax_rate || 0,
       currency: data.currency || 'USD',
       baseCurrency: data.base_currency || 'USD',
+<<<<<<< HEAD
       interfaceMode: data.interface_mode as AppSettings['interfaceMode'] || 'touch',
       autoBackup: data.auto_backup ?? true,
       receiptPrinter: data.receipt_printer ?? true,
@@ -673,6 +882,15 @@ export const settingsService = {
       invoicePrefix: data.invoice_prefix || 'INV',
       invoiceCounter: data.invoice_counter || 1000,
       exchangeRateProvider: data.exchange_rate_provider as AppSettings['exchangeRateProvider'] || 'exchangerate',
+=======
+      interfaceMode: (data.interface_mode as AppSettings['interfaceMode']) || 'touch',
+      autoBackup: data.auto_backup ?? true,
+      receiptPrinter: data.receipt_printer ?? true,
+      theme: (data.theme as AppSettings['theme']) || 'light',
+      invoicePrefix: data.invoice_prefix || 'INV',
+      invoiceCounter: data.invoice_counter || 1000,
+      exchangeRateProvider: (data.exchange_rate_provider as AppSettings['exchangeRateProvider']) || 'exchangerate',
+>>>>>>> feature/vision-v3-migration
       exchangeRateApiKey: data.exchange_rate_api_key || undefined,
       exchangeRateUpdateInterval: data.exchange_rate_update_interval || 60
     }
@@ -791,7 +1009,11 @@ export const salesTabsService = {
     return data.map(tab => ({
       id: tab.id,
       name: tab.name,
+<<<<<<< HEAD
       cart: tab.cart as CartItem[] || [],
+=======
+      cart: (tab.cart as CartItem[]) || [],
+>>>>>>> feature/vision-v3-migration
       selectedCustomer: tab.selected_customer ? {
         id: tab.selected_customer.id,
         name: tab.selected_customer.name,
@@ -826,7 +1048,11 @@ export const salesTabsService = {
     return {
       id: data.id,
       name: data.name,
+<<<<<<< HEAD
       cart: data.cart as CartItem[] || [],
+=======
+      cart: (data.cart as CartItem[]) || [],
+>>>>>>> feature/vision-v3-migration
       selectedCustomer: tab.selectedCustomer,
       createdAt: new Date(data.created_at)
     }
@@ -849,7 +1075,11 @@ export const salesTabsService = {
     return {
       id: data.id,
       name: data.name,
+<<<<<<< HEAD
       cart: data.cart as CartItem[] || [],
+=======
+      cart: (data.cart as CartItem[]) || [],
+>>>>>>> feature/vision-v3-migration
       selectedCustomer: tab.selectedCustomer || null,
       createdAt: new Date(data.created_at)
     }
@@ -1287,15 +1517,7 @@ export const shopMembershipsService = {
     const shop = (data as any).shop
     if (!shop) return null
 
-    return {
-      id: shop.id,
-      name: shop.name || '',
-      address: shop.address || '',
-      phone: shop.phone || '',
-      email: shop.email || '',
-      createdAt: new Date(shop.created_at),
-      updatedAt: new Date(shop.updated_at),
-    }
+    return mapShopRow(shop)
   },
 }
 
@@ -1310,19 +1532,25 @@ export const shopsService = {
 
     if (error) throw error
 
-    return {
-      id: data.id,
-      name: data.name || '',
-      address: data.address || '',
-      phone: data.phone || '',
-      email: data.email || '',
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    }
+    return mapShopRow(data)
   },
 
   async getByUserId(userId: string): Promise<Shop | null> {
     return shopMembershipsService.getShopByUserId(userId)
+  },
+
+  async getShopWithCapabilities(userId: string): Promise<CapabilityResolution | null> {
+    const shop = await shopMembershipsService.getShopByUserId(userId)
+    if (!shop) return null
+
+    const [features, overrides] = await Promise.all([
+      featureDefinitionsService.getAll(),
+      shopFeaturesService.getByShopId(shop.id),
+    ])
+
+    const capabilities = resolveCapabilities(shop, features, overrides)
+
+    return { capabilities, shop, features, overrides }
   },
 }
 
@@ -2158,5 +2386,116 @@ export const printJobsService = {
   async delete(id: string): Promise<void> {
     const { error } = await supabase.from('print_jobs').delete().eq('id', id)
     if (error) throw error
+  },
+}
+
+// ================================================================
+// Cash Shifts Service (VISION §12)
+// ================================================================
+
+export const cashShiftsService = {
+  async getOpenByCashier(cashierId: string): Promise<CashShift | null> {
+    const { data, error } = await supabase
+      .from('cash_shifts')
+      .select('*')
+      .eq('cashier_id', cashierId)
+      .eq('status', 'open')
+      .maybeSingle()
+
+    if (error) throw error
+    if (!data) return null
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      cashierId: data.cashier_id,
+      openingCash: Number(data.opening_cash),
+      closingCash: data.closing_cash != null ? Number(data.closing_cash) : undefined,
+      expectedCash: data.expected_cash != null ? Number(data.expected_cash) : undefined,
+      variance: data.variance != null ? Number(data.variance) : undefined,
+      status: data.status as 'open' | 'closed',
+      openedAt: new Date(data.opened_at),
+      closedAt: data.closed_at ? new Date(data.closed_at) : undefined,
+    }
+  },
+
+  async create(input: { shopId: string; cashierId: string; openingCash: number }): Promise<CashShift> {
+    const { data, error } = await supabase
+      .from('cash_shifts')
+      .insert({
+        shop_id: input.shopId,
+        cashier_id: input.cashierId,
+        opening_cash: input.openingCash,
+        status: 'open',
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      cashierId: data.cashier_id,
+      openingCash: Number(data.opening_cash),
+      status: 'open',
+      openedAt: new Date(data.opened_at),
+    }
+  },
+
+  async close(id: string, closingCash: number, expectedCash?: number): Promise<CashShift> {
+    const variance = expectedCash != null ? closingCash - expectedCash : undefined
+
+    const { data, error } = await supabase
+      .from('cash_shifts')
+      .update({
+        closing_cash: closingCash,
+        expected_cash: expectedCash,
+        variance,
+        status: 'closed',
+        closed_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      cashierId: data.cashier_id,
+      openingCash: Number(data.opening_cash),
+      closingCash: Number(data.closing_cash),
+      expectedCash: data.expected_cash != null ? Number(data.expected_cash) : undefined,
+      variance: data.variance != null ? Number(data.variance) : undefined,
+      status: 'closed',
+      openedAt: new Date(data.opened_at),
+      closedAt: data.closed_at ? new Date(data.closed_at) : undefined,
+    }
+  },
+
+  async getByShopId(shopId: string, limit = 10): Promise<CashShift[]> {
+    const { data, error } = await supabase
+      .from('cash_shifts')
+      .select('*')
+      .eq('shop_id', shopId)
+      .order('opened_at', { ascending: false })
+      .limit(limit)
+
+    if (error) throw error
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      shopId: row.shop_id,
+      cashierId: row.cashier_id,
+      openingCash: Number(row.opening_cash),
+      closingCash: row.closing_cash != null ? Number(row.closing_cash) : undefined,
+      expectedCash: row.expected_cash != null ? Number(row.expected_cash) : undefined,
+      variance: row.variance != null ? Number(row.variance) : undefined,
+      status: row.status as 'open' | 'closed',
+      openedAt: new Date(row.opened_at),
+      closedAt: row.closed_at ? new Date(row.closed_at) : undefined,
+    }))
   },
 }

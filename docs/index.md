@@ -36,7 +36,7 @@
 |----------|-------------|--------|
 | [Multi-Tenancy](specs/multi-tenancy.md) | Multi-tenant schema with shop_id foundation, 4 roles, subscription tiers | Foundation complete, dynamic config pending |
 | [Inventory Alerts](specs/inventory-alerts.md) | Alert system: 5 alert types, email/SMS, templates, scheduling | Planned |
-| [Kitchen Workflow](specs/kitchen-workflow.md) | Kitchen Display System (KDS), real-time orders, print jobs, station routing | Planned |
+| [Kitchen Workflow](specs/kitchen-workflow.md) | ~~Kitchen Display System (KDS)~~ — Deprecated. Kitchen printer routing via `printer_integration` (Growth). | Deprecated |
 | [Recipe BOM](specs/recipe-bom.md) | Bill of Materials, raw materials, recipes, consumption logging, UoM conversion | Planned |
 | [Feature Flags](specs/feature-flags.md) | Capability-based per-shop feature toggling, subscription tier gating (Free/Growth/Pro) | Planned |
 | [Waste Tracking](specs/waste-tracking.md) | Recording spoiled/damaged ingredients, waste reports, impact on profitability | Pro tier — Planned |
@@ -70,7 +70,7 @@ User-facing guides written for shop owners and staff — no technical jargon.
 - [Database](architecture/database.md) → [Auth](architecture/auth.md) → [Multi-Tenancy](specs/multi-tenancy.md) → [Recipe BOM](specs/recipe-bom.md)
 
 **Frontend/Focus:**
-- [Design System](architecture/design-system.md) → [State Management](architecture/state-management.md) → [Patterns](architecture/patterns.md) → [Kitchen Workflow](specs/kitchen-workflow.md)
+- [Design System](architecture/design-system.md) → [State Management](architecture/state-management.md) → [Patterns](architecture/patterns.md)
 
 **Shop Owner / Non-Technical:**
 - [User Onboarding](specs/user-onboarding.md) → [Recipe & Inventory](specs/recipe-bom-user-workflow.md) → [Waste Tracking](specs/waste-tracking.md)

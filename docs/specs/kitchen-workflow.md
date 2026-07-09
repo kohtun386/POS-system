@@ -1,5 +1,11 @@
 # Kitchen Workflow System — Design Specification
 
+> **⚠️ DEPRECATED (2026-07-04):** This spec describes a Kitchen Display System (KDS) screen.
+> In the Myanmar coffee shop market, no one uses physical KDS screens. The standard workflow is
+> POS → Kitchen Thermal Printer. KDS screen components have been deleted from the codebase.
+> Kitchen printer routing is handled via `printer_integration` (Growth tier) in `Settings.tsx`.
+> The `kitchen_display` DB key is dead code — kept for forward compatibility only.
+
 ## Overview
 
 A Kitchen Display System (KDS) that replaces paper ticket printers with a real-time digital display. Orders flow from the POS to a kitchen screen, staff prepare items, and mark them complete — all tracked with timestamps for performance analytics.

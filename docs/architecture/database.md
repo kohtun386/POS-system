@@ -248,8 +248,8 @@ Transaction records. JSONB `items` stores cart snapshot at time of sale.
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
 **Triggers:**
-- `trigger_auto_generate_invoice_number` — BEFORE INSERT, fills empty invoice_number
-- `trigger_update_customer_stats` — AFTER INSERT/UPDATE, updates `customers.total_purchases` and `last_purchase`
+- ~~`trigger_auto_generate_invoice_number`~~ — **DROPPED** (migration m38). Invoice generation now handled inside `checkout_complete()` RPC.
+- ~~`trigger_update_customer_stats`~~ — **DROPPED** (migration m39). Customer stats update now handled inside `checkout_complete()` RPC.
 
 **Service:** `salesService` — `getAll()` cursor-based pagination (`limit`, `cursor`). `create()`, `delete()`. No `update()`.
 
@@ -471,17 +471,17 @@ feature_definitions
 
 | Function | Security | Purpose | Trigger? |
 |----------|----------|---------|----------|
-| `update_updated_at_column()` | INVOKER, `search_path=''` | Sets `updated_at = now()` on UPDATE | Yes — all tables with `updated_at` |
-| `generate_invoice_number(p_shop_id uuid)` | INVOKER, `search_path=''` | Atomically reads `shops.invoice_prefix`/`invoice_counter`, increments the shop counter, returns formatted invoice number | No — called by `auto_generate_invoice_number()` or RPC-backed service path |
-| `auto_generate_invoice_number()` | INVOKER, `search_path=''` | Calls `generate_invoice_number(NEW.shop_id)` if invoice_number is empty | Yes — BEFORE INSERT on `sales` |
-| `update_customer_stats()` | INVOKER, `search_path=''` | Updates `customers.total_purchases` and `last_purchase` | Yes — AFTER INSERT/UPDATE on `sales` |
-| `handle_new_auth_user()` | SECURITY DEFINER, `search_path=''` | Creates `public.users` row on `auth.users` insert | Yes — AFTER INSERT on `auth.users` |
+| `update_updated_at_column()` | SECURITY DEFINER | Sets `updated_at = now()` on UPDATE | Yes — all tables with `updated_at` |
+| `generate_invoice_number()` | INVOKER, `search_path=''` | Reads `app_settings.invoice_prefix`/`invoice_counter`, increments counter, returns formatted invoice number | No — called by `checkout_complete()` RPC (trigger path dropped in m38) |
+| `handle_new_auth_user()` | SECURITY DEFINER, `search_path=''` | Creates `public.users` + `shops` + `shop_memberships` rows on `auth.users` insert | Yes — AFTER INSERT on `auth.users` |
 | `get_current_exchange_rate(text, text)` | INVOKER, `search_path=''` | Returns current rate between two currencies | No — called from app |
 | `convert_currency_amount(decimal, text, text)` | INVOKER, `search_path=''` | Converts amount using current rate | No — called from app |
 | `update_exchange_rate(text, text, decimal, text, boolean)` | INVOKER, `search_path=''` | Ends current rate, inserts new, records history | No — called from app |
 | `rls_auto_enable()` | SECURITY DEFINER | Auto-enables RLS. Revoked from client roles | Event trigger |
-| `checkout_complete(uuid, jsonb, jsonb, uuid)` | INVOKER, `search_path=''` | Atomic all-or-nothing checkout transaction. Race condition protection via `SELECT ... FOR UPDATE` on shops row. Checks `daily_order_limit`, generates invoice, inserts sale, deducts inventory (recipe-based), creates print jobs, updates customer stats, logs consumption. RAISES `DAILY_LIMIT_REACHED` if limit exceeded. | No — called via `supabase.rpc()` |
-| `current_shop_ids()` | INVOKER, `search_path=''` | Returns `uuid[]` of shop IDs where current user has active membership. Used in RLS policies for shop-scoped access. | No — called in RLS policies |
+| `checkout_complete(uuid, jsonb, jsonb, uuid)` | SECURITY DEFINER, `search_path='public'` | Atomic all-or-nothing checkout transaction. Race condition protection via `SELECT ... FOR UPDATE` on shops row. Checks `daily_order_limit`, generates invoice, inserts sale, deducts inventory (product stock + recipe-based raw materials), logs consumption, updates customer stats. RAISES `DAILY_LIMIT_REACHED` if limit exceeded. | No — called via `supabase.rpc()` |
+| `current_shop_ids()` | INVOKER, `search_path=''` | Returns shop IDs where current user has active membership. Used in RLS policies for shop-scoped access. | No — called in RLS policies |
+| `is_platform_admin()` | SECURITY DEFINER | Checks if `auth.uid()` maps to a user with `role = 'platform_admin'`. Used in RLS for cross-tenant access. | No — called in RLS policies |
+| `replace_recipe_lines(uuid, jsonb)` | SECURITY DEFINER | Atomically deletes existing recipe_lines for a recipe and inserts new lines. Used by recipe BOM management. | No — called via RPC |
 
 ---
 
@@ -793,29 +793,36 @@ Bill of Materials (BOM) header. Links a finished product to its recipe. Growth+ 
 | `id` | uuid PK | `gen_random_uuid()` | |
 | `shop_id` | uuid FK NOT NULL | | → `shops(id)` |
 | `product_id` | uuid FK NOT NULL | | → `products(id)` — the finished product |
-| `name` | text NOT NULL | | Recipe name |
-| `notes` | text | | |
+| `product_name` | text NOT NULL | | Denormalized product name |
+| `serving_size` | numeric(10,2) | `1` | |
+| `serving_unit` | text | `'serving'` | |
+| `prep_time_seconds` | integer | | |
+| `instructions` | text | | |
 | `is_active` | boolean | `true` | |
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
-**Constraint:** UNIQUE(`shop_id`, `product_id`)
+**Constraint:** UNIQUE(`product_id`) — one recipe per finished product
 
 ---
 
-### 7.4 `recipe_items`
+### 7.4 `recipe_lines`
 
-Recipe line items. Each row is one ingredient in a recipe.
+Recipe line items. Each row is one ingredient in a recipe. Note: DB uses `recipe_lines` (not `recipe_items`).
 
 | Column | Type | Default | Notes |
 |--------|------|---------|-------|
 | `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)` |
 | `recipe_id` | uuid FK NOT NULL | | → `recipes(id)` ON DELETE CASCADE |
-| `ingredient_id` | uuid FK NOT NULL | | → `products(id)` — raw material product |
+| `raw_material_id` | uuid FK NOT NULL | | → `raw_materials(id)` |
+| `raw_material_name` | text NOT NULL | | Denormalized raw material name |
 | `quantity` | numeric(10,3) NOT NULL | | e.g. 18.000 grams |
-| `unit` | text NOT NULL | | CHECK: `'g'` \| `'ml'` \| `'pcs'` \| `'kg'` \| `'l'` |
-| `cost_per_unit` | numeric(10,2) NOT NULL | | Cost per 1 unit of ingredient |
-| `total_cost` | numeric(10,2) | | GENERATED ALWAYS AS (`quantity * cost_per_unit`) STORED |
+| `recipe_unit` | text | | Unit in recipe context |
+| `recipe_quantity` | numeric(10,3) | | |
+| `wastage_percent` | numeric(5,2) | `0` | |
+| `is_optional` | boolean | `false` | |
+| `notes` | text | | |
 | `created_at` | timestamptz | `now()` | NOT NULL |
 
 ---
@@ -829,12 +836,18 @@ Logs actual ingredient consumption per sale. Used for COGS calculation. Inserted
 | `id` | uuid PK | `gen_random_uuid()` | |
 | `shop_id` | uuid FK NOT NULL | | → `shops(id)` |
 | `sale_id` | uuid FK NOT NULL | | → `sales(id)` |
+| `sale_item_index` | integer | | Position of item in sale (1-based) |
 | `product_id` | uuid FK NOT NULL | | → `products(id)` — finished product sold |
-| `ingredient_id` | uuid FK NOT NULL | | → `products(id)` — raw material consumed |
-| `quantity` | numeric(10,3) NOT NULL | | Actual quantity consumed |
+| `product_name` | text NOT NULL | | Denormalized product name |
+| `raw_material_id` | uuid FK NOT NULL | | → `raw_materials(id)` |
+| `raw_material_name` | text NOT NULL | | Denormalized raw material name |
+| `quantity_consumed` | numeric(12,3) NOT NULL | | Actual quantity consumed (with wastage) |
+| `quantity_base` | numeric(12,3) NOT NULL | | Base quantity (without wastage) |
+| `wastage_amount` | numeric(12,3) | `0` | Quantity wasted |
 | `unit` | text NOT NULL | | |
-| `cost` | numeric(10,2) NOT NULL | | Cost of consumed quantity |
-| `created_at` | timestamptz | `now()` | NOT NULL |
+| `stock_before` | numeric(12,3) NOT NULL | | Raw material stock before deduction |
+| `stock_after` | numeric(12,3) NOT NULL | | Raw material stock after deduction |
+| `consumed_at` | timestamptz | `now()` | NOT NULL |
 
 ---
 

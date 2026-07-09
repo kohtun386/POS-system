@@ -1,15 +1,20 @@
 import { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Package, AlertTriangle, ArrowUpDown } from 'lucide-react';
 import { RawMaterial } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
-import { useFeatureFlag } from '../../hooks/useFeatureFlag';
+import { useApp, useCapability } from '../../context/SupabaseAppContext';
 import { rawMaterialsService } from '../../lib/services';
 import { RawMaterialModal } from './RawMaterialModal';
 import { swalConfig } from '../../lib/sweetAlert';
+import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 export function RawMaterialManager() {
   const { state, dispatch } = useApp();
+<<<<<<< HEAD
   const inventoryEnabled = useFeatureFlag('inventory');
+=======
+  const inventoryEnabled = useCapability('inventory');
+  const rawMaterialsEnabled = useCapability('raw_materials');
+>>>>>>> feature/vision-v3-migration
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showModal, setShowModal] = useState(false);
@@ -17,12 +22,16 @@ export function RawMaterialManager() {
   const [sortBy, setSortBy] = useState<'name' | 'stock' | 'category'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  if (!inventoryEnabled) {
+  if (!inventoryEnabled || !rawMaterialsEnabled) {
     return (
       <div className="p-6 text-center">
         <Package className="h-12 w-12 mx-auto text-[#ad9e8a] mb-4" />
-        <h2 className="text-lg font-semibold text-[#473b32] dark:text-[#f0ece5]">Inventory Tracking Disabled</h2>
-        <p className="text-[#7d6b57] dark:text-[#c6bbab] mt-2">Enable the inventory_tracking feature flag to manage raw materials.</p>
+        <h2 className="text-lg font-semibold text-[#473b32] dark:text-[#f0ece5]">
+          {!inventoryEnabled ? 'Inventory Tracking Disabled' : 'Raw Materials Disabled'}
+        </h2>
+        <div className="mt-2 max-w-md mx-auto">
+          <UpgradePrompt feature="Raw material management" tier="growth" onClose={() => {}} />
+        </div>
       </div>
     );
   }

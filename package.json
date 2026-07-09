@@ -25,7 +25,14 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
+<<<<<<< HEAD
     "test:watch": "vitest"
+=======
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
+>>>>>>> feature/vision-v3-migration
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.5",
@@ -40,6 +47,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+<<<<<<< HEAD
+=======
+    "@playwright/test": "^1.61.1",
+>>>>>>> feature/vision-v3-migration
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -58,6 +69,10 @@
     "typescript-eslint": "^8.3.0",
     "vite": "^5.4.2",
     "vite-plugin-pwa": "^1.3.0",
+<<<<<<< HEAD
     "vitest": "^4.1.10"
+=======
+    "vitest": "^4.1.9"
+>>>>>>> feature/vision-v3-migration
   }
 }

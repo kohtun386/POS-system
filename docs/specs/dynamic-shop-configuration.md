@@ -340,7 +340,9 @@ export function useInvoiceGeneration() {
 }
 ```
 
-`invoicesService.generateForShop(shopId)` must call the DB-owned atomic invoice generation path, such as RPC `generate_invoice_number(p_shop_id)`, or create a sale that invokes `auto_generate_invoice_number()` with `NEW.shop_id`.
+`invoicesService.generateForShop(shopId)` must call the DB-owned atomic invoice generation path, such as RPC `generate_invoice_number(p_shop_id)`, or invoke `checkout_complete()` which handles invoice generation internally.
+
+> **Note (2026-07-04):** The `auto_generate_invoice_number()` trigger was dropped in migration m38. Invoice generation now happens inside the `checkout_complete()` RPC. This spec section is historical.
 
 Frontend code must not calculate and persist `invoiceCounter` increments as the source of truth. UI-only formatting helpers are allowed, but counter mutation must be atomic in the database to avoid duplicate invoice numbers under concurrent checkouts.
 
@@ -384,20 +386,14 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### 3.2 `auto_generate_invoice_number()` trigger — passes `shop_id`
+### 3.2 ~~`auto_generate_invoice_number()` trigger~~ — DROPPED
 
+> **Dropped in migration m38.** This trigger no longer exists. Invoice generation is now handled inside the `checkout_complete()` RPC, which calls `generate_invoice_number(NEW.shop_id)` directly.
+
+The trigger code previously:
 ```sql
-CREATE OR REPLACE FUNCTION auto_generate_invoice_number()
-RETURNS TRIGGER
-SET search_path = ''
-AS $$
-BEGIN
-    IF NEW.invoice_number IS NULL OR NEW.invoice_number = '' THEN
-        NEW.invoice_number := generate_invoice_number(NEW.shop_id);
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- RETIRED: auto_generate_invoice_number() dropped in migration 20260703000007
+-- Invoice generation now happens inside checkout_complete() RPC
 ```
 
 **Dependency:** `sales.shop_id` already exists from multi-tenancy migration `20260620000001`.
@@ -702,7 +698,7 @@ SELECT cron.schedule(
 | 1.3 | Backfill default shop from `app_settings` | `UPDATE shops SET tax_rate = ..., currency = ...` |
 | 1.4 | Drop 10 columns from `app_settings` | `ALTER TABLE app_settings DROP COLUMN ...` |
 | 1.5 | Refactor `generate_invoice_number()` | Add `p_shop_id` parameter |
-| 1.6 | Update `auto_generate_invoice_number()` trigger | Pass `NEW.shop_id` |
+| 1.6 | ~~Update `auto_generate_invoice_number()` trigger~~ | **DROPPED** (m38) — invoice generation now in `checkout_complete()` RPC |
 | 1.7 | Fix RLS: shops UPDATE by shop admin | Replace global admin policy |
 | 1.8 | Update `handle_new_auth_user()` trigger | New users get `is_active=false` |
 | 1.9 | Install `pg_cron` + schedule cleanup jobs | `CREATE EXTENSION pg_cron` |

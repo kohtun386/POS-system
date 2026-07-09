@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
 import {
   Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, Shop,
-  FeatureFlags, RawMaterial, Recipe
+  FeatureFlags, CashShift, RawMaterial, Recipe
 } from '../types';
 import { useAuth } from './AuthContext';
 import {
@@ -16,7 +16,9 @@ import {
   featureDefinitionsService,
   shopFeaturesService,
   rawMaterialsService,
-  recipesService
+  recipesService,
+  cashShiftsService,
+  resolveCapabilitiesRpc
 } from '../lib/services';
 
 interface AppState {
@@ -33,7 +35,10 @@ interface AppState {
   activeSalesTab: string;
   activeShopId: string;  // Current shop for multi-tenant scoping
   shop: Shop | null;
+  /** @deprecated Use `capabilities` instead. Kept for backward compat during migration. */
   featureFlags: FeatureFlags;
+  capabilities: string[];
+  cashShifts: CashShift[];
   rawMaterials: RawMaterial[];
   recipes: Recipe[];
   loading: boolean;
@@ -77,6 +82,10 @@ type AppAction =
   | { type: 'SET_SHOP'; payload: Shop | null }
   | { type: 'SET_FEATURE_FLAGS'; payload: FeatureFlags }
   | { type: 'TOGGLE_FEATURE_FLAG'; payload: { key: string; enabled: boolean } }
+  | { type: 'SET_CAPABILITIES'; payload: string[] }
+  | { type: 'SET_CASH_SHIFTS'; payload: CashShift[] }
+  | { type: 'ADD_CASH_SHIFT'; payload: CashShift }
+  | { type: 'UPDATE_CASH_SHIFT'; payload: CashShift }
   | { type: 'SET_RAW_MATERIALS'; payload: RawMaterial[] }
   | { type: 'ADD_RAW_MATERIAL'; payload: RawMaterial }
   | { type: 'UPDATE_RAW_MATERIAL'; payload: RawMaterial }
@@ -114,6 +123,8 @@ const initialState: AppState = {
   activeShopId: '',
   shop: null,
   featureFlags: {},
+  capabilities: ['pos'],  // Minimal default so POS always works
+  cashShifts: [],
   rawMaterials: [],
   recipes: [],
   loading: false,
@@ -258,6 +269,17 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         featureFlags: { ...state.featureFlags, [action.payload.key]: action.payload.enabled }
+      };
+    case 'SET_CAPABILITIES':
+      return { ...state, capabilities: action.payload };
+    case 'SET_CASH_SHIFTS':
+      return { ...state, cashShifts: action.payload };
+    case 'ADD_CASH_SHIFT':
+      return { ...state, cashShifts: [action.payload, ...state.cashShifts] };
+    case 'UPDATE_CASH_SHIFT':
+      return {
+        ...state,
+        cashShifts: state.cashShifts.map(cs => cs.id === action.payload.id ? action.payload : cs),
       };
     case 'SET_RAW_MATERIALS':
       return { ...state, rawMaterials: action.payload };
@@ -409,10 +431,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         recipesService.getAll(),
       ]);
 
-      // Load shop feature overrides AFTER shop is known (depends on shop.id)
-      const shopFeatures = shop
-        ? await shopFeaturesService.getByShopId(shop.id)
-        : [];
+      // Load shop feature overrides + cash shifts AFTER shop is known (depends on shop.id)
+      const [shopFeatures, latestCashShifts] = await Promise.all([
+        shop ? shopFeaturesService.getByShopId(shop.id) : Promise.resolve([]),
+        shop ? cashShiftsService.getByShopId(shop.id, 1) : Promise.resolve([]),
+      ]);
 
       dispatch({ type: 'SET_PRODUCTS', payload: products });
       dispatch({ type: 'SET_CUSTOMERS', payload: customers });
@@ -430,13 +453,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: 'SET_ACTIVE_SHOP', payload: shop.id });
       }
 
-      // Resolve feature flags
+      // Resolve capabilities (VISION §5) — server-side via RPC
+      if (shop) {
+        const caps = await resolveCapabilitiesRpc(shop.id);
+        dispatch({ type: 'SET_CAPABILITIES', payload: caps });
+      }
+
+      // Resolve legacy feature flags (backward compat — maps from same data)
       const resolvedFeatureFlags: FeatureFlags = {};
       for (const def of featureDefinitions) {
         const override = shopFeatures.find(o => o.featureKey === def.key);
         resolvedFeatureFlags[def.key] = override ? override.enabled : def.defaultEnabled;
       }
       dispatch({ type: 'SET_FEATURE_FLAGS', payload: resolvedFeatureFlags });
+
+      // Set cash shifts
+      dispatch({ type: 'SET_CASH_SHIFTS', payload: latestCashShifts });
 
       // Create initial sales tab if none exist
       if (salesTabs.length === 0 && user) {
@@ -471,6 +503,15 @@ export function useApp() {
     throw new Error('useApp must be used within an AppProvider');
   }
   return context;
+}
+
+/**
+ * Check if the current shop has a specific capability.
+ * Replaces the old `useFeatureFlag()` hook pattern.
+ */
+export function useCapability(name: string): boolean {
+  const { state } = useApp();
+  return state.capabilities.includes(name);
 }
 
 // Utility function to check if discounts apply
@@ -560,21 +601,13 @@ export function generateNextInvoiceNumber(settings: AppSettings): { invoiceNumbe
   return { invoiceNumber, newCounter };
 }
 
-// Generate invoice number and automatically update counter in state
+// DEPRECATED: Invoice numbers are now generated server-side by checkout_complete RPC.
+// This hook is kept for test compatibility only — do NOT use in production code.
 export function useInvoiceGeneration() {
-  const { state, dispatch } = useApp();
+  const { state } = useApp();
 
   return async () => {
-    const { invoiceNumber, newCounter } = generateNextInvoiceNumber(state.settings);
-
-    // Update settings in Supabase
-    try {
-      await settingsService.update({ invoiceCounter: newCounter });
-      dispatch({ type: 'INCREMENT_INVOICE_COUNTER', payload: newCounter });
-    } catch (error) {
-      console.error('Error updating invoice counter:', error);
-    }
-
+    const { invoiceNumber } = generateNextInvoiceNumber(state.settings);
     return invoiceNumber;
   };
 }

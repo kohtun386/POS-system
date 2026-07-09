@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Search, Download, Eye, RefreshCw, CreditCard, Banknote, Smartphone, Receipt, FileText, X, ShoppingCart } from 'lucide-react';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp, useCapability } from '../../context/SupabaseAppContext';
 import { format } from 'date-fns';
 import { Sale } from '../../types';
 import { CheckoutModal } from '../pos/CheckoutModal';
 import { salesService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
+import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 // Helper function to determine if a sale is a draft
 const isDraftSale = (sale: Sale) => {
@@ -345,6 +346,7 @@ interface TransactionDetailModalProps {
 function TransactionDetailModal({ transaction, onClose }: TransactionDetailModalProps) {
   const { state, dispatch } = useApp();
   const [showCheckout, setShowCheckout] = useState(false);
+  const canPrint = useCapability('printer_integration');
 
   const handleCompleteDraft = () => {
     // Load the draft sale into the cart for completion
@@ -523,6 +525,21 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
                 </button>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Print Receipt Section */}
+        <div className="px-6 pb-4">
+          {!canPrint ? (
+            <UpgradePrompt feature="Receipt printing" tier="growth" onClose={() => {}} />
+          ) : (
+            <button
+              onClick={() => window.print()}
+              className="btn btn-primary btn-md w-full"
+            >
+              <Receipt className="h-4 w-4" />
+              <span>Print Receipt</span>
+            </button>
           )}
         </div>
 

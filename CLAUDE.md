@@ -33,11 +33,9 @@ There is no test suite yet. When you add tests, follow this pattern:
 
 ### State Management
 
-- **`src/context/SupabaseAppContext.tsx`** — the **active** app state. useReducer-based with `dispatch` + `state` pattern. All product, customer, sale, user, discount, cart, settings, and salesTab state lives here. Loads from Supabase on auth via parallel `Promise.all`.
+- **`src/context/SupabaseAppContext.tsx`** — the **active** app state. useReducer-based with `dispatch` + `state` pattern (48 reducer actions). All product, customer, sale, user, discount, cart, settings, capabilities, and salesTab state lives here. Loads from Supabase on auth via parallel `Promise.all`. Capabilities are resolved server-side from subscription tier + per-shop overrides.
 
-- **`src/context/AppContext.tsx`** — **DEPRECATED.** Contains old localStorage-based mock data. Do NOT import from here. Always use `SupabaseAppContext`.
-
-- **`src/context/AuthContext.tsx`** — Supabase auth wrapper. Provides `user`, `profile`, `session`, `signIn`, `signUp`, `signOut`, `updateProfile`. User profile loaded from `public.users` table.
+- **`src/context/AuthContext.tsx`** — Supabase auth wrapper. Provides `user`, `profile`, `session`, `isPendingApproval`, `signIn`, `signUp`, `signOut`, `updateProfile`. User profile loaded from `public.users` table. Inactive users (`profile.active === false`) see PendingApprovalPage.
 
 - **`src/context/ThemeContext.tsx`** — Light/dark/system theme. Toggles `dark` class on `<html>`.
 
@@ -54,9 +52,11 @@ productsService.update(id, partial) // → Product
 productsService.delete(id)    // → void
 ```
 
-Services: `productsService`, `customersService`, `salesService`, `discountsService`, `settingsService`, `usersService`, `salesTabsService`, `alertRecipientsService`, `alertTemplatesService`, `alertConfigurationsService`, `alertHistoryService`, `notificationServiceConfigService`
+Services: `productsService`, `customersService`, `salesService`, `checkoutService`, `discountsService`, `settingsService`, `usersService`, `salesTabsService`, `alertRecipientsService`, `alertTemplatesService`, `alertConfigurationsService`, `alertHistoryService`, `notificationServiceConfigService`, `shopMembershipsService`, `shopsService`, `featureDefinitionsService`, `shopFeaturesService`, `rawMaterialsService`, `recipesService`, `recipeLinesService`, `consumptionLogService`, `kitchenOrdersService`, `printJobsService`, `cashShiftsService`
 
-`settingsService.get()` returns a single row (app_settings). `settingsService.update()` updates by finding the existing record's ID first.
+- `checkoutService.complete()` — single atomic RPC call for all checkout operations. Replaces sequential JS calls.
+- `cashShiftsService` — CRUD for shift management (open/close/query).
+- `settingsService.get()` returns a single row (app_settings). `settingsService.update()` updates by finding the existing record's ID first.
 
 ### Type System
 
@@ -69,6 +69,10 @@ All types defined in `src/types/index.ts`. Key ones:
 | `Payment` | `method` supports Myanmar + Sri Lankan payment methods |
 | `Sale` | `paymentMethod: 'split'` when `payments` array is populated |
 | `Discount` | `conditions` are JSONB in DB; `freeGiftProducts` for `type: 'free_gift'` |
+| `Shop` | Business identity, subscription tier, daily order limits, receipt settings |
+| `CashShift` | Open/close shift management per cashier |
+| `FeatureDefinition` | Server-side feature catalog with tier gating |
+| `PrintJob` | Bluetooth/network printer jobs per sale |
 
 ### Database
 
@@ -80,17 +84,46 @@ Supabase project: `ejvvwnupiqytximrbmfw`. Migrations in `supabase/migrations/`.
 - JSONB columns: `items`, `payments`, `card_details`, `applied_discounts`, `free_gifts`, `conditions`, `config_data` — map directly to typed arrays/objects
 - Boolean columns: `is_weight_based`, `track_inventory`, `is_active` — drop `is_` prefix in DB
 
-**RLS:** All tables have Row Level Security enabled. Policies grant full access to `authenticated` users. Sales tabs are user-scoped.
+**RLS:** All tables have Row Level Security enabled. Policies use `shop_id = ANY(current_shop_ids())` scoping. Sales tabs are user-scoped.
 
 ### Role-Based Access
 
 | Role | Permissions |
 |---|---|
+| `platform_admin` | Cross-tenant: manages all shops, approves signups, activates subscriptions. Separate UI (src/components/platform/). Uses Edge Functions with service_role key. |
 | `admin` | Everything: POS, transactions, inventory, customers, discounts, reports, users, settings |
 | `manager` | POS, transactions, inventory, customers, discounts, reports, settings |
 | `cashier` | POS terminal only |
 
-Access is enforced in `App.tsx` (`renderCurrentView`) and `Header.tsx` (nav items). Cashiers redirected to POS if they try to navigate elsewhere.
+Access is enforced in `App.tsx` (`renderCurrentView`) and `Header.tsx` (nav items). Cashiers redirected to POS if they try to navigate elsewhere. Platform admin sees separate component tree.
+
+### Capability-Based Feature Gating
+
+Features are gated by `capabilities: string[]` in state, resolved server-side from subscription tier + per-shop overrides. Components use `useCapability('key')` — never check `shop.subscriptionTier` directly.
+
+```typescript
+const canUsePrinter = useCapability('printer_integration');
+const canUseRecipe = useCapability('recipe_bom');
+```
+
+### Tier & Feature Gating Protocol
+
+**Source of truth:** `docs/TIER-SPEC.md` — read it before any tier/capability change.
+
+| Rule | Description |
+|------|-------------|
+| **Read Before Write** | Always read `TIER-SPEC.md` before changing tier assignments or feature gating |
+| **Capability-Only Logic** | Gate via `useCapability('key')`, never check `shop.subscriptionTier` directly |
+| **Migration First** | DB tier changes require a migration file in `supabase/migrations/`; never update `feature_definitions` without one |
+| **New Features Require Tier Assignment** | Every new feature key must have a `minTier` in `TIER-SPEC.md` before implementation starts |
+
+**Tier hierarchy:** `free (0) → growth (1) → pro (2)` — a shop at tier N gets all features where `minTier ≤ N`.
+
+**CI validation:** Run `npx tsx scripts/validate-tiers.ts` to verify DB matches TIER-SPEC.md. Fails build on mismatch.
+
+### Checkout Pattern
+
+Checkout uses `checkoutService.complete()` — single atomic RPC call. Handles sale creation, inventory deduction, stock deduction, print jobs, customer stats, and consumption logging in one transaction. Never use sequential JS calls.
 
 ## Code Style
 
@@ -176,3 +209,13 @@ Configuration in `eslint.config.js` — TypeScript-ESLint with React hooks plugi
 | `docs/specs/technical-debt.md` | Known debt (any types, React Refresh warnings, color drift) |
 | `docs/specs/multi-tenancy.md` | Multi-tenant gap analysis and migration strategy |
 | `docs/specs/inventory-alerts.md` | Alert system specification (5 alert types, email/SMS, templates) |
+| `docs/TIER-SPEC.md` | **Canonical tier definitions**, capability mapping, v1.0 scope, AI harness rules |
+
+## 🛡️ DB Safety Hook (Mandatory)
+BEFORE running ANY `supabase db *`, `docker exec psql`, or migration-related commands:
+1. MUST invoke `@db-guardian` to validate schema safety
+2. MUST wait for "Safe to proceed" or "Proceed with caution" verdict
+3. ONLY then execute the DB command
+4. Log guardian verdict in `.harness/guardian-log.md`
+
+⚠️ Violating this rule = Auto-reject command & retry with guardian check
