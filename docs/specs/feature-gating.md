@@ -1,9 +1,9 @@
-# Feature Flags — Implementation Guide
+# Feature Gating — Implementation Guide
 
 **Status:** Spec complete, implementation pending
-**Last updated:** 2026-07-04 (reconciled with TIER-SPEC.md)
-**Canonical source of truth:** `docs/TIER-SPEC.md` — this document describes implementation details only.
-**Depends on:** Multi-tenancy foundation (`docs/specs/multi-tenancy.md`), Dynamic shop configuration (`docs/specs/dynamic-shop-configuration.md`)
+**Last updated:** 2026-07-04 (reconciled with tier-spec.md)
+**Canonical source of truth:** `docs/specs/tier-spec.md` — this document describes implementation details only.
+**Depends on:** Multi-tenancy foundation (`docs/specs/multi-tenancy.md`), Dynamic shop configuration (`docs/specs/dynamic-configuration.md`)
 
 ---
 
@@ -466,7 +466,7 @@ A new component `FeatureDefinitions.tsx` accessible only to `platform_admin` via
 
 ## 9. Feature Gate Summary by Tier
 
-> Derived from `TIER-SPEC.md §2.1` — canonical source.
+> Derived from `tier-spec.md §2.1` — canonical source.
 
 ### 9.1 Free Tier (10 features)
 
@@ -552,9 +552,9 @@ ALTER TABLE shop_features ENABLE ROW LEVEL SECURITY;
 
 ## Related Documents
 
-- **[TIER-SPEC.md](../TIER-SPEC.md)** — **Canonical source of truth** for tier definitions, capability mapping, and override rules
+- **[tier-spec.md](tier-spec.md)** — **Canonical source of truth** for tier definitions, capability mapping, and override rules
 - [VISION.md](../vision/VISION.md) — Section 5: Feature Flag Architecture (business vision)
 - [Multi-Tenancy](multi-tenancy.md) — shop_id foundation, subscription tiers, role model
-- [Dynamic Shop Configuration](dynamic-shop-configuration.md) — shops table, subscription_tier column
+- [Dynamic Shop Configuration](dynamic-configuration.md) — shops table, subscription_tier column
 - [Database Architecture](../architecture/database.md) — feature_definitions, shop_features schema
 - [State Management](../architecture/state-management.md) — capabilities in AppState

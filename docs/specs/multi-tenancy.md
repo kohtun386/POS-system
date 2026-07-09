@@ -2,7 +2,7 @@
 
 **Status:** Current foundation implemented; dynamic shop configuration pending
 **Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
-**Canonical companion spec:** `docs/specs/dynamic-shop-configuration.md`
+**Canonical companion spec:** `docs/specs/dynamic-configuration.md`
 **Source of truth:** `docs/vision/VISION.md` v3.0.0
 
 > CURRENT TRUTH: The project is no longer in the pre-migration "zero tenant isolation" state. The `shop_id` foundation exists. This document describes the current foundation and the remaining work needed to complete dynamic per-shop configuration.
@@ -309,5 +309,5 @@ The original version of this document described the app as single-tenant with no
 - **Updated companion:** `docs/architecture/database.md` (shops, shop_memberships schema)
 - **Updated companion:** `docs/architecture/auth.md` (role model, RLS patterns)
 - **Updated companion:** `docs/architecture/state-management.md` (capabilities, checkout RPC)
-- **Depends on:** `docs/specs/dynamic-shop-configuration.md` (implementation spec)
-- **Depends on:** `docs/specs/feature-flags.md` (capability-based feature gating)
+- **Depends on:** `docs/specs/dynamic-configuration.md` (implementation spec)
+- **Depends on:** `docs/specs/feature-gating.md` (capability-based feature gating)

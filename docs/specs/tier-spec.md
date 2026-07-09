@@ -1,4 +1,4 @@
-# TIER-SPEC.md — Technical Contract
+# Tier Spec — Technical Contract
 
 **Source of truth for tier definitions, feature gating, and capability mapping.**
 **Any discrepancy between this document and code/DB → this document wins.**

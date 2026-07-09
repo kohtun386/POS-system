@@ -76,20 +76,17 @@ The following business types will never be supported:
 | Product Management | ✅ (max 50) | ✅ (unlimited) | ✅ (unlimited) |
 | Customer Management | ✅ | ✅ | ✅ |
 | Basic Discounts | ✅ | ✅ | ✅ |
-| Multi-currency | ✅ | ✅ | ✅ |
+| Currency | MMK only | MMK only | MMK only |
 | Daily Order Limit | 50/day | Unlimited | Unlimited |
 | Receipt Printing | ❌ | ✅ | ✅ |
 | "Print?" Toggle | ❌ | ✅ (forced) | ✅ (configurable) |
 | Shop Receipt Setting | ❌ | ✅ | ✅ |
 | Reprint from History | ❌ | ✅ | ✅ |
-| Raw Material Tracking | ❌ | ✅ | ✅ |
-| Recipe Management | ❌ | ✅ | ✅ |
-| Auto-deduct on Sale | ❌ | ✅ | ✅ |
-| COGS Calculation | ❌ | ✅ | ✅ |
+| Purchase Log | ❌ | ✅ | ✅ |
+| Stock Overview | ❌ | ✅ | ✅ |
 | Low Stock Alerts | ❌ | ✅ | ✅ |
 | Cash Drawer / Shift Mgmt | ❌ | ✅ | ✅ |
-| Profit Margin Analytics | ❌ | ❌ | ✅ |
-| Waste Tracking | ❌ | ❌ | ✅ |
+| Simple Profit Report | ❌ | ❌ | ✅ |
 | Owner Insights (P&L) | ❌ | ❌ | ✅ |
 | WhatsApp Daily Report | ❌ | ❌ | ✅ |
 
@@ -101,7 +98,7 @@ The following business types will never be supported:
 
 **No printer support** — Free tier cannot connect any printer hardware. Manual receipt only (hand-written or no receipt).
 
-**No recipe/inventory tracking** — No raw materials, no recipe BOM, no auto-deduction, no COGS.
+**No purchase log or stock tracking** — No purchase logging, no stock overview, no low stock alerts. Upgrade to Growth for inventory features.
 
 **No reprint capability** — Transaction history exists but "Reprint" button hidden.
 
@@ -216,17 +213,16 @@ The client stores a `capabilities: string[]` array. Components check this array 
 | `pos` | POS terminal | free | all |
 | `inventory` | Stock tracking | free | all |
 | `discounts` | Discount engine | free | all |
-| `multi_currency` | Multi-currency support | free | all |
 | `draft_sales` | Draft/pending sales | free | all |
 | `customer_management` | Customer records | free | all |
 | `printer_integration` | Thermal printer | growth | all |
-| `recipe_bom` | Recipe/BOM costing | growth | all |
-| `raw_materials` | Raw material tracking | growth | all |
+| `purchase_log` | Purchase recording | growth | all |
+| `stock_overview` | Stock levels & adjustments | growth | all |
+| `low_stock_alerts` | Threshold-based alerts | growth | all |
 | `staff_accounts` | Multiple staff logins | growth | all |
 | `cash_drawer` | Shift start/end | growth | all |
-| `owner_insights` | P&L, shift mgmt | pro | all |
-| `profit_analytics` | Profit margin analytics | pro | all |
-| `waste_tracking` | Waste tracking | pro | all |
+| `owner_insights` | P&L dashboard | pro | all |
+| `simple_profit_report` | Revenue − Purchases | pro | all |
 
 ---
 
@@ -395,61 +391,62 @@ Free tier: Transaction History visible but "Reprint" button hidden.
 
 ---
 
-## 10. Recipe & Inventory Management (Growth+)
+## 10. Simplified Inventory Model (Growth+)
 
-### 10.1 Product Types
+### 10.1 Business Reality
 
-| Type | Description | Examples |
-|------|-------------|----------|
-| **Finished Products** | Menu items sold to customers | Cappuccino, Latte, Mohinga |
-| **Raw Materials** | Ingredients used in recipes | Coffee beans, milk, sugar, cups |
+Myanmar coffee shops buy supplies in bulk (beans, milk, cups, sugar) weekly or monthly.
+They sell finished drinks daily.
+They do NOT track exact ingredient usage per recipe.
+Profit is calculated monthly: **Total Sales − Total Purchases**.
 
-### 10.2 Recipe / Bill of Materials (BOM)
+### 10.2 How It Works
 
+#### Purchase Log (Growth+)
+
+Owner records purchases:
+- Date, supplier name, item description
+- Quantity, unit, unit cost, total cost
+
+Example:
 ```
-Product: "Cappuccino" (2,500 MMK)
-└── Recipe:
-    ├── Coffee beans: 18g @ 8.33 MMK/g = 150 MMK
-    ├── Milk: 200ml @ 1.5 MMK/ml = 300 MMK
-    ├── Sugar: 5g @ 4 MMK/g = 20 MMK
-    └── Cup: 1pc @ 100 MMK/pc = 100 MMK
-    Total COGS: 570 MMK
-    Profit: 1,930 MMK (77% margin)
+2026-07-01 | Supplier: ABC Beans | Coffee beans | 5 kg | 8,000 MMK/kg | 40,000 MMK
+2026-07-01 | Supplier: City Milk  | Fresh milk   | 20 L | 2,500 MMK/L  | 50,000 MMK
 ```
 
-### 10.3 Checkout Integration
+#### Stock Overview (Growth+)
 
-Inside the checkout flow (critical path, rollback on failure):
-1. For each item in cart, find recipe
-2. Calculate ingredient quantities needed
-3. Deduct ingredients from inventory
-4. Log consumption for COGS tracking
+- Current supply levels (manual entry, not auto-calculated)
+- Manual adjustment (owner updates weekly after physical count)
+- Low stock alerts (threshold-based: "coffee beans below 2 kg → alert")
 
-If any deduction fails (insufficient stock), the entire checkout rolls back.
+#### Simple Profit Report (Pro)
 
-**Free tier:** Finished product stock check only (if `track_inventory` enabled). No raw material check (no recipe BOM).
+- Monthly Revenue = sum of all sales
+- Monthly Purchases = sum of all purchase logs
+- **Profit = Revenue − Purchases**
+- No per-recipe COGS, no ingredient deduction, no consumption log
+
+### 10.3 What We Do NOT Build
+
+| Removed Feature | Reason |
+|----------------|--------|
+| Recipe BOM / Bill of Materials | Too complex for Myanmar coffee shop reality |
+| Auto-deduct ingredients on sale | Requires precise recipes; shops don't track this |
+| Per-drink COGS calculation | Monthly profit (Revenue − Purchases) is sufficient |
+| Consumption log per ingredient | No auto-deduction means no consumption to log |
+| UOM conversion system | Not needed without recipe tracking |
+| Waste tracking per recipe | No recipe tracking; use low stock alerts instead |
 
 ### 10.4 Tier Gating
 
 | Feature | Free | Growth | Pro |
 |---------|------|--------|-----|
 | Product management | ✅ (50 max) | ✅ (unlimited) | ✅ (unlimited) |
-| Raw material tracking | ❌ | ✅ | ✅ |
-| Recipe management | ❌ | ✅ | ✅ |
-| Auto-deduct on sale | ❌ | ✅ | ✅ |
-| COGS calculation | ❌ | ✅ | ✅ |
+| Purchase log | ❌ | ✅ | ✅ |
+| Stock overview | ❌ | ✅ | ✅ |
 | Low stock alerts | ❌ | ✅ | ✅ |
-| Profit margin analytics | ❌ | ❌ | ✅ |
-| Waste tracking | ❌ | ❌ | ✅ |
-
-### 10.5 Free Tier: Simple Inventory Only
-
-Free tier products can toggle `track_inventory` for basic stock counts, but:
-- No raw materials
-- No recipe BOM
-- No auto-deduction
-- No COGS tracking
-- Manual stock adjustment only
+| Simple profit report | ❌ | ❌ | ✅ |
 
 ---
 
@@ -461,7 +458,7 @@ Sequential JavaScript service calls cause data inconsistency. If step 2 fails af
 
 ### 11.2 Solution
 
-**Single atomic RPC.** The entire checkout flow (sale creation, inventory deduction, kitchen order, customer stats, consumption logging) MUST be a single Supabase RPC call wrapped in a database transaction.
+**Single atomic RPC.** The entire checkout flow (sale creation, inventory deduction, customer stats) MUST be a single Supabase RPC call wrapped in a database transaction.
 
 All steps succeed together, or all steps roll back together.
 
@@ -522,11 +519,11 @@ Everything else is secondary. Owner Insights is built around these two questions
 
 ### 13.2 Daily P&L Dashboard
 
-**Display:** Three numbers only — Revenue, COGS, Gross Profit.
+**Display:** Three numbers only — Revenue, Purchases, Gross Profit.
 
 - **Revenue:** Sum of sales for the day
-- **COGS:** Sum of material costs from consumption log (requires Recipe BOM data)
-- **Gross Profit:** Revenue - COGS
+- **Purchases:** Sum of purchase logs (manual entry by owner)
+- **Gross Profit:** Revenue − Purchases
 
 No complex charts, no drill-downs, no trend lines in v1.
 
@@ -536,7 +533,7 @@ No complex charts, no drill-downs, no trend lines in v1.
 
 **Delivery:** WhatsApp Business API
 
-**Message includes:** Revenue, COGS, Profit, Shift count, Variance alerts
+**Message includes:** Revenue, Purchases, Profit, Shift count, Variance alerts
 
 ### 13.4 Cash Drawer Variance Alerts
 
@@ -710,21 +707,45 @@ src/components/platform/
 
 ## 19. What We Are NOT Building (v1)
 
+### Business Scope
+
 | Item | Reason |
 |------|--------|
 | Restaurant/food court support | Coffee/tea shop only in v1 |
 | Native mobile apps (iOS/Android) | PWA is sufficient; native adds 3x cost |
 | International payment gateways (Stripe) | Myanmar market uses local mobile payments only |
+| Multi-currency / exchange rates | MMK only — Myanmar coffee shops don't need currency conversion |
+| Myanmar language UI | v2 — English-first for technical stability |
+
+### ERP / Manufacturing Features (Removed from v1)
+
+| Item | Reason |
+|------|--------|
+| Recipe BOM / Bill of Materials | Too complex for Myanmar coffee shop workflow; shops buy supplies, not track per-drink ingredients |
+| Auto-deduct ingredients on sale | Requires precise recipe data; shops don't track ingredient usage per sale |
+| Per-drink COGS calculation | Monthly profit (Revenue − Purchases) is sufficient for shop owners |
+| Consumption log per ingredient | No auto-deduction means no consumption to log |
+| UOM conversion system | Not needed without recipe-level ingredient tracking |
+| Waste tracking per recipe | No recipe tracking; use low stock alerts instead |
+| Kitchen Display System (KDS) | Not practical in Myanmar — heat, water, dust damage screens; use thermal printer |
+
+### Hardware / Infrastructure
+
+| Item | Reason |
+|------|--------|
 | USB printer support | v2 only (WebUSB via Android Chrome) |
 | Waiter tablets | v2 only, counter-only workflow in v1 |
 | Multi-branch dashboard | v2 only, single-branch in v1 |
 | Digital receipts (WhatsApp/Email) | v2 only |
 | Printer support for Free tier | Growth+ only |
-| Recipe/inventory tracking for Free tier | Growth+ only |
 | Complex offline mode | v1 = graceful degradation only |
+
+### Platform
+
+| Item | Reason |
+|------|--------|
 | API access for customers | Not in scope |
 | Automated billing | Manual high-touch until 50+ paying customers |
-| Myanmar language UI | v2 — English-first for technical stability |
 
 ---
 
@@ -736,14 +757,13 @@ The following documents MUST be updated to align with this VISION.md:
 |----------|-----------------|
 | `docs/specs/prd.md` | Update tier model (3-tier). Remove Enterprise. Add Free tier limits. Update device architecture. Add role model. |
 | `docs/specs/multi-tenancy.md` | Update subscription_tier to (free, growth, pro). Remove Enterprise. Add shop_memberships as auth source. |
-| `docs/specs/feature-flags.md` | Align capability keys with 3-tier model. Remove Enterprise tier. Document capability-based architecture. |
+| `docs/specs/feature-gating.md` | Align capability keys with 3-tier model. Remove Enterprise tier. Document capability-based architecture. |
 | `docs/architecture/decisions.md` | Add printer execution model decision. Add order limit enforcement decision. Add timezone decision. Add checkout atomicity decision. |
-| `docs/architecture/database.md` | Add `daily_order_limit` column to shops. Add `print_jobs` table. Add `cash_shifts` table. Add `recipes`, `recipe_items`, `consumption_log` tables. Update subscription_tier CHECK. |
+| `docs/architecture/database.md` | Add `daily_order_limit` column to shops. Add `print_jobs` table. Add `cash_shifts` table. Update subscription_tier CHECK. |
 | `docs/architecture/auth.md` | Add role model (4 roles). Document Edge Function bypass pattern. Update role matrix. Add authentication policy. |
 | `docs/architecture/state-management.md` | Add `capabilities: string[]` to AppState. Document checkout RPC pattern. Add receipt management state. Add shift management state. |
-| `docs/specs/kitchen-workflow.md` | Rewrite: printer-first, async kitchen printing via pg_cron. Add Myanmar reality context. |
-| `docs/specs/recipe-bom.md` | Align with Growth+ tier gating. Add checkout integration detail. Document COGS calculation. |
+| `docs/specs/inventory-model.md` | Simplified inventory: purchase log, stock overview, low stock alerts, simple profit report. |
 | `docs/specs/owner-insights.md` | Document P&L dashboard, WhatsApp daily report, variance alerts. |
 | `docs/specs/roadmap.md` | Update with 3-tier model, Free tier limits, offline strategy phases, v2 features. |
 | `docs/specs/inventory-alerts.md` | Align with Growth+ tier gating. |
-| `CLAUDE.md` | Update role model, service layer rules, checkout pattern, tier references, feature flag architecture. |
+| `CLAUDE.md` | Update OUT OF SCOPE list, MMK-only assumption, BOM/COGS/KDS guard. |

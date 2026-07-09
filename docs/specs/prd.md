@@ -444,7 +444,7 @@ Acceptance Criteria:
 | Feature | Reason | Tier / Version |
 |---------|--------|----------------|
 | Supplier management UI | `suppliers` table exists but no frontend CRUD | v2 |
-| Recipe/ingredient costing | 4-table schema designed (docs/specs/recipe-bom.md) | **Growth+ tier** (not v2) |
+| Recipe/ingredient costing | 4-table schema designed (docs/archive/recipe-bom.md) | **Growth+ tier** (not v2) |
 | Raw material tracking | Ingredient inventory with auto-deduction | **Growth+ tier** |
 | Kitchen display system (KDS) | Requires real-time order queue + screen management | v3 (printer-first is v1 Growth+) |
 | Table management | Restaurant floor plan + table assignment | v2 (restaurant/food_court business types) |

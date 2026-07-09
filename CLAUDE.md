@@ -108,18 +108,18 @@ const canUseRecipe = useCapability('recipe_bom');
 
 ### Tier & Feature Gating Protocol
 
-**Source of truth:** `docs/TIER-SPEC.md` — read it before any tier/capability change.
+**Source of truth:** `docs/specs/tier-spec.md` — read it before any tier/capability change.
 
 | Rule | Description |
 |------|-------------|
-| **Read Before Write** | Always read `TIER-SPEC.md` before changing tier assignments or feature gating |
+| **Read Before Write** | Always read `tier-spec.md` before changing tier assignments or feature gating |
 | **Capability-Only Logic** | Gate via `useCapability('key')`, never check `shop.subscriptionTier` directly |
 | **Migration First** | DB tier changes require a migration file in `supabase/migrations/`; never update `feature_definitions` without one |
-| **New Features Require Tier Assignment** | Every new feature key must have a `minTier` in `TIER-SPEC.md` before implementation starts |
+| **New Features Require Tier Assignment** | Every new feature key must have a `minTier` in `tier-spec.md` before implementation starts |
 
 **Tier hierarchy:** `free (0) → growth (1) → pro (2)` — a shop at tier N gets all features where `minTier ≤ N`.
 
-**CI validation:** Run `npx tsx scripts/validate-tiers.ts` to verify DB matches TIER-SPEC.md. Fails build on mismatch.
+**CI validation:** Run `npx tsx scripts/validate-tiers.ts` to verify DB matches tier-spec.md. Fails build on mismatch.
 
 ### Checkout Pattern
 
@@ -182,6 +182,35 @@ Configuration in `eslint.config.js` — TypeScript-ESLint with React hooks plugi
 
 **Animations** (Framer Motion): Use `motion.div` / `motion.button` with `whileHover`, `whileTap`, `animate`, `initial` props. Keep `transition={{ duration: 0.2 }}` consistent.
 
+## v1 Scope Boundaries (Non-Negotiable)
+
+### Currency
+**MMK only.** The app operates exclusively in Myanmar Kyat. No multi-currency, no exchange rates, no currency conversion. `CurrencyContext` and `currencyUtils.ts` are hardcoded to MMK.
+
+### OUT OF SCOPE — Do NOT Build
+
+| Feature | Reason |
+|---------|--------|
+| Recipe BOM / Bill of Materials | Too complex for Myanmar coffee shops |
+| Auto-deduct ingredients on sale | Requires precise recipes; shops don't track this |
+| Per-drink COGS calculation | Monthly profit (Revenue − Purchases) is sufficient |
+| Consumption log per ingredient | No auto-deduction means no consumption to log |
+| UOM conversion system | Not needed without recipe tracking |
+| Waste tracking per recipe | No recipe tracking; use low stock alerts instead |
+| Kitchen Display System (KDS) | Not practical in Myanmar; use thermal printer |
+| Multi-currency / exchange rates | MMK only |
+
+### Guard Clause
+If a request implies any of the following → **STOP and ask before proceeding:**
+- BOM / Bill of Materials / recipe ingredient tracking
+- COGS calculation per product or per sale
+- Consumption logging per ingredient
+- Kitchen Display System / KDS screens
+- Multi-currency support or exchange rate integration
+- UOM conversion tables or logic
+
+---
+
 ## Common Pitfalls
 
 - **Don't import from `AppContext.tsx`** — it's deprecated. Always use `SupabaseAppContext.tsx`.
@@ -209,7 +238,7 @@ Configuration in `eslint.config.js` — TypeScript-ESLint with React hooks plugi
 | `docs/specs/technical-debt.md` | Known debt (any types, React Refresh warnings, color drift) |
 | `docs/specs/multi-tenancy.md` | Multi-tenant gap analysis and migration strategy |
 | `docs/specs/inventory-alerts.md` | Alert system specification (5 alert types, email/SMS, templates) |
-| `docs/TIER-SPEC.md` | **Canonical tier definitions**, capability mapping, v1.0 scope, AI harness rules |
+| `docs/specs/tier-spec.md` | **Canonical tier definitions**, capability mapping, v1.0 scope, AI harness rules |
 
 ## 🛡️ DB Safety Hook (Mandatory)
 BEFORE running ANY `supabase db *`, `docker exec psql`, or migration-related commands:
