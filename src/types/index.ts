@@ -353,9 +353,6 @@ export interface ShopFeature {
   updatedAt: Date;
 }
 
-/** @deprecated Use `capabilities: string[]` instead. Kept for backward compat during migration. */
-export type FeatureFlags = Record<string, boolean>;
-
 // ================================================================
 // Print Job Types (kept — used by printJobsService for Growth+ receipt printing)
 // ================================================================

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
 import {
   Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, Shop,
-  FeatureFlags, CashShift
+  CashShift
 } from '../types';
 import { useAuth } from './AuthContext';
 import {
@@ -33,8 +33,6 @@ interface AppState {
   activeSalesTab: string;
   activeShopId: string;  // Current shop for multi-tenant scoping
   shop: Shop | null;
-  /** @deprecated Use `capabilities` instead. Kept for backward compat during migration. */
-  featureFlags: FeatureFlags;
   capabilities: string[];
   cashShifts: CashShift[];
   loading: boolean;
@@ -76,8 +74,6 @@ type AppAction =
   | { type: 'SET_SALES_TABS'; payload: SalesTab[] }
   | { type: 'SET_ACTIVE_SHOP'; payload: string }
   | { type: 'SET_SHOP'; payload: Shop | null }
-  | { type: 'SET_FEATURE_FLAGS'; payload: FeatureFlags }
-  | { type: 'TOGGLE_FEATURE_FLAG'; payload: { key: string; enabled: boolean } }
   | { type: 'SET_CAPABILITIES'; payload: string[] }
   | { type: 'SET_CASH_SHIFTS'; payload: CashShift[] }
   | { type: 'ADD_CASH_SHIFT'; payload: CashShift }
@@ -110,7 +106,6 @@ const initialState: AppState = {
   activeSalesTab: '',
   activeShopId: '',
   shop: null,
-  featureFlags: {},
   capabilities: ['pos'],  // Minimal default so POS always works
   cashShifts: [],
   loading: false,
@@ -249,13 +244,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, activeShopId: action.payload };
     case 'SET_SHOP':
       return { ...state, shop: action.payload };
-    case 'SET_FEATURE_FLAGS':
-      return { ...state, featureFlags: action.payload };
-    case 'TOGGLE_FEATURE_FLAG':
-      return {
-        ...state,
-        featureFlags: { ...state.featureFlags, [action.payload.key]: action.payload.enabled }
-      };
     case 'SET_CAPABILITIES':
       return { ...state, capabilities: action.payload };
     case 'SET_CASH_SHIFTS':
@@ -410,14 +398,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const caps = await resolveCapabilitiesRpc(shop.id);
         dispatch({ type: 'SET_CAPABILITIES', payload: caps });
       }
-
-      // Resolve legacy feature flags (backward compat — maps from same data)
-      const resolvedFeatureFlags: FeatureFlags = {};
-      for (const def of featureDefinitions) {
-        const override = shopFeatures.find(o => o.featureKey === def.key);
-        resolvedFeatureFlags[def.key] = override ? override.enabled : def.defaultEnabled;
-      }
-      dispatch({ type: 'SET_FEATURE_FLAGS', payload: resolvedFeatureFlags });
 
       // Set cash shifts
       dispatch({ type: 'SET_CASH_SHIFTS', payload: latestCashShifts });
