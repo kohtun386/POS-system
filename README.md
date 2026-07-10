@@ -212,22 +212,14 @@ src/
 │   ├── users/           # User manager and modal
 │   └── ui/              # Reusable: Button, Card, Input, CurrencyDisplay, LoadingSpinner, ErrorBoundary
 ├── context/
-<<<<<<< HEAD
 │   ├── SupabaseAppContext.tsx   # Active state management (useReducer, 25+ actions)
-=======
-│   ├── SupabaseAppContext.tsx   # Active state management (useReducer, 54 actions)
->>>>>>> feature/vision-v3-migration
 │   ├── AuthContext.tsx          # Supabase auth wrapper
 │   └── ThemeContext.tsx         # Light/dark/system theme
 ├── hooks/
 │   ├── useFeatureFlag.ts        # Feature flag hook (reads from shop_features)
 │   └── useRealtimeSubscription.ts  # Supabase Realtime subscription hook
 ├── lib/
-<<<<<<< HEAD
 │   ├── services.ts              # 21 service objects (all DB access)
-=======
-│   ├── services.ts              # 24 service objects (all DB access)
->>>>>>> feature/vision-v3-migration
 │   ├── supabase.ts              # Supabase client init
 │   ├── sweetAlert.ts            # SweetAlert2 themed configs
 │   ├── inventoryUtils.ts        # Inventory helper utilities
@@ -245,11 +237,7 @@ src/
 
 **Supabase project ref:** `ejvvwnupiqytximrbmfw`
 
-<<<<<<< HEAD
 ### Tables (29)
-=======
-### Tables (31)
->>>>>>> feature/vision-v3-migration
 
 | Table | Purpose |
 |-------|---------|
@@ -268,26 +256,12 @@ src/
 | `exchange_rate_history` | Rate change audit trail |
 | `shops` | Shop identity and per-shop POS configuration: branding, tax, currency, invoice config, draft retention |
 | `shop_memberships` | User-to-shop role assignments |
-<<<<<<< HEAD
 | `feature_definitions` | Platform-wide feature flag definitions |
 | `shop_features` | Per-shop feature flag enablement |
-=======
-| `feature_definitions` | Platform-level feature catalog with tier gating |
-| `shop_features` | Per-shop feature overrides |
-| `recipes` | Bill of Materials (BOM) header — links finished product to recipe |
-| `recipe_lines` | Recipe line items — ingredients per recipe |
-| `raw_materials` | Raw material inventory (coffee beans, milk, etc.) |
-| `consumption_log` | Ingredient consumption per sale (COGS calculation) |
-| `print_jobs` | Print job queue for receipt/kitchen printers |
-| `cash_shifts` | Cash drawer shift tracking |
-| `kitchen_orders` | Kitchen display workflow orders |
-| `uom_conversions` | Unit of measure conversions |
->>>>>>> feature/vision-v3-migration
 | `alert_recipients` | Alert notification recipients |
 | `alert_templates` | Email/SMS alert templates |
 | `alert_configurations` | Alert type settings and thresholds |
 | `alert_history` | Alert send history |
-<<<<<<< HEAD
 | `notification_service_config` | Notification service (email/SMS) configuration |
 | `raw_materials` | Raw ingredient tracking with units and costs |
 | `recipes` | Product-to-raw-material BOM definitions |
@@ -307,21 +281,6 @@ src/
 - **Triggers/functions:** atomic per-shop invoice number generation, customer stats update, pending user/profile/shop creation
 - **21 functions** with `SET search_path = ''` (injection hardening)
 - **88 indexes** for performance (B-tree, GIN full-text, partial, composite)
-=======
-| `alert_schedules` | Alert scheduling configuration |
-| `notification_service_config` | Email/SMS service provider config |
-
-### Migrations
-
-40 migration files in `supabase/migrations/`. Run `supabase db push` to apply.
-
-### Key Database Features
-
-- **Row Level Security** on all 31 tables — role-aware policies (admin/manager/cashier)
-- **Triggers/functions:** atomic per-shop invoice number generation, pending user/profile/shop creation, checkout atomicity
-- **11 functions** with injection hardening (`SET search_path = ''` or `'public'`)
-- **40+ indexes** for performance (B-tree, GIN full-text, partial, composite)
->>>>>>> feature/vision-v3-migration
 
 ---
 
@@ -362,11 +321,7 @@ Documentation-Driven Development (DDD) workflow. Docs are source of truth.
 
 | Measure | Status |
 |---------|--------|
-<<<<<<< HEAD
 | RLS on all 29 tables | ✅ Enabled |
-=======
-| RLS on all 31 tables | ✅ Enabled |
->>>>>>> feature/vision-v3-migration
 | Role-aware policies (not blanket authenticated) | ✅ Since migration `20260618000001` |
 | shop_id RLS scoping via `current_shop_ids()` | ✅ Since migration `20260620000002` |
 | Card data purge (cardNumber stripped) | ✅ Since migration `20260618000001` |
