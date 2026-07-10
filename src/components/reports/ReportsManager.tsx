@@ -581,7 +581,7 @@ export function ReportsManager() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: any) => [`${state.settings.currency} ${Number(value).toFixed(2)}`, 'Revenue']}
+                  formatter={(value: number | string) => [`${state.settings.currency} ${Number(value).toFixed(2)}`, 'Revenue']}
                   contentStyle={{
                     backgroundColor: '#faf8f5',
                     border: '1px solid #ded7cc',
@@ -669,7 +669,7 @@ export function ReportsManager() {
                   <Cell fill="#DC2626" />
                 </Pie>
                 <Tooltip 
-                  formatter={(value: any) => [value, 'Products']}
+                  formatter={(value: number | string) => [value, 'Products']}
                   contentStyle={{
                     backgroundColor: '#faf8f5',
                     border: '1px solid #ded7cc',
@@ -709,7 +709,7 @@ export function ReportsManager() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: any) => [`${state.settings.currency} ${Number(value).toFixed(2)}`, 'Stock Value']}
+                  formatter={(value: number | string) => [`${state.settings.currency} ${Number(value).toFixed(2)}`, 'Stock Value']}
                   contentStyle={{
                     backgroundColor: '#faf8f5',
                     border: '1px solid #ded7cc',

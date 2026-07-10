@@ -53,26 +53,26 @@ export class DailyLimitError extends Error {
 // Helper: map DB row → Shop (shared by shopsService + shopMembershipsService)
 // ================================================================
 
-function mapShopRow(row: any): Shop {
+function mapShopRow(row: Record<string, unknown>): Shop {
   return {
-    id: row.id,
-    name: row.name || '',
-    address: row.address || '',
-    phone: row.phone || '',
-    email: row.email || '',
-    logo: row.logo || undefined,
-    ownerId: row.owner_id || undefined,
-    businessType: row.business_type || 'coffee_shop',
+    id: row.id as string,
+    name: (row.name as string) || '',
+    address: (row.address as string) || '',
+    phone: (row.phone as string) || '',
+    email: (row.email as string) || '',
+    logo: (row.logo as string) || undefined,
+    ownerId: (row.owner_id as string) || undefined,
+    businessType: (row.business_type as string) || 'coffee_shop',
     taxRate: Number(row.tax_rate ?? 0),
-    invoicePrefix: row.invoice_prefix || 'INV',
-    invoiceCounter: row.invoice_counter ?? 0,
-    draftRetentionDays: row.draft_retention_days ?? 30,
-    subscriptionTier: row.subscription_tier || 'free',
-    dailyOrderLimit: row.daily_order_limit ?? undefined,
-    receiptSetting: row.receipt_setting || 'ask',
-    isActive: row.is_active ?? true,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
+    invoicePrefix: (row.invoice_prefix as string) || 'INV',
+    invoiceCounter: (row.invoice_counter as number) ?? 0,
+    draftRetentionDays: (row.draft_retention_days as number) ?? 30,
+    subscriptionTier: (row.subscription_tier as string) || 'free',
+    dailyOrderLimit: (row.daily_order_limit as number) ?? undefined,
+    receiptSetting: (row.receipt_setting as string) || 'ask',
+    isActive: (row.is_active as boolean) ?? true,
+    createdAt: new Date(row.created_at as string),
+    updatedAt: new Date(row.updated_at as string),
   }
 }
 
@@ -570,7 +570,7 @@ export const salesService = {
 
 // Checkout Service — atomic checkout via RPC (VISION §11)
 export const checkoutService = {
-  async complete(shopId: string, saleData: any, payments: any, cashierId: string): Promise<Sale> {
+  async complete(shopId: string, saleData: Record<string, unknown>, payments: Record<string, unknown>, cashierId: string): Promise<Sale> {
     const { data: rpcResult, error } = await supabase.rpc('checkout_complete', {
       p_shop_id: shopId,
       p_sale_data: saleData,
@@ -1421,7 +1421,7 @@ export const shopMembershipsService = {
       throw error
     }
 
-    const shop = (data as any).shop
+    const shop = (data as { shop: Record<string, unknown> }).shop
     if (!shop) return null
 
     return mapShopRow(shop)
@@ -1468,15 +1468,15 @@ export const featureDefinitionsService = {
       .from('feature_definitions')
       .select('*')
     if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      key: row.key,
-      name: row.name,
-      description: row.description,
-      category: row.category,
-      defaultEnabled: row.default_enabled,
-      subscriptionTier: row.subscription_tier,
-      createdAt: new Date(row.created_at),
+    return (data || []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      key: row.key as string,
+      name: row.name as string,
+      description: row.description as string,
+      category: row.category as string,
+      defaultEnabled: row.default_enabled as boolean,
+      subscriptionTier: row.subscription_tier as string,
+      createdAt: new Date(row.created_at as string),
     }))
   },
 }
@@ -1489,12 +1489,12 @@ export const shopFeaturesService = {
       .select('*')
       .eq('shop_id', shopId)
     if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      featureKey: row.feature_key,
-      enabled: row.enabled,
-      updatedAt: new Date(row.updated_at),
+    return (data || []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      shopId: row.shop_id as string,
+      featureKey: row.feature_key as string,
+      enabled: row.enabled as boolean,
+      updatedAt: new Date(row.updated_at as string),
     }))
   },
 
@@ -1538,14 +1538,14 @@ export const printJobsService = {
     if (filters?.status) query = query.eq('status', filters.status)
     const { data, error } = await query.order('created_at', { ascending: false })
     if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      orderId: row.order_id,
+    return (data || []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      shopId: row.shop_id as string,
+      orderId: row.order_id as string,
       status: row.status as PrintJobStatus,
-      configData: row.config_data || {},
-      createdAt: new Date(row.created_at),
-      completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
+      configData: (row.config_data as Record<string, string | number | boolean>) || {},
+      createdAt: new Date(row.created_at as string),
+      completedAt: row.completed_at ? new Date(row.completed_at as string) : undefined,
     }))
   },
 
@@ -1563,7 +1563,7 @@ export const printJobsService = {
     }
   },
 
-  async enqueue(input: { shopId: string; orderId: string; configData: Record<string, any> }): Promise<PrintJob> {
+  async enqueue(input: { shopId: string; orderId: string; configData: Record<string, string | number | boolean> }): Promise<PrintJob> {
     const { data, error } = await supabase.from('print_jobs').insert({
       shop_id: input.shopId,
       order_id: input.orderId,
@@ -1583,7 +1583,7 @@ export const printJobsService = {
   },
 
   async updateStatus(id: string, status: PrintJobStatus): Promise<PrintJob> {
-    const updateData: any = { status }
+    const updateData: Record<string, unknown> = { status }
     if (status === 'completed' || status === 'failed') updateData.completed_at = new Date().toISOString()
 
     const { data, error } = await supabase.from('print_jobs').update(updateData).eq('id', id).select().single()
@@ -1701,17 +1701,17 @@ export const cashShiftsService = {
 
     if (error) throw error
 
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      cashierId: row.cashier_id,
+    return (data || []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      shopId: row.shop_id as string,
+      cashierId: row.cashier_id as string,
       openingCash: Number(row.opening_cash),
       closingCash: row.closing_cash != null ? Number(row.closing_cash) : undefined,
       expectedCash: row.expected_cash != null ? Number(row.expected_cash) : undefined,
       variance: row.variance != null ? Number(row.variance) : undefined,
       status: row.status as 'open' | 'closed',
-      openedAt: new Date(row.opened_at),
-      closedAt: row.closed_at ? new Date(row.closed_at) : undefined,
+      openedAt: new Date(row.opened_at as string),
+      closedAt: row.closed_at ? new Date(row.closed_at as string) : undefined,
     }))
   },
 }
