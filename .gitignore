@@ -77,3 +77,6 @@ playwright-report/
 test-results/
 .mcp.json
 >>>>>>> feature/vision-v3-migration
+
+# Claude Code skills (AI tooling config)
+.claude/skills/
