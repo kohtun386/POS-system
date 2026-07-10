@@ -110,7 +110,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
           {state.cart.length > 0 && (
             <button
               onClick={() => {
-                state.cart.forEach((_, i) => dispatch({ type: 'REMOVE_FROM_CART', payload: 0 }));
+                state.cart.forEach(() => dispatch({ type: 'REMOVE_FROM_CART', payload: 0 }));
               }}
               className="text-xs text-secondary-400 hover:text-danger-600 transition-colors px-2 py-1 rounded-lg hover:bg-[#fee2e2]"
             >

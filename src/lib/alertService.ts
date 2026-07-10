@@ -379,7 +379,7 @@ export class AlertService {
             }
 
             // Get templates
-            const { data: emailTemplate, error: _emailTemplateError } = await supabase
+            const { data: emailTemplate } = await supabase
                 .from('alert_templates')
                 .select('*')
                 .eq('type', alert.alertType)
@@ -387,7 +387,7 @@ export class AlertService {
                 .eq('is_active', true)
                 .single();
 
-            const { data: smsTemplate, error: _smsTemplateError } = await supabase
+            const { data: smsTemplate } = await supabase
                 .from('alert_templates')
                 .select('*')
                 .eq('type', alert.alertType)

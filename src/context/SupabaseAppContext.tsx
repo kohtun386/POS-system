@@ -359,7 +359,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         users,
         salesTabs,
         shop,
-        featureDefinitions
       ] = await Promise.all([
         productsService.getAll(),
         customersService.getAll(),
@@ -374,7 +373,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ]);
 
       // Load shop feature overrides + cash shifts AFTER shop is known (depends on shop.id)
-      const [shopFeatures, latestCashShifts] = await Promise.all([
+      const [, latestCashShifts] = await Promise.all([
         shop ? shopFeaturesService.getByShopId(shop.id) : Promise.resolve([]),
         shop ? cashShiftsService.getByShopId(shop.id, 1) : Promise.resolve([]),
       ]);

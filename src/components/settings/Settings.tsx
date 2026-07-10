@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Save, Store, DollarSign, Printer, Users, Globe, FileText, Lock } from 'lucide-react';
 import { useApp, useInvoiceStats, useCapability } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';

@@ -369,7 +369,7 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
     setShowCheckout(true);
   };
 
-  const handleCheckoutComplete = async (_completedSale: Sale) => {
+  const handleCheckoutComplete = async () => {
     try {
       // Delete the draft sale from Supabase
       await salesService.delete(transaction.id);
