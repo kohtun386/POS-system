@@ -1,6 +1,6 @@
 # CoffeeShop POS
 
-**Last updated:** 2026-07-06
+**Last updated:** 2026-07-10
 
 A web-based point-of-sale platform built for coffee shops and tea shops in Myanmar. Supports 9 payment methods including KBZpay, WavePay, AYAPay, CBPay, and MPU. Installable as a PWA on iPad and Android. Multi-tenancy foundation is in place with `shop_id` scoping and role-based access; dynamic per-shop configuration is specified and pending implementation.
 
@@ -37,11 +37,11 @@ A web-based point-of-sale platform built for coffee shops and tea shops in Myanm
 - Receipt printing via browser print dialog (on-screen preview + print)
 - Weight-based products (per-kg/lb/g pricing)
 
-### Inventory Management
-- Product CRUD with image upload, batch tracking, SKU/barcode
-- Stock auto-deduction on sale completion (via database trigger)
-- Low-stock and out-of-stock indicators
-- Inventory reports: stock status, value by category, turnover ratio
+### Simplified Inventory Management (Growth+)
+- Purchase Log — record supplier, item, quantity, cost (Growth+)
+- Stock Overview — current supply levels, manual adjustments (Growth+)
+- Low Stock Alerts — threshold-based notifications (Growth+)
+- Simple Profit Report — Monthly Revenue − Purchases (Pro)
 
 ### Customer Management
 - Customer database with credit system (limit/used/available)
@@ -203,7 +203,7 @@ src/
 │   ├── auth/            # Login page
 │   ├── customers/       # Customer manager, modal, detail view
 │   ├── discounts/       # Discount manager and modal
-│   ├── inventory/       # Product manager, modal, raw material manager
+│   ├── inventory/       # Product manager, modal
 │   ├── layout/          # Header with role-based navigation
 │   ├── pos/             # POS terminal, product grid, cart, checkout, receipt, sales tabs
 │   ├── reports/         # Sales/customer/inventory reports with charts
@@ -216,10 +216,9 @@ src/
 │   ├── AuthContext.tsx          # Supabase auth wrapper
 │   └── ThemeContext.tsx         # Light/dark/system theme
 ├── hooks/
-│   ├── useFeatureFlag.ts        # Feature flag hook (reads from shop_features)
-│   └── useRealtimeSubscription.ts  # Supabase Realtime subscription hook
+│   └── useFeatureFlag.ts        # Feature flag hook (reads from shop_features)
 ├── lib/
-│   ├── services.ts              # 21 service objects (all DB access)
+│   ├── services.ts              # 19 service objects (all DB access)
 │   ├── supabase.ts              # Supabase client init
 │   ├── sweetAlert.ts            # SweetAlert2 themed configs
 │   ├── inventoryUtils.ts        # Inventory helper utilities
@@ -237,11 +236,11 @@ src/
 
 **Supabase project ref:** `ejvvwnupiqytximrbmfw`
 
-### Tables (29)
+### Active Tables (20)
 
 | Table | Purpose |
 |-------|---------|
-| `app_settings` | Global/preferences-style settings: interface, theme, printer, backup, exchange-rate config |
+| `app_settings` | Global preferences: interface, theme, printer, backup |
 | `categories` | Product categories |
 | `customers` | Customer records with credit system |
 | `suppliers` | Supplier records (data model only, no UI) |
@@ -251,10 +250,7 @@ src/
 | `users` | Staff profiles (extends auth.users) |
 | `sales` | Transaction records with JSONB items |
 | `sales_tabs` | Multi-tab POS workflow (user-scoped) |
-| `currency_config` | Supported currencies |
-| `exchange_rates` | Active exchange rates (versioned) |
-| `exchange_rate_history` | Rate change audit trail |
-| `shops` | Shop identity and per-shop POS configuration: branding, tax, currency, invoice config, draft retention |
+| `shops` | Shop identity and per-shop POS configuration |
 | `shop_memberships` | User-to-shop role assignments |
 | `feature_definitions` | Platform-wide feature flag definitions |
 | `shop_features` | Per-shop feature flag enablement |
@@ -262,14 +258,24 @@ src/
 | `alert_templates` | Email/SMS alert templates |
 | `alert_configurations` | Alert type settings and thresholds |
 | `alert_history` | Alert send history |
-| `notification_service_config` | Notification service (email/SMS) configuration |
-| `raw_materials` | Raw ingredient tracking with units and costs |
-| `recipes` | Product-to-raw-material BOM definitions |
-| `recipe_lines` | Individual recipe ingredient lines with quantities |
-| `consumption_log` | Raw material consumption audit trail |
-| `uom_conversions` | Unit-of-measure conversion factors |
-| `kitchen_orders` | Kitchen display order queue and status tracking |
-| `print_jobs` | Receipt print job tracking |
+| `print_jobs` | Receipt/kitchen printer job queue |
+| `cash_shifts` | Cash drawer shift tracking |
+
+### Deprecated Tables (9)
+
+> Preserved for backward compatibility. NOT used in v1.0.
+
+| Table | Reason |
+|-------|--------|
+| `currency_config` | MMK only — no multi-currency |
+| `exchange_rates` | MMK only — no exchange rates |
+| `exchange_rate_history` | MMK only — no exchange rate audit |
+| `raw_materials` | See Purchase Log (Simplified Inventory) |
+| `recipes` | See Purchase Log — no BOM tracking |
+| `recipe_lines` | See Purchase Log — no recipe tracking |
+| `consumption_log` | No auto-deduction — use Purchase Log instead |
+| `uom_conversions` | No recipe tracking — not needed |
+| `kitchen_orders` | Use thermal printer (printer_integration) |
 
 ### Migrations
 
@@ -277,7 +283,7 @@ src/
 
 ### Key Database Features
 
-- **Row Level Security** on all 29 tables — role-aware policies (admin/manager/cashier)
+- **Row Level Security** on all 20 active tables — role-aware policies (admin/manager/cashier)
 - **Triggers/functions:** atomic per-shop invoice number generation, customer stats update, pending user/profile/shop creation
 - **21 functions** with `SET search_path = ''` (injection hardening)
 - **88 indexes** for performance (B-tree, GIN full-text, partial, composite)
@@ -286,11 +292,31 @@ src/
 
 ## User Roles
 
-| Role | Access |
-|------|--------|
-| **Admin** | Everything: POS, transactions, inventory, customers, discounts, reports, users, settings |
-| **Manager** | POS, transactions, inventory, customers, discounts, reports, settings. No user management. |
-| **Cashier** | POS terminal only. Redirected to POS if navigating elsewhere. |
+| Role | Scope | Access |
+|------|-------|--------|
+| **Platform Admin** | Cross-tenant | Manages all shops, approves signups, activates subscriptions |
+| **Admin** | Per-shop | Everything: POS, transactions, inventory, customers, discounts, reports, users, settings |
+| **Manager** | Per-shop | POS, transactions, inventory, customers, discounts, reports, settings |
+| **Cashier** | Per-shop | POS terminal only |
+
+---
+
+## Subscription Tiers
+
+| Feature | Free (0 MMK/mo) | Growth (49,000 MMK/mo) | Pro (149,000 MMK/mo) |
+|---------|-----------------|------------------------|----------------------|
+| POS Terminal | ✅ | ✅ | ✅ |
+| Products | 50 max | Unlimited | Unlimited |
+| Daily Orders | 50/day | Unlimited | Unlimited |
+| Customer Management | ✅ | ✅ | ✅ |
+| Basic Discounts | ✅ | ✅ | ✅ |
+| Receipt Printing | ❌ | ✅ | ✅ |
+| Purchase Log | ❌ | ✅ | ✅ |
+| Stock Overview | ❌ | ✅ | ✅ |
+| Low Stock Alerts | ❌ | ✅ | ✅ |
+| Cash Drawer / Shifts | ❌ | ✅ | ✅ |
+| Simple Profit Report | ❌ | ❌ | ✅ |
+| Owner Insights (P&L) | ❌ | ❌ | ✅ |
 
 ---
 
@@ -321,7 +347,7 @@ Documentation-Driven Development (DDD) workflow. Docs are source of truth.
 
 | Measure | Status |
 |---------|--------|
-| RLS on all 29 tables | ✅ Enabled |
+| RLS on all 20 active tables | ✅ Enabled |
 | Role-aware policies (not blanket authenticated) | ✅ Since migration `20260618000001` |
 | shop_id RLS scoping via `current_shop_ids()` | ✅ Since migration `20260620000002` |
 | Card data purge (cardNumber stripped) | ✅ Since migration `20260618000001` |
