@@ -474,14 +474,14 @@ feature_definitions
 | `update_updated_at_column()` | SECURITY DEFINER | Sets `updated_at = now()` on UPDATE | Yes — all tables with `updated_at` |
 | `generate_invoice_number()` | INVOKER, `search_path=''` | Reads `app_settings.invoice_prefix`/`invoice_counter`, increments counter, returns formatted invoice number | No — called by `checkout_complete()` RPC (trigger path dropped in m38) |
 | `handle_new_auth_user()` | SECURITY DEFINER, `search_path=''` | Creates `public.users` + `shops` + `shop_memberships` rows on `auth.users` insert | Yes — AFTER INSERT on `auth.users` |
-| `get_current_exchange_rate(text, text)` | INVOKER, `search_path=''` | Returns current rate between two currencies | No — called from app |
-| `convert_currency_amount(decimal, text, text)` | INVOKER, `search_path=''` | Converts amount using current rate | No — called from app |
-| `update_exchange_rate(text, text, decimal, text, boolean)` | INVOKER, `search_path=''` | Ends current rate, inserts new, records history | No — called from app |
+| `get_current_exchange_rate(text, text)` | INVOKER, `search_path=''` | **DEPRECATED (v3.1.0).** Returns current rate between two currencies. MMK-only — no multi-currency. | No — called from app |
+| `convert_currency_amount(decimal, text, text)` | INVOKER, `search_path=''` | **DEPRECATED (v3.1.0).** Converts amount using current rate. MMK-only — no multi-currency. | No — called from app |
+| `update_exchange_rate(text, text, decimal, text, boolean)` | INVOKER, `search_path=''` | **DEPRECATED (v3.1.0).** Ends current rate, inserts new, records history. MMK-only — no multi-currency. | No — called from app |
 | `rls_auto_enable()` | SECURITY DEFINER | Auto-enables RLS. Revoked from client roles | Event trigger |
-| `checkout_complete(uuid, jsonb, jsonb, uuid)` | SECURITY DEFINER, `search_path='public'` | Atomic all-or-nothing checkout transaction. Race condition protection via `SELECT ... FOR UPDATE` on shops row. Checks `daily_order_limit`, generates invoice, inserts sale, deducts inventory (product stock + recipe-based raw materials), logs consumption, updates customer stats. RAISES `DAILY_LIMIT_REACHED` if limit exceeded. | No — called via `supabase.rpc()` |
+| `checkout_complete(uuid, jsonb, jsonb, uuid)` | SECURITY DEFINER, `search_path='public'` | Atomic all-or-nothing checkout transaction. Race condition protection via `SELECT ... FOR UPDATE` on shops row. Checks `daily_order_limit`, generates invoice, inserts sale, deducts inventory (product stock only), updates customer stats. RAISES `DAILY_LIMIT_REACHED` if limit exceeded. | No — called via `supabase.rpc()` |
 | `current_shop_ids()` | INVOKER, `search_path=''` | Returns shop IDs where current user has active membership. Used in RLS policies for shop-scoped access. | No — called in RLS policies |
 | `is_platform_admin()` | SECURITY DEFINER | Checks if `auth.uid()` maps to a user with `role = 'platform_admin'`. Used in RLS for cross-tenant access. | No — called in RLS policies |
-| `replace_recipe_lines(uuid, jsonb)` | SECURITY DEFINER | Atomically deletes existing recipe_lines for a recipe and inserts new lines. Used by recipe BOM management. | No — called via RPC |
+| `replace_recipe_lines(uuid, jsonb)` | SECURITY DEFINER | **DEPRECATED (v3.1.0).** Atomically deletes existing recipe_lines for a recipe and inserts new lines. Was used by recipe BOM management — BOM removed from v1 scope. | No — called via RPC |
 
 ---
 

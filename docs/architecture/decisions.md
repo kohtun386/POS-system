@@ -1,8 +1,8 @@
 # Key Technology Decisions — CoffeeShop POS
 
-Synthesized from existing documentation and VISION.md v3.0.0. Each decision links to its source.
+Synthesized from existing documentation and VISION.md v3.1.0. Each decision links to its source.
 
-**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
+**Last updated:** 2026-07-10 (aligned with VISION.md v3.1.0 — scope reframe)
 
 ---
 
@@ -86,9 +86,9 @@ Synthesized from existing documentation and VISION.md v3.0.0. Each decision link
 
 ### Provider Tree Hierarchy
 
-**What:** `ThemeProvider → AuthProvider → AppProvider → CurrencyProvider → AppContent`
+**What:** `ThemeProvider → AuthProvider → AppProvider → AppContent`
 
-**Why:** AppProvider depends on `useAuth()`. CurrencyProvider is independent but logically inside App. Theme wraps everything for dark mode support. This exact order is required.
+**Why:** AppProvider depends on `useAuth()`. Theme wraps everything for dark mode support. CurrencyProvider was removed — MMK-only formatting is a simple utility, no context needed.
 
 **Source:** `docs/architecture/state-management.md`
 
@@ -108,7 +108,7 @@ Synthesized from existing documentation and VISION.md v3.0.0. Each decision link
 - Gate 1: Subscription tier — features below shop's tier are disabled
 - Gate 2: Business type defaults — different business types get different default capability sets
 
-**Source:** `VISION.md v3.0.0 Section 5`, `docs/architecture/database.md` (feature_definitions, shop_features tables)
+**Source:** `VISION.md v3.1.0 Section 5`, `docs/architecture/database.md` (feature_definitions, shop_features tables)
 
 ---
 
@@ -122,7 +122,7 @@ Synthesized from existing documentation and VISION.md v3.0.0. Each decision link
 
 **`platform_admin` rule:** NEVER appears in RLS policies. Platform admin bypasses RLS entirely via `service_role` key in Edge Functions. No `OR users.role = 'platform_admin'` in any policy.
 
-**Source:** `docs/architecture/auth.md`, `VISION.md v3.0.0 Section 4.3`
+**Source:** `docs/architecture/auth.md`, `VISION.md v3.1.0 Section 4.3`
 
 ### JSONB for Flexible Fields
 
@@ -162,7 +162,7 @@ Synthesized from existing documentation and VISION.md v3.0.0. Each decision link
 
 **Why:** Myanmar market. Daily order limit enforcement uses `CURRENT_DATE` which must resolve to Asia/Yangon midnight, not UTC. Prevents off-by-one-day errors for shops operating near midnight.
 
-**Source:** `VISION.md v3.0.0 Section 14`, `docs/architecture/database.md Section 8.1`
+**Source:** `VISION.md v3.1.0 Section 14`, `docs/architecture/database.md Section 8.1`
 
 ### Business Type: coffee_shop Only (v1)
 
@@ -170,20 +170,20 @@ Synthesized from existing documentation and VISION.md v3.0.0. Each decision link
 
 **Why:** Coffee/tea shops have a simple counter workflow. Restaurant (table service) and food court (multi-vendor) require fundamentally different UI and routing. Building for one type first ensures quality before expanding.
 
-**Source:** `VISION.md v3.0.0 Section 2`, `docs/architecture/database.md` (shops.business_type CHECK)
+**Source:** `VISION.md v3.1.0 Section 2`, `docs/architecture/database.md` (shops.business_type CHECK)
 
 ### Subscription Tiers: 3-Tier (Free/Growth/Pro)
 
 **What:** `shops.subscription_tier` CHECK constraint: `'free'` | `'growth'` | `'pro'`. Enterprise tier removed.
 
 **Why:**
-- **Free (0 MMK):** Small shops, trial users. 50 orders/day, 50 products max, no printer/recipe.
-- **Growth (49,000 MMK):** Mid-size shops. Unlimited orders, printer support, recipe/BOM, cash drawer.
-- **Pro (149,000 MMK):** High-volume shops. Owner insights, P&L dashboard, WhatsApp reports, waste tracking.
+- **Free (0 MMK):** Small shops, trial users. 50 orders/day, 50 products max, no printer.
+- **Growth (49,000 MMK):** Mid-size shops. Unlimited orders, printer support, purchase log, stock overview, low stock alerts, cash drawer.
+- **Pro (149,000 MMK):** High-volume shops. Owner insights (P&L), simple profit report, WhatsApp daily report.
 
 Manual high-touch billing. Customer pays via KBZpay/AYApay/UABpay/MMQR, Ko Htun activates in Platform Admin.
 
-**Source:** `VISION.md v3.0.0 Section 3`, `docs/architecture/database.md` (shops.subscription_tier CHECK)
+**Source:** `VISION.md v3.1.0 Section 3`, `docs/architecture/database.md` (shops.subscription_tier CHECK)
 
 ---
 
@@ -191,17 +191,17 @@ Manual high-touch billing. Customer pays via KBZpay/AYApay/UABpay/MMQR, Ko Htun 
 
 ### Checkout Atomicity: Single RPC (not Sequential JS Calls)
 
-**What:** Entire checkout flow (sale creation, inventory deduction, kitchen print job, customer stats update, consumption logging) wrapped in a single `checkout_complete()` Supabase RPC call. All steps succeed together or all roll back together.
+**What:** Entire checkout flow (sale creation, inventory deduction, kitchen print job, customer stats update) wrapped in a single `checkout_complete()` Supabase RPC call. All steps succeed together or all roll back together.
 
 **Why:** Sequential JavaScript service calls (`salesService.create()` → `productsService.updateStock()` → ...) leave data inconsistent if a middle step fails. A single database transaction guarantees atomicity.
 
 **Implementation:**
 - `supabase.rpc('checkout_complete', { p_shop_id, p_cart, p_payment, p_cashier_id })`
 - Inside: `SELECT ... FOR UPDATE` on shops row (race condition lock)
-- Check daily order limit, generate invoice, insert sale, deduct inventory, create print jobs, update customer stats, log consumption
+- Check daily order limit, generate invoice, insert sale, deduct inventory, create print jobs, update customer stats
 - Any failure → automatic rollback of ALL steps
 
-**Source:** `VISION.md v3.0.0 Section 11`, `docs/architecture/database.md` (checkout_complete function)
+**Source:** `VISION.md v3.1.0 Section 11`, `docs/architecture/database.md` (checkout_complete function)
 
 ### Order Limit Enforcement: Server-Side in checkout_complete RPC
 
@@ -213,7 +213,7 @@ Manual high-touch billing. Customer pays via KBZpay/AYApay/UABpay/MMQR, Ko Htun 
 
 **Client error handling:** Server raises `DAILY_LIMIT_REACHED` exception. Client catches and shows upgrade prompt.
 
-**Source:** `VISION.md v3.0.0 Section 16`, `docs/architecture/database.md` (checkout_complete function)
+**Source:** `VISION.md v3.1.0 Section 16`, `docs/architecture/database.md` (checkout_complete function)
 
 ---
 
@@ -232,7 +232,7 @@ Manual high-touch billing. Customer pays via KBZpay/AYApay/UABpay/MMQR, Ko Htun 
 
 Thermal paper slips are more reliable than tablets in Myanmar kitchen environments.
 
-**Source:** `VISION.md v3.0.0 Section 8.3`
+**Source:** `VISION.md v3.1.0 Section 8.3`
 
 ### Printer Hardware: Bluetooth + Network (Growth+ Only)
 
@@ -248,7 +248,7 @@ Thermal paper slips are more reliable than tablets in Myanmar kitchen environmen
 - USB (v2 only)
 - Any printer for Free tier
 
-**Source:** `VISION.md v3.0.0 Section 8.1-8.2`
+**Source:** `VISION.md v3.1.0 Section 8.1-8.2`
 
 ### Print Execution Model: Client-Side Receipt + Async Kitchen
 
@@ -260,7 +260,7 @@ Thermal paper slips are more reliable than tablets in Myanmar kitchen environmen
 
 **Print failure policy:** Non-critical path. Print failures NEVER roll back a sale. Receipt failure → manual receipt. Kitchen failure → retry queue + alert staff.
 
-**Source:** `VISION.md v3.0.0 Section 8.4-8.5`, `docs/architecture/database.md` (print_jobs table)
+**Source:** `VISION.md v3.1.0 Section 8.4-8.5`, `docs/architecture/database.md` (print_jobs table)
 
 ### Receipt Management: Toggle + Reprint + Shop Settings (Growth+)
 
@@ -273,31 +273,35 @@ Free tier: No receipt printing, no toggle, no reprint. Transaction History visib
 
 **Why:** Receipt management is a Growth+ feature because it requires printer hardware (also Growth+). Free tier shops use hand-written receipts or no receipts.
 
-**Source:** `VISION.md v3.0.0 Section 9`, `docs/architecture/database.md` (shops.receipt_setting, print_jobs.is_reprint)
+**Source:** `VISION.md v3.1.0 Section 9`, `docs/architecture/database.md` (shops.receipt_setting, print_jobs.is_reprint)
 
 ---
 
-## Inventory & Recipe Decisions
+## Inventory Decisions
 
-### Recipe/BOM with Auto-Deduction (Growth+)
+### Simplified Inventory Model (Growth+) — No Recipe BOM
 
-**What:** Growth+ shops can define recipes (Bill of Materials) linking finished products to raw materials. On checkout, `checkout_complete` RPC deducts ingredients from inventory and logs consumption for COGS tracking.
+**What:** Growth+ shops use Purchase Log + Stock Overview + Low Stock Alerts. No per-recipe ingredient tracking, no auto-deduction, no COGS calculation. Profit = Revenue − Purchases (monthly).
 
-**Why:** Coffee shop owners need to know actual cost per cup. Recipe BOM enables COGS calculation, profit margin analytics (Pro), and low stock alerts (Growth+).
+**Why (VISION.md v3.1.0 §10.3):** Myanmar coffee shops buy supplies in bulk (beans, milk, cups, sugar) weekly or monthly. They sell finished drinks daily. They do NOT track exact ingredient usage per recipe. Monthly profit (Revenue − Purchases) is sufficient.
 
-**Product types:**
-- `finished` — menu items sold to customers (Cappuccino, Latte)
-- `raw_material` — ingredients (coffee beans, milk, sugar, cups)
+**What we do NOT build:**
+- Recipe BOM / Bill of Materials — too complex for Myanmar coffee shop reality
+- Auto-deduct ingredients on sale — requires precise recipes; shops don't track this
+- Per-drink COGS calculation — monthly profit is sufficient
+- Consumption log per ingredient — no auto-deduction means no consumption to log
+- UOM conversion system — not needed without recipe tracking
+- Waste tracking per recipe — no recipe tracking; use low stock alerts instead
 
-**Checkout integration:** Inside `checkout_complete` RPC (critical path, rollback on failure):
-1. For each cart item, find recipe
-2. Calculate ingredient quantities
-3. Deduct from `products.stock`
-4. INSERT into `consumption_log`
+**Purchase Log (Growth+):** Owner records purchases — date, supplier, item, quantity, unit cost, total cost.
 
-**Free tier:** Basic inventory only (`track_inventory` toggle). No raw materials, no recipe BOM, no auto-deduction, no COGS.
+**Stock Overview (Growth+):** Current supply levels (manual entry), manual adjustment (weekly after physical count), low stock alerts (threshold-based).
 
-**Source:** `VISION.md v3.0.0 Section 10`, `docs/architecture/database.md` (recipes, recipe_items, consumption_log tables)
+**Simple Profit Report (Pro):** Monthly Revenue = sum of sales. Monthly Purchases = sum of purchase logs. Profit = Revenue − Purchases.
+
+**Deprecated DB tables:** `recipes`, `recipe_lines`, `consumption_log`, `raw_materials`, `uom_conversions` — exist in DB but unused by v1 code. See `docs/specs/inventory-model.md`.
+
+**Source:** `VISION.md v3.1.0 Section 10`, `docs/specs/inventory-model.md`, `docs/specs/tier-spec.md §2.2 Dead Keys`
 
 ---
 
@@ -315,7 +319,7 @@ Free tier: No receipt printing, no toggle, no reprint. Transaction History visib
 3. Shift end: cashier enters closing cash, system calculates variance
 4. Variance thresholds: Green (≤1,000 MMK), Yellow (≤10,000 MMK), Red (>10,000 MMK)
 
-**Source:** `VISION.md v3.0.0 Section 12`, `docs/architecture/database.md` (cash_shifts table)
+**Source:** `VISION.md v3.1.0 Section 12`, `docs/architecture/database.md` (cash_shifts table)
 
 ---
 
@@ -342,7 +346,7 @@ Free tier: No receipt printing, no toggle, no reprint. Transaction History visib
 | `platform-admin-manage-features` | Update feature_definitions rows |
 | `platform-admin-daily-stats` | Platform-wide metrics (MRR, active shops) |
 
-**Source:** `VISION.md v3.0.0 Section 17`, `docs/architecture/database.md` (feature_definitions table)
+**Source:** `VISION.md v3.1.0 Section 17`, `docs/architecture/database.md` (feature_definitions table)
 
 ---
 
@@ -354,7 +358,7 @@ Free tier: No receipt printing, no toggle, no reprint. Transaction History visib
 
 **Why:** Global `users.role` doesn't support multi-shop scenarios. Per-shop membership allows role flexibility.
 
-**4 roles (VISION.md v3.0.0 Section 4):**
+**4 roles (VISION.md v3.1.0 Section 4):**
 - `platform_admin` — cross-tenant, no shop_memberships row, Edge Function only
 - `admin` — shop owner, full access
 - `manager` — shift supervisor, POS + operations + reports
@@ -362,7 +366,7 @@ Free tier: No receipt printing, no toggle, no reprint. Transaction History visib
 
 **`users.role` status:** Retained for backward compatibility. Canonical source is `shop_memberships.role`.
 
-**Source:** `docs/specs/multi-tenancy.md`, `VISION.md v3.0.0 Section 4`
+**Source:** `docs/specs/multi-tenancy.md`, `VISION.md v3.1.0 Section 4`
 
 ### RLS Scoped via current_shop_ids()
 
@@ -384,13 +388,17 @@ Free tier: No receipt printing, no toggle, no reprint. Transaction History visib
 
 ## Currency & Myanmar Market
 
-### Multi-Currency Support with Exchange Rate Providers
+### MMK-Only Currency (No Multi-Currency)
 
-**What:** `currency_config`, `exchange_rates`, `exchange_rate_history` tables. Three API providers (Fixer.io, CurrencyLayer, ExchangeRate-API) plus manual fallback. 5-minute cache on rates.
+**What:** App operates exclusively in Myanmar Kyat (MMK). No multi-currency support, no exchange rates, no currency conversion. `CurrencyContext` and `currencyUtils.ts` are hardcoded to MMK.
 
-**Why:** Coffee shop operates in Myanmar (MMK) with possible USD/LKR pricing. Exchange rates change daily. Manual override needed for offline scenarios.
+**Why (VISION.md v3.1.0 §19):** Myanmar coffee shops don't need currency conversion. Multi-currency adds complexity with zero value for the target market.
 
-**Source:** `docs/architecture/database.md`, `src/lib/currencyUtils.ts`, `src/lib/exchangeRateService.ts`
+**Deprecated DB tables:** `currency_config`, `exchange_rates`, `exchange_rate_history` — exist in DB but unused by v1 code.
+
+**Deprecated code:** `CurrencyContext.tsx`, `currencyUtils.ts` — dead code pending removal.
+
+**Source:** `VISION.md v3.1.0 Section 19`, `docs/specs/tier-spec.md §2.2 Dead Keys` (`multi_currency`)
 
 ### Myanmar Payment Methods
 
@@ -419,7 +427,7 @@ Free tier: No receipt printing, no toggle, no reprint. Transaction History visib
 
 **Owner Mobile:** Pro tier feature. Read-only dashboard (daily P&L, shift variances, alerts). No POS terminal, no product/inventory management.
 
-**Source:** `VISION.md v3.0.0 Section 7`
+**Source:** `VISION.md v3.1.0 Section 7`
 
 ---
 
@@ -436,7 +444,7 @@ All three remain inactive until `platform_admin` approves via Edge Function.
 
 **Why:** Ensures every auth user has a profile, shop, and membership. Trigger runs server-side with elevated privileges. Manual approval prevents spam and ensures quality onboarding.
 
-**Source:** `docs/architecture/auth.md`, `VISION.md v3.0.0 Section 6`
+**Source:** `docs/architecture/auth.md`, `VISION.md v3.1.0 Section 6`
 
 ### Admin Creates Users via signUp + Session Save/Restore
 
@@ -456,7 +464,7 @@ All three remain inactive until `platform_admin` approves via Edge Function.
 
 **Why:** Coffee shop has platform operator (Ko Htun), owner (admin), shift supervisors (manager), and baristas (cashier). Roles enforced in UI (App.tsx renderCurrentView, Header nav items), database (RLS policies), and Edge Functions (platform_admin JWT validation).
 
-**Source:** `docs/architecture/auth.md`, `VISION.md v3.0.0 Section 4`
+**Source:** `docs/architecture/auth.md`, `VISION.md v3.1.0 Section 4`
 
 ### No Instant Access (Manual Approval Required)
 
@@ -464,7 +472,7 @@ All three remain inactive until `platform_admin` approves via Edge Function.
 
 **Why:** Quality control. Ko Htun reviews every shop before activation. Prevents spam, ensures correct setup, enables personal onboarding relationship.
 
-**Source:** `VISION.md v3.0.0 Section 6.4`
+**Source:** `VISION.md v3.1.0 Section 6.4`
 
 ---
 
@@ -514,7 +522,7 @@ All three remain inactive until `platform_admin` approves via Edge Function.
 
 **v2 planned:** Offline queue for cash-only transactions (IndexedDB, auto-sync on reconnection).
 
-**Source:** `VISION.md v3.0.0 Section 15`
+**Source:** `VISION.md v3.1.0 Section 15`
 
 ---
 
@@ -522,19 +530,19 @@ All three remain inactive until `platform_admin` approves via Edge Function.
 
 ### Daily P&L Dashboard: 3 Numbers Only
 
-**What:** Revenue, COGS, Gross Profit. No complex charts, no drill-downs, no trend lines in v1.
+**What:** Revenue, Purchases, Gross Profit. No complex charts, no drill-downs, no trend lines in v1.
 
-**Why:** Owners need to answer "How much profit today?" — not analyze quarterly trends. COGS auto-calculated from Recipe BOM consumption log.
+**Why:** Owners need to answer "How much profit today?" — not analyze quarterly trends. Purchases are manually logged via Purchase Log (Growth+).
 
-**Source:** `VISION.md v3.0.0 Section 13.2`
+**Source:** `VISION.md v3.1.0 Section 13.2`
 
 ### WhatsApp/Viber Daily Report Push
 
-**What:** Daily at 9:00 PM (Asia/Yangon). Sent via WhatsApp Business API. Includes revenue, COGS, profit, shift count, variance alerts.
+**What:** Daily at 9:00 PM (Asia/Yangon). Sent via WhatsApp Business API. Includes revenue, purchases, profit, shift count, variance alerts.
 
 **Why:** Owners want to check their shop's performance from home. WhatsApp is the most-used messaging app in Myanmar.
 
-**Source:** `VISION.md v3.0.0 Section 13.3`
+**Source:** `VISION.md v3.1.0 Section 13.3`
 
 ---
 
@@ -543,8 +551,8 @@ All three remain inactive until `platform_admin` approves via Edge Function.
 | Topic | Status | Source |
 |-------|--------|--------|
 | i18n library (react-i18next vs react-intl vs custom) | Scoping needed | `docs/specs/roadmap.md` |
-| Offline checkout queue (v2) | Needs real connectivity data | `VISION.md v3.0.0 Section 15.2` |
+| Offline checkout queue (v2) | Needs real connectivity data | `VISION.md v3.1.0 Section 15.2` |
 | Sales tab sharing between baristas | Not on roadmap | `docs/specs/roadmap.md` |
-| Digital receipts (WhatsApp/Email) | v2 only | `VISION.md v3.0.0 Section 9.4` |
-| Waiter tablets | v2 only | `VISION.md v3.0.0 Section 14.2` |
-| Multi-branch dashboard | v2 only | `VISION.md v3.0.0 Section 19` |
+| Digital receipts (WhatsApp/Email) | v2 only | `VISION.md v3.1.0 Section 9.4` |
+| Waiter tablets | v2 only | `VISION.md v3.1.0 Section 14.2` |
+| Multi-branch dashboard | v2 only | `VISION.md v3.1.0 Section 19` |

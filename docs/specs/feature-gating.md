@@ -75,17 +75,14 @@ CREATE TABLE feature_definitions (
 | `printer_integration` | Thermal printer | Bluetooth/Network |
 | `staff_accounts` | Multiple staff logins | |
 | `cash_drawer` | Shift start/end | Shift management, variance tracking |
-| `recipe_bom` | Recipe/BOM costing | |
-| `raw_materials` | Raw material tracking | |
 
 **Pro Tier (adds analytics):**
 
 | Capability | Description | Notes |
 |------------|-------------|-------|
-| `advanced_reports` | Consolidated Pro reports gate | Gates owner_insights, profit_analytics, waste_tracking |
+| `advanced_reports` | Consolidated Pro reports gate | Gates owner_insights, profit_analytics |
 | `owner_insights` | P&L dashboard, WhatsApp reports | |
 | `profit_analytics` | Profit margin analytics | |
-| `waste_tracking` | Waste tracking | |
 
 **Dead/Reserved Keys (DB rows only — no UI or code reference):**
 
@@ -94,6 +91,10 @@ CREATE TABLE feature_definitions (
 | `kitchen_display` | pro | **DEAD** | Out of scope for Myanmar market. No KDS screens used — kitchen routing handled via `printer_integration` (Growth tier). Component code deleted 2026-07-04. |
 | `online_ordering` | pro | **DEAD** | VISION §19: "NOT Building" in v1 |
 | `supplier_management` | pro | **DEAD** | No component exists |
+| `recipe_bom` | growth | **DEAD** | Removed per VISION §10.3 scope reframe. BOM/COGS not needed for Myanmar coffee shop market. DB table `recipes` deprecated. |
+| `raw_materials` | growth | **DEAD** | Removed per VISION §10.3 scope reframe. Raw material tracking replaced by Purchase Log (Growth). DB table `raw_materials` deprecated. |
+| `waste_tracking` | pro | **DEAD** | Removed per VISION §10.3/§19 scope reframe. Waste tracking requires recipe-level tracking which is out of scope. Use low stock alerts (Growth) instead. |
+| `multi_currency` | free | **DEAD** | Myanmar market is MMK-only. Tables `currency_config`, `exchange_rates`, `exchange_rate_history` deprecated. |
 
 Dead keys stay in the DB for forward compatibility but are never checked in code. Do not gate new features on them.
 
@@ -115,17 +116,18 @@ INSERT INTO feature_definitions (key, name, category, default_enabled, subscript
   ('printer_integration', 'Thermal Printer',         'pos',        true,  'growth'),
   ('staff_accounts',      'Multiple Staff Accounts', 'general',    true,  'growth'),
   ('cash_drawer',         'Cash Drawer / Shift Mgmt','pos',        true,  'growth'),
-  ('recipe_bom',          'Recipe/BOM Costing',      'inventory',  false, 'growth'),
-  ('raw_materials',       'Raw Material Tracking',   'inventory',  false, 'growth'),
   -- Pro tier capabilities
   ('advanced_reports',    'Advanced Reports',        'reports',    false, 'pro'),
   ('owner_insights',      'Owner Insights (P&L)',    'reports',    false, 'pro'),
   ('profit_analytics',    'Profit Margin Analytics', 'reports',    false, 'pro'),
-  ('waste_tracking',      'Waste Tracking',          'inventory',  false, 'pro'),
   -- Dead/Reserved keys (DB rows only, no UI or code reference)
   ('kitchen_display',     'Kitchen Display',         'kitchen',    false, 'pro'),
   ('online_ordering',     'Online Ordering',         'general',    false, 'pro'),
-  ('supplier_management', 'Supplier Management',     'general',    false, 'pro');
+  ('supplier_management', 'Supplier Management',     'general',    false, 'pro'),
+  ('recipe_bom',          'Recipe/BOM Costing',      'inventory',  false, 'growth'),
+  ('raw_materials',       'Raw Material Tracking',   'inventory',  false, 'growth'),
+  ('waste_tracking',      'Waste Tracking',          'inventory',  false, 'pro'),
+  ('multi_currency',      'Multi-Currency Support',  'general',    true,  'free');
 ```
 
 > **Note:** `pos` is implicit (always available) and has no DB row (TIER-SPEC §2.3). Dead keys are included for forward compatibility but never referenced in code.
@@ -212,7 +214,7 @@ For each feature_definitions row:
   └─ Append enabled features to capabilities array
   │
   ▼
-Result: flat string[] → ['pos', 'inventory', 'discounts', 'multi_currency', ...]
+Result: flat string[] → ['pos', 'inventory', 'discounts', ...]
   │
   ▼
 Returned to client, stored in AppState.capabilities
@@ -492,8 +494,6 @@ All Free capabilities PLUS:
 | `printer_integration` | ✅ | Bluetooth/Network thermal printer |
 | `staff_accounts` | ✅ | Multiple staff logins |
 | `cash_drawer` | ✅ | Shift start/end, variance tracking |
-| `recipe_bom` | ✅ | Recipe/BOM costing |
-| `raw_materials` | ✅ | Raw material tracking |
 
 ### 9.3 Pro Tier (19 active features)
 
@@ -504,15 +504,18 @@ All Growth capabilities PLUS:
 | `advanced_reports` | ✅ | Consolidated Pro reports gate |
 | `owner_insights` | ✅ | P&L dashboard, WhatsApp reports |
 | `profit_analytics` | ✅ | Profit margin analytics |
-| `waste_tracking` | ✅ | Waste tracking |
 
-### 9.4 Dead/Reserved Keys (3 keys — DB only)
+### 9.4 Dead/Reserved Keys (7 keys — DB only)
 
 | Capability | DB Tier | Reason |
 |------------|---------|--------|
 | `kitchen_display` | pro | Out of scope for Myanmar market. No KDS screens — kitchen routing via `printer_integration` (Growth). Code deleted 2026-07-04. |
 | `online_ordering` | pro | VISION §19: "NOT Building" in v1 |
 | `supplier_management` | pro | No component exists |
+| `recipe_bom` | growth | Removed per VISION §10.3 scope reframe. BOM/COGS not needed for Myanmar coffee shop market. |
+| `raw_materials` | growth | Removed per VISION §10.3 scope reframe. Replaced by Purchase Log (Growth). |
+| `waste_tracking` | pro | Removed per VISION §10.3/§19. Requires recipe-level tracking — out of scope. Use low stock alerts (Growth). |
+| `multi_currency` | free | MMK-only market. No multi-currency support. |
 
 ### 9.5 Platform Admin Override
 

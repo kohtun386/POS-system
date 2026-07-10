@@ -1,6 +1,6 @@
 # Product Roadmap — CoffeeShop POS
 
-**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
+**Last updated:** 2026-07-10 (aligned with VISION.md v3.1.0 — scope reframe)
 
 Date: 2026-06-18
 Commits referenced: `8556dc3`, `25da4db`, `64e0082`
@@ -112,10 +112,9 @@ Coffee shop in Myanmar → baristas need Myanmar language UI. Customers may see 
 **Effort:** 2-3 days (library setup + key extraction + translation), after scope decision.
 **Priority:** v2 — English-first for v1 per VISION.md §19.
 
-### 2. Food Costing Module — Ingredients, Recipes, Theoretical COGS
+### 2. ~~Food Costing Module — Ingredients, Recipes, Theoretical COGS~~
 
-**Status:** Scoping complete. MVP defined. Awaiting implementation.
-**Tier:** Growth+ feature (not available on Free tier per VISION.md §10). Free tier has finished product stock tracking only (if `track_inventory` enabled). No raw materials, no recipe BOM, no auto-deduction, no COGS.
+**Status:** REMOVED from v1 scope (VISION.md v3.1.0 §10.3). See `docs/specs/inventory-model.md` for simplified inventory model. Deferred to v2 if needed.
 
 **Problem:** Coffee shop owners don't know true profit per drink. `Product.cost` is a single manual number — no ingredient-level breakdown, no automatic recalculation when vendor prices change.
 
@@ -190,12 +189,12 @@ Revenue-driving feature. Primary pain point: "I'm afraid my cashier will cheat m
 Owners need answers to two questions: "How much profit today?" and "Is my cashier stealing?"
 
 **Scope:**
-- Daily P&L dashboard: Revenue, COGS, Gross Profit (three numbers only)
+- Daily P&L dashboard: Revenue, Purchases, Gross Profit (three numbers only)
 - WhatsApp/Viber daily report at 9:00 PM (Asia/Yangon)
 - Cash drawer variance alerts (red: >10,000 MMK)
 - Mobile-first responsive design (owner checks from phone)
 
-**Dependencies:** Requires Recipe BOM data for COGS calculation. Requires Cash Drawer for variance alerts.
+**Dependencies:** Requires Purchase Log data for Purchases calculation. Requires Cash Drawer for variance alerts.
 
 **Effort:** 2-3 days (P&L computation + WhatsApp Business API integration + mobile UI)
 
@@ -228,16 +227,16 @@ Historical note: this section originally described the pre-2026-06-20 state when
 
 | Tier | Price | Key Features | Limits |
 |------|-------|-------------|--------|
-| **Free** | 0 MMK/month | POS, products, customers, discounts, multi-currency | 50 products, 50 orders/day, no printer, no recipe/inventory |
-| **Growth** | 49,000 MMK/month | + Thermal printer, raw materials, recipe BOM, COGS, low stock alerts, cash drawer | Unlimited |
-| **Pro** | 149,000 MMK/month | + Owner insights (P&L), profit analytics, waste tracking, WhatsApp daily report | Unlimited |
+| **Free** | 0 MMK/month | POS, products, customers, discounts | 50 products, 50 orders/day, no printer |
+| **Growth** | 49,000 MMK/month | + Thermal printer, purchase log, stock overview, low stock alerts, cash drawer | Unlimited |
+| **Pro** | 149,000 MMK/month | + Owner insights (P&L), simple profit report, WhatsApp daily report | Unlimited |
 
 **Grace period:** 5 days after subscription expiry, then auto-downgrade to Free features. No data deleted.
 **Billing:** Manual high-touch via KBZpay/AYApay/UABpay/MMQR.
 
 ---
 
-## Priority Order (Aligned with VISION.md v3.0.0)
+## Priority Order (Aligned with VISION.md v3.1.0)
 
 ```
 1. Dynamic shop configuration         ← NEXT ARCHITECTURE MILESTONE (shops owns business identity)
@@ -245,9 +244,8 @@ Historical note: this section originally described the pre-2026-06-20 state when
 3. Capability-based feature flags     ← HIGH (server resolves capabilities, client checks array — vision §5)
 4. Checkout atomicity (RPC)           ← HIGH (single atomic checkout_complete RPC — vision §11)
 5. Thermal printer integration        ← GROWTH+ (Bluetooth/Network, client-side receipt, async kitchen — vision §8)
-6. Recipe BOM / Raw Materials         ← GROWTH+ (ingredient tracking, auto-deduction, COGS — vision §10)
-7. Cash Drawer / Shift Management     ← GROWTH+ (shift start/end, variance tracking — vision §12)
-8. Owner Insights (P&L)               ← PRO (daily P&L, WhatsApp report, variance alerts — vision §13)
+6. Cash Drawer / Shift Management     ← GROWTH+ (shift start/end, variance tracking — vision §12)
+7. Owner Insights (P&L)               ← PRO (daily P&L, WhatsApp report, variance alerts — vision §13)
 9. Security Audit Phase 2             ← PRE-LAUNCH (app_settings single-row, alert tables, partial index)
 10. i18n (Myanmar language)           ← v2 (English-first for v1 — vision §19)
 11. React Refresh warnings            ← POST-BETA (1 hour, dev experience)
