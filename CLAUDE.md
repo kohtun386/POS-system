@@ -109,6 +109,7 @@ const canUseCashDrawer = useCapability('cash_drawer');
 ### Tier & Feature Gating Protocol
 
 **Source of truth:** `docs/specs/tier-spec.md` — read it before any tier/capability change.
+**Document precedence:** See `docs/GOVERNANCE.md` for conflict resolution rules. Quick reference: VISION.md (scope) > tier-spec.md (implementation) > CLAUDE.md (agent rules).
 
 | Rule | Description |
 |------|-------------|
@@ -124,6 +125,18 @@ const canUseCashDrawer = useCapability('cash_drawer');
 ### Checkout Pattern
 
 Checkout uses `checkoutService.complete()` — single atomic RPC call. Handles sale creation, inventory deduction, stock deduction, print jobs, and customer stats in one transaction. Never use sequential JS calls.
+
+### Post-Audit Task: CurrencyContext Dead Code Check
+
+`multi_currency` moved to Dead Keys. `CurrencyContext` and `CurrencyProvider` may be dead code.
+
+**Checklist:**
+1. Run `grep -r "CurrencyContext\|CurrencyProvider\|useCurrency" src/ --include="*.tsx" --include="*.ts"`
+2. Run `grep -r "currencyUtils\|convertAmount\|formatAmount\|updateExchangeRates" src/ --include="*.tsx" --include="*.ts"`
+3. If `currencyUtils.ts` has zero imports outside itself → safe to remove file
+4. If `CurrencyProvider` is only used in `App.tsx` provider tree and nowhere else → safe to remove from tree
+5. If `formatAmount` is still used for MMK display → extract to a simple utility, remove exchange rate logic
+6. Update CLAUDE.md provider hierarchy if CurrencyProvider is removed
 
 ## Code Style
 

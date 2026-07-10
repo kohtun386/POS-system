@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Version** | 3.0.0 |
-| **Date** | 2026-06-29 |
+| **Version** | 3.1.0 |
+| **Date** | 2026-07-10 |
 | **Status** | LOCKED |
 | **Author** | Ko Htun |
 | **Scope** | Business vision for Myanmar coffee/tea shop POS platform |
@@ -11,6 +11,7 @@
 > This document defines WHAT we are building and WHY.
 > Technical implementation details belong in architecture docs and feature specs.
 > To amend this document, a new version must be authored with explicit rationale.
+> For document conflict resolution, see `docs/GOVERNANCE.md`.
 
 ---
 
@@ -215,6 +216,10 @@ The client stores a `capabilities: string[]` array. Components check this array 
 | `discounts` | Discount engine | free | all |
 | `draft_sales` | Draft/pending sales | free | all |
 | `customer_management` | Customer records | free | all |
+| `batch_tracking` | Batch/lot tracking (embedded in ProductModal) | free | all |
+| `weight_based_products` | Per-unit/weight-based pricing (embedded in ProductModal) | free | all |
+| `credit_system` | Customer credit tracking | free | all |
+| `multi_tab_sales` | Multi-tab POS workflow | free | all |
 | `printer_integration` | Thermal printer | growth | all |
 | `purchase_log` | Purchase recording | growth | all |
 | `stock_overview` | Stock levels & adjustments | growth | all |
@@ -223,6 +228,7 @@ The client stores a `capabilities: string[]` array. Components check this array 
 | `cash_drawer` | Shift start/end | growth | all |
 | `owner_insights` | P&L dashboard | pro | all |
 | `simple_profit_report` | Revenue − Purchases | pro | all |
+| `advanced_reports` | Consolidated Pro reports gate (parent of `owner_insights`, `profit_analytics`) | pro | all |
 
 ---
 
@@ -746,6 +752,15 @@ src/components/platform/
 |------|--------|
 | API access for customers | Not in scope |
 | Automated billing | Manual high-touch until 50+ paying customers |
+
+---
+
+## Changelog
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 3.1.0 | 2026-07-10 | Scope reframe: removed BOM, COGS, consumption log, UOM conversion, waste tracking, KDS from v1. Simplified inventory model (Purchase Log + Stock Overview + Low Stock Alerts + Simple Profit Report). `multi_currency` moved to DEAD. Cross-document SSOT audit completed — VISION.md confirmed as business scope authority. |
+| 3.0.0 | 2026-06-29 | Initial LOCKED version. 3-tier subscription model. 4-role RBAC. Capability-based feature gating. |
 
 ---
 

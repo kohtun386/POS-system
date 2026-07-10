@@ -64,7 +64,7 @@ A web-based point-of-sale platform built for coffee shops and tea shops in Myanm
 - Coffee-themed stat cards with gradient backgrounds
 
 ### User Management & RBAC
-- 3 roles: Admin (full shop access), Manager (POS + inventory + reports + settings), Cashier (POS only)
+- 4 roles: Platform Admin (cross-tenant), Admin (full shop access), Manager (POS + inventory + reports + settings), Cashier (POS only)
 - Role-based navigation — cashiers see POS only, managers see everything except user management
 - `shop_memberships.role` is the canonical authorization source
 - RLS enforced at database level — not just UI
@@ -339,6 +339,8 @@ Documentation-Driven Development (DDD) workflow. Docs are source of truth.
 | **Technical Debt** | [`docs/specs/technical-debt.md`](docs/specs/technical-debt.md) | any types, React Refresh warnings, color palette drift |
 | **Multi-Tenancy** | [`docs/specs/multi-tenancy.md`](docs/specs/multi-tenancy.md) | Current shop_id foundation, dynamic shop configuration target, historical context |
 | **Inventory Alerts** | [`docs/specs/inventory-alerts.md`](docs/specs/inventory-alerts.md) | Alert system spec (5 alert types, email/SMS, templates) |
+| **Tier Spec** | [`docs/specs/tier-spec.md`](docs/specs/tier-spec.md) | Canonical tier definitions, capability mapping, resolution rules |
+| **Governance** | [`docs/GOVERNANCE.md`](docs/GOVERNANCE.md) | Document precedence and conflict resolution rules |
 | **Maintenance** | [`docs/ops/maintenance-checklist.md`](docs/ops/maintenance-checklist.md) | Monthly security & DB maintenance |
 
 ---
