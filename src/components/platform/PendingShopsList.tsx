@@ -98,20 +98,20 @@ export function PendingShopsList() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-fraunces font-bold text-[#473b32] dark:text-[#f0ece5] mb-6">
+      <h1 className="text-2xl font-fraunces font-bold text-secondary-900 dark:text-secondary-100 mb-6">
         Pending Shop Approvals
       </h1>
       {pending.length === 0 ? (
         <div className="card p-8 text-center">
-          <p className="text-[#7d6b57] dark:text-[#c6bbab]">No shops pending approval.</p>
+          <p className="text-secondary-600 dark:text-secondary-300">No shops pending approval.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {pending.map((shop) => (
             <div key={shop.shopId} className="card p-4 flex items-center justify-between">
               <div>
-                <div className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{shop.shopName}</div>
-                <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">
+                <div className="font-semibold text-secondary-900 dark:text-secondary-100">{shop.shopName}</div>
+                <div className="text-sm text-secondary-600 dark:text-secondary-300">
                   Owner: {shop.userName} ({shop.email})
                 </div>
                 <div className="text-xs text-[#a8978a] dark:text-[#8a7d70]">

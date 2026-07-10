@@ -256,12 +256,12 @@ export function ReportsManager() {
   };
 
   return (
-    <div className="p-4 lg:p-6 space-y-6 bg-[#faf8f5] dark:bg-[#1f1309] min-h-full">
+    <div className="p-4 lg:p-6 space-y-6 bg-secondary-50 dark:bg-primary-950 min-h-full">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-[#473b32] dark:text-[#f0ece5]">Reports & Analytics</h1>
-          <p className="text-[#7d6b57] dark:text-[#c6bbab] mt-1">
+          <h1 className="text-2xl lg:text-3xl font-bold text-secondary-900 dark:text-secondary-100">Reports & Analytics</h1>
+          <p className="text-secondary-600 dark:text-secondary-300 mt-1">
             {format(validStartDate, 'MMM dd, yyyy')} - {format(validEndDate, 'MMM dd, yyyy')}
           </p>
         </div>
@@ -279,8 +279,8 @@ export function ReportsManager() {
       <div className="card p-4 lg:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 gap-4">
           <div className="flex items-center space-x-2">
-            <BarChart3 className="h-5 w-5 text-[#ad9e8a]" />
-            <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">Report Filters</span>
+            <BarChart3 className="h-5 w-5 text-secondary-400" />
+            <span className="font-medium text-secondary-900 dark:text-secondary-100">Report Filters</span>
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
@@ -348,7 +348,7 @@ export function ReportsManager() {
       )}
       {reportType === 'sales' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <div className="stat-card bg-gradient-to-br from-[#9a693a] to-[#7a4f2c]">
+          <div className="stat-card bg-gradient-to-br from-primary-600 to-primary-700">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Total Revenue</p>
@@ -360,7 +360,7 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-[#f57323] to-[#e55c13]">
+          <div className="stat-card bg-gradient-to-br from-accent-500 to-accent-600">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Transactions</p>
@@ -372,7 +372,7 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-[#16a34a] to-[#15803d]">
+          <div className="stat-card bg-gradient-to-br from-success-600 to-success-700">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Avg. Transaction</p>
@@ -403,7 +403,7 @@ export function ReportsManager() {
       )}
       {reportType === 'customers' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <div className="stat-card bg-gradient-to-br from-[#9a693a] to-[#7a4f2c]">
+          <div className="stat-card bg-gradient-to-br from-primary-600 to-primary-700">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Total Customers</p>
@@ -415,7 +415,7 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-[#f57323] to-[#e55c13]">
+          <div className="stat-card bg-gradient-to-br from-accent-500 to-accent-600">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Active Customers</p>
@@ -427,7 +427,7 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-[#16a34a] to-[#15803d]">
+          <div className="stat-card bg-gradient-to-br from-success-600 to-success-700">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Avg. Customer Value</p>
@@ -459,7 +459,7 @@ export function ReportsManager() {
       )}
       {reportType === 'inventory' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <div className="stat-card bg-gradient-to-br from-[#9a693a] to-[#7a4f2c]">
+          <div className="stat-card bg-gradient-to-br from-primary-600 to-primary-700">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Total Products</p>
@@ -471,7 +471,7 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-[#f57323] to-[#e55c13]">
+          <div className="stat-card bg-gradient-to-br from-accent-500 to-accent-600">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Low Stock Items</p>
@@ -483,7 +483,7 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-[#16a34a] to-[#15803d]">
+          <div className="stat-card bg-gradient-to-br from-success-600 to-success-700">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Total Stock Value</p>
@@ -514,7 +514,7 @@ export function ReportsManager() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Sales Trend */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
               <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
               Sales Trend
             </h3>
@@ -560,7 +560,7 @@ export function ReportsManager() {
 
           {/* Category Distribution */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
               <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
               Sales by Category
             </h3>
@@ -599,7 +599,7 @@ export function ReportsManager() {
         <div className="grid grid-cols-1 gap-6">
           {/* Customer Spending Chart */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
               <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
               Top Customer Spending
             </h3>
@@ -644,7 +644,7 @@ export function ReportsManager() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Stock Status Chart */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
               <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
               Stock Status Distribution
             </h3>
@@ -683,7 +683,7 @@ export function ReportsManager() {
 
           {/* Category Stock Value */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
               <DollarSign className="h-5 w-5 mr-2 text-green-600" />
               Stock Value by Category
             </h3>
@@ -726,8 +726,8 @@ export function ReportsManager() {
       {/* Data Tables */}
       {reportType === 'sales' && (
         <div className="card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#ded7cc] dark:border-[#54463b]">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] flex items-center font-fraunces">
+          <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-800">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 flex items-center font-fraunces">
               <ShoppingCart className="h-5 w-5 mr-2 text-green-600" />
               Top Selling Products
             </h3>
@@ -743,15 +743,15 @@ export function ReportsManager() {
                   <th className="table-header-cell">Avg. Price</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#ded7cc] dark:divide-[#54463b]">
+              <tbody className="divide-y divide-secondary-200 dark:divide-secondary-800">
                 {topProducts.map((product, index) => (
                   <tr key={index} className="table-row">
                     <td className="table-cell">
-                      <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-[#9a693a] to-[#7a4f2c] text-white rounded-full font-bold text-sm">
+                      <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary-600 to-primary-700 text-white rounded-full font-bold text-sm">
                         {index + 1}
                       </div>
                     </td>
-                    <td className="table-cell font-semibold text-[#473b32] dark:text-[#f0ece5]">
+                    <td className="table-cell font-semibold text-secondary-900 dark:text-secondary-100">
                       {product.name}
                     </td>
                     <td className="table-cell">
@@ -760,7 +760,7 @@ export function ReportsManager() {
                     <td className="table-cell font-semibold text-green-600">
                       {state.settings.currency} {product.revenue.toFixed(2)}
                     </td>
-                    <td className="table-cell text-[#7d6b57] dark:text-[#c6bbab]">
+                    <td className="table-cell text-secondary-600 dark:text-secondary-300">
                       {state.settings.currency} {(product.revenue / product.quantity).toFixed(2)}
                     </td>
                   </tr>
@@ -773,8 +773,8 @@ export function ReportsManager() {
 
       {reportType === 'customers' && (
         <div className="card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#ded7cc] dark:border-[#54463b]">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] flex items-center font-fraunces">
+          <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-800">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 flex items-center font-fraunces">
               <Users className="h-5 w-5 mr-2 text-blue-600" />
               Customer Analytics
             </h3>
@@ -791,15 +791,15 @@ export function ReportsManager() {
                   <th className="table-header-cell">Last Purchase</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#ded7cc] dark:divide-[#54463b]">
+              <tbody className="divide-y divide-secondary-200 dark:divide-secondary-800">
                 {customerData.slice(0, 20).map((customer) => (
                   <tr key={customer.id} className="table-row">
                     <td className="table-cell">
                       <div className="flex items-center">
-                        <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-[#9a693a] to-[#7a4f2c] text-white rounded-full font-bold text-sm mr-3">
+                        <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary-600 to-primary-700 text-white rounded-full font-bold text-sm mr-3">
                           {customer.name.charAt(0).toUpperCase()}
                         </div>
-                        <span className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{customer.name}</span>
+                        <span className="font-semibold text-secondary-900 dark:text-secondary-100">{customer.name}</span>
                       </div>
                     </td>
                     <td className="table-cell font-semibold text-green-600">
@@ -811,10 +811,10 @@ export function ReportsManager() {
                     <td className="table-cell">
                       <span className="badge badge-secondary">{customer.totalItems}</span>
                     </td>
-                    <td className="table-cell text-[#7d6b57] dark:text-[#c6bbab]">
+                    <td className="table-cell text-secondary-600 dark:text-secondary-300">
                       {state.settings.currency} {customer.avgTransactionValue.toFixed(2)}
                     </td>
-                    <td className="table-cell text-[#7d6b57] dark:text-[#c6bbab]">
+                    <td className="table-cell text-secondary-600 dark:text-secondary-300">
                       {format(customer.lastPurchase, 'MMM dd, yyyy')}
                     </td>
                   </tr>
@@ -827,8 +827,8 @@ export function ReportsManager() {
 
       {reportType === 'inventory' && (
         <div className="card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#ded7cc] dark:border-[#54463b]">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] flex items-center font-fraunces">
+          <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-800">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 flex items-center font-fraunces">
               <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
               Inventory Analytics
             </h3>
@@ -849,16 +849,16 @@ export function ReportsManager() {
                   <th className="table-header-cell">Margin</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#ded7cc] dark:divide-[#54463b]">
+              <tbody className="divide-y divide-secondary-200 dark:divide-secondary-800">
                 {inventoryData.slice(0, 50).map((item) => (
                   <tr key={item.id} className="table-row">
                     <td className="table-cell">
                       <div className="flex items-center">
-                        <span className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{item.name}</span>
+                        <span className="font-semibold text-secondary-900 dark:text-secondary-100">{item.name}</span>
                         {!item.active && <span className="ml-2 badge badge-error text-xs">Inactive</span>}
                       </div>
                     </td>
-                    <td className="table-cell font-mono text-sm text-[#7d6b57] dark:text-[#c6bbab]">{item.sku}</td>
+                    <td className="table-cell font-mono text-sm text-secondary-600 dark:text-secondary-300">{item.sku}</td>
                     <td className="table-cell">
                       <span className="badge badge-secondary">{item.category}</span>
                     </td>

@@ -31,37 +31,37 @@ export function PlatformDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-[#7d6b57] dark:text-[#c6bbab]">Loading platform data…</div>
+        <div className="text-secondary-600 dark:text-secondary-300">Loading platform data…</div>
       </div>
     );
   }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-fraunces font-bold text-[#473b32] dark:text-[#f0ece5] mb-6">
+      <h1 className="text-2xl font-fraunces font-bold text-secondary-900 dark:text-secondary-100 mb-6">
         Platform Administration
       </h1>
-      <p className="text-[#7d6b57] dark:text-[#c6bbab] mb-8">
+      <p className="text-secondary-600 dark:text-secondary-300 mb-8">
         Manage shops, subscriptions, and feature definitions across the platform.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="card p-4 text-center">
-          <div className="text-3xl font-bold text-[#f57323]">{stats.pending}</div>
-          <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab] mt-1">Pending Approvals</div>
+          <div className="text-3xl font-bold text-accent-500">{stats.pending}</div>
+          <div className="text-sm text-secondary-600 dark:text-secondary-300 mt-1">Pending Approvals</div>
         </div>
         <div className="card p-4 text-center">
-          <div className="text-3xl font-bold text-[#9a693a]">{stats.active}</div>
-          <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab] mt-1">Active Shops</div>
+          <div className="text-3xl font-bold text-primary-600">{stats.active}</div>
+          <div className="text-sm text-secondary-600 dark:text-secondary-300 mt-1">Active Shops</div>
         </div>
         <div className="card p-4 text-center">
-          <div className="text-3xl font-bold text-[#473b32] dark:text-[#f0ece5]">${stats.totalRevenue}</div>
-          <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab] mt-1">Total Revenue</div>
+          <div className="text-3xl font-bold text-secondary-900 dark:text-secondary-100">${stats.totalRevenue}</div>
+          <div className="text-sm text-secondary-600 dark:text-secondary-300 mt-1">Total Revenue</div>
         </div>
       </div>
 
       <div className="card p-6">
-        <h2 className="text-lg font-fraunces font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4">
+        <h2 className="text-lg font-fraunces font-semibold text-secondary-900 dark:text-secondary-100 mb-4">
           Quick Actions
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

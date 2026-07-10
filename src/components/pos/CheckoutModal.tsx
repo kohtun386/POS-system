@@ -406,8 +406,8 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
     return [
       'flex flex-col items-center space-y-2 p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer',
       isActive
-        ? 'border-[#9a693a] bg-[#fcf5eb] text-[#7a4f2c] dark:border-[#cfa16a] dark:bg-[#3b2613]/50 dark:text-[#ddb889]'
-        : 'border-[#ded7cc] dark:border-[#54463b] hover:border-[#c6bbab] dark:hover:border-[#655547] text-[#7d6b57] dark:text-[#c6bbab]',
+        ? 'border-primary-600 bg-primary-50 text-primary-700 dark:border-primary-400 dark:bg-primary-900/50 dark:text-primary-300'
+        : 'border-secondary-200 dark:border-secondary-800 hover:border-secondary-300 dark:hover:border-secondary-700 text-secondary-600 dark:text-secondary-300',
       isTouchMode ? 'min-h-[80px]' : 'min-h-[70px]',
       isDisabled ? 'opacity-50 cursor-not-allowed' : '',
     ].join(' ');
@@ -420,13 +420,13 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
           <div className={`modal ${isTouchMode ? 'max-w-lg md:max-w-xl' : 'max-w-md md:max-w-lg'}`}>
             {/* Header */}
             <div className="modal-header">
-              <h2 className={`font-bold font-fraunces text-[#473b32] dark:text-[#f0ece5] ${isTouchMode ? 'text-xl' : 'text-lg'}`}>
+              <h2 className={`font-bold font-fraunces text-secondary-900 dark:text-secondary-100 ${isTouchMode ? 'text-xl' : 'text-lg'}`}>
                 Complete Payment
               </h2>
               <button
                 onClick={onClose}
                 disabled={isProcessing}
-                className="text-[#ad9e8a] hover:text-[#7d6b57] p-2 rounded-xl hover:bg-[#f0ece5] dark:hover:bg-[#3b2613] transition-colors disabled:opacity-50"
+                className="text-secondary-400 hover:text-secondary-600 p-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-primary-900 transition-colors disabled:opacity-50"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -435,14 +435,14 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
             <div className="modal-body space-y-6">
               {/* Discount Alert */}
               {showDiscountAlert && appliedDiscounts.length > 0 && (
-                <div className="bg-[#f0fdf4] dark:bg-[#14532d]/20 border border-[#bbf7d0] dark:border-[#166534]/50 rounded-xl p-4 animate-slide-up">
+                <div className="bg-[#f0fdf4] dark:bg-success-900/20 border border-[#bbf7d0] dark:border-success-800/50 rounded-xl p-4 animate-slide-up">
                   <div className="flex items-start space-x-3">
-                    <Gift className="h-5 w-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+                    <Gift className="h-5 w-5 text-success-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <h4 className="font-semibold text-[#166534] dark:text-[#86efac] mb-2">Discounts Applied!</h4>
+                      <h4 className="font-semibold text-success-800 dark:text-[#86efac] mb-2">Discounts Applied!</h4>
                       <div className="space-y-1">
                         {appliedDiscounts.map((discount, index) => (
-                          <div key={index} className="text-sm text-[#15803d] dark:text-[#4ade80]">
+                          <div key={index} className="text-sm text-success-700 dark:text-[#4ade80]">
                             <span className="font-medium">{discount.discountName}</span>
                             {discount.type !== 'free_gift' && (
                               <span className="ml-2">- {state.settings.currency} {discount.discountAmount.toFixed(2)}</span>
@@ -450,7 +450,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                           </div>
                         ))}
                         {freeGifts.length > 0 && (
-                          <div className="text-sm text-[#15803d] dark:text-[#4ade80]">
+                          <div className="text-sm text-success-700 dark:text-[#4ade80]">
                             <span className="font-medium">Free Gifts: </span>
                             {freeGifts.map(gift => gift.product.name).join(', ')}
                           </div>
@@ -459,7 +459,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     </div>
                     <button
                       onClick={() => setShowDiscountAlert(false)}
-                      className="text-[#16a34a] hover:text-[#15803d]"
+                      className="text-success-600 hover:text-success-700"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -469,21 +469,21 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
               {/* Order Summary */}
               <div>
-                <h3 className={`font-semibold font-fraunces text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                <h3 className={`font-semibold font-fraunces text-secondary-900 dark:text-secondary-100 mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                   Order Summary
                 </h3>
 
                 <div className="space-y-2 mb-4 max-h-40 md:max-h-48 overflow-y-auto">
                   {state.cart.map((item, index) => (
-                    <div key={index} className="flex justify-between text-sm text-[#7d6b57] dark:text-[#c6bbab]">
+                    <div key={index} className="flex justify-between text-sm text-secondary-600 dark:text-secondary-300">
                       <span className="truncate flex-1 mr-2">
                         {item.product.name} × {item.weight ? `${item.weight}${item.product.unit}` : item.quantity}
                       </span>
-                      <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {item.subtotal.toFixed(2)}</span>
+                      <span className="font-medium text-secondary-900 dark:text-secondary-100">{state.settings.currency} {item.subtotal.toFixed(2)}</span>
                     </div>
                   ))}
                   {freeGifts.map((gift, index) => (
-                    <div key={`gift-${index}`} className="flex justify-between text-sm text-[#16a34a]">
+                    <div key={`gift-${index}`} className="flex justify-between text-sm text-success-600">
                       <span className="truncate flex-1 mr-2">
                         🎁 {gift.product.name} × {gift.quantity} (FREE)
                       </span>
@@ -492,31 +492,31 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                   ))}
                 </div>
 
-                <div className="space-y-2 pt-4 border-t border-[#ded7cc] dark:border-[#54463b]">
-                  <div className="flex justify-between text-[#7d6b57] dark:text-[#c6bbab]">
+                <div className="space-y-2 pt-4 border-t border-secondary-200 dark:border-secondary-800">
+                  <div className="flex justify-between text-secondary-600 dark:text-secondary-300">
                     <span>Subtotal:</span>
-                    <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {subtotal.toFixed(2)}</span>
+                    <span className="font-medium text-secondary-900 dark:text-secondary-100">{state.settings.currency} {subtotal.toFixed(2)}</span>
                   </div>
                   {totalDiscount > 0 && (
-                    <div className="flex justify-between text-[#16a34a]">
+                    <div className="flex justify-between text-success-600">
                       <span>Total Discount:</span>
                       <span className="font-medium">-{state.settings.currency} {totalDiscount.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-[#7d6b57] dark:text-[#c6bbab]">
+                  <div className="flex justify-between text-secondary-600 dark:text-secondary-300">
                     <span>Tax ({state.settings.taxRate}%):</span>
-                    <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {taxAmount.toFixed(2)}</span>
+                    <span className="font-medium text-secondary-900 dark:text-secondary-100">{state.settings.currency} {taxAmount.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-lg font-bold text-[#473b32] dark:text-[#f0ece5] pt-2 border-t border-[#ded7cc] dark:border-[#54463b]">
+                  <div className="flex justify-between text-lg font-bold text-secondary-900 dark:text-secondary-100 pt-2 border-t border-secondary-200 dark:border-secondary-800">
                     <span>Total:</span>
-                    <span className="text-[#9a693a] dark:text-[#cfa16a]">{state.settings.currency} {total.toFixed(2)}</span>
+                    <span className="text-primary-600 dark:text-primary-400">{state.settings.currency} {total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
 
               {/* Payment Method */}
               <div>
-                <h3 className={`font-semibold font-fraunces text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                <h3 className={`font-semibold font-fraunces text-secondary-900 dark:text-secondary-100 mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                   Payment Method
                 </h3>
 
@@ -550,7 +550,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                   <button
                     type="button"
                     onClick={() => setShowMorePayments(!showMorePayments)}
-                    className="mt-3 text-sm text-[#9a693a] dark:text-[#cfa16a] hover:text-[#7a4f2c] dark:hover:text-[#ddb889] font-medium flex items-center space-x-1 transition-colors"
+                    className="mt-3 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium flex items-center space-x-1 transition-colors"
                   >
                     <span className={`transform transition-transform duration-300 ${showMorePayments ? 'rotate-90' : ''}`}>›</span>
                     <span>{showMorePayments ? 'Less payment options' : 'More payment options'}</span>
@@ -606,7 +606,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                 {/* Amount Received - always visible */}
                 {!splitPaymentEnabled && (
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-[#473b32] dark:text-[#f0ece5] mb-2">
+                    <label className="block text-sm font-medium text-secondary-900 dark:text-secondary-100 mb-2">
                       Amount Received *
                     </label>
                     <input
@@ -626,11 +626,11 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -6 }}
                           transition={{ duration: 0.2 }}
-                          className="mt-2 bg-[#f0fdf4] dark:bg-[#14532d]/20 border border-[#bbf7d0] dark:border-[#166534]/50 rounded-xl p-3"
+                          className="mt-2 bg-[#f0fdf4] dark:bg-success-900/20 border border-[#bbf7d0] dark:border-success-800/50 rounded-xl p-3"
                         >
                           <div className="flex justify-between items-center">
-                            <span className="font-semibold text-[#166534] dark:text-[#86efac] text-sm">Change Due:</span>
-                            <span className="text-base font-bold text-[#166534] dark:text-[#86efac]">
+                            <span className="font-semibold text-success-800 dark:text-[#86efac] text-sm">Change Due:</span>
+                            <span className="text-base font-bold text-success-800 dark:text-[#86efac]">
                               {state.settings.currency} {change.toFixed(2)}
                             </span>
                           </div>
@@ -645,7 +645,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                   <button
                     type="button"
                     onClick={() => setSplitPaymentEnabled(!splitPaymentEnabled)}
-                    className="text-sm text-[#9a693a] dark:text-[#cfa16a] hover:text-[#7a4f2c] dark:hover:text-[#ddb889] font-medium flex items-center space-x-1 transition-colors"
+                    className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium flex items-center space-x-1 transition-colors"
                   >
                     <span className={`transform transition-transform duration-300 ${splitPaymentEnabled ? 'rotate-90' : ''}`}>›</span>
                     <span>{splitPaymentEnabled ? 'Single Payment' : 'Split Payment'}</span>
@@ -653,9 +653,9 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
                   {/* Collapsible split payment section */}
                   <div className={`overflow-hidden transition-all duration-300 ease-in-out ${splitPaymentEnabled ? 'max-h-[500px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
-                    <div className="space-y-3 border border-[#ded7cc] dark:border-[#54463b] rounded-xl p-3 bg-[#faf8f5] dark:bg-[#2a1a10]">
-                      <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">
-                        Remaining to pay: <span className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {remaining.toFixed(2)}</span>
+                    <div className="space-y-3 border border-secondary-200 dark:border-secondary-800 rounded-xl p-3 bg-secondary-50 dark:bg-surface-dark">
+                      <div className="text-sm text-secondary-600 dark:text-secondary-300">
+                        Remaining to pay: <span className="font-semibold text-secondary-900 dark:text-secondary-100">{state.settings.currency} {remaining.toFixed(2)}</span>
                       </div>
 
                       <div className="flex items-center space-x-2">
@@ -672,13 +672,13 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
                       <div className="space-y-2">
                         {payments.map(p => (
-                          <div key={p.id} className="flex justify-between items-center p-2 border border-[#ded7cc] dark:border-[#54463b] rounded-xl bg-white dark:bg-[#1a0f08]">
+                          <div key={p.id} className="flex justify-between items-center p-2 border border-secondary-200 dark:border-secondary-800 rounded-xl bg-white dark:bg-[#1a0f08]">
                             <div>
-                              <div className="font-medium text-[#473b32] dark:text-[#f0ece5]">{p.method.toUpperCase()}</div>
-                              <div className="text-xs text-[#7d6b57] dark:text-[#c6bbab]">{p.cardDetails ? `${p.cardDetails.cardType} ••••${p.cardDetails.lastFourDigits}` : ''}</div>
+                              <div className="font-medium text-secondary-900 dark:text-secondary-100">{p.method.toUpperCase()}</div>
+                              <div className="text-xs text-secondary-600 dark:text-secondary-300">{p.cardDetails ? `${p.cardDetails.cardType} ••••${p.cardDetails.lastFourDigits}` : ''}</div>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <div className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{state.settings.currency} {p.amount.toFixed(2)}</div>
+                              <div className="font-semibold text-secondary-900 dark:text-secondary-100">{state.settings.currency} {p.amount.toFixed(2)}</div>
                               <button onClick={() => removePayment(p.id)} className="btn-ghost text-sm font-medium !text-red-600 hover:!text-red-800">Remove</button>
                             </div>
                           </div>
@@ -690,9 +690,9 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
                 {/* Credit Payment Warning */}
                 {paymentMethod === 'credit' && !canPayWithCredit && (
-                  <div className="mt-4 p-3 bg-[#fef2f2] dark:bg-[#450a0a]/30 border border-[#fecaca] dark:border-[#991b1b]/50 rounded-xl flex items-center space-x-2">
-                    <AlertCircle className="h-5 w-5 text-[#dc2626] flex-shrink-0" />
-                    <span className="text-[#b91c1c] dark:text-[#fca5a5] text-sm">
+                  <div className="mt-4 p-3 bg-[#fef2f2] dark:bg-[#450a0a]/30 border border-[#fecaca] dark:border-danger-800/50 rounded-xl flex items-center space-x-2">
+                    <AlertCircle className="h-5 w-5 text-danger-600 flex-shrink-0" />
+                    <span className="text-danger-700 dark:text-[#fca5a5] text-sm">
                       {state.selectedCustomer
                         ? 'Insufficient credit limit'
                         : 'Please select a customer for credit payment'
@@ -703,8 +703,8 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
                 {/* Credit Available Info */}
                 {paymentMethod === 'credit' && state.selectedCustomer && (
-                  <div className="mt-4 p-3 bg-[#fcf5eb] dark:bg-[#3b2613]/30 border border-[#ddb889] dark:border-[#7a4f2c]/50 rounded-xl">
-                    <div className="text-sm text-[#473b32] dark:text-[#f0ece5]">
+                  <div className="mt-4 p-3 bg-primary-50 dark:bg-primary-900/30 border border-primary-300 dark:border-primary-700/50 rounded-xl">
+                    <div className="text-sm text-secondary-900 dark:text-secondary-100">
                       <div className="flex justify-between">
                         <span>Credit Limit:</span>
                         <span className="font-medium">{state.settings.currency} {state.selectedCustomer.creditLimit.toFixed(2)}</span>
@@ -713,9 +713,9 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                         <span>Used:</span>
                         <span className="font-medium">{state.settings.currency} {state.selectedCustomer.creditUsed.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between font-semibold border-t border-[#ddb889] dark:border-[#7a4f2c]/50 pt-1 mt-1">
+                      <div className="flex justify-between font-semibold border-t border-primary-300 dark:border-primary-700/50 pt-1 mt-1">
                         <span>Available:</span>
-                        <span className="text-[#16a34a]">{state.settings.currency} {(state.selectedCustomer.creditLimit - state.selectedCustomer.creditUsed).toFixed(2)}</span>
+                        <span className="text-success-600">{state.settings.currency} {(state.selectedCustomer.creditLimit - state.selectedCustomer.creditUsed).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -732,13 +732,13 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     transition={{ duration: 0.2, ease: 'easeOut' }}
                   >
                     <div className="overflow-hidden">
-                      <h3 className={`font-semibold font-fraunces text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                      <h3 className={`font-semibold font-fraunces text-secondary-900 dark:text-secondary-100 mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                     Card Details
                   </h3>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-[#473b32] dark:text-[#f0ece5] mb-2">
+                      <label className="block text-sm font-medium text-secondary-900 dark:text-secondary-100 mb-2">
                         Bank Name *
                       </label>
                       <select
@@ -755,7 +755,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-[#473b32] dark:text-[#f0ece5] mb-2">
+                      <label className="block text-sm font-medium text-secondary-900 dark:text-secondary-100 mb-2">
                         Card Number *
                       </label>
                       <input
@@ -769,8 +769,8 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                       />
                       {cardDetails.cardType !== 'unknown' && cardNumberInput && (
                         <div className="mt-2 flex items-center space-x-2">
-                          <span className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">Detected:</span>
-                          <span className="text-sm font-medium capitalize text-[#9a693a] dark:text-[#cfa16a]">
+                          <span className="text-sm text-secondary-600 dark:text-secondary-300">Detected:</span>
+                          <span className="text-sm font-medium capitalize text-primary-600 dark:text-primary-400">
                             {cardDetails.cardType}
                           </span>
                         </div>
@@ -778,7 +778,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-[#473b32] dark:text-[#f0ece5] mb-2">
+                      <label className="block text-sm font-medium text-secondary-900 dark:text-secondary-100 mb-2">
                         Card Holder Name *
                       </label>
                       <input
@@ -806,7 +806,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     transition={{ duration: 0.2, ease: 'easeOut' }}
                   >
                     <div className="overflow-hidden">
-                      <h3 className={`font-semibold font-fraunces text-[#473b32] dark:text-[#f0ece5] mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                      <h3 className={`font-semibold font-fraunces text-secondary-900 dark:text-secondary-100 mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
                     Credit Notes
                   </h3>
                   <textarea

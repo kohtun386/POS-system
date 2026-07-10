@@ -88,7 +88,7 @@ export function FeatureDefinitions() {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-fraunces font-bold text-[#473b32] dark:text-[#f0ece5]">
+        <h1 className="text-2xl font-fraunces font-bold text-secondary-900 dark:text-secondary-100">
           Feature Definitions
         </h1>
         <button className="btn btn-primary" onClick={handleCreate}>
@@ -136,7 +136,7 @@ export function FeatureDefinitions() {
           </tbody>
         </table>
         {features.length === 0 && (
-          <div className="p-8 text-center text-[#7d6b57] dark:text-[#c6bbab]">
+          <div className="p-8 text-center text-secondary-600 dark:text-secondary-300">
             No features defined yet.
           </div>
         )}

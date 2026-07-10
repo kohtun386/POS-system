@@ -48,7 +48,7 @@ export function SubscriptionManager() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-fraunces font-bold text-[#473b32] dark:text-[#f0ece5] mb-6">
+      <h1 className="text-2xl font-fraunces font-bold text-secondary-900 dark:text-secondary-100 mb-6">
         Subscription Management
       </h1>
       <div className="card overflow-hidden">

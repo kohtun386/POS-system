@@ -18,8 +18,8 @@ export function UserManager() {
   if (!staffAccountsEnabled) {
     return (
       <div className="p-6 text-center">
-        <User className="h-12 w-12 mx-auto text-[#ad9e8a] mb-4" />
-        <h2 className="text-lg font-semibold text-[#473b32] dark:text-[#f0ece5]">Staff Accounts Disabled</h2>
+        <User className="h-12 w-12 mx-auto text-secondary-400 mb-4" />
+        <h2 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100">Staff Accounts Disabled</h2>
         <div className="mt-2 max-w-md mx-auto">
           <UpgradePrompt feature="Staff accounts" tier="growth" onClose={() => {}} />
         </div>

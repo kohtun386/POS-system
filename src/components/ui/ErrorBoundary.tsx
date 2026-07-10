@@ -33,7 +33,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div className="min-h-screen bg-[#faf8f5] dark:bg-[#1f1309] flex items-center justify-center p-8">
+        <div className="min-h-screen bg-secondary-50 dark:bg-primary-950 flex items-center justify-center p-8">
           <div className="card max-w-md w-full text-center space-y-6">
             <div className="text-4xl">⚠️</div>
             <h2 className="font-fraunces text-xl font-semibold text-secondary-800 dark:text-secondary-100">

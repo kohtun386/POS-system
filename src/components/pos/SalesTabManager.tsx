@@ -93,7 +93,7 @@ export function SalesTabManager() {
   };
 
   return (
-    <div className="w-16 bg-[#faf8f5] dark:bg-[#2a1a10] border-r border-[#ded7cc] dark:border-[#54463b] flex flex-col h-full">
+    <div className="w-16 bg-secondary-50 dark:bg-surface-dark border-r border-secondary-200 dark:border-secondary-800 flex flex-col h-full">
       {/* Sale Buttons with Rotated Text */}
       <div className="flex-1 overflow-y-auto py-2 space-y-1">
         {state.salesTabs.map((tab, index) => {
@@ -107,8 +107,8 @@ export function SalesTabManager() {
                 onClick={() => switchTab(tab.id)}
                 className={`relative w-12 h-20 rounded-md text-xs font-medium transition-all group flex items-center justify-center ${
                   isActive
-                    ? 'bg-gradient-to-b from-[#9a693a] to-[#7a4f2c] text-white shadow-copper'
-                    : 'bg-[#f0ece5] dark:bg-[#3b2613] text-[#7d6b57] dark:text-[#c6bbab] hover:bg-[#e5ddd2] dark:hover:bg-[#473b32] hover:shadow-md'
+                    ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white shadow-copper'
+                    : 'bg-secondary-100 dark:bg-primary-900 text-secondary-600 dark:text-secondary-300 hover:bg-hover-border dark:hover:bg-secondary-900 hover:shadow-md'
                 }`}
               >
                 {/* Rotated Text Label */}
@@ -121,7 +121,7 @@ export function SalesTabManager() {
                 {/* Item Count Badge */}
                 {itemCount > 0 && (
                   <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs flex items-center justify-center ${
-                    isActive ? 'bg-[#faf8f5] text-[#7a4f2c]' : 'bg-[#e55c13] text-white'
+                    isActive ? 'bg-secondary-50 text-primary-700' : 'bg-accent-600 text-white'
                   }`}>
                     {itemCount}
                   </div>
@@ -142,7 +142,7 @@ export function SalesTabManager() {
                         closeTab(tab.id);
                       }
                     }}
-                    className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-[#dc2626] text-white flex items-center justify-center hover:bg-[#b91c1c] transition-colors ${
+                    className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-danger-600 text-white flex items-center justify-center hover:bg-danger-700 transition-colors ${
                       isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                     }`}
                   >
@@ -156,7 +156,7 @@ export function SalesTabManager() {
       </div>
 
       {/* Add New Sale Button */}
-      <div className="p-1 border-t border-[#ded7cc] dark:border-[#54463b] relative">
+      <div className="p-1 border-t border-secondary-200 dark:border-secondary-800 relative">
         <button
           onClick={() => {
             if (!canManageTabs) {
@@ -168,7 +168,7 @@ export function SalesTabManager() {
           disabled={!canManageTabs}
           className={`w-12 h-10 rounded-md transition-all duration-300 flex items-center justify-center mx-auto shadow-soft ${
             canManageTabs
-              ? 'bg-gradient-to-r from-[#9a693a] to-[#b8854a] hover:from-[#b8854a] hover:to-[#cfa16a] text-white'
+              ? 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white'
               : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
           }`}
           title={canManageTabs ? 'Add New Sale' : 'Multi-tab sales disabled'}

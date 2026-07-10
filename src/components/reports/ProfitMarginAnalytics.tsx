@@ -81,16 +81,16 @@ export function ProfitMarginAnalytics({ dateRange }: ProfitMarginAnalyticsProps)
     <div className="space-y-6">
       <div className="card p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-[#473b32] dark:text-[#f0ece5]">
+          <h3 className="font-semibold text-secondary-900 dark:text-secondary-100">
             Overall Margin
           </h3>
-          <span className="text-2xl font-bold text-[#473b32] dark:text-[#f0ece5]">
+          <span className="text-2xl font-bold text-secondary-900 dark:text-secondary-100">
             {overallMargin.toFixed(1)}%
           </span>
         </div>
-        <div className="w-full bg-[#f0ece5] dark:bg-[#3d2d1f] rounded-full h-3">
+        <div className="w-full bg-secondary-100 dark:bg-[#3d2d1f] rounded-full h-3">
           <div
-            className="bg-[#9a693a] h-3 rounded-full transition-all"
+            className="bg-primary-600 h-3 rounded-full transition-all"
             style={{ width: `${Math.min(overallMargin, 100)}%` }}
           />
         </div>
@@ -98,8 +98,8 @@ export function ProfitMarginAnalytics({ dateRange }: ProfitMarginAnalyticsProps)
 
       {chartData.length > 0 && (
         <div className="card p-6">
-          <h3 className="font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4 flex items-center">
-            <TrendingUp className="h-5 w-5 mr-2 text-[#9a693a]" />
+          <h3 className="font-semibold text-secondary-900 dark:text-secondary-100 mb-4 flex items-center">
+            <TrendingUp className="h-5 w-5 mr-2 text-primary-600" />
             Margin by Product
           </h3>
           <ResponsiveContainer width="100%" height={Math.max(300, chartData.length * 40)}>
@@ -141,7 +141,7 @@ export function ProfitMarginAnalytics({ dateRange }: ProfitMarginAnalyticsProps)
                 <td className="table-cell text-right">
                   {product.cost.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </td>
-                <td className={`table-cell text-right font-semibold ${product.margin >= 0 ? 'text-[#059669]' : 'text-[#dc2626]'}`}>
+                <td className={`table-cell text-right font-semibold ${product.margin >= 0 ? 'text-[#059669]' : 'text-danger-600'}`}>
                   {product.margin.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </td>
                 <td className="table-cell text-right">

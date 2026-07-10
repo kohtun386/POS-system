@@ -80,7 +80,7 @@ export function ShopDetail() {
         <button className="btn btn-ghost btn-sm" onClick={() => window.history.back()}>
           ← Back
         </button>
-        <h1 className="text-2xl font-fraunces font-bold text-[#473b32] dark:text-[#f0ece5]">
+        <h1 className="text-2xl font-fraunces font-bold text-secondary-900 dark:text-secondary-100">
           {shop.name}
         </h1>
         <span className={`badge ${shop.is_active ? 'badge-success' : 'badge-danger'}`}>
@@ -90,17 +90,17 @@ export function ShopDetail() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="card p-4">
-          <h2 className="font-semibold mb-3 text-[#473b32] dark:text-[#f0ece5]">Details</h2>
+          <h2 className="font-semibold mb-3 text-secondary-900 dark:text-secondary-100">Details</h2>
           <div className="space-y-2 text-sm">
-            <div><span className="text-[#7d6b57]">Address:</span> {shop.address}</div>
-            <div><span className="text-[#7d6b57]">Email:</span> {shop.email}</div>
-            <div><span className="text-[#7d6b57]">Phone:</span> {shop.phone}</div>
-            <div><span className="text-[#7d6b57]">Created:</span> {new Date(shop.created_at).toLocaleDateString()}</div>
+            <div><span className="text-secondary-600">Address:</span> {shop.address}</div>
+            <div><span className="text-secondary-600">Email:</span> {shop.email}</div>
+            <div><span className="text-secondary-600">Phone:</span> {shop.phone}</div>
+            <div><span className="text-secondary-600">Created:</span> {new Date(shop.created_at).toLocaleDateString()}</div>
           </div>
         </div>
 
         <div className="card p-4">
-          <h2 className="font-semibold mb-3 text-[#473b32] dark:text-[#f0ece5]">Subscription</h2>
+          <h2 className="font-semibold mb-3 text-secondary-900 dark:text-secondary-100">Subscription</h2>
           <div className="flex items-center gap-2 mb-3">
             <span className="badge badge-accent">{shop.subscription_tier}</span>
           </div>
@@ -118,15 +118,15 @@ export function ShopDetail() {
         </div>
 
         <div className="card p-4">
-          <h2 className="font-semibold mb-3 text-[#473b32] dark:text-[#f0ece5]">Stats</h2>
+          <h2 className="font-semibold mb-3 text-secondary-900 dark:text-secondary-100">Stats</h2>
           <div className="space-y-2">
-            <div><span className="text-[#7d6b57]">Total Sales:</span> {stats.salesCount}</div>
-            <div><span className="text-[#7d6b57]">Revenue:</span> ${stats.totalRevenue.toFixed(2)}</div>
+            <div><span className="text-secondary-600">Total Sales:</span> {stats.salesCount}</div>
+            <div><span className="text-secondary-600">Revenue:</span> ${stats.totalRevenue.toFixed(2)}</div>
           </div>
         </div>
 
         <div className="card p-4">
-          <h2 className="font-semibold mb-3 text-[#473b32] dark:text-[#f0ece5]">Actions</h2>
+          <h2 className="font-semibold mb-3 text-secondary-900 dark:text-secondary-100">Actions</h2>
           <button
             className={`btn ${shop.is_active ? 'btn-danger' : 'btn-success'}`}
             onClick={toggleActive}

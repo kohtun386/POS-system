@@ -1,8 +1,8 @@
 # Design System — Espresso & Copper
 
 **Source of truth:** `tailwind.config.js` + `src/index.css`
-**Last updated:** 2026-06-30 (aligned with VISION.md v3.0.0)
-**Version:** 2.0.0
+**Last updated:** 2026-07-10 (aligned with VISION.md v3.1.0)
+**Version:** 3.0.0
 **Dark mode:** Tailwind `class` strategy — `.dark` on `<html>`
 **Theme:** Espresso & Copper only (Light/Dark variants)
 
@@ -78,73 +78,30 @@
 | Role | Light | Dark | Tailwind (light) | Tailwind (dark) |
 |------|-------|------|-------------------|-----------------|
 | Body bg | `#faf8f5` | `#1f1309` | `bg-secondary-50` | `dark:bg-primary-950` |
-| Card bg | `#f0ece5` | `#2a1a10` | `bg-secondary-100` | `dark:bg-[#2a1a10]` |
+| Card bg | `#f0ece5` | `#2a1a10` | `bg-secondary-100` | `dark:bg-surface-dark` |
 | Card border | `#ded7cc` | `#54463b` | `border-secondary-200` | `dark:border-secondary-800` |
 | Heading text | `#473b32` | `#f0ece5` | `text-secondary-900` | `dark:text-secondary-100` |
 | Body text | `#7d6b57` | `#c6bbab` | `text-secondary-600` | `dark:text-secondary-300` |
 | Muted text | `#ad9e8a` | — | `text-secondary-400` | — |
-| Input bg | `#faf8f5` | `#2a1a10` | `bg-secondary-50` | `dark:bg-[#2a1a10]` |
+| Input bg | `#faf8f5` | `#2a1a10` | `bg-secondary-50` | `dark:bg-surface-dark` |
 | Table hover | `#f0ece5` | `#3b2613` | `hover:bg-secondary-100` | `dark:hover:bg-primary-900` |
 | Overlay | `#251e18` | same | `bg-secondary-950` | same |
 
-**Note:** Dark card bg `#2a1a10` is not in Tailwind config — used as inline `dark:bg-[#2a1a10]`. Consider adding to config as `surface-dark`.
+### 1.6 Inline Hex Migration — Complete ✅
 
-### 1.6 Inline Hex Migration Plan
+**Status:** Migrated 2026-07-10. All className hex values replaced with Tailwind tokens.
 
-**Current state:** 59+ instances of raw hex values in components
+**Remaining hex (acceptable):**
+- Recharts component props (`stroke=`, `fill=`) — library requires literal hex
+- Recharts CSS-in-JS objects (`contentStyle`, `dot={{ fill: }}`)
+- SweetAlert2 `!important` overrides — raw CSS, can't use Tailwind tokens
+- Framer Motion color props
 
-**Problem:**
-- Design system updates require changing 59+ places
-- Inconsistency: sometimes hex, sometimes token
-- Hard to maintain
+**Token additions:**
+- `surface.dark` (`#2a1a10`) — dark card/surface bg
+- `hover.border` (`#e5ddd2`) — hover border highlight
 
-**Migration strategy:**
-
-**Step 1: Add missing tokens to tailwind.config.js**
-
-```javascript
-colors: {
-  surface: {
-    dark: '#2a1a10', // Dark card bg (6 instances)
-  },
-  hover: {
-    border: '#e5ddd2', // Hover border (3 instances)
-  },
-}
-```
-
-**Step 2: Replace inline hex with tokens (file-by-file)**
-
-Priority order:
-
-| Priority | Inline Hex | Count | Maps To |
-|----------|------------|-------|---------|
-| High | `#f0ece5` | 59 | `secondary-100` |
-| High | `#473b32` | 46 | `secondary-900` |
-| High | `#7d6b57` | 38 | `secondary-600` |
-| Medium | `#c6bbab` | 25 | `secondary-300` |
-| Medium | `#ded7cc` | 22 | `secondary-200` |
-| Medium | `#9a693a` | 20 | `primary-600` |
-| Medium | `#54463b` | 17 | `secondary-800` |
-| Medium | `#ad9e8a` | 15 | `secondary-400` |
-| Medium | `#7a4f2c` | 15 | `primary-700` |
-| Low | `#3b2613` | 14 | `primary-900` |
-| Low | `#faf8f5` | 12 | `secondary-50` |
-| Low | `#cfa16a` | 11 | `primary-400` |
-| Low | `#fcf5eb` | 9 | `primary-50` |
-| Low | `#ddb889` | 7 | `primary-300` |
-| Low | `#2a1a10` | 6 | `surface-dark` |
-| Low | `#e5ddd2` | 3 | `hover-border` |
-
-**Step 3: Chart colors stay inline**
-
-- Recharts needs literal hex strings
-- Keep in `COLORS` array
-- Future: Move to `src/lib/theme.ts`
-
-**Timeline:** Phase 5 (Cleanup) — after core features implemented
-
-**Migration rule:** Replace `text-[#473b32]` → `text-secondary-900`, `bg-[#f0ece5]` → `bg-secondary-100`, etc. Do file-by-file. Chart colors stay inline (Recharts needs literal hex strings).
+**Migration rule:** Always use Tailwind tokens. If token doesn't exist, add to `tailwind.config.js` first.
 
 ---
 
@@ -694,13 +651,13 @@ No special components needed — standard design system applies.
 | POS terminal | ✅ | ✅ | ✅ |
 | Product management | ✅ | ✅ | ✅ |
 | Basic reports | ✅ | ✅ | ✅ |
-| Recipe management | 🔒 | ✅ | ✅ |
 | Cash drawer | 🔒 | ✅ | ✅ |
+| Purchase log | 🔒 | ✅ | ✅ |
+| Printer integration | 🔒 | ✅ | ✅ |
 | Advanced analytics | 🔒 | 🔒 | ✅ |
-| Owner mobile app | 🔒 | 🔒 | ✅ |
-| Waste tracking | 🔒 | 🔒 | ✅ |
-| Daily P&L | 🔒 | 🔒 | ✅ |
-| Export (CSV/PDF) | 🔒 | 🔒 | ✅ |
+| Owner insights (P&L) | 🔒 | 🔒 | ✅ |
+| Profit analytics | 🔒 | 🔒 | ✅ |
+| Simple profit report | 🔒 | 🔒 | ✅ |
 
 ---
 

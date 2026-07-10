@@ -32,18 +32,18 @@ export function WhatsAppReportConfig() {
   return (
     <div className="space-y-6">
       <div className="card p-5">
-        <h3 className="font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4">
+        <h3 className="font-semibold text-secondary-900 dark:text-secondary-100 mb-4">
           WhatsApp Daily Report
         </h3>
-        <p className="text-sm text-[#7d6b57] dark:text-[#c6bbab] mb-6">
+        <p className="text-sm text-secondary-600 dark:text-secondary-300 mb-6">
           Configure automatic daily sales reports sent to WhatsApp. Receive a summary of daily revenue, transactions, and top products.
         </p>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-[#f0ece5] dark:border-[#3d2d1f]">
+          <div className="flex items-center justify-between py-3 border-b border-secondary-100 dark:border-[#3d2d1f]">
             <div>
-              <div className="font-medium text-[#473b32] dark:text-[#f0ece5]">Enable Reports</div>
-              <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">
+              <div className="font-medium text-secondary-900 dark:text-secondary-100">Enable Reports</div>
+              <div className="text-sm text-secondary-600 dark:text-secondary-300">
                 Send daily summary to WhatsApp
               </div>
             </div>
@@ -58,7 +58,7 @@ export function WhatsAppReportConfig() {
           {enabled && (
             <>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#473b32] dark:text-[#f0ece5]">
+                <label className="text-sm font-medium text-secondary-900 dark:text-secondary-100">
                   Recipient Phone Number
                 </label>
                 <input
@@ -71,7 +71,7 @@ export function WhatsAppReportConfig() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#473b32] dark:text-[#f0ece5]">
+                <label className="text-sm font-medium text-secondary-900 dark:text-secondary-100">
                   Report Time
                 </label>
                 <input
@@ -101,12 +101,12 @@ export function WhatsAppReportConfig() {
 
       {/* Preview */}
       <div className="card p-5">
-        <h4 className="font-medium text-[#473b32] dark:text-[#f0ece5] mb-3">Preview</h4>
-        <div className="bg-[#f0ece5] dark:bg-[#3d2d1f] rounded-xl p-4 text-sm">
-          <div className="font-semibold text-[#473b32] dark:text-[#f0ece5] mb-2">
+        <h4 className="font-medium text-secondary-900 dark:text-secondary-100 mb-3">Preview</h4>
+        <div className="bg-secondary-100 dark:bg-[#3d2d1f] rounded-xl p-4 text-sm">
+          <div className="font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
             ☕ Daily Sales Report
           </div>
-          <div className="space-y-1 text-[#7d6b57] dark:text-[#c6bbab]">
+          <div className="space-y-1 text-secondary-600 dark:text-secondary-300">
             <div>📅 {new Date().toLocaleDateString()}</div>
             <div>💰 Revenue: {state.settings.currency} —</div>
             <div>🧾 Transactions: —</div>

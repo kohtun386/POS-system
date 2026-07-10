@@ -53,10 +53,10 @@ export function OwnerInsights({ dateRange }: OwnerInsightsProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">Revenue</span>
-            <DollarSign className="h-5 w-5 text-[#9a693a]" />
+            <span className="text-sm text-secondary-600 dark:text-secondary-300">Revenue</span>
+            <DollarSign className="h-5 w-5 text-primary-600" />
           </div>
-          <div className="text-3xl font-bold text-[#473b32] dark:text-[#f0ece5]">
+          <div className="text-3xl font-bold text-secondary-900 dark:text-secondary-100">
             {totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
           <div className="text-xs text-[#a8978a] dark:text-[#8a7d70] mt-1">
@@ -66,10 +66,10 @@ export function OwnerInsights({ dateRange }: OwnerInsightsProps) {
 
         <div className="card p-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">COGS</span>
-            <TrendingDown className="h-5 w-5 text-[#e55c13]" />
+            <span className="text-sm text-secondary-600 dark:text-secondary-300">COGS</span>
+            <TrendingDown className="h-5 w-5 text-accent-600" />
           </div>
-          <div className="text-3xl font-bold text-[#473b32] dark:text-[#f0ece5]">
+          <div className="text-3xl font-bold text-secondary-900 dark:text-secondary-100">
             {totalCOGS.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
           <div className="text-xs text-[#a8978a] dark:text-[#8a7d70] mt-1">
@@ -79,10 +79,10 @@ export function OwnerInsights({ dateRange }: OwnerInsightsProps) {
 
         <div className="card p-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">Profit</span>
+            <span className="text-sm text-secondary-600 dark:text-secondary-300">Profit</span>
             <TrendingUp className="h-5 w-5 text-[#059669]" />
           </div>
-          <div className={`text-3xl font-bold ${totalProfit >= 0 ? 'text-[#059669]' : 'text-[#dc2626]'}`}>
+          <div className={`text-3xl font-bold ${totalProfit >= 0 ? 'text-[#059669]' : 'text-danger-600'}`}>
             {totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
           <div className="text-xs text-[#a8978a] dark:text-[#8a7d70] mt-1">
@@ -93,29 +93,29 @@ export function OwnerInsights({ dateRange }: OwnerInsightsProps) {
 
       {/* Summary stats */}
       <div className="card p-5">
-        <h3 className="font-semibold text-[#473b32] dark:text-[#f0ece5] mb-4">Summary</h3>
+        <h3 className="font-semibold text-secondary-900 dark:text-secondary-100 mb-4">Summary</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">Avg Order Value</div>
-            <div className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5]">
+            <div className="text-sm text-secondary-600 dark:text-secondary-300">Avg Order Value</div>
+            <div className="text-lg font-bold text-secondary-900 dark:text-secondary-100">
               {avgOrderValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
           </div>
           <div>
-            <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">Total Transactions</div>
-            <div className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5]">
+            <div className="text-sm text-secondary-600 dark:text-secondary-300">Total Transactions</div>
+            <div className="text-lg font-bold text-secondary-900 dark:text-secondary-100">
               {totalTransactions}
             </div>
           </div>
           <div>
-            <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">Profit Margin</div>
-            <div className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5]">
+            <div className="text-sm text-secondary-600 dark:text-secondary-300">Profit Margin</div>
+            <div className="text-lg font-bold text-secondary-900 dark:text-secondary-100">
               {profitMargin.toFixed(1)}%
             </div>
           </div>
           <div>
-            <div className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">COGS Ratio</div>
-            <div className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5]">
+            <div className="text-sm text-secondary-600 dark:text-secondary-300">COGS Ratio</div>
+            <div className="text-lg font-bold text-secondary-900 dark:text-secondary-100">
               {totalRevenue > 0 ? ((totalCOGS / totalRevenue) * 100).toFixed(1) : 0}%
             </div>
           </div>
