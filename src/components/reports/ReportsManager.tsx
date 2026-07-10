@@ -455,7 +455,7 @@ export function ReportsManager() {
       )}
 
       {reportType === 'inventory' && !hasProReports && (
-        <UpgradePrompt feature="Waste tracking" tier="pro" onClose={() => {}} />
+        <UpgradePrompt feature="Advanced reports" tier="pro" onClose={() => {}} />
       )}
       {reportType === 'inventory' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
