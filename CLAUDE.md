@@ -52,7 +52,7 @@ productsService.update(id, partial) // → Product
 productsService.delete(id)    // → void
 ```
 
-Services: `productsService`, `customersService`, `salesService`, `checkoutService`, `discountsService`, `settingsService`, `usersService`, `salesTabsService`, `alertRecipientsService`, `alertTemplatesService`, `alertConfigurationsService`, `alertHistoryService`, `notificationServiceConfigService`, `shopMembershipsService`, `shopsService`, `featureDefinitionsService`, `shopFeaturesService`, `rawMaterialsService`, `recipesService`, `recipeLinesService`, `consumptionLogService`, `kitchenOrdersService`, `printJobsService`, `cashShiftsService`
+Services: `productsService`, `customersService`, `salesService`, `checkoutService`, `discountsService`, `settingsService`, `usersService`, `salesTabsService`, `alertRecipientsService`, `alertTemplatesService`, `alertConfigurationsService`, `alertHistoryService`, `notificationServiceConfigService`, `shopMembershipsService`, `shopsService`, `featureDefinitionsService`, `shopFeaturesService`, `printJobsService`, `cashShiftsService`
 
 - `checkoutService.complete()` — single atomic RPC call for all checkout operations. Replaces sequential JS calls.
 - `cashShiftsService` — CRUD for shift management (open/close/query).
@@ -103,7 +103,7 @@ Features are gated by `capabilities: string[]` in state, resolved server-side fr
 
 ```typescript
 const canUsePrinter = useCapability('printer_integration');
-const canUseRecipe = useCapability('recipe_bom');
+const canUseCashDrawer = useCapability('cash_drawer');
 ```
 
 ### Tier & Feature Gating Protocol
@@ -123,7 +123,7 @@ const canUseRecipe = useCapability('recipe_bom');
 
 ### Checkout Pattern
 
-Checkout uses `checkoutService.complete()` — single atomic RPC call. Handles sale creation, inventory deduction, stock deduction, print jobs, customer stats, and consumption logging in one transaction. Never use sequential JS calls.
+Checkout uses `checkoutService.complete()` — single atomic RPC call. Handles sale creation, inventory deduction, stock deduction, print jobs, and customer stats in one transaction. Never use sequential JS calls.
 
 ## Code Style
 
