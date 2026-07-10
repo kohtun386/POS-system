@@ -99,11 +99,6 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
       items.push({ id: 'users', label: 'Users', icon: User, color: 'text-[#7a4f2c]' });
     }
 
-    // Feature Flags - Admin only
-    if (role === 'admin') {
-      items.push({ id: 'feature-flags', label: 'Feature Flags', icon: Settings, color: 'text-[#7a4f2c]' });
-    }
-
     return items;
   };
 

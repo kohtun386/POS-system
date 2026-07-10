@@ -435,7 +435,7 @@ Acceptance Criteria:
 |-------------|--------|
 | Myanmar language | v2 — English-first for v1 (technical stability) |
 | RTL support | Not needed (Myanmar is LTR) |
-| Multi-currency | Implemented (11 currencies, exchange rates, CurrencyContext) |
+| Multi-currency | Not implemented (MMK only) |
 
 ---
 

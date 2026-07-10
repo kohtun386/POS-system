@@ -1,7 +1,6 @@
 import { useState, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppProvider, useApp } from './context/SupabaseAppContext';
-import { CurrencyProvider } from './context/CurrencyContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LoadingSpinner } from './components/ui/LoadingComponents';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -19,7 +18,6 @@ const ReportsManager = lazy(() => import('./components/reports/ReportsManager').
 const Settings = lazy(() => import('./components/settings/Settings').then(m => ({ default: m.Settings })));
 const DiscountManager = lazy(() => import('./components/discounts/DiscountManager').then(m => ({ default: m.DiscountManager })));
 const UserManager = lazy(() => import('./components/users/UserManager').then(m => ({ default: m.UserManager })));
-const FeatureFlagsManager = lazy(() => import('./components/settings/FeatureFlagsManager').then(m => ({ default: m.FeatureFlagsManager })));
 const AlertManager = lazy(() => import('./components/alerts/AlertManager').then(m => ({ default: m.AlertManager })));
 
 function AppContent() {
@@ -159,11 +157,9 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <AppProvider>
-          <CurrencyProvider>
-            <ErrorBoundary>
-              <AppContent />
-            </ErrorBoundary>
-          </CurrencyProvider>
+          <ErrorBoundary>
+            <AppContent />
+          </ErrorBoundary>
         </AppProvider>
       </AuthProvider>
     </ThemeProvider>

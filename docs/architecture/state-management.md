@@ -1,7 +1,7 @@
 # State Management Architecture — CoffeeShop POS
 
 **Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
-**Source of truth:** `src/context/SupabaseAppContext.tsx` (active), `src/context/AuthContext.tsx`, `src/context/ThemeContext.tsx`, `src/context/CurrencyContext.tsx`
+**Source of truth:** `src/context/SupabaseAppContext.tsx` (active), `src/context/AuthContext.tsx`, `src/context/ThemeContext.tsx`
 
 ---
 
@@ -11,9 +11,9 @@
 <ThemeProvider>                    — theme state (light/dark/system)
   <AuthProvider>                   — Supabase auth session + user profile
     <AppProvider>                  — ALL app state (products, cart, sales, etc.)
-      <CurrencyProvider>           — Multi-currency + exchange rates
+      <ErrorBoundary>              — catch rendering errors
         <AppContent />             — Routes + header
-      </CurrencyProvider>
+      </ErrorBoundary>
     </AppProvider>
   </AuthProvider>
 </ThemeProvider>
@@ -21,7 +21,7 @@
 
 Defined in `src/App.tsx`.
 
-**Rule:** Providers must wrap in this exact order. `AppProvider` depends on `useAuth()`. `CurrencyProvider` depends on nothing from `AppProvider` but logically sits inside it.
+**Rule:** Providers must wrap in this exact order. `AppProvider` depends on `useAuth()`. CurrencyContext was removed — MMK-only formatting is inline where needed.
 
 ---
 
@@ -32,7 +32,6 @@ Defined in `src/App.tsx`.
 | `ThemeContext` | `src/context/ThemeContext.tsx` | `useState` | `isDark`, `toggleTheme`, `setTheme`, `theme` |
 | `AuthContext` | `src/context/AuthContext.tsx` | `useState` × 4 | `user`, `profile`, `session`, `loading`, `signIn`, `signUp`, `signOut`, `updateProfile` |
 | `AppContext` (active) | `src/context/SupabaseAppContext.tsx` | `useReducer` | `state`, `dispatch` |
-| `CurrencyContext` | `src/context/CurrencyContext.tsx` | `useReducer` | `state`, `loadSupportedCurrencies`, `convertAmount`, `formatAmount`, `updateExchangeRates`, etc. |
 | `AppContext` (deprecated) | `src/context/AppContext.tsx` | `useReducer` | **DO NOT IMPORT.** localStorage mock data only. |
 
 ---
@@ -236,43 +235,9 @@ interface ThemeContextType {
 
 ---
 
-## 6. CurrencyContext
+## 6. Component → State Access Patterns
 
-### 6.1 State Shape
-
-```typescript
-interface CurrencyState {
-  supportedCurrencies: CurrencyConfig[];
-  baseCurrency: CurrencyConfig | null;
-  displayCurrency: string;
-  exchangeRates: ExchangeRate[];
-  isLoading: boolean;
-  error: string | null;
-  lastUpdateTime: Date | null;
-}
-```
-
-### 6.2 Behavior
-
-- Loads supported currencies from `currency_config` table on mount
-- Loads base currency from `CurrencyUtils.getBaseCurrency()`
-- Loads exchange rates when base currency set
-- Background auto-update DISABLED (commented out). Manual updates only via Settings.
-- 5-minute in-memory cache on exchange rates (`CurrencyUtils.cachedRates`)
-
-### 6.3 Exported Hooks
-
-| Hook | Purpose |
-|------|---------|
-| `useCurrency()` | Full context access |
-| `useCurrencyFormat()` | Returns `{ format, displayCurrency }` |
-| `useCurrencyConversion()` | Returns `{ convert, getRate, baseCurrency, displayCurrency }` |
-
----
-
-## 7. Component → State Access Patterns
-
-### 7.1 POS Components
+### 6.1 POS Components
 
 | Component | Reads | Dispatches |
 |-----------|-------|------------|
@@ -282,7 +247,7 @@ interface CurrencyState {
 | `CheckoutModal` | `state.cart`, `state.selectedCustomer`, `state.discounts`, `state.products`, `state.shop`, `state.settings`, `state.currentUser`, `state.capabilities` | `ADD_SALE`, `CLEAR_CART` (inventory deduction, customer stats, print jobs, consumption logging all handled by `checkout_complete` RPC) |
 | `SalesTabManager` | `state.salesTabs`, `state.activeSalesTab`, `state.cart`, `state.selectedCustomer` | `ADD_SALES_TAB`, `UPDATE_SALES_TAB`, `REMOVE_SALES_TAB`, `SET_ACTIVE_SALES_TAB` |
 
-### 7.2 Management Components
+### 6.2 Management Components
 
 | Component | Reads | Dispatches |
 |-----------|-------|------------|
@@ -300,14 +265,14 @@ interface CurrencyState {
 | `RecipeManager` | `state.products`, `state.capabilities` | — |
 | `ShiftManager` | `state.capabilities` | — |
 
-### 7.3 Layout Components
+### 6.3 Layout Components
 
 | Component | Reads | Dispatches |
 |-----------|-------|------------|
 | `Header` | `state.currentUser`, `state.shop`, `state.settings`, `state.cart`, `state.capabilities` | `SET_SETTINGS` (interface mode toggle) |
 | `LoginPage` | — | — (uses `useAuth()` only) |
 
-### 7.4 Capability-Based Feature Gating
+### 6.4 Capability-Based Feature Gating
 
 Components check `state.capabilities` to show/hide features. Never check `shop.subscriptionTier` or `shop.businessType` directly.
 
@@ -338,9 +303,9 @@ if (shop.businessType === 'coffee_shop') { ... }
 
 ---
 
-## 8. State Flow Diagrams
+## 7. State Flow Diagrams
 
-### 8.1 Checkout Flow (VISION.md v3.0.0 — Atomic RPC)
+### 7.1 Checkout Flow (VISION.md v3.0.0 — Atomic RPC)
 
 ```
 Cart (user taps "Checkout")
@@ -396,7 +361,7 @@ onComplete(sale) → POSTerminal clears tab cart
 
 **Key difference from pre-v3.0.0:** No sequential JavaScript service calls. Single `supabase.rpc('checkout_complete', ...)` call handles everything atomically. All steps succeed together or all roll back together.
 
-### 8.2 Sales Tab Switch Flow
+### 7.2 Sales Tab Switch Flow
 
 ```
 User clicks tab button
@@ -419,7 +384,7 @@ dispatch SET_ACTIVE_SALES_TAB(tabId)
 Cart renders with new tab's items
 ```
 
-### 8.3 Auth State Change Flow
+### 7.3 Auth State Change Flow
 
 ```
 supabase.auth.onAuthStateChange(event, session)
@@ -457,7 +422,7 @@ supabase.auth.onAuthStateChange(event, session)
 
 ---
 
-## 9. Anti-Patterns (What NOT To Do)
+## 8. Anti-Patterns (What NOT To Do)
 
 | Anti-Pattern | Why | Correct Pattern |
 |-------------|-----|-----------------|
@@ -475,7 +440,7 @@ supabase.auth.onAuthStateChange(event, session)
 
 ---
 
-## 10. Planned Changes
+## 9. Planned Changes
 
 | Change | Impact | Status |
 |--------|--------|--------|

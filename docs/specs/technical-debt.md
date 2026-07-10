@@ -57,7 +57,6 @@ Commit: `8556dc3` (159 → 140 lint problems).
 |---|---|
 | `src/context/AppContext.tsx` | Exports `AppProvider` + `useApp` hook + `checkDiscountEligibility` utility |
 | `src/context/AuthContext.tsx` | Exports `AuthProvider` + `useAuth` hook |
-| `src/context/CurrencyContext.tsx` | Exports `CurrencyProvider` + `useCurrencyConversion` + `useCurrencyFormat` hooks |
 | `src/context/SupabaseAppContext.tsx` | Exports `AppProvider` + `useApp` + `useInvoiceGeneration` + `checkDiscountEligibility` |
 | `src/context/ThemeContext.tsx` | Exports `ThemeProvider` + `useTheme` hook |
 | `src/lib/alertScheduler.tsx` | Exports `useAlertScheduler` hook + `AlertStatusIndicator` component |

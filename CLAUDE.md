@@ -29,7 +29,7 @@ There is no test suite yet. When you add tests, follow this pattern:
 **Layout:** All components live under `src/components/<domain>/`. Each domain (pos, inventory, customers, etc.) has a Manager component (table/list view) and Modal sub-components (forms). Reusable UI primitives are in `src/components/ui/`.
 
 **Entry:** `src/main.tsx` → `src/App.tsx`. The provider hierarchy is:
-`ThemeProvider` → `AuthProvider` → `AppProvider` → `CurrencyProvider` → `AppContent`
+`ThemeProvider` → `AuthProvider` → `AppProvider` → `ErrorBoundary` → `AppContent`
 
 ### State Management
 
@@ -38,8 +38,6 @@ There is no test suite yet. When you add tests, follow this pattern:
 - **`src/context/AuthContext.tsx`** — Supabase auth wrapper. Provides `user`, `profile`, `session`, `isPendingApproval`, `signIn`, `signUp`, `signOut`, `updateProfile`. User profile loaded from `public.users` table. Inactive users (`profile.active === false`) see PendingApprovalPage.
 
 - **`src/context/ThemeContext.tsx`** — Light/dark/system theme. Toggles `dark` class on `<html>`.
-
-- **`src/context/CurrencyContext.tsx`** — Multi-currency support. Provides `convertAmount`, `formatAmount`, `updateExchangeRates`. Use `src/lib/currencyUtils.ts` for the CurrencyUtils class.
 
 ### Service Layer (`src/lib/services.ts`)
 
@@ -126,18 +124,6 @@ const canUseCashDrawer = useCapability('cash_drawer');
 
 Checkout uses `checkoutService.complete()` — single atomic RPC call. Handles sale creation, inventory deduction, stock deduction, print jobs, and customer stats in one transaction. Never use sequential JS calls.
 
-### Post-Audit Task: CurrencyContext Dead Code Check
-
-`multi_currency` moved to Dead Keys. `CurrencyContext` and `CurrencyProvider` may be dead code.
-
-**Checklist:**
-1. Run `grep -r "CurrencyContext\|CurrencyProvider\|useCurrency" src/ --include="*.tsx" --include="*.ts"`
-2. Run `grep -r "currencyUtils\|convertAmount\|formatAmount\|updateExchangeRates" src/ --include="*.tsx" --include="*.ts"`
-3. If `currencyUtils.ts` has zero imports outside itself → safe to remove file
-4. If `CurrencyProvider` is only used in `App.tsx` provider tree and nowhere else → safe to remove from tree
-5. If `formatAmount` is still used for MMK display → extract to a simple utility, remove exchange rate logic
-6. Update CLAUDE.md provider hierarchy if CurrencyProvider is removed
-
 ## Code Style
 
 ### Naming
@@ -198,7 +184,7 @@ Configuration in `eslint.config.js` — TypeScript-ESLint with React hooks plugi
 ## v1 Scope Boundaries (Non-Negotiable)
 
 ### Currency
-**MMK only.** The app operates exclusively in Myanmar Kyat. No multi-currency, no exchange rates, no currency conversion. `CurrencyContext` and `currencyUtils.ts` are hardcoded to MMK.
+**MMK only.** The app operates exclusively in Myanmar Kyat. No multi-currency, no exchange rates, no currency conversion.
 
 ### OUT OF SCOPE — Do NOT Build
 

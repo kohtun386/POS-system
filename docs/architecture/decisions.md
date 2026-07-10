@@ -390,13 +390,13 @@ Free tier: No receipt printing, no toggle, no reprint. Transaction History visib
 
 ### MMK-Only Currency (No Multi-Currency)
 
-**What:** App operates exclusively in Myanmar Kyat (MMK). No multi-currency support, no exchange rates, no currency conversion. `CurrencyContext` and `currencyUtils.ts` are hardcoded to MMK.
+**What:** App operates exclusively in Myanmar Kyat (MMK). No multi-currency support, no exchange rates, no currency conversion.
 
 **Why (VISION.md v3.1.0 §19):** Myanmar coffee shops don't need currency conversion. Multi-currency adds complexity with zero value for the target market.
 
 **Deprecated DB tables:** `currency_config`, `exchange_rates`, `exchange_rate_history` — exist in DB but unused by v1 code.
 
-**Deprecated code:** `CurrencyContext.tsx`, `currencyUtils.ts` — dead code pending removal.
+**Removed code:** `CurrencyContext.tsx`, `currencyUtils.ts` — removed as dead code.
 
 **Source:** `VISION.md v3.1.0 Section 19`, `docs/specs/tier-spec.md §2.2 Dead Keys` (`multi_currency`)
 
