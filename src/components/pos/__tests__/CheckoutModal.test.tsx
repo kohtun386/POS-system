@@ -25,7 +25,7 @@ const { mockSwalConfig, mockCheckoutComplete, MockDailyLimitError } = vi.hoisted
 })
 
 vi.mock('../../../lib/services', () => ({
-  checkoutService: { complete: (...args: any[]) => mockCheckoutComplete(...args) },
+  checkoutService: { complete: (...args: unknown[]) => mockCheckoutComplete(...args) },
   DailyLimitError: MockDailyLimitError,
 }))
 
@@ -76,7 +76,7 @@ vi.mock('../ReceiptPrint', () => ({
 }))
 
 vi.mock('../../ui/UpgradePrompt', () => ({
-  UpgradePrompt: ({ feature, tier, onClose }: any) => (
+  UpgradePrompt: ({ feature, tier, onClose }: { feature: string; tier: string; onClose: () => void }) => (
     <div data-testid="upgrade-prompt">
       Upgrade to {tier} for {feature}
       <button onClick={onClose}>Close upgrade</button>

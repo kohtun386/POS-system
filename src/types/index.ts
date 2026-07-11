@@ -368,7 +368,7 @@ export interface PrintJob {
   configData: Record<string, string | number | boolean>;
   connectionType: 'bluetooth' | 'network';
   printerAddress: string;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   isReprint: boolean;
   retryCount: number;
   errorMessage?: string;

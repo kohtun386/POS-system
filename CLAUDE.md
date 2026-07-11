@@ -2,34 +2,19 @@
 
 ## Build & Run
 
-```bash
-npm install             # Install dependencies
-npm run dev             # Start dev server (Vite with --host)
-npm run build           # Production build (vite build)
-npm run preview         # Preview production build
-npm run lint            # ESLint across all source files
-```
-
-The dev server runs on `http://localhost:5173`. Supabase credentials are in `.env` —
-the Supabase project ref is `ejvvwnupiqytximrbmfw`.
+Supabase credentials are in `.env` — project ref is `ejvvwnupiqytximrbmfw`.
+Dev server runs on `http://localhost:5173`.
 
 ## Tests
 
-There is no test suite yet. When you add tests, follow this pattern:
+8 test files using Vitest + React Testing Library. Run with `npx vitest`.
 
 - Component tests: co-locate `__tests__/ComponentName.test.tsx` with the component
 - Service tests: `__tests__/services/` under `src/lib/`
-- Use Vitest + React Testing Library (already compatible with the Vite toolchain)
-- Run tests with `npx vitest`
 
 ## Architecture
 
-**Stack:** React 18.3, TypeScript 5.5 (strict), Supabase, Tailwind CSS 3.4 (Espresso & Copper theme), Framer Motion, Recharts
-
-**Layout:** All components live under `src/components/<domain>/`. Each domain (pos, inventory, customers, etc.) has a Manager component (table/list view) and Modal sub-components (forms). Reusable UI primitives are in `src/components/ui/`.
-
-**Entry:** `src/main.tsx` → `src/App.tsx`. The provider hierarchy is:
-`ThemeProvider` → `AuthProvider` → `AppProvider` → `ErrorBoundary` → `AppContent`
+**Layout:** Components live under `src/components/<domain>/`. Each domain has a Manager component (table/list view) and Modal sub-components (forms). Reusable UI primitives are in `src/components/ui/`.
 
 ### State Management
 
@@ -41,36 +26,11 @@ There is no test suite yet. When you add tests, follow this pattern:
 
 ### Service Layer (`src/lib/services.ts`)
 
-All DB access goes through service objects, not raw `supabase.from()`. Each service maps **camelCase** (frontend) ↔ **snake_case** (PostgreSQL). Pattern:
-
-```ts
-productsService.getAll()    // → Product[]
-productsService.create(data) // → Product
-productsService.update(id, partial) // → Product
-productsService.delete(id)    // → void
-```
-
-Services: `productsService`, `customersService`, `salesService`, `checkoutService`, `discountsService`, `settingsService`, `usersService`, `salesTabsService`, `alertRecipientsService`, `alertTemplatesService`, `alertConfigurationsService`, `alertHistoryService`, `notificationServiceConfigService`, `shopMembershipsService`, `shopsService`, `featureDefinitionsService`, `shopFeaturesService`, `printJobsService`, `cashShiftsService`
+All DB access goes through service objects, not raw `supabase.from()`. Each service maps **camelCase** (frontend) ↔ **snake_case** (PostgreSQL).
 
 - `checkoutService.complete()` — single atomic RPC call for all checkout operations. Replaces sequential JS calls.
 - `cashShiftsService` — CRUD for shift management (open/close/query).
 - `settingsService.get()` returns a single row (app_settings). `settingsService.update()` updates by finding the existing record's ID first.
-
-### Type System
-
-All types defined in `src/types/index.ts`. Key ones:
-
-| Type | Notes |
-|---|---|
-| `Product` | `trackInventory` toggle controls stock validation; `isWeightBased` enables per-unit pricing |
-| `CartItem` | `weight` for weight-based products; `discountType: 'percentage' \| 'fixed'` |
-| `Payment` | `method` supports Myanmar + Sri Lankan payment methods |
-| `Sale` | `paymentMethod: 'split'` when `payments` array is populated |
-| `Discount` | `conditions` are JSONB in DB; `freeGiftProducts` for `type: 'free_gift'` |
-| `Shop` | Business identity, subscription tier, daily order limits, receipt settings |
-| `CashShift` | Open/close shift management per cashier |
-| `FeatureDefinition` | Server-side feature catalog with tier gating |
-| `PrintJob` | Bluetooth/network printer jobs per sale |
 
 ### Database
 
@@ -85,13 +45,6 @@ Supabase project: `ejvvwnupiqytximrbmfw`. Migrations in `supabase/migrations/`.
 **RLS:** All tables have Row Level Security enabled. Policies use `shop_id = ANY(current_shop_ids())` scoping. Sales tabs are user-scoped.
 
 ### Role-Based Access
-
-| Role | Permissions |
-|---|---|
-| `platform_admin` | Cross-tenant: manages all shops, approves signups, activates subscriptions. Separate UI (src/components/platform/). Uses Edge Functions with service_role key. |
-| `admin` | Everything: POS, transactions, inventory, customers, discounts, reports, users, settings |
-| `manager` | POS, transactions, inventory, customers, discounts, reports, settings |
-| `cashier` | POS terminal only |
 
 Access is enforced in `App.tsx` (`renderCurrentView`) and `Header.tsx` (nav items). Cashiers redirected to POS if they try to navigate elsewhere. Platform admin sees separate component tree.
 
@@ -154,32 +107,9 @@ Checkout uses `checkoutService.complete()` — single atomic RPC call. Handles s
 - Destructive operations: confirm first with `swalConfig.deleteConfirm(itemName)`
 - Show loading state: `swalConfig.loading('message...')`
 
-### ESLint
-Configuration in `eslint.config.js` — TypeScript-ESLint with React hooks plugin. Run `npm run lint` before committing.
-
 ## Design System (Espresso & Copper)
 
-**Colors** (Tailwind custom palette):
-- `primary` (espresso browns): `#9a693a` / `#7a4f2c` — buttons, links, nav
-
-- `secondary` (warm stones): `#f0ece5` / `#ded7cc` — cards, backgrounds, borders
-- `accent` (copper oranges): `#f57323` / `#e55c13` — highlights, badges
-
-**Typography:**
-- Headings: `Fraunces` (serif, 600 weight, `font-fraunces` utility)
-- Body: `DM Sans` (sans-serif)
-
-**CSS Classes** (defined in `src/index.css` `@layer components`):
-- `.card`, `.card-glass`, `.card-hover`
-- `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-accent`, `.btn-success`, `.btn-danger`, `.btn-ghost`
-- `.btn-sm` / `.btn-md` / `.btn-lg`
-- `.input`, `.select`, `.textarea`, `.input-sm`
-- `.modal-overlay`, `.modal`, `.modal-header`, `.modal-body`, `.modal-footer`
-- `.table`, `.table-header`, `.table-row`, `.table-cell`, `.table-header-cell`
-- `.badge`, `.badge-success`, `.badge-warning`, `.badge-danger`, `.badge-info`, `.badge-accent`
-- `.stat-card`, `.stat-card-success`, `.stat-card-warning`, `.stat-card-danger`
-
-**Animations** (Framer Motion): Use `motion.div` / `motion.button` with `whileHover`, `whileTap`, `animate`, `initial` props. Keep `transition={{ duration: 0.2 }}` consistent.
+See `.claude/skills/design-system/SKILL.md` for colors, typography, CSS classes, and animation patterns. Key rule: use `.btn`/`.input`/`.modal-overlay` CSS classes — NOT raw Tailwind for form elements.
 
 ## v1 Scope Boundaries (Non-Negotiable)
 
@@ -220,24 +150,6 @@ If a request implies any of the following → **STOP and ask before proceeding:*
 - **Discount eligibility** — use `checkDiscountEligibility()` from SupabaseAppContext; don't reimplement condition checking.
 - **Alerts access** — the AlertManager component exists but is NOT wired into the nav yet. It's accessible if needed but not in the main navigation flow.
 - **SalesTabs** — are user-scoped in the DB (RLS). Each user only sees their own tabs. The initial tab is auto-created on first data load if none exist.
-
-## Key Reference Docs
-
-| Doc | What It Covers |
-|-----|----------------|
-| `docs/architecture/decisions.md` | Key technology decisions (stack, architecture, database, multi-tenancy, currency, PWA, auth, security) |
-| `docs/architecture/patterns.md` | Coding conventions and patterns (component structure, service layer, state updates, RLS, naming) |
-| `docs/architecture/database.md` | Full database schema reference (tables, columns, types, indexes, functions) |
-| `docs/architecture/auth.md` | Auth flows, role hierarchy, permission matrix, RLS policy patterns |
-| `docs/architecture/state-management.md` | Provider tree, reducer actions, cart persistence, data loading |
-| `docs/architecture/deployment.md` | Environment variables, local dev, Supabase config, PWA, backup |
-| `docs/architecture/design-system.md` | Espresso & Copper tokens, component CSS classes, typography, animations |
-| `docs/specs/prd.md` | User personas, functional requirements, acceptance criteria |
-| `docs/specs/roadmap.md` | Short-term and long-term feature roadmap |
-| `docs/specs/technical-debt.md` | Known debt (any types, React Refresh warnings, color drift) |
-| `docs/specs/multi-tenancy.md` | Multi-tenant gap analysis and migration strategy |
-| `docs/specs/inventory-alerts.md` | Alert system specification (5 alert types, email/SMS, templates) |
-| `docs/specs/tier-spec.md` | **Canonical tier definitions**, capability mapping, v1.0 scope, AI harness rules |
 
 ## 🛡️ DB Safety Hook (Mandatory)
 BEFORE running ANY `supabase db *`, `docker exec psql`, or migration-related commands:

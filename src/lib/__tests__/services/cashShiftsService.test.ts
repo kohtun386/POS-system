@@ -12,9 +12,9 @@ vi.mock('../../supabase', () => ({
   },
 }))
 
-function createMockQuery(returnData: any = null, returnError: any = null) {
+function createMockQuery(returnData: unknown = null, returnError: { message: string } | null = null) {
   const result = { data: returnData, error: returnError }
-  const chain: Record<string, any> = {}
+  const chain: Record<string, unknown> = {} as Record<string, unknown>
 
   // Chain methods return the chain itself
   for (const method of ['select', 'insert', 'update', 'order', 'limit', 'eq']) {
@@ -26,9 +26,9 @@ function createMockQuery(returnData: any = null, returnError: any = null) {
   chain.single = vi.fn().mockResolvedValue(result)
 
   // Make chain thenable so `await supabase.from(...).select('*')...` resolves
-  chain.then = (onFulfilled: any, onRejected: any) =>
-    Promise.resolve(result).then(onFulfilled, onRejected)
-  chain.catch = (onRejected: any) => Promise.resolve(result).catch(onRejected)
+  chain.then = (onFulfilled: ((value: typeof result) => unknown) | null, onRejected: ((reason: unknown) => unknown) | null) =>
+    Promise.resolve(result).then(onFulfilled ?? undefined, onRejected ?? undefined)
+  chain.catch = (onRejected: ((reason: unknown) => unknown) | null) => Promise.resolve(result).catch(onRejected ?? undefined)
 
   return chain
 }
