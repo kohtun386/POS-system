@@ -285,31 +285,37 @@ CREATE POLICY "App settings write by admin/manager" ON app_settings
 -- === CASH_SHIFTS ===
 -- Cash shifts use shop_memberships role check; add platform_admin
 -- bypass so platform admins can manage shifts in any shop.
-DROP POLICY IF EXISTS "Cash shifts write by shop admin" ON cash_shifts;
-CREATE POLICY "Cash shifts write by shop admin" ON cash_shifts
-  FOR ALL USING (
-    auth.role() = 'authenticated'
-    AND (
-      -- Platform admin: can write to any shop's cash shifts
-      EXISTS (
-        SELECT 1 FROM public.users
-        WHERE users.id = auth.uid()
-          AND users.role = 'platform_admin'
-      )
-      OR
-      -- Shop admin/manager: can write via membership
-      (
-        shop_id IN (SELECT public.current_shop_ids())
-        AND EXISTS (
-          SELECT 1 FROM public.shop_memberships sm
-          WHERE sm.user_id = auth.uid()
-            AND sm.shop_id = cash_shifts.shop_id
-            AND sm.role IN ('admin', 'manager')
-            AND sm.is_active = true
+-- Skip if cash_shifts table doesn't exist (not in v3.1.0 local schema).
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'cash_shifts' AND relkind = 'r') THEN
+    DROP POLICY IF EXISTS "Cash shifts write by shop admin" ON cash_shifts;
+    CREATE POLICY "Cash shifts write by shop admin" ON cash_shifts
+      FOR ALL USING (
+        auth.role() = 'authenticated'
+        AND (
+          -- Platform admin: can write to any shop's cash shifts
+          EXISTS (
+            SELECT 1 FROM public.users
+            WHERE users.id = auth.uid()
+              AND users.role = 'platform_admin'
+          )
+          OR
+          -- Shop admin/manager: can write via membership
+          (
+            shop_id IN (SELECT public.current_shop_ids())
+            AND EXISTS (
+              SELECT 1 FROM public.shop_memberships sm
+              WHERE sm.user_id = auth.uid()
+                AND sm.shop_id = cash_shifts.shop_id
+                AND sm.role IN ('admin', 'manager')
+                AND sm.is_active = true
+            )
+          )
         )
-      )
-    )
-  );
+      );
+  END IF;
+END $$;
 
 -- ================================================================
 -- VERIFICATION

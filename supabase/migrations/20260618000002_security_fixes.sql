@@ -2,7 +2,7 @@
 -- SECURITY FIXES: Audit Remediations — June 18, 2026
 -- ================================================================
 -- 1. Fix users INSERT policy — was WITH CHECK(true), now scoped to own profile
--- 2. Revoke client-side EXECUTE on SECURITY DEFINER rls_auto_enable()
+-- 2. (removed in v3.1.0 — rls_auto_enable() not in v3.1.0 schema)
 -- 3. (removed in v3.1.0 — currency/exchange tables are out of scope)
 -- 4. Add SET search_path = '' to core public functions
 -- ================================================================
@@ -17,12 +17,8 @@ DROP POLICY IF EXISTS "Authenticated users can insert their own profile" ON user
 CREATE POLICY "Users can only insert their own profile" ON users
   FOR INSERT WITH CHECK (auth.uid() = id);
 
--- ================================================================
--- 2. RLS_AUTO_ENABLE() — REVOKE FROM CLIENT ROLES
---    This SECURITY DEFINER function runs as event trigger.
---    No client (anon/authenticated) should call it via RPC.
--- ================================================================
-REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM anon, authenticated;
+-- 2. (removed in v3.1.0 — rls_auto_enable() was a legacy event trigger
+--    from a deleted migration; no longer in use)
 
 -- NOTE: Section 3 (currency/exchange tables RLS) removed in v3.1.0.
 -- Those tables are out of scope (dead features). If they exist at

@@ -256,20 +256,26 @@ CREATE POLICY "App settings write by admin/manager" ON app_settings
 -- ================================================================
 -- 9. Cash Shifts: Remove platform_admin bypass branch
 --    §5.12: Shop-scoped only — no platform_admin override
+--    Skip if cash_shifts table doesn't exist (not in v3.1.0 local schema).
 -- ================================================================
-DROP POLICY IF EXISTS "Cash shifts write by shop admin" ON cash_shifts;
-CREATE POLICY "Cash shifts write by shop admin" ON cash_shifts
-  FOR ALL USING (
-    auth.role() = 'authenticated'
-    AND shop_id IN (SELECT public.current_shop_ids())
-    AND EXISTS (
-      SELECT 1 FROM public.shop_memberships sm
-      WHERE sm.user_id = auth.uid()
-        AND sm.shop_id = cash_shifts.shop_id
-        AND sm.role IN ('admin', 'manager')
-        AND sm.is_active = true
-    )
-  );
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'cash_shifts' AND relkind = 'r') THEN
+    DROP POLICY IF EXISTS "Cash shifts write by shop admin" ON cash_shifts;
+    CREATE POLICY "Cash shifts write by shop admin" ON cash_shifts
+      FOR ALL USING (
+        auth.role() = 'authenticated'
+        AND shop_id IN (SELECT public.current_shop_ids())
+        AND EXISTS (
+          SELECT 1 FROM public.shop_memberships sm
+          WHERE sm.user_id = auth.uid()
+            AND sm.shop_id = cash_shifts.shop_id
+            AND sm.role IN ('admin', 'manager')
+            AND sm.is_active = true
+        )
+      );
+  END IF;
+END $$;
 
 -- ================================================================
 -- 10. KEEP users_role_check constraint WITH platform_admin
