@@ -23,8 +23,8 @@ Deno.serve(async (req) => {
     let query = adminClient
       .from("shops")
       .select(`
-        id, name, address, email, phone, business_type,
-        subscription_tier, is_active, daily_order_limit,
+        id, name, address, email, phone,
+        subscription_tier, is_active,
         created_at, updated_at,
         owner_id
       `);
@@ -81,7 +81,8 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     if (err instanceof Response) return err;
-    console.error("Unhandled error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("Unhandled error:", msg, err);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
