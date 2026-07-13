@@ -3,7 +3,7 @@
 // Verifies JWT + platform_admin role; provides service_role client
 // ================================================================
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "supabase-js";
 import { corsHeaders } from "./cors.ts";
 
 export interface PlatformAdminUser {
