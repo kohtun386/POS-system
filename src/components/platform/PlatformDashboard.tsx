@@ -1,24 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { platformAdminService, PlatformDailyStats } from '../../lib/services';
 
 export function PlatformDashboard() {
-  useAuth(); // ensure auth context loaded
-  const [stats, setStats] = useState({ pending: 0, active: 0, totalRevenue: 0 });
+  useAuth();
+  const [stats, setStats] = useState<PlatformDailyStats>({ totalShops: 0, activeShops: 0, pendingApprovals: 0, mrr: 0, currency: 'MMK' });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const [shopsRes, membersRes] = await Promise.all([
-          supabase.from('shops').select('id, is_active'),
-          supabase.from('shop_memberships').select('id, is_active'),
-        ]);
-        const allShops = shopsRes.data || [];
-        const allMembers = membersRes.data || [];
-        const pending = allMembers.filter(m => !m.is_active).length;
-        const active = allShops.filter(s => s.is_active).length;
-        setStats({ pending, active, totalRevenue: 0 });
+        const data = await platformAdminService.dailyStats();
+        setStats(data);
       } catch {
         // Stats best-effort — don't block dashboard
       } finally {
@@ -47,16 +40,18 @@ export function PlatformDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="card p-4 text-center">
-          <div className="text-3xl font-bold text-accent-500">{stats.pending}</div>
+          <div className="text-3xl font-bold text-accent-500">{stats.pendingApprovals}</div>
           <div className="text-sm text-secondary-600 dark:text-secondary-300 mt-1">Pending Approvals</div>
         </div>
         <div className="card p-4 text-center">
-          <div className="text-3xl font-bold text-primary-600">{stats.active}</div>
+          <div className="text-3xl font-bold text-primary-600">{stats.activeShops}</div>
           <div className="text-sm text-secondary-600 dark:text-secondary-300 mt-1">Active Shops</div>
         </div>
         <div className="card p-4 text-center">
-          <div className="text-3xl font-bold text-secondary-900 dark:text-secondary-100">${stats.totalRevenue}</div>
-          <div className="text-sm text-secondary-600 dark:text-secondary-300 mt-1">Total Revenue</div>
+          <div className="text-3xl font-bold text-secondary-900 dark:text-secondary-100">
+            {stats.mrr.toLocaleString()} {stats.currency}
+          </div>
+          <div className="text-sm text-secondary-600 dark:text-secondary-300 mt-1">Monthly Recurring Revenue</div>
         </div>
       </div>
 

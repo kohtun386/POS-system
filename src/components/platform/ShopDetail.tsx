@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { platformAdminService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
 
-interface ShopDetailData {
+interface ShopInfo {
   id: string;
   name: string;
   address: string;
@@ -16,59 +16,48 @@ interface ShopDetailData {
 
 export function ShopDetail() {
   const { shopId } = useParams<{ shopId: string }>();
-  const [shop, setShop] = useState<ShopDetailData | null>(null);
+  const [shop, setShop] = useState<ShopInfo | null>(null);
   const [stats, setStats] = useState({ salesCount: 0, totalRevenue: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (shopId) {
-      loadShop();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (shopId) loadShop();
   }, [shopId]);
 
   async function loadShop() {
+    if (!shopId) return;
     setLoading(true);
-    const [shopRes, , salesRes] = await Promise.all([
-      supabase.from('shops').select('*').eq('id', shopId).single(),
-      supabase.from('shop_memberships').select('*').eq('shop_id', shopId),
-      supabase.from('sales').select('total_amount').eq('shop_id', shopId),
-    ]);
-    if (shopRes.error) {
+    try {
+      const detail = await platformAdminService.getShopDetail(shopId);
+      setShop(detail.shop as unknown as ShopInfo);
+      setStats(detail.stats);
+    } catch {
       swalConfig.error('Failed to load shop details');
-      setLoading(false);
-      return;
     }
-    setShop(shopRes.data);
-    const sales = salesRes.data || [];
-    setStats({
-      salesCount: sales.length,
-      totalRevenue: sales.reduce((sum, s) => sum + (s.total_amount || 0), 0),
-    });
     setLoading(false);
   }
 
   async function updateTier(tier: string) {
     if (!shop) return;
-    const { error } = await supabase.from('shops').update({ subscription_tier: tier }).eq('id', shop.id);
-    if (error) {
+    try {
+      await platformAdminService.updateSubscription(shop.id, tier as 'free' | 'growth' | 'pro');
+      setShop({ ...shop, subscription_tier: tier });
+      swalConfig.success('Subscription updated');
+    } catch {
       swalConfig.error('Failed to update subscription');
-      return;
     }
-    setShop({ ...shop, subscription_tier: tier });
-    swalConfig.success('Subscription updated');
   }
 
   async function toggleActive() {
     if (!shop) return;
     const newActive = !shop.is_active;
-    const { error } = await supabase.from('shops').update({ is_active: newActive }).eq('id', shop.id);
-    if (error) {
+    try {
+      await platformAdminService.toggleShopActive(shop.id, newActive);
+      setShop({ ...shop, is_active: newActive });
+      swalConfig.success(newActive ? 'Shop activated' : 'Shop deactivated');
+    } catch {
       swalConfig.error('Failed to update status');
-      return;
     }
-    setShop({ ...shop, is_active: newActive });
-    swalConfig.success(newActive ? 'Shop activated' : 'Shop deactivated');
   }
 
   if (loading) return <div className="text-center py-8">Loading shop details…</div>;
@@ -121,7 +110,7 @@ export function ShopDetail() {
           <h2 className="font-semibold mb-3 text-secondary-900 dark:text-secondary-100">Stats</h2>
           <div className="space-y-2">
             <div><span className="text-secondary-600">Total Sales:</span> {stats.salesCount}</div>
-            <div><span className="text-secondary-600">Revenue:</span> ${stats.totalRevenue.toFixed(2)}</div>
+            <div><span className="text-secondary-600">Revenue:</span> {stats.totalRevenue.toLocaleString()} MMK</div>
           </div>
         </div>
 

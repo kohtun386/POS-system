@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { platformAdminService, PlatformShop } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
 
 interface PendingShop {
@@ -21,75 +21,47 @@ export function PendingShopsList() {
 
   async function loadPending() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('shop_memberships')
-      .select(`
-        shop_id, user_id, is_active, created_at,
-        shops!shop_memberships_shop_id_fkey ( name ),
-        users!shop_memberships_user_id_fkey ( name, email )
-      `)
-      .eq('is_active', false)
-      .order('created_at', { ascending: false });
-    if (error) {
+    try {
+      const shops = await platformAdminService.listShops({ status: 'inactive' });
+      const items: PendingShop[] = shops
+        .filter((s) => !s.membershipActive)
+        .map((s: PlatformShop) => ({
+          shopId: s.id,
+          shopName: s.name || 'Unknown',
+          userId: (s as Record<string, unknown>).owner_id as string || '',
+          userName: '',
+          email: '',
+          createdAt: s.createdAt || '',
+        }));
+      setPending(items);
+    } catch {
       swalConfig.error('Failed to load pending shops');
-      setLoading(false);
-      return;
     }
-    interface MembershipRow {
-      shop_id: string;
-      user_id: string;
-      created_at: string;
-      shops?: { name: string };
-      users?: { name: string; email: string };
-    }
-    const items: PendingShop[] = ((data || []) as MembershipRow[]).map((row) => ({
-      shopId: row.shop_id,
-      shopName: row.shops?.name || 'Unknown',
-      userId: row.user_id,
-      userName: row.users?.name || 'Unknown',
-      email: row.users?.email || '',
-      createdAt: row.created_at,
-    }));
-    setPending(items);
     setLoading(false);
   }
 
-  async function handleApprove(shopId: string, userId: string) {
+  async function handleApprove(shopId: string) {
     const result = await swalConfig.confirm('Approve this shop and activate the user?');
     if (!result.isConfirmed) return;
-    const { error } = await supabase.rpc('platform_admin_approve_shop', {
-      p_shop_id: shopId,
-      p_user_id: userId,
-    });
-    if (error) {
-      // Fallback to direct update if RPC not yet deployed
-      const [memErr, userErr] = await Promise.all([
-        supabase.from('shop_memberships').update({ is_active: true }).eq('shop_id', shopId).eq('user_id', userId),
-        supabase.from('users').update({ active: true }).eq('id', userId),
-      ]);
-      if (memErr.error || userErr.error) {
-        swalConfig.error('Failed to approve shop');
-        return;
-      }
-      await supabase.from('shops').update({ is_active: true }).eq('id', shopId);
+    try {
+      await platformAdminService.approveShop(shopId);
+      swalConfig.success('Shop approved');
+      loadPending();
+    } catch {
+      swalConfig.error('Failed to approve shop');
     }
-    swalConfig.success('Shop approved');
-    loadPending();
   }
 
-  async function handleReject(shopId: string, userId: string) {
+  async function handleReject(shopId: string) {
     const { value: reason } = await swalConfig.prompt('Rejection reason');
     if (!reason) return;
-    const [memErr, userErr] = await Promise.all([
-      supabase.from('shop_memberships').update({ is_active: false }).eq('shop_id', shopId).eq('user_id', userId),
-      supabase.from('users').update({ active: false }).eq('id', userId),
-    ]);
-    if (memErr.error || userErr.error) {
+    try {
+      await platformAdminService.rejectShop(shopId, reason);
+      swalConfig.success('Shop rejected');
+      loadPending();
+    } catch {
       swalConfig.error('Failed to reject shop');
-      return;
     }
-    swalConfig.success('Shop rejected');
-    loadPending();
   }
 
   if (loading) {
@@ -111,9 +83,6 @@ export function PendingShopsList() {
             <div key={shop.shopId} className="card p-4 flex items-center justify-between">
               <div>
                 <div className="font-semibold text-secondary-900 dark:text-secondary-100">{shop.shopName}</div>
-                <div className="text-sm text-secondary-600 dark:text-secondary-300">
-                  Owner: {shop.userName} ({shop.email})
-                </div>
                 <div className="text-xs text-[#a8978a] dark:text-[#8a7d70]">
                   Registered: {new Date(shop.createdAt).toLocaleDateString()}
                 </div>
@@ -121,13 +90,13 @@ export function PendingShopsList() {
               <div className="flex gap-2">
                 <button
                   className="btn btn-success btn-sm"
-                  onClick={() => handleApprove(shop.shopId, shop.userId)}
+                  onClick={() => handleApprove(shop.shopId)}
                 >
                   Approve
                 </button>
                 <button
                   className="btn btn-danger btn-sm"
-                  onClick={() => handleReject(shop.shopId, shop.userId)}
+                  onClick={() => handleReject(shop.shopId)}
                 >
                   Reject
                 </button>

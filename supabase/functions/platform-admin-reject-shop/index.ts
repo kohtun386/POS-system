@@ -1,7 +1,7 @@
 // ================================================================
-// platform-admin-approve-shop
-// Activates a pending shop: sets shop.is_active, membership.is_active,
-// and user.active to true. Only callable by platform_admin.
+// platform-admin-reject-shop
+// Rejects a pending shop application: deactivates membership + user.
+// Only callable by platform_admin.
 //
 // VISION.md §17.3 — Edge Function Inventory
 // ================================================================
@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
-    const { shop_id } = await req.json();
+    const { shop_id, reason } = await req.json();
 
     if (!shop_id) {
       return new Response(
@@ -25,15 +25,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 1. Verify caller is platform_admin
     const caller = await verifyPlatformAdmin(req);
-
-    // 2. Perform mutations with service_role (bypasses RLS)
     const adminClient = createAdminClient();
 
     const { data: shop, error: shopError } = await adminClient
       .from("shops")
-      .select("id, name, is_active, owner_id")
+      .select("id, name, owner_id")
       .eq("id", shop_id)
       .single();
 
@@ -44,46 +41,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (shop.is_active) {
-      return new Response(
-        JSON.stringify({ error: "Shop is already active" }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const { data: membership, error: membershipError } = await adminClient
-      .from("shop_memberships")
-      .select("id, user_id, is_active")
-      .eq("shop_id", shop_id)
-      .eq("role", "admin")
-      .single();
-
-    if (membershipError || !membership) {
-      return new Response(
-        JSON.stringify({ error: "No pending membership found for this shop" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
+    // Deactivate membership and user
     const errors: string[] = [];
 
-    const { error: shopUpdateErr } = await adminClient
-      .from("shops")
-      .update({ is_active: true, updated_at: new Date().toISOString() })
-      .eq("id", shop_id);
-    if (shopUpdateErr) errors.push(`shop: ${shopUpdateErr.message}`);
-
-    const { error: memberUpdateErr } = await adminClient
+    const { error: memberErr } = await adminClient
       .from("shop_memberships")
-      .update({ is_active: true, updated_at: new Date().toISOString() })
-      .eq("id", membership.id);
-    if (memberUpdateErr) errors.push(`membership: ${memberUpdateErr.message}`);
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq("shop_id", shop_id);
+    if (memberErr) errors.push(`membership: ${memberErr.message}`);
 
-    const { error: userUpdateErr } = await adminClient
+    const { error: userErr } = await adminClient
       .from("users")
-      .update({ active: true, updated_at: new Date().toISOString() })
-      .eq("id", membership.user_id);
-    if (userUpdateErr) errors.push(`user: ${userUpdateErr.message}`);
+      .update({ active: false, updated_at: new Date().toISOString() })
+      .eq("id", shop.owner_id);
+    if (userErr) errors.push(`user: ${userErr.message}`);
 
     if (errors.length > 0) {
       return new Response(
@@ -92,19 +63,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 3. Record audit log
     await recordAudit(adminClient, {
       actorId: caller.userId,
-      action: "approve_shop",
+      action: "reject_shop",
       targetType: "shop",
       targetId: shop_id,
       shopId: shop_id,
-      details: { shop_name: shop.name, owner_id: membership.user_id },
+      details: { shop_name: shop.name, reason: reason ?? null },
       ipAddress: extractIp(req),
     });
 
     return new Response(
-      JSON.stringify({ message: "Shop approved successfully", shop_id, shop_name: shop.name }),
+      JSON.stringify({ message: "Shop rejected successfully", shop_id }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {

@@ -31,6 +31,7 @@ All DB access goes through service objects, not raw `supabase.from()`. Each serv
 - `checkoutService.complete()` — single atomic RPC call for all checkout operations. Replaces sequential JS calls.
 - `cashShiftsService` — CRUD for shift management (open/close/query).
 - `settingsService.get()` returns a single row (app_settings). `settingsService.update()` updates by finding the existing record's ID first.
+- `platformAdminService` — all platform admin operations via Edge Functions. Uses `supabase.functions.invoke()`, NEVER `supabase.from()`. See VISION.md §17.4.
 
 ### Database
 

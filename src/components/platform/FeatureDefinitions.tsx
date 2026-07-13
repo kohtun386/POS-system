@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { platformAdminService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
 import Swal from 'sweetalert2';
 
@@ -22,14 +22,11 @@ export function FeatureDefinitions() {
 
   async function loadFeatures() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('feature_definitions')
-      .select('*')
-      .order('key');
-    if (error) {
+    try {
+      const result = await platformAdminService.manageFeatures('list');
+      setFeatures((result.features ?? []) as unknown as FeatureDefinition[]);
+    } catch {
       swalConfig.error('Failed to load features');
-    } else {
-      setFeatures(data || []);
     }
     setLoading(false);
   }
@@ -44,43 +41,44 @@ export function FeatureDefinitions() {
       cancelButtonText: 'Cancel',
     });
     if (!result.value) return;
-    const { error } = await supabase.from('feature_definitions').insert({
-      key: result.value.toLowerCase().replace(/\s+/g, '_'),
-      name: result.value,
-      description: '',
-      subscription_tier: 'free',
-      default_enabled: true,
-    });
-    if (error) {
+    try {
+      await platformAdminService.manageFeatures('create', {
+        key: result.value.toLowerCase().replace(/\s+/g, '_'),
+        name: result.value,
+        description: '',
+        subscription_tier: 'free',
+        default_enabled: true,
+      });
+      swalConfig.success('Feature created');
+      loadFeatures();
+    } catch {
       swalConfig.error('Failed to create feature');
-      return;
     }
-    swalConfig.success('Feature created');
-    loadFeatures();
   }
 
   async function handleToggle(id: string, currentState: boolean) {
-    const { error } = await supabase
-      .from('feature_definitions')
-      .update({ default_enabled: !currentState })
-      .eq('id', id);
-    if (error) {
+    try {
+      await platformAdminService.manageFeatures('update', {
+        feature_id: id,
+        default_enabled: !currentState,
+      });
+      setFeatures(features.map(f => f.id === id ? { ...f, default_enabled: !currentState } : f));
+      swalConfig.success('Feature updated');
+    } catch {
       swalConfig.error('Failed to toggle feature');
-      return;
     }
-    setFeatures(features.map(f => f.id === id ? { ...f, default_enabled: !currentState } : f));
   }
 
   async function handleDelete(id: string) {
     const result = await swalConfig.confirm('Delete this feature?', 'This cannot be undone.');
     if (!result.isConfirmed) return;
-    const { error } = await supabase.from('feature_definitions').delete().eq('id', id);
-    if (error) {
+    try {
+      await platformAdminService.manageFeatures('delete', { feature_id: id });
+      swalConfig.success('Feature deleted');
+      loadFeatures();
+    } catch {
       swalConfig.error('Failed to delete feature');
-      return;
     }
-    swalConfig.success('Feature deleted');
-    loadFeatures();
   }
 
   if (loading) return <div className="text-center py-8">Loading features…</div>;

@@ -1,7 +1,7 @@
 # Auth Architecture — CoffeeShop POS
 
 **Supabase project:** `ejvvwnupiqytximrbmfw`
-**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
+**Last updated:** 2026-07-13 (Phase 3B: platform admin Edge Functions implemented)
 
 ---
 
@@ -177,8 +177,9 @@ AppProvider useEffect: user is null →
 ### 3.2 platform_admin Specifics
 
 - **No shop_memberships row:** `platform_admin` does not have entries in `shop_memberships`. They operate cross-tenant.
-- **No RLS bypass in policies:** RLS policies do NOT contain `OR users.role = 'platform_admin'`. Platform admin bypasses RLS entirely via `service_role` key in Edge Functions.
-- **All operations via Edge Functions:** Every platform admin action routes through Supabase Edge Functions using the `service_role` key. Zero direct database access from the platform admin UI.
+- **No RLS bypass in policies:** RLS policies do NOT contain `OR users.role = 'platform_admin'`. Platform admin bypasses RLS entirely via `service_role` key in Edge Functions. (Migration 005 reverted the temporary platform_admin additions from migration 002.)
+- **All operations via Edge Functions:** Every platform admin action routes through Supabase Edge Functions using the `service_role` key. Zero direct database access from the platform admin UI. (Implemented in Phase 3B.)
+- **Edge Functions:** `platform-admin-approve-shop`, `platform-admin-reject-shop`, `platform-admin-update-subscription`, `platform-admin-list-shops`, `platform-admin-get-shop-detail`, `platform-admin-manage-features`, `platform-admin-daily-stats`. Shared auth helper in `_shared/auth.ts`.
 
 ### 3.3 Default Role Assignment
 

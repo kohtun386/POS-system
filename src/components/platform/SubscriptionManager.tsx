@@ -1,16 +1,9 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { platformAdminService, PlatformShop } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
 
-interface Shop {
-  id: string;
-  name: string;
-  subscription_tier: string;
-  is_active: boolean;
-}
-
 export function SubscriptionManager() {
-  const [shops, setShops] = useState<Shop[]>([]);
+  const [shops, setShops] = useState<PlatformShop[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,29 +12,23 @@ export function SubscriptionManager() {
 
   async function loadShops() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('shops')
-      .select('id, name, subscription_tier, is_active')
-      .order('name');
-    if (error) {
+    try {
+      const data = await platformAdminService.listShops();
+      setShops(data);
+    } catch {
       swalConfig.error('Failed to load shops');
-    } else {
-      setShops(data || []);
     }
     setLoading(false);
   }
 
-  async function updateTier(shopId: string, newTier: string) {
-    const { error } = await supabase
-      .from('shops')
-      .update({ subscription_tier: newTier })
-      .eq('id', shopId);
-    if (error) {
+  async function updateTier(shopId: string, newTier: 'free' | 'growth' | 'pro') {
+    try {
+      await platformAdminService.updateSubscription(shopId, newTier);
+      setShops(shops.map(s => s.id === shopId ? { ...s, subscriptionTier: newTier } : s));
+      swalConfig.success('Tier updated');
+    } catch {
       swalConfig.error('Failed to update tier');
-      return;
     }
-    setShops(shops.map(s => s.id === shopId ? { ...s, subscription_tier: newTier } : s));
-    swalConfig.success('Tier updated');
   }
 
   if (loading) return <div className="text-center py-8">Loading shops…</div>;
@@ -66,21 +53,21 @@ export function SubscriptionManager() {
               <tr key={shop.id} className="table-row">
                 <td className="table-cell font-medium">{shop.name}</td>
                 <td className="table-cell">
-                  <span className={`badge ${shop.is_active ? 'badge-success' : 'badge-danger'}`}>
-                    {shop.is_active ? 'Active' : 'Inactive'}
+                  <span className={`badge ${shop.isActive ? 'badge-success' : 'badge-danger'}`}>
+                    {shop.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
                 <td className="table-cell">
-                  <span className="badge badge-accent">{shop.subscription_tier}</span>
+                  <span className="badge badge-accent">{shop.subscriptionTier}</span>
                 </td>
                 <td className="table-cell">
                   <div className="flex gap-1">
                     {(['free', 'growth', 'pro'] as const).map(tier => (
                       <button
                         key={tier}
-                        className={`btn btn-sm ${shop.subscription_tier === tier ? 'btn-primary' : 'btn-ghost'}`}
-                        onClick={() => shop.subscription_tier !== tier && updateTier(shop.id, tier)}
-                        disabled={shop.subscription_tier === tier}
+                        className={`btn btn-sm ${shop.subscriptionTier === tier ? 'btn-primary' : 'btn-ghost'}`}
+                        onClick={() => shop.subscriptionTier !== tier && updateTier(shop.id, tier)}
+                        disabled={shop.subscriptionTier === tier}
                       >
                         {tier}
                       </button>
