@@ -3,13 +3,28 @@
 **Supabase project:** `ejvvwnupiqytximrbmfw`
 **Last schema migration:** `20260620000001_shop_id_placeholder.sql`
 **Generated:** 2026-06-20
-**Reconciled:** 2026-06-29 (aligned with VISION.md v3.0.0)
+**Reconciled:** 2026-07-13 (aligned with VISION.md v3.1.0)
 
 > **Multi-tenancy:** The `shop_id` foundation exists with a single default shop and no shop-switching UI yet. Dynamic shop configuration is the next milestone: `shops` owns business identity and POS behavior, while `app_settings` is trimmed to global/preferences-style settings. See `docs/specs/multi-tenancy.md` and `docs/specs/dynamic-configuration.md`.
 
 ---
 
 ## 1. Tables
+
+> ⚠️ **DEPRECATED TABLES (v3.1.0)** — The following tables exist in the database but are **NOT used in v1.0**. No UI or business logic references them. Preserved for backward compatibility only.
+> - `recipes`, `recipe_lines` — Recipe BOM (out of scope, see Purchase Log)
+> - `raw_materials` — Raw material tracking (out of scope)
+> - `consumption_log` — Consumption tracking (out of scope)
+> - `uom_conversions` — Unit conversions (out of scope)
+> - `kitchen_orders` — Kitchen display (out of scope, use printer)
+> - `currency_config`, `exchange_rates`, `exchange_rate_history` — Multi-currency (out of scope, MMK only)
+>
+> **Note:** Counts in this document are approximate as of v3.1.0. For precise numbers, run:
+> ```bash
+> supabase db dump --schema-only | grep -c "CREATE TABLE"
+> supabase db dump --schema-only | grep -c "CREATE INDEX"
+> supabase db dump --schema-only | grep -c "CREATE FUNCTION"
+> ```
 
 ### 1.1 Core Business Tables
 
@@ -76,7 +91,7 @@ Product catalog. Supports weight-based and unit-based pricing.
 | `price_per_unit` | decimal(10,2) | | Per-kg or per-lb price |
 | `unit` | text | `'piece'` | `'kg'`, `'lb'`, `'g'`, `'oz'`, `'l'`, `'ml'`, `'piece'` |
 | `track_inventory` | boolean | `true` | When false, stock not checked/deducted |
-| `product_type` | text | `'finished'` | CHECK: `'finished'` \| `'raw_material'`. Distinguishes menu items from ingredients (Recipe/BOM support, VISION.md v3.0.0 Section 10). |
+| `product_type` | text | `'finished'` | CHECK: `'finished'` \| `'raw_material'`. Distinguishes menu items from ingredients (Recipe/BOM support, VISION.md v3.1.0 §7). |
 | `base_currency` | text | `'USD'` | Added in currency migration |
 | `price_in_base_currency` | decimal(10,2) | | |
 | `created_at` | timestamptz | `now()` | NOT NULL |
@@ -272,7 +287,7 @@ Multi-tab POS workflow. User-scoped, persisted between sessions.
 
 ---
 
-### 1.2 Currency Tables
+### 1.2 Currency Tables ⚠️ DEPRECATED (MMK only in v1)
 
 #### `currency_config`
 Supported currencies. Seeded with 11 currencies (USD base + EUR/GBP/CAD/LKR/JPY/AUD/CHF/CNY/INR/MMK).
@@ -292,7 +307,7 @@ Supported currencies. Seeded with 11 currencies (USD base + EUR/GBP/CAD/LKR/JPY/
 
 ---
 
-#### `exchange_rates`
+#### `exchange_rates` ⚠️ DEPRECATED
 Active exchange rates. Versioned via `effective_to` (NULL = current).
 
 | Column | Type | Default | Notes |
@@ -784,7 +799,7 @@ Per-shop feature overrides. Only stores deviations from defaults.
 
 ---
 
-### 7.3 `recipes`
+### 7.3 `recipes` ⚠️ DEPRECATED
 
 Bill of Materials (BOM) header. Links a finished product to its recipe. Growth+ only (VISION.md v3.0.0 Section 10).
 
@@ -806,7 +821,7 @@ Bill of Materials (BOM) header. Links a finished product to its recipe. Growth+ 
 
 ---
 
-### 7.4 `recipe_lines`
+### 7.4 `recipe_lines` ⚠️ DEPRECATED
 
 Recipe line items. Each row is one ingredient in a recipe. Note: DB uses `recipe_lines` (not `recipe_items`).
 
@@ -827,7 +842,7 @@ Recipe line items. Each row is one ingredient in a recipe. Note: DB uses `recipe
 
 ---
 
-### 7.5 `consumption_log`
+### 7.5 `consumption_log` ⚠️ DEPRECATED
 
 Logs actual ingredient consumption per sale. Used for COGS calculation. Inserted by `checkout_complete` RPC.
 

@@ -1,6 +1,6 @@
 # Coding Conventions & Patterns — CoffeeShop POS
 
-**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
+**Last updated:** 2026-07-13 (aligned with VISION.md v3.1.0)
 
 Synthesized from existing documentation. Each pattern links to its source.
 
@@ -99,11 +99,17 @@ is_weight_based: product.isWeightBased,
 | `productsService` | products | Lazy-loads batches via `getBatchesByProductId()` |
 | `customersService` | customers | `update()` only includes provided fields |
 | `salesService` | sales | Cursor-based pagination: `{ limit, cursor } → { data, count, hasMore }` |
+| `checkoutService` | — | Atomic RPC wrapper: `complete()` calls `checkout_complete` DB function |
 | `discountsService` | discounts | JSONB conditions, free_gift_products array |
-| `shopsService` | shops | Business identity and per-shop POS behavior: name, logo, tax, currency, invoice config, draft retention |
 | `settingsService` | app_settings | Global/preferences-style settings only: interface mode, theme, printer, backup, exchange-rate config |
 | `usersService` | users | CRUD only, auth handled separately |
 | `salesTabsService` | sales_tabs | User-scoped, joins customers for selected_customer |
+| `shopsService` | shops | Business identity and per-shop POS behavior: name, logo, tax, currency, invoice config, draft retention |
+| `shopMembershipsService` | shop_memberships | Per-shop role assignments |
+| `featureDefinitionsService` | feature_definitions | Platform feature catalog (read-only) |
+| `shopFeaturesService` | shop_features | Per-shop feature overrides |
+| `printJobsService` | print_jobs | Print job queue management |
+| `cashShiftsService` | cash_shifts | Shift open/close/query |
 | `alertRecipientsService` | alert_recipients | alert_types JSONB array |
 | `alertTemplatesService` | alert_templates | Template body with {{variable}} placeholders |
 | `alertConfigurationsService` | alert_configurations | Update only (no create/delete) |
@@ -361,7 +367,7 @@ await productsService.updateStock(items);
 await customersService.updateStats(customerId, total);
 ```
 
-**Why:** If step 2 fails after step 1 commits, the database is left in an inconsistent state. The atomic RPC wraps all steps (sale creation, inventory deduction, kitchen order, customer stats, consumption logging) in a single database transaction.
+**Why:** If step 2 fails after step 1 commits, the database is left in an inconsistent state. The atomic RPC wraps all steps (sale creation, inventory deduction, kitchen print jobs, customer stats) in a single database transaction.
 
 **Source:** `docs/vision/VISION.md` §11
 
@@ -374,7 +380,7 @@ The server resolves all feature logic. The client receives a flat list of capabi
 ```ts
 // ✅ Correct — check capabilities array
 if (capabilities.includes('printer_integration')) { /* show printer UI */ }
-if (capabilities.includes('recipe_bom')) { /* show recipe tab */ }
+if (capabilities.includes('purchase_log')) { /* show purchase log */ }
 
 // ❌ Wrong — checking tier/type directly in components
 if (shop.subscriptionTier === 'growth') { /* ... */ }

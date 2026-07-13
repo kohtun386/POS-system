@@ -1,6 +1,6 @@
 # State Management Architecture — CoffeeShop POS
 
-**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
+**Last updated:** 2026-07-10 (aligned with VISION.md v3.1.0)
 **Source of truth:** `src/context/SupabaseAppContext.tsx` (active), `src/context/AuthContext.tsx`, `src/context/ThemeContext.tsx`
 
 ---
@@ -65,9 +65,9 @@ interface AppState {
 
 `AppSettings` owns interface mode, auto backup, receipt printer, theme, and exchange-rate provider/key/update interval. It must not contain store identity, tax, currency, or invoice fields in the target architecture.
 
-`capabilities` is a flat string array of capability keys (e.g., `['pos', 'inventory', 'printer_integration', 'recipe_bom']`). Resolved server-side at login from subscription tier, business type, and per-shop overrides. Components check `capabilities.includes('key')` — never check `shop.subscriptionTier` or `shop.businessType` directly. (VISION.md v3.0.0 Section 5)
+`capabilities` is a flat string array of capability keys (e.g., `['pos', 'inventory', 'printer_integration', 'purchase_log']`). Resolved server-side at login from subscription tier, business type, and per-shop overrides. Components check `capabilities.includes('key')` — never check `shop.subscriptionTier` or `shop.businessType` directly. (VISION.md v3.1.0 Section 5)
 
-### 3.2 Action Types (54 actions)
+### 3.2 Action Types (~44 actions)
 
 | Action | Payload | Behavior |
 |--------|---------|----------|
@@ -262,7 +262,6 @@ interface ThemeContextType {
 | `UserManager` | `state.users`, `state.currentUser` | `SET_USERS` |
 | `UserModal` | `state.users`, `state.currentUser` | `SET_USERS` |
 | `Settings` | `state.shop`, `state.settings`, `state.currentUser`, `state.capabilities` | `SET_SHOP`, `SET_SETTINGS` |
-| `RecipeManager` | `state.products`, `state.capabilities` | — |
 | `ShiftManager` | `state.capabilities` | — |
 
 ### 6.3 Layout Components
@@ -280,7 +279,7 @@ Components check `state.capabilities` to show/hide features. Never check `shop.s
 // CORRECT — check capabilities
 const { state } = useApp();
 const canUsePrinter = state.capabilities.includes('printer_integration');
-const canUseRecipe = state.capabilities.includes('recipe_bom');
+const canUsePurchaseLog = state.capabilities.includes('purchase_log');
 const canUseCashDrawer = state.capabilities.includes('cash_drawer');
 const canUseOwnerInsights = state.capabilities.includes('owner_insights');
 
@@ -294,18 +293,19 @@ if (shop.businessType === 'coffee_shop') { ... }
 | Capability | Used By | Purpose |
 |------------|---------|---------|
 | `printer_integration` | CheckoutModal, TransactionsManager, Settings | Show/hide print buttons, receipt settings |
-| `recipe_bom` | InventoryManager, ProductModal, RecipeManager | Show/hide recipe management, raw materials |
-| `raw_materials` | InventoryManager, ProductModal | Show/hide raw material product type |
+| `purchase_log` | InventoryManager, ReportsManager | Show/hide purchase log (Growth+) |
+| `stock_overview` | InventoryManager | Show/hide stock overview (Growth+) |
+| `low_stock_alerts` | AlertManager, InventoryManager | Show/hide low stock alert config (Growth+) |
+| `inventory` | InventoryManager, ReportsManager | Show/hide simplified inventory features (Growth+) |
 | `cash_drawer` | Header, ShiftManager | Show/hide shift management nav |
 | `owner_insights` | Header, ReportsManager | Show/hide P&L dashboard, owner reports |
-| `profit_analytics` | ReportsManager | Show/hide profit margin analytics |
-| `waste_tracking` | InventoryManager | Show/hide waste tracking UI |
+| `profit_report` | ReportsManager | Show/hide simple profit report (Pro) |
 
 ---
 
 ## 7. State Flow Diagrams
 
-### 7.1 Checkout Flow (VISION.md v3.0.0 — Atomic RPC)
+### 7.1 Checkout Flow (VISION.md v3.1.0 — Atomic RPC)
 
 ```
 Cart (user taps "Checkout")
@@ -339,10 +339,9 @@ CheckoutModal opens
   │   ▼
   │   Success (all steps atomic):
   │     ✓ Sale created
-  │     ✓ Inventory deducted (recipe-based if Growth+)
+  │     ✓ Inventory deducted (simple stock deduction)
   │     ✓ Print jobs created (kitchen printer, if Growth+)
   │     ✓ Customer stats updated
-  │     ✓ Consumption logged (COGS, if Growth+)
   │     ✓ Daily order limit checked (race condition safe)
   │   │
   │   ▼
@@ -436,7 +435,6 @@ supabase.auth.onAuthStateChange(event, session)
 | Check `shop.subscriptionTier` in components | Couples component code to tier logic. Adding a new tier requires component changes. | Check `state.capabilities.includes('key')` |
 | Check `shop.businessType` in components | Couples component code to business type. Adding a new type requires component changes. | Check `state.capabilities.includes('key')` |
 | Read `feature_definitions` table client-side | Server resolves capabilities at login. Client only needs the flat array. | Use `state.capabilities` only |
-| `any` type in reducer payloads | Loses type safety. 73 lint errors already. | Use discriminated union (planned cleanup). |
 
 ---
 
@@ -445,7 +443,5 @@ supabase.auth.onAuthStateChange(event, session)
 | Change | Impact | Status |
 |--------|--------|--------|
 | Discriminated union for actions | Eliminates `payload: any`. Type-safe dispatch. | Planned (tech debt #1) |
-| Split context exports to separate files | Fixes React Refresh warnings (26 warnings, 6 files). | Planned (tech debt #2) |
-| Zustand or Redux Toolkit evaluation | Current useReducer pattern works but scales poorly with 54 actions. | Not started |
-| Owner Mobile state | Separate read-only state for owner mobile view (Pro tier). | v2 |
-| Offline queue state | IndexedDB-backed queue for cash-only offline transactions. | v2 |
+| Split context exports to separate files | Fixes React Refresh warnings (15 warnings, 6 files). | Planned (tech debt #2) |
+| Zustand or Redux Toolkit evaluation | Current useReducer pattern works but scales poorly with ~44 actions. | Not started |
