@@ -1,5 +1,5 @@
 // Ensure required environment variables are set
-const requiredEnv = ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
+const requiredEnv = ["URL", "ANON_KEY", "SERVICE_ROLE_KEY"] as const;
 for (const key of requiredEnv) {
   if (!Deno.env.get(key)) {
     console.error(`Missing required environment variable: ${key}`);
@@ -35,8 +35,8 @@ export async function verifyPlatformAdmin(
 
   // Client with anon key — used ONLY to verify JWT and check role
   const verifyClient = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
+    Deno.env.get("URL")!,
+    Deno.env.get("ANON_KEY")!,
     { global: { headers: { Authorization: authHeader } } },
   );
 
@@ -76,7 +76,7 @@ export async function verifyPlatformAdmin(
  */
 export function createAdminClient() {
   return createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    Deno.env.get("URL")!,
+    Deno.env.get("SERVICE_ROLE_KEY")!,
   );
 }
