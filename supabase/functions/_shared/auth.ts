@@ -1,10 +1,13 @@
-// ================================================================
-// Shared auth helper for platform admin Edge Functions
-// Verifies JWT + platform_admin role; provides service_role client
-// ================================================================
+// Ensure required environment variables are set
+const requiredEnv = ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
+for (const key of requiredEnv) {
+  if (!Deno.env.get(key)) {
+    console.error(`Missing required environment variable: ${key}`);
+    // In Edge Functions, throwing a Response aborts the function execution
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+}
 
-import { createClient } from "supabase-js";
-import { corsHeaders } from "./cors.ts";
 
 export interface PlatformAdminUser {
   userId: string;

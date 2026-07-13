@@ -6,7 +6,7 @@
 // VISION.md §17.3 — Edge Function Inventory
 // ================================================================
 
-import "@supabase/functions-js/edge-runtime.d.ts";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { verifyPlatformAdmin, createAdminClient } from "../_shared/auth.ts";
 import { extractIp, recordAudit } from "../_shared/audit.ts";
