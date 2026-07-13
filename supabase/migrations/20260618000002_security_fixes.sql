@@ -3,8 +3,8 @@
 -- ================================================================
 -- 1. Fix users INSERT policy — was WITH CHECK(true), now scoped to own profile
 -- 2. Revoke client-side EXECUTE on SECURITY DEFINER rls_auto_enable()
--- 3. Apply role-aware RLS to currency_config, exchange_rates, exchange_rate_history
--- 4. Add SET search_path = '' to all 7 public functions
+-- 3. (removed in v3.1.0 — currency/exchange tables are out of scope)
+-- 4. Add SET search_path = '' to core public functions
 -- ================================================================
 
 -- ================================================================
@@ -24,61 +24,10 @@ CREATE POLICY "Users can only insert their own profile" ON users
 -- ================================================================
 REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM anon, authenticated;
 
--- ================================================================
--- 3. CURRENCY / EXCHANGE TABLES — ROLE-AWARE RLS
---    Old: blanket auth.role()='authenticated' FOR ALL
---    New: SELECT for all, write only for admin/manager
--- ================================================================
-
--- Drop old blanket policies
-DROP POLICY IF EXISTS "Currency config is viewable by authenticated users" ON currency_config;
-DROP POLICY IF EXISTS "Currency config is editable by authenticated users" ON currency_config;
-DROP POLICY IF EXISTS "Exchange rates are viewable by authenticated users" ON exchange_rates;
-DROP POLICY IF EXISTS "Exchange rates are editable by authenticated users" ON exchange_rates;
-DROP POLICY IF EXISTS "Exchange rate history is viewable by authenticated users" ON exchange_rate_history;
-DROP POLICY IF EXISTS "Exchange rate history is editable by authenticated users" ON exchange_rate_history;
-
--- Currency Config
-CREATE POLICY "Currency config viewable by all authenticated" ON currency_config
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Currency config write by admin/manager" ON currency_config
-  FOR ALL USING (
-    auth.role() = 'authenticated'
-    AND EXISTS (
-      SELECT 1 FROM users
-      WHERE users.id = auth.uid()
-      AND users.role IN ('admin', 'manager')
-    )
-  );
-
--- Exchange Rates
-CREATE POLICY "Exchange rates viewable by all authenticated" ON exchange_rates
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Exchange rates write by admin/manager" ON exchange_rates
-  FOR ALL USING (
-    auth.role() = 'authenticated'
-    AND EXISTS (
-      SELECT 1 FROM users
-      WHERE users.id = auth.uid()
-      AND users.role IN ('admin', 'manager')
-    )
-  );
-
--- Exchange Rate History
-CREATE POLICY "Exchange rate history viewable by all authenticated" ON exchange_rate_history
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Exchange rate history write by admin/manager" ON exchange_rate_history
-  FOR ALL USING (
-    auth.role() = 'authenticated'
-    AND EXISTS (
-      SELECT 1 FROM users
-      WHERE users.id = auth.uid()
-      AND users.role IN ('admin', 'manager')
-    )
-  );
+-- NOTE: Section 3 (currency/exchange tables RLS) removed in v3.1.0.
+-- Those tables are out of scope (dead features). If they exist at
+-- migration time from a prior init.sql, no policy on them is safer
+-- than a permissive one. They'll be dropped in a subsequent cleanup.
 
 -- ================================================================
 -- 4. FUNCTION SEARCH_PATH HARDENING
@@ -158,102 +107,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 4e. Get current exchange rate
-CREATE OR REPLACE FUNCTION get_current_exchange_rate(
-    p_base_currency TEXT,
-    p_target_currency TEXT
-)
-RETURNS DECIMAL(15,8)
-SET search_path = ''
-AS $$
-DECLARE
-    current_rate DECIMAL(15,8);
-BEGIN
-    IF p_base_currency = p_target_currency THEN
-        RETURN 1.0;
-    END IF;
-
-    SELECT rate INTO current_rate
-    FROM exchange_rates
-    WHERE base_currency = p_base_currency
-      AND target_currency = p_target_currency
-      AND (effective_to IS NULL OR effective_to > NOW())
-    ORDER BY effective_from DESC
-    LIMIT 1;
-
-    IF current_rate IS NULL THEN
-        SELECT (1.0 / rate) INTO current_rate
-        FROM exchange_rates
-        WHERE base_currency = p_target_currency
-          AND target_currency = p_base_currency
-          AND (effective_to IS NULL OR effective_to > NOW())
-        ORDER BY effective_from DESC
-        LIMIT 1;
-    END IF;
-
-    RETURN COALESCE(current_rate, 1.0);
-END;
-$$ LANGUAGE plpgsql;
-
--- 4f. Convert currency amount
-CREATE OR REPLACE FUNCTION convert_currency_amount(
-    p_amount DECIMAL(12,2),
-    p_from_currency TEXT,
-    p_to_currency TEXT
-)
-RETURNS DECIMAL(12,2)
-SET search_path = ''
-AS $$
-DECLARE
-    exchange_rate DECIMAL(15,8);
-    converted_amount DECIMAL(12,2);
-BEGIN
-    exchange_rate := get_current_exchange_rate(p_from_currency, p_to_currency);
-    converted_amount := p_amount * exchange_rate;
-    RETURN converted_amount;
-END;
-$$ LANGUAGE plpgsql;
-
--- 4g. Update exchange rate with history tracking
-CREATE OR REPLACE FUNCTION update_exchange_rate(
-    p_base_currency TEXT,
-    p_target_currency TEXT,
-    p_rate DECIMAL(15,8),
-    p_source TEXT DEFAULT 'api',
-    p_is_manual_override BOOLEAN DEFAULT false
-)
-RETURNS VOID
-SET search_path = ''
-AS $$
-DECLARE
-    previous_rate DECIMAL(15,8);
-    change_percentage DECIMAL(8,4);
-BEGIN
-    SELECT rate INTO previous_rate
-    FROM exchange_rates
-    WHERE base_currency = p_base_currency
-      AND target_currency = p_target_currency
-      AND (effective_to IS NULL OR effective_to > NOW())
-    ORDER BY effective_from DESC
-    LIMIT 1;
-
-    IF previous_rate IS NOT NULL AND previous_rate > 0 THEN
-        change_percentage := ((p_rate - previous_rate) / previous_rate) * 100;
-    END IF;
-
-    UPDATE exchange_rates
-    SET effective_to = NOW()
-    WHERE base_currency = p_base_currency
-      AND target_currency = p_target_currency
-      AND effective_to IS NULL;
-
-    INSERT INTO exchange_rates (base_currency, target_currency, rate, source, is_manual_override)
-    VALUES (p_base_currency, p_target_currency, p_rate, p_source, p_is_manual_override);
-
-    INSERT INTO exchange_rate_history (base_currency, target_currency, rate, previous_rate, change_percentage, source, is_manual_override)
-    VALUES (p_base_currency, p_target_currency, p_rate, previous_rate, change_percentage, p_source, p_is_manual_override);
-END;
-$$ LANGUAGE plpgsql;
+-- 4e-4g: Currency/exchange rate functions removed in v3.1.0.
+-- Those reference dead exchange_rates/exchange_rate_history tables.
 
 -- ================================================================
 -- SECURITY FIXES COMPLETE

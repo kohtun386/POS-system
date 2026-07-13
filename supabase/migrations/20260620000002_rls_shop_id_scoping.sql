@@ -84,18 +84,6 @@ DROP POLICY IF EXISTS "Sales delete by admin/manager" ON sales;
 DROP POLICY IF EXISTS "Users can view their own sales tabs" ON sales_tabs;
 DROP POLICY IF EXISTS "Users can manage their own sales tabs" ON sales_tabs;
 
--- currency_config
-DROP POLICY IF EXISTS "Currency config viewable by all authenticated" ON currency_config;
-DROP POLICY IF EXISTS "Currency config write by admin/manager" ON currency_config;
-
--- exchange_rates
-DROP POLICY IF EXISTS "Exchange rates viewable by all authenticated" ON exchange_rates;
-DROP POLICY IF EXISTS "Exchange rates write by admin/manager" ON exchange_rates;
-
--- exchange_rate_history
-DROP POLICY IF EXISTS "Exchange rate history viewable by all authenticated" ON exchange_rate_history;
-DROP POLICY IF EXISTS "Exchange rate history write by admin/manager" ON exchange_rate_history;
-
 -- shops (Chunk 1 temporary)
 DROP POLICY IF EXISTS "Shops viewable by all authenticated" ON shops;
 DROP POLICY IF EXISTS "Shops write by all authenticated" ON shops;
@@ -127,7 +115,7 @@ DROP POLICY IF EXISTS "Notification service config write by all authenticated" O
 -- ================================================================
 -- 3. STANDARD PATTERN: SELECT for shop members, write for admin/manager
 --    Applied to: app_settings, categories, suppliers, product_batches,
---    discounts, currency_config, exchange_rates, exchange_rate_history
+--    discounts
 -- ================================================================
 
 -- ——— APP SETTINGS ———
@@ -194,48 +182,6 @@ CREATE POLICY "Discounts viewable by shop members" ON discounts
   );
 
 CREATE POLICY "Discounts write by shop admin/manager" ON discounts
-  FOR ALL USING (
-    auth.role() = 'authenticated'
-    AND shop_id IN (SELECT public.current_shop_ids())
-    AND EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND users.role IN ('admin', 'manager'))
-  );
-
--- ——— CURRENCY CONFIG ———
-CREATE POLICY "Currency config viewable by shop members" ON currency_config
-  FOR SELECT USING (
-    auth.role() = 'authenticated'
-    AND shop_id IN (SELECT public.current_shop_ids())
-  );
-
-CREATE POLICY "Currency config write by shop admin/manager" ON currency_config
-  FOR ALL USING (
-    auth.role() = 'authenticated'
-    AND shop_id IN (SELECT public.current_shop_ids())
-    AND EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND users.role IN ('admin', 'manager'))
-  );
-
--- ——— EXCHANGE RATES ———
-CREATE POLICY "Exchange rates viewable by shop members" ON exchange_rates
-  FOR SELECT USING (
-    auth.role() = 'authenticated'
-    AND shop_id IN (SELECT public.current_shop_ids())
-  );
-
-CREATE POLICY "Exchange rates write by shop admin/manager" ON exchange_rates
-  FOR ALL USING (
-    auth.role() = 'authenticated'
-    AND shop_id IN (SELECT public.current_shop_ids())
-    AND EXISTS (SELECT 1 FROM public.users WHERE users.id = auth.uid() AND users.role IN ('admin', 'manager'))
-  );
-
--- ——— EXCHANGE RATE HISTORY ———
-CREATE POLICY "Exchange rate history viewable by shop members" ON exchange_rate_history
-  FOR SELECT USING (
-    auth.role() = 'authenticated'
-    AND shop_id IN (SELECT public.current_shop_ids())
-  );
-
-CREATE POLICY "Exchange rate history write by shop admin/manager" ON exchange_rate_history
   FOR ALL USING (
     auth.role() = 'authenticated'
     AND shop_id IN (SELECT public.current_shop_ids())
