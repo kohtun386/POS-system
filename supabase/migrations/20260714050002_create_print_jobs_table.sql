@@ -26,6 +26,12 @@ CREATE TABLE IF NOT EXISTS print_jobs (
   completed_at  TIMESTAMPTZ
 );
 
+-- Drop existing policies first to avoid "already exists" errors
+DROP POLICY IF EXISTS "Print jobs viewable by shop members" ON print_jobs;
+DROP POLICY IF EXISTS "Print jobs insertable by shop members" ON print_jobs;
+DROP POLICY IF EXISTS "Print jobs updatable by shop admin/manager" ON print_jobs;
+DROP POLICY IF EXISTS "Print jobs deletable by shop admin/manager" ON print_jobs;
+
 -- ================================================================
 -- 2. INDEXES
 -- ================================================================
