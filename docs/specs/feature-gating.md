@@ -1,7 +1,7 @@
 # Feature Gating — Implementation Guide
 
 **Status:** Spec complete, implementation pending
-**Last updated:** 2026-07-04 (reconciled with tier-spec.md)
+**Last updated:** 2026-07-14 (aligned with VISION.md v3.1.0)
 **Canonical source of truth:** `docs/specs/tier-spec.md` — this document describes implementation details only.
 **Depends on:** Multi-tenancy foundation (`docs/specs/multi-tenancy.md`), Dynamic shop configuration (`docs/specs/dynamic-configuration.md`)
 
@@ -9,7 +9,7 @@
 
 ## 1. Problem
 
-Features like receipt printing, recipe BOM, cash drawer management, and owner insights are currently hard-coded as always-on. A Free tier shop shouldn't see printer settings. A Growth tier shop shouldn't see P&L dashboards. We need per-shop feature control driven by subscription tier and business type — without code changes or migrations.
+Features like receipt printing, cash drawer management, and owner insights are currently hard-coded as always-on. A Free tier shop shouldn't see printer settings. A Growth tier shop shouldn't see P&L dashboards. We need per-shop feature control driven by subscription tier — without code changes or migrations.
 
 ## 2. Design Decisions
 
@@ -51,16 +51,15 @@ CREATE TABLE feature_definitions (
 | `default_enabled` | BOOLEAN | Default state for new shops |
 | `subscription_tier` | TEXT | Minimum tier required: `free`, `growth`, `pro` (VISION §3.1) |
 
-### 3.2 Capability Keys (TIER-SPEC §2 — Canonical)
+### 3.2 Capability Keys (VISION.md §5.5 — Canonical, 18 keys)
 
-**Free Tier (always available):**
+**Free Tier (9 keys — always available):**
 
 | Capability | Description | Notes |
 |------------|-------------|-------|
-| `pos` | POS terminal | Implicit — always available, no DB row needed (TIER-SPEC §2.3) |
+| `pos` | POS terminal | Implicit — always available, no DB row needed |
 | `inventory` | Stock tracking | |
 | `discounts` | Discount engine | |
-| `multi_currency` | ~~Multi-currency support~~ **DEAD** — Myanmar market is MMK-only | |
 | `draft_sales` | Draft/pending sales | |
 | `customer_management` | Customer records | |
 | `batch_tracking` | Batch/lot tracking | Embedded in ProductModal, no standalone component |
@@ -68,69 +67,54 @@ CREATE TABLE feature_definitions (
 | `credit_system` | Customer credit tracking | Embedded in POS, no standalone component |
 | `multi_tab_sales` | Multi-tab POS workflow | Embedded in SalesTabManager, no standalone component |
 
-**Growth Tier (adds operational tools):**
+**Growth Tier (6 keys — adds operational tools):**
 
 | Capability | Description | Notes |
 |------------|-------------|-------|
 | `printer_integration` | Thermal printer | Bluetooth/Network |
+| `purchase_log` | Purchase recording | Simplified inventory: record what was bought |
+| `stock_overview` | Stock levels & adjustments | Manual entry, not auto-calculated |
+| `low_stock_alerts` | Threshold-based alerts | "coffee beans below 2 kg → alert" |
 | `staff_accounts` | Multiple staff logins | |
 | `cash_drawer` | Shift start/end | Shift management, variance tracking |
 
-**Pro Tier (adds analytics):**
+**Pro Tier (3 keys — adds analytics):**
 
 | Capability | Description | Notes |
 |------------|-------------|-------|
-| `advanced_reports` | Consolidated Pro reports gate | Gates owner_insights, profit_analytics |
-| `owner_insights` | P&L dashboard, WhatsApp reports | |
-| `profit_analytics` | Profit margin analytics | |
+| `owner_insights` | P&L dashboard | Revenue − Purchases monthly view |
+| `simple_profit_report` | Revenue − Purchases | Monthly profit calculation, no per-recipe COGS |
+| `advanced_reports` | Consolidated Pro reports gate | Gates owner_insights, simple_profit_report |
 
-**Dead/Reserved Keys (DB rows only — no UI or code reference):**
-
-| Capability | DB Tier | Status | Reason |
-|------------|---------|--------|--------|
-| `kitchen_display` | pro | **DEAD** | Out of scope for Myanmar market. No KDS screens used — kitchen routing handled via `printer_integration` (Growth tier). Component code deleted 2026-07-04. |
-| `online_ordering` | pro | **DEAD** | VISION §19: "NOT Building" in v1 |
-| `supplier_management` | pro | **DEAD** | No component exists |
-| `recipe_bom` | growth | **DEAD** | Removed per VISION §10.3 scope reframe. BOM/COGS not needed for Myanmar coffee shop market. DB table `recipes` deprecated. |
-| `raw_materials` | growth | **DEAD** | Removed per VISION §10.3 scope reframe. Raw material tracking replaced by Purchase Log (Growth). DB table `raw_materials` deprecated. |
-| `waste_tracking` | pro | **DEAD** | Removed per VISION §10.3/§19 scope reframe. Waste tracking requires recipe-level tracking which is out of scope. Use low stock alerts (Growth) instead. |
-| `multi_currency` | free | **DEAD** | Myanmar market is MMK-only. Tables `currency_config`, `exchange_rates`, `exchange_rate_history` deprecated. |
-
-Dead keys stay in the DB for forward compatibility but are never checked in code. Do not gate new features on them.
+> Note: `pos` is implicit (always available) and has no DB row.
 
 ### 3.3 Seed Data
 
 ```sql
 INSERT INTO feature_definitions (key, name, category, default_enabled, subscription_tier) VALUES
-  -- Free tier capabilities (always available)
+  -- Free tier capabilities (9 keys, always available)
   ('inventory',           'Stock Tracking',          'inventory',  true,  'free'),
   ('discounts',           'Discount Engine',         'pos',        true,  'free'),
-  ('multi_currency',      'Multi-Currency Support',  'general',    true,  'free'),
   ('draft_sales',         'Draft Sales',             'pos',        true,  'free'),
   ('customer_management', 'Customer Management',     'customers',  true,  'free'),
   ('batch_tracking',      'Batch/Lot Tracking',      'inventory',  true,  'free'),
   ('weight_based_products','Weight-Based Products',  'inventory',  true,  'free'),
   ('credit_system',       'Customer Credit System',  'customers',  true,  'free'),
   ('multi_tab_sales',     'Multi-Tab Sales',         'pos',        true,  'free'),
-  -- Growth tier capabilities
+  -- Growth tier capabilities (6 keys)
   ('printer_integration', 'Thermal Printer',         'pos',        true,  'growth'),
+  ('purchase_log',        'Purchase Recording',      'inventory',  true,  'growth'),
+  ('stock_overview',      'Stock Overview',          'inventory',  true,  'growth'),
+  ('low_stock_alerts',    'Low Stock Alerts',        'inventory',  true,  'growth'),
   ('staff_accounts',      'Multiple Staff Accounts', 'general',    true,  'growth'),
   ('cash_drawer',         'Cash Drawer / Shift Mgmt','pos',        true,  'growth'),
-  -- Pro tier capabilities
-  ('advanced_reports',    'Advanced Reports',        'reports',    false, 'pro'),
+  -- Pro tier capabilities (3 keys)
   ('owner_insights',      'Owner Insights (P&L)',    'reports',    false, 'pro'),
-  ('profit_analytics',    'Profit Margin Analytics', 'reports',    false, 'pro'),
-  -- Dead/Reserved keys (DB rows only, no UI or code reference)
-  ('kitchen_display',     'Kitchen Display',         'kitchen',    false, 'pro'),
-  ('online_ordering',     'Online Ordering',         'general',    false, 'pro'),
-  ('supplier_management', 'Supplier Management',     'general',    false, 'pro'),
-  ('recipe_bom',          'Recipe/BOM Costing',      'inventory',  false, 'growth'),
-  ('raw_materials',       'Raw Material Tracking',   'inventory',  false, 'growth'),
-  ('waste_tracking',      'Waste Tracking',          'inventory',  false, 'pro'),
-  ('multi_currency',      'Multi-Currency Support',  'general',    true,  'free');
+  ('simple_profit_report','Simple Profit Report',    'reports',    false, 'pro'),
+  ('advanced_reports',    'Advanced Reports',        'reports',    false, 'pro');
 ```
 
-> **Note:** `pos` is implicit (always available) and has no DB row (TIER-SPEC §2.3). Dead keys are included for forward compatibility but never referenced in code.
+> **Note:** `pos` is implicit (always available) and has no DB row. 18 keys total: 9 free, 6 growth, 3 pro (VISION.md §5.5).
 
 ### 3.4 `shop_features` — Per-Shop Overrides
 
@@ -470,14 +454,13 @@ A new component `FeatureDefinitions.tsx` accessible only to `platform_admin` via
 
 > Derived from `tier-spec.md §2.1` — canonical source.
 
-### 9.1 Free Tier (10 features)
+### 9.1 Free Tier (9 features)
 
 | Capability | Available | Notes |
 |------------|-----------|-------|
 | `pos` | ✅ | POS terminal (implicit, no DB row) |
 | `inventory` | ✅ | Stock tracking |
 | `discounts` | ✅ | Discount engine |
-| `multi_currency` | ⚠️ | ~~Multi-currency support~~ **DEAD** — Myanmar market is MMK-only |
 | `draft_sales` | ✅ | Draft/pending sales |
 | `customer_management` | ✅ | Customer records |
 | `batch_tracking` | ✅ | Embedded in ProductModal |
@@ -492,30 +475,25 @@ All Free capabilities PLUS:
 | Capability | Available | Notes |
 |------------|-----------|-------|
 | `printer_integration` | ✅ | Bluetooth/Network thermal printer |
+| `purchase_log` | ✅ | Simplified inventory: record purchases |
+| `stock_overview` | ✅ | Current supply levels, manual adjustments |
+| `low_stock_alerts` | ✅ | Threshold-based notifications |
 | `staff_accounts` | ✅ | Multiple staff logins |
 | `cash_drawer` | ✅ | Shift start/end, variance tracking |
 
-### 9.3 Pro Tier (19 active features)
+### 9.3 Pro Tier (18 active features)
 
 All Growth capabilities PLUS:
 
 | Capability | Available | Notes |
 |------------|-----------|-------|
+| `owner_insights` | ✅ | P&L dashboard (Revenue − Purchases) |
+| `simple_profit_report` | ✅ | Monthly profit report |
 | `advanced_reports` | ✅ | Consolidated Pro reports gate |
-| `owner_insights` | ✅ | P&L dashboard, WhatsApp reports |
-| `profit_analytics` | ✅ | Profit margin analytics |
 
-### 9.4 Dead/Reserved Keys (7 keys — DB only)
+### 9.4 Total: 18 Capability Keys
 
-| Capability | DB Tier | Reason |
-|------------|---------|--------|
-| `kitchen_display` | pro | Out of scope for Myanmar market. No KDS screens — kitchen routing via `printer_integration` (Growth). Code deleted 2026-07-04. |
-| `online_ordering` | pro | VISION §19: "NOT Building" in v1 |
-| `supplier_management` | pro | No component exists |
-| `recipe_bom` | growth | Removed per VISION §10.3 scope reframe. BOM/COGS not needed for Myanmar coffee shop market. |
-| `raw_materials` | growth | Removed per VISION §10.3 scope reframe. Replaced by Purchase Log (Growth). |
-| `waste_tracking` | pro | Removed per VISION §10.3/§19. Requires recipe-level tracking — out of scope. Use low stock alerts (Growth). |
-| `multi_currency` | free | MMK-only market. No multi-currency support. |
+18 keys across 3 tiers (VISION.md §5.5). No dead/reserved keys in v3.1.0 scope.
 
 ### 9.5 Platform Admin Override
 

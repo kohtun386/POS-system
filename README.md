@@ -1,10 +1,10 @@
 # CoffeeShop POS
 
-**Last updated:** 2026-07-10
+**Last updated:** 2026-07-14
 
 A web-based point-of-sale platform built for coffee shops and tea shops in Myanmar. Supports 9 payment methods including KBZpay, WavePay, AYAPay, CBPay, and MPU. Installable as a PWA on iPad and Android. Multi-tenancy foundation is in place with `shop_id` scoping and role-based access; dynamic per-shop configuration is specified and pending implementation.
 
-![Version](https://img.shields.io/badge/Version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-3.1.0-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6.svg)
 ![Supabase](https://img.shields.io/badge/Supabase-2.50-3ECF8E.svg)
@@ -236,7 +236,7 @@ src/
 
 **Supabase project ref:** `ejvvwnupiqytximrbmfw`
 
-### Active Tables (20)
+### Active Tables (21) + 1 Pending
 
 | Table | Purpose |
 |-------|---------|
@@ -258,8 +258,10 @@ src/
 | `alert_templates` | Email/SMS alert templates |
 | `alert_configurations` | Alert type settings and thresholds |
 | `alert_history` | Alert send history |
-| `print_jobs` | Receipt/kitchen printer job queue |
+| `notification_service_config` | Email/SMS provider configuration |
+| `audit_logs` | Platform admin action audit trail (service_role only) |
 | `cash_shifts` | Cash drawer shift tracking |
+| `print_jobs` | **(PENDING)** Receipt/kitchen printer job queue — Growth+ only |
 
 ### Deprecated Tables (9)
 
@@ -283,7 +285,7 @@ src/
 
 ### Key Database Features
 
-- **Row Level Security** on all 20 active tables — role-aware policies (admin/manager/cashier)
+- **Row Level Security** on all 21 active tables — role-aware policies (admin/manager/cashier)
 - **Triggers/functions:** atomic per-shop invoice number generation, customer stats update, pending user/profile/shop creation
 - **21 functions** with `SET search_path = ''` (injection hardening)
 - **88 indexes** for performance (B-tree, GIN full-text, partial, composite)

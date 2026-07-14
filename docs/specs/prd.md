@@ -1,7 +1,7 @@
 # Product Requirements Document — CoffeeShop POS v1
 
 **Status:** Draft
-**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
+**Last updated:** 2026-07-14 (aligned with VISION.md v3.1.0)
 **Supersedes:** Nothing (new document)
 **Governs:** All v1 feature work. Every PR must reference acceptance criteria from this doc.
 
@@ -348,9 +348,9 @@ Acceptance Criteria:
 Acceptance Criteria:
 - Three tiers: Free (0 MMK/month), Growth (49,000 MMK/month), Pro (149,000 MMK/month)
 - `shops.subscription_tier` stores current tier
-- Free tier limits: max 50 products, 50 orders/day, no printer, no recipe/inventory tracking
-- Growth tier: thermal printer, raw materials, recipe BOM, COGS, low stock alerts, cash drawer, unlimited orders
-- Pro tier: + owner insights (P&L), profit analytics, waste tracking, WhatsApp daily report
+- Free tier limits: max 50 products, 50 orders/day, no printer, no inventory tracking
+- Growth tier: thermal printer, purchase log, stock overview, low stock alerts, cash drawer, unlimited orders
+- Pro tier: + owner insights (P&L), simple profit report (Revenue − Purchases), WhatsApp daily report
 - Grace period: 5 days after subscription expiry, then auto-downgrade to Free features
 - Manual high-touch billing via KBZpay/AYApay/UABpay/MMQR (no automated billing)
 - Tier managed by platform_admin via Platform Admin UI
@@ -378,7 +378,6 @@ Acceptance Criteria:
 - No sequential JavaScript service calls for checkout
 - Inventory deduction failure (insufficient stock) rolls back entire checkout
 - Free tier: finished product stock check only (if `track_inventory` enabled)
-- Growth+: raw material stock check via recipe BOM
 
 ---
 
@@ -444,9 +443,9 @@ Acceptance Criteria:
 | Feature | Reason | Tier / Version |
 |---------|--------|----------------|
 | Supplier management UI | `suppliers` table exists but no frontend CRUD | v2 |
-| Recipe/ingredient costing | 4-table schema designed (docs/archive/recipe-bom.md) | **Growth+ tier** (not v2) |
-| Raw material tracking | Ingredient inventory with auto-deduction | **Growth+ tier** |
-| Kitchen display system (KDS) | Requires real-time order queue + screen management | v3 (printer-first is v1 Growth+) |
+| Recipe/ingredient costing | Too complex for Myanmar coffee shop reality | **Removed from v1** (VISION §19) |
+| Raw material tracking | Replaced by Purchase Log (Growth+) | **Removed from v1** (VISION §19) |
+| Kitchen display system (KDS) | Not practical in Myanmar; use thermal printer | **Removed from v1** (VISION §19) |
 | Table management | Restaurant floor plan + table assignment | v2 (restaurant/food_court business types) |
 | Delivery integration | Grab/Foodpanda API integration | v3 |
 | Loyalty program | Points, tiers, rewards engine | v2 |

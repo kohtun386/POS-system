@@ -1,9 +1,9 @@
 # Multi-Tenancy Architecture — CoffeeShop POS
 
 **Status:** Current foundation implemented; dynamic shop configuration pending
-**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
+**Last updated:** 2026-07-14 (aligned with VISION.md v3.1.0)
 **Canonical companion spec:** `docs/specs/dynamic-configuration.md`
-**Source of truth:** `docs/vision/VISION.md` v3.0.0
+**Source of truth:** `docs/vision/VISION.md` v3.1.0
 
 > CURRENT TRUTH: The project is no longer in the pre-migration "zero tenant isolation" state. The `shop_id` foundation exists. This document describes the current foundation and the remaining work needed to complete dynamic per-shop configuration.
 
@@ -200,10 +200,11 @@ Platform admin operations bypass RLS entirely — they use Edge Functions with `
 | Product Management | ✅ (max 50) | ✅ (unlimited) | ✅ (unlimited) |
 | Daily Order Limit | 50/day | Unlimited | Unlimited |
 | Receipt Printing | ❌ | ✅ | ✅ |
-| Raw Material Tracking | ❌ | ✅ | ✅ |
-| Recipe Management | ❌ | ✅ | ✅ |
+| Purchase Log | ❌ | ✅ | ✅ |
+| Stock Overview | ❌ | ✅ | ✅ |
+| Low Stock Alerts | ❌ | ✅ | ✅ |
 | Cash Drawer / Shift Mgmt | ❌ | ✅ | ✅ |
-| Profit Margin Analytics | ❌ | ❌ | ✅ |
+| Simple Profit Report | ❌ | ❌ | ✅ |
 | Owner Insights (P&L) | ❌ | ❌ | ✅ |
 
 ### 8.3 Billing Model
@@ -305,7 +306,7 @@ The original version of this document described the app as single-tenant with no
 
 ## Document Dependencies
 
-- **Source of truth:** `docs/vision/VISION.md` v3.0.0
+- **Source of truth:** `docs/vision/VISION.md` v3.1.0
 - **Updated companion:** `docs/architecture/database.md` (shops, shop_memberships schema)
 - **Updated companion:** `docs/architecture/auth.md` (role model, RLS patterns)
 - **Updated companion:** `docs/architecture/state-management.md` (capabilities, checkout RPC)
