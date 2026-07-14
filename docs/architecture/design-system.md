@@ -473,7 +473,7 @@ Custom styles in `src/index.css`. All toasts use themed colors.
 
 ## 10. Multi-Device Design Patterns
 
-VISION.md v3.0.0 defines three device layers. Each has distinct form factors, interaction models, and UI patterns.
+VISION.md v3.1.0 defines three device layers. Each has distinct form factors, interaction models, and UI patterns.
 
 ### 10.1 POS Tablet (Mobile/Tablet-First)
 
@@ -516,7 +516,7 @@ VISION.md v3.0.0 defines three device layers. Each has distinct form factors, in
 |---------|-------------|
 | Bottom navigation | 4-5 items max, fixed at bottom |
 | Card layout | Single column, full-width |
-| Stat cards | Large Revenue, COGS, Profit display |
+| Stat cards | Large Revenue, Purchases, Profit display |
 | Swipe gestures | Navigate between views |
 | Pull-to-refresh | Data updates on pull-down |
 
@@ -525,7 +525,7 @@ VISION.md v3.0.0 defines three device layers. Each has distinct form factors, in
 | Component | Class | Purpose |
 |-----------|-------|---------|
 | Owner mobile card | `.owner-mobile-card` | Compact card variant for small screens |
-| Owner mobile stat | `.owner-mobile-stat` | Large stat card (Revenue, COGS, Profit) |
+| Owner mobile stat | `.owner-mobile-stat` | Large stat card (Revenue, Purchases, Profit) |
 | Owner mobile nav | `.owner-mobile-nav` | Bottom navigation bar |
 
 ---
@@ -534,32 +534,76 @@ VISION.md v3.0.0 defines three device layers. Each has distinct form factors, in
 
 **Target:** Ko Htun's desktop for managing all shops
 **Form factor:** 24"+ monitor, mouse + keyboard
+**Architecture:** Edge Function only — `supabase.functions.invoke()` for all ops. Zero `supabase.from()` (VISION.md §17.4).
 
-**Design principles:**
-- Data-dense tables (compact row height: 40px)
-- Keyboard shortcuts for power users
-- Multi-tenant views (shop list, approval queue)
-- Sidebar navigation (280px width)
-- Mouse-driven (40px tap targets OK)
+#### 10.3.1 Responsive Breakpoints & Behavior
 
-**UI patterns:**
+| Breakpoint | Width | Sidebar | Layout |
+|------------|-------|---------|--------|
+| Mobile | < 768px | Hidden (hamburger toggle) | Single column, stacked cards |
+| Tablet | 768–1023px | Hidden (hamburger toggle) | 2-column grid |
+| Desktop | ≥ 1024px | Visible, fixed 256px | Multi-column, full density |
 
-| Pattern | Description |
-|---------|-------------|
-| Sidebar navigation | Left side, 280px width, collapsible |
-| Data tables | Sorting, filtering, pagination |
-| Modal dialogs | Actions (approve, reject, edit) |
-| Keyboard shortcuts | `Ctrl+K` search, `Ctrl+N` new |
-| Status badges | Shop approval status indicators |
+- Sidebar collapses to hamburger icon on mobile/tablet
+- Main content area uses `flex-1 overflow-y-auto`
+- Tables wrapped in `<div className="overflow-x-auto">` at all breakpoints
 
-**Components needed (future):**
+#### 10.3.2 Layout Structure
 
-| Component | Class | Purpose |
-|-----------|-------|---------|
-| Admin sidebar | `.admin-sidebar` | Left sidebar navigation (280px) |
-| Admin table | `.admin-table` | Compact data table (40px rows) |
-| Admin modal | `.admin-modal` | Action modal (approve/reject) |
-| Admin shortcut | `.admin-shortcut` | Keyboard shortcut hint badge |
+```
+┌──────────────────────────────────────────────┐
+│ Header (h-16, sticky top-0)                  │
+│ [☰ hamburger]  Platform Admin    [user menu] │
+├──────────┬───────────────────────────────────┤
+│ Sidebar  │  Main Content                     │
+│ 256px    │  p-6 max-w-7xl mx-auto            │
+│ fixed    │                                   │
+│          │  ┌─────┐ ┌─────┐ ┌─────┐         │
+│ ● Dash   │  │Stat │ │Stat │ │Stat │         │
+│ ○ Shops  │  │Card │ │Card │ │Card │         │
+│ ○ Subs   │  └─────┘ └─────┘ └─────┘         │
+│ ○ Feats  │                                   │
+│          │  ┌─────────────────────────────┐  │
+│          │  │ Data Table / Content         │  │
+│          │  └─────────────────────────────┘  │
+└──────────┴───────────────────────────────────┘
+```
+
+**Sidebar:**
+- Width: 256px (`w-64`), fixed position
+- Background: `bg-secondary-100 dark:bg-[#2a1f15]`
+- Nav items: `.nav-item` pattern with Lucide icons + text labels
+- Active state: `bg-primary-600 text-white`
+
+**Header (mobile):**
+- Height: 48px (`h-12`), sticky top-0
+- Hamburger button (40px tap target) toggles sidebar overlay
+- Overlay backdrop: `bg-secondary-950/40` on mobile when sidebar open
+
+#### 10.3.3 Data-Dense Component Patterns
+
+**Stat Cards:**
+- Use `.stat-card` / `.stat-card-success` / `.stat-card-warning` / `.stat-card-danger`
+- Grid: `grid grid-cols-1 md:grid-cols-3 gap-4`
+- White text on gradient bg, `::before` glass overlay
+
+**Data Tables:**
+- Wrap in `<div className="overflow-x-auto">` to prevent horizontal overflow
+- Row height: 40px (`px-6 py-3`)
+- Header: `bg-secondary-100/80 text-xs font-semibold uppercase`
+- Font: `font-mono text-sm` for keys/codes/IDs
+- Sortable columns: `cursor-pointer hover:text-primary-600`
+
+**Empty States:**
+- Centered `p-8 text-secondary-600` with action button
+
+#### 10.3.4 Accessibility & Interaction
+
+- All nav items have visible text labels (no icon-only)
+- Focus ring: `ring-2 ring-primary-500 ring-offset-2` on interactive elements
+- Tables support keyboard navigation (Tab between rows)
+- Modal dialogs trap focus, Escape to close
+- Status badges use color + text (not color alone)
 
 ---
 
@@ -570,7 +614,7 @@ VISION.md v3.0.0 defines three device layers. Each has distinct form factors, in
 | Form factor | 10-12" tablet | 5-6" phone | 24"+ monitor |
 | Input | Touch only | Touch only | Mouse + keyboard |
 | Min tap target | 48px | 56px | 40px |
-| Navigation | Top header | Bottom nav | Sidebar |
+| Navigation | Top header | Bottom nav | Sidebar (256px, collapsible) |
 | Layout | Single column | Single column | Multi-column |
 | Data density | Medium | Low | High |
 | Primary use | POS terminal | Read-only reports | Shop management |
@@ -580,7 +624,7 @@ VISION.md v3.0.0 defines three device layers. Each has distinct form factors, in
 
 ## 11. Tier-Based UI Patterns
 
-VISION.md v3.0.0 defines three subscription tiers. UI patterns differ by tier to show value and guide upgrades.
+VISION.md v3.1.0 defines three subscription tiers. UI patterns differ by tier to show value and guide upgrades.
 
 ### 11.1 Free Tier — Upgrade Prompts
 
@@ -613,7 +657,6 @@ VISION.md v3.0.0 defines three subscription tiers. UI patterns differ by tier to
 - All menu items unlocked
 - No lock icons
 - Standard component patterns apply
-- Recipe management UI visible
 - Cash drawer UI visible
 
 No special components needed — standard design system applies.
@@ -628,9 +671,8 @@ No special components needed — standard design system applies.
 
 | Feature | Description |
 |---------|-------------|
-| Profit margin charts | Recharts line chart showing margins over time |
-| Waste tracking UI | Card showing waste items and costs |
-| Daily P&L dashboard | 3 numbers: Revenue, COGS, Profit |
+| Simple profit report | Revenue − Purchases dashboard |
+| Owner Insights (P&L) | 3 numbers: Revenue, Purchases, Profit |
 | Advanced report filters | Date range, product category selectors |
 | Export buttons | CSV and PDF export |
 
@@ -638,8 +680,7 @@ No special components needed — standard design system applies.
 
 | Component | Class | Purpose |
 |-----------|-------|---------|
-| Profit chart | `.profit-chart` | Recharts line chart for margins |
-| Waste card | `.waste-card` | Waste tracking display card |
+| Profit chart | `.profit-chart` | Recharts line chart for profit over time |
 | P&L dashboard | `.pnl-dashboard` | 3-number P&L display |
 
 ---
@@ -649,15 +690,15 @@ No special components needed — standard design system applies.
 | Feature | Free | Growth | Pro |
 |---------|------|--------|-----|
 | POS terminal | ✅ | ✅ | ✅ |
-| Product management | ✅ | ✅ | ✅ |
+| Product management | ✅ (50 max) | ✅ (unlimited) | ✅ (unlimited) |
 | Basic reports | ✅ | ✅ | ✅ |
 | Cash drawer | 🔒 | ✅ | ✅ |
-| Purchase log | 🔒 | ✅ | ✅ |
+| Purchase log | ❌ | ✅ | ✅ |
+| Stock overview | ❌ | ✅ | ✅ |
+| Low stock alerts | ❌ | ✅ | ✅ |
 | Printer integration | 🔒 | ✅ | ✅ |
-| Advanced analytics | 🔒 | 🔒 | ✅ |
-| Owner insights (P&L) | 🔒 | 🔒 | ✅ |
-| Profit analytics | 🔒 | 🔒 | ✅ |
-| Simple profit report | 🔒 | 🔒 | ✅ |
+| Simple profit report | ❌ | ❌ | ✅ |
+| Owner insights (P&L) | ❌ | ❌ | ✅ |
 
 ---
 

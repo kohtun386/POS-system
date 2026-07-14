@@ -40,19 +40,25 @@ export function PlatformDashboard() {
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="card p-4 text-center">
-          <div className="text-3xl font-bold text-accent-500">{stats.pendingApprovals}</div>
-          <div className="text-sm text-secondary-600 dark:text-secondary-300 mt-1">Pending Approvals</div>
-        </div>
-        <div className="card p-4 text-center">
-          <div className="text-3xl font-bold text-primary-600">{stats.activeShops}</div>
-          <div className="text-sm text-secondary-600 dark:text-secondary-300 mt-1">Active Shops</div>
-        </div>
-        <div className="card p-4 text-center">
-          <div className="text-3xl font-bold text-secondary-900 dark:text-secondary-100">
-            {stats.mrr.toLocaleString()} {DEFAULT_CURRENCY}
+        <div className="stat-card-warning">
+          <div className="relative z-10">
+            <div className="text-3xl font-bold">{stats.pendingApprovals}</div>
+            <div className="text-sm opacity-90 mt-1">Pending Approvals</div>
           </div>
-          <div className="text-sm text-secondary-600 dark:text-secondary-300 mt-1">Monthly Recurring Revenue</div>
+        </div>
+        <div className="stat-card-success">
+          <div className="relative z-10">
+            <div className="text-3xl font-bold">{stats.activeShops}</div>
+            <div className="text-sm opacity-90 mt-1">Active Shops</div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="relative z-10">
+            <div className="text-3xl font-bold">
+              {stats.mrr.toLocaleString()} {DEFAULT_CURRENCY}
+            </div>
+            <div className="text-sm opacity-90 mt-1">Monthly Recurring Revenue</div>
+          </div>
         </div>
       </div>
 

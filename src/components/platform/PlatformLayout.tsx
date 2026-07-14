@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { LayoutDashboard, Clock, CreditCard, Settings, Menu, X } from 'lucide-react';
 import { PlatformDashboard } from './PlatformDashboard';
 import { PendingShopsList } from './PendingShopsList';
 import { SubscriptionManager } from './SubscriptionManager';
@@ -6,20 +7,24 @@ import { FeatureDefinitions } from './FeatureDefinitions';
 
 type PlatformView = 'dashboard' | 'pending' | 'subscriptions' | 'features';
 
+const navItems = [
+  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { key: 'pending', label: 'Pending Shops', icon: Clock },
+  { key: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
+  { key: 'features', label: 'Features', icon: Settings },
+] as const;
+
 export function PlatformLayout() {
   const [view, setView] = useState<PlatformView>('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { key: 'pending', label: 'Pending Shops', icon: '⏳' },
-    { key: 'subscriptions', label: 'Subscriptions', icon: '💳' },
-    { key: 'features', label: 'Features', icon: '⚙️' },
-  ] as const;
+  const handleNav = (key: PlatformView) => {
+    setView(key);
+    setSidebarOpen(false);
+  };
 
   const renderView = () => {
     switch (view) {
-      case 'dashboard':
-        return <PlatformDashboard />;
       case 'pending':
         return <PendingShopsList />;
       case 'subscriptions':
@@ -32,34 +37,68 @@ export function PlatformLayout() {
   };
 
   return (
-    <div className="h-dvh bg-secondary-50 dark:bg-primary-950 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-secondary-100 dark:bg-[#2a1f15] border-r border-secondary-200 dark:border-[#3d2d1f] p-4">
-        <h1 className="text-xl font-fraunces font-bold text-primary-600 mb-6">
-          Platform Admin
-        </h1>
-        <nav className="space-y-1">
-          {navItems.map(item => (
-            <button
-              key={item.key}
-              onClick={() => setView(item.key as PlatformView)}
-              className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                view === item.key
-                  ? 'bg-primary-600 text-white'
-                  : 'text-secondary-900 dark:text-secondary-100 hover:bg-secondary-200 dark:hover:bg-[#3d2d1f]'
-              }`}
-            >
-              <span className="mr-2">{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      </aside>
+    <div className="h-dvh bg-secondary-50 dark:bg-primary-950 flex flex-col">
+      {/* Mobile Header */}
+      <header className="h-12 flex items-center px-4 bg-secondary-100 dark:bg-[#2a1f15] border-b border-secondary-200 dark:border-[#3d2d1f] md:hidden">
+        <button
+          className="p-2 rounded-lg hover:bg-secondary-200 dark:hover:bg-[#3d2d1f] transition-colors"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+        >
+          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+        <span className="ml-3 text-lg font-fraunces font-bold text-primary-600">Platform Admin</span>
+      </header>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        {renderView()}
-      </main>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Mobile overlay backdrop */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-secondary-950/40 z-30 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar — desktop: always visible; mobile: slide-in overlay */}
+        <aside
+          className={`
+            fixed md:static inset-y-0 left-0 z-40
+            w-64 bg-secondary-100 dark:bg-[#2a1f15] border-r border-secondary-200 dark:border-[#3d2d1f]
+            flex flex-col pt-4 pb-4
+            transition-transform duration-200 ease-out
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            md:translate-x-0
+          `}
+        >
+          <h1 className="text-xl font-fraunces font-bold text-primary-600 mb-6 px-4 hidden md:block">
+            Platform Admin
+          </h1>
+          <nav className="space-y-1 px-3">
+            {navItems.map(item => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => handleNav(item.key as PlatformView)}
+                  className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    view === item.key
+                      ? 'bg-primary-600 text-white'
+                      : 'text-secondary-900 dark:text-secondary-100 hover:bg-secondary-200 dark:hover:bg-[#3d2d1f]'
+                  }`}
+                >
+                  <Icon size={18} />
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          {renderView()}
+        </main>
+      </div>
     </div>
   );
 }

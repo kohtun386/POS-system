@@ -95,6 +95,7 @@ export function FeatureDefinitions() {
       </div>
 
       <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="table">
           <thead className="table-header">
             <tr>
@@ -133,6 +134,7 @@ export function FeatureDefinitions() {
             ))}
           </tbody>
         </table>
+        </div>
         {features.length === 0 && (
           <div className="p-8 text-center text-secondary-600 dark:text-secondary-300">
             No features defined yet.

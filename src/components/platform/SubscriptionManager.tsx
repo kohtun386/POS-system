@@ -39,6 +39,7 @@ export function SubscriptionManager() {
         Subscription Management
       </h1>
       <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="table">
           <thead className="table-header">
             <tr>
@@ -78,6 +79,7 @@ export function SubscriptionManager() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
