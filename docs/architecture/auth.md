@@ -1,7 +1,7 @@
 # Auth Architecture — CoffeeShop POS
 
 **Supabase project:** `ejvvwnupiqytximrbmfw`
-**Last updated:** 2026-07-13 (Phase 3B: platform admin Edge Functions implemented)
+**Last updated:** 2026-07-14 (Aligned with VISION.md v3.1.0: role matrix §4.4, `users.role` deprecation §4.2)
 
 ---
 
@@ -191,7 +191,9 @@ AppProvider useEffect: user is null →
 
 ### 3.4 `users.role` Status
 
-`users.role` is retained for backward compatibility. The canonical role source is `shop_memberships.role`. The `platform_admin` role does NOT have a `shop_memberships` row — it operates cross-tenant via Edge Functions with `service_role` key.
+`users.role` is retained temporarily for backward compatibility only. **Long-term target is to deprecate `users.role` in favor of `shop_memberships.role`.** (VISION.md v3.1.0 §4.2)
+
+The `platform_admin` role does NOT have a `shop_memberships` row — it operates cross-tenant via Edge Functions with `service_role` key.
 
 ---
 
@@ -199,23 +201,29 @@ AppProvider useEffect: user is null →
 
 ### 4.1 UI Access (Enforced in App.tsx + Header.tsx)
 
-| View | platform_admin | admin | manager | cashier |
-|------|:-:|:-:|:-:|:-:|
-| Platform Admin UI | ✅ | ❌ | ❌ | ❌ |
+**Role matrix (VISION.md v3.1.0 §4.4 — 13 operations × 4 roles):**
+
+| Operation | platform_admin | admin | manager | cashier |
+|-----------|:-:|:-:|:-:|:-:|
 | POS Terminal | ❌ | ✅ | ✅ | ✅ |
-| Transactions | ❌ | ✅ | ✅ | ❌ (redirect to POS) |
-| Inventory | ❌ | ✅ | ✅ | ❌ (redirect to POS) |
-| Customers | ❌ | ✅ | ✅ | ❌ (redirect to POS) |
-| Discounts | ❌ | ✅ | ✅ | ❌ (redirect to POS) |
-| Reports | ❌ | ✅ | ✅ | ❌ (redirect to POS) |
-| Owner Insights | ❌ | ✅ | ❌ | ❌ (redirect to POS) |
-| Users | ❌ | ✅ | ❌ (redirect to POS) | ❌ (redirect to POS) |
-| Settings | ❌ | ✅ | ✅ (read-only for some) | ❌ (redirect to POS) |
+| Manage Products | ❌ | ✅ | ✅ | ❌ |
+| Manage Inventory | ❌ | ✅ | ✅ | ❌ |
+| Manage Customers | ❌ | ✅ | ✅ | ❌ |
+| Manage Discounts | ❌ | ✅ | ✅ | ❌ |
+| View Reports | ❌ | ✅ | ✅ | ❌ |
+| Owner Insights | ❌ | ✅ | ❌ | ❌ |
+| Shop Settings | ❌ | ✅ | ❌ | ❌ |
+| Manage Staff | ❌ | ✅ | ❌ | ❌ |
+| Approve Signups | ✅ | ❌ | ❌ | ❌ |
+| Manage Subscriptions | ✅ | ❌ | ❌ | ❌ |
+| View All Tenants | ✅ | ❌ | ❌ | ❌ |
+| Manage Feature Defs | ✅ | ❌ | ❌ | ❌ |
 
 **Enforcement locations:**
 - `App.tsx:renderCurrentView()` — switch on `currentView`, checks `state.currentUser.role`
 - `Header.tsx:getNavigationItems()` — filters nav items by role
 - Mobile: non-cashiers see `ReportsManager` dashboard instead of POS
+- Cashiers redirected to POS if they try to navigate elsewhere
 - Platform admin: separate component tree under `src/components/platform/`, only accessible to `platform_admin` role
 
 ### 4.2 Database Access (Enforced by RLS Policies)
@@ -254,12 +262,6 @@ AppProvider useEffect: user is null →
 | **Shop Features** | | | | |
 | SELECT | Edge Function | ✅ | ✅ | ✅ |
 | INSERT/UPDATE/DELETE | Edge Function | ✅ (admin only) | ❌ | ❌ |
-| **Recipes / Recipe Items** | | | | |
-| SELECT | Edge Function | ✅ | ✅ | ✅ |
-| INSERT/UPDATE/DELETE | Edge Function | ✅ | ✅ | ❌ |
-| **Consumption Log** | | | | |
-| SELECT | Edge Function | ✅ | ✅ | ✅ |
-| INSERT | Edge Function | RPC only | RPC only | RPC only |
 | **Print Jobs** | | | | |
 | SELECT | Edge Function | ✅ | ✅ | ✅ |
 | INSERT | Edge Function | RPC only | RPC only | RPC only |
@@ -287,7 +289,6 @@ AppProvider useEffect: user is null →
 | `users` self-deletion | Blocked in UI | `UserManager.tsx` hides delete button for current user |
 | `sales_tabs` isolation | `user_id = auth.uid()` | RLS policy — complete per-user isolation |
 | `sales` cashier insert | `auth.role() = 'authenticated'` | RLS policy — all authenticated can insert sales |
-| `consumption_log` insert | RPC only | `checkout_complete()` RPC (SECURITY DEFINER) |
 | `print_jobs` insert | RPC only | `checkout_complete()` RPC |
 | `print_jobs` update | Edge Function only | pg_cron worker via Edge Function |
 | `feature_definitions` write | Edge Function only | `platform_admin` via Edge Function |
@@ -327,7 +328,9 @@ CREATE POLICY "shop_admin_write" ON <table>
   );
 ```
 
-**Tables using this pattern:** app_settings, categories, suppliers, product_batches, discounts, currency_config, exchange_rates, exchange_rate_history, alert_recipients, alert_templates, alert_configurations, alert_history, notification_service_config, recipes, recipe_items
+**Tables using this pattern:** app_settings, categories, suppliers, product_batches, discounts, alert_recipients, alert_templates, alert_configurations, alert_history, notification_service_config
+
+**⚠️ Deprecated (v3.1.0, out of scope per §19):** currency_config, exchange_rates, exchange_rate_history, recipes, recipe_items
 
 ### 5.2 Products/Customers Pattern (Per-Operation)
 

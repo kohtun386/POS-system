@@ -11,15 +11,17 @@
 
 ## 1. Tables
 
-> ⚠️ **DEPRECATED TABLES (v3.1.0)** — The following tables exist in the database but are **NOT used in v1.0**. No UI or business logic references them. Preserved for backward compatibility only.
+> ⚠️ **DEPRECATED TABLES (v3.1.0)** — The following tables exist in the database but are **NOT used in v1.0**. No UI or business logic references them. Preserved for backward compatibility only. **Out of scope per VISION.md v3.1.0 §19.**
 > - `recipes`, `recipe_lines` — Recipe BOM (out of scope, see Purchase Log)
 > - `raw_materials` — Raw material tracking (out of scope)
 > - `consumption_log` — Consumption tracking (out of scope)
 > - `uom_conversions` — Unit conversions (out of scope)
-> - `kitchen_orders` — Kitchen display (out of scope, use printer)
-> - `currency_config`, `exchange_rates`, `exchange_rate_history` — Multi-currency (out of scope, MMK only)
+> - `kitchen_orders` — Kitchen display (out of scope, use thermal printer)
+> - `currency_config`, `exchange_rates`, `exchange_rate_history` — Multi-currency (out of scope, MMK only per §19)
 >
-> **Note:** Counts in this document are approximate as of v3.1.0. For precise numbers, run:
+> **Table Count (v3.1.0):** 27 total — 21 active tables + 6 deprecated tables listed above.
+>
+> **Note:** For precise counts, run:
 > ```bash
 > supabase db dump --schema-only | grep -c "CREATE TABLE"
 > supabase db dump --schema-only | grep -c "CREATE INDEX"
@@ -209,7 +211,7 @@ Staff profiles. Extends Supabase `auth.users`.
 | `username` | text NOT NULL | | UNIQUE |
 | `name` | text NOT NULL | | |
 | `email` | text NOT NULL | | |
-| `role` | text NOT NULL | `'cashier'` | CHECK: `'platform_admin'` \| `'admin'` \| `'manager'` \| `'cashier'`. 4 roles (VISION.md v3.0.0 Section 4). |
+| `role` | text NOT NULL | `'cashier'` | CHECK: `'platform_admin'` \| `'admin'` \| `'manager'` \| `'cashier'`. 4 roles (VISION.md v3.1.0 §4). |
 | `permissions` | text[] | `'{}'` | Currently unused (role governs access) |
 | `active` | boolean | `true` | |
 | `last_login` | timestamptz | | |
@@ -224,7 +226,7 @@ Staff profiles. Extends Supabase `auth.users`.
 2. `shops` row (is_active=false, business_type='coffee_shop', subscription_tier='free', daily_order_limit=50)
 3. `shop_memberships` row (role='admin', is_active=false)
 
-All three remain inactive until `platform_admin` approves via Edge Function. (VISION.md v3.0.0 Section 6)
+All three remain inactive until `platform_admin` approves via Edge Function. (VISION.md v3.1.0 §6)
 
 **Service:** `usersService` — full CRUD. `AuthContext.loadProfile()` reads directly via `supabase.from('users')`.
 
@@ -252,7 +254,7 @@ Transaction records. JSONB `items` stores cart snapshot at time of sale.
 | `cashier_id` | uuid FK | | → `users(id)`. Structured reference for shift tracking. Existing `cashier` text column retained for backward compat. |
 | `cashier_role` | text | | |
 | `receipt_number` | text | | |
-| `receipt_printed` | boolean | `false` | Whether receipt was printed for this sale (VISION.md v3.0.0 Section 9). |
+| `receipt_printed` | boolean | `false` | Whether receipt was printed for this sale (VISION.md v3.1.0 §9). |
 | `notes` | text | | |
 | `applied_discounts` | jsonb | `'[]'` | Array of AppliedDiscount objects |
 | `free_gifts` | jsonb | `'[]'` | Array of CartItem objects |
@@ -352,10 +354,6 @@ auth.users
 
 products
   ├── product_batches.product_id (CASCADE)
-  ├── recipes.product_id (finished product)
-  ├── recipe_items.ingredient_id (raw material)
-  ├── consumption_log.product_id (finished product)
-  ├── consumption_log.ingredient_id (raw material)
   └── discounts.free_gift_products (TEXT[] — no FK, soft reference)
 
 customers
@@ -370,8 +368,6 @@ users
 shops
   ├── shop_memberships.shop_id (CASCADE)
   ├── shop_features.shop_id (CASCADE)
-  ├── recipes.shop_id
-  ├── consumption_log.shop_id
   ├── print_jobs.shop_id
   ├── cash_shifts.shop_id
   ├── alert_recipients.shop_id
@@ -381,15 +377,30 @@ shops
   ├── notification_service_config.shop_id
   └── (all 13 original tables via shop_id)
 
-recipes
-  └── recipe_items.recipe_id (CASCADE)
-
 sales
-  ├── consumption_log.sale_id
   └── print_jobs.sale_id
 
 feature_definitions
   └── shop_features.feature_key (CASCADE)
+```
+
+**⚠️ Deprecated FKs (v3.1.0 — out of scope per §19):**
+```
+recipes
+  ├── products.product_id (finished product)     — DEPRECATED
+  ├── shops.shop_id                              — DEPRECATED
+  └── recipe_items.recipe_id (CASCADE)           — DEPRECATED
+
+recipe_items
+  └── raw_materials.id (raw material)            — DEPRECATED
+
+consumption_log
+  ├── products.product_id (finished product)     — DEPRECATED
+  ├── products.ingredient_id (raw material)      — DEPRECATED
+  ├── sales.sale_id                              — DEPRECATED
+  └── shops.shop_id                              — DEPRECATED
+
+currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only)
 ```
 
 **Soft references (no FK constraint):**
@@ -497,6 +508,12 @@ feature_definitions
 | `current_shop_ids()` | INVOKER, `search_path=''` | Returns shop IDs where current user has active membership. Used in RLS policies for shop-scoped access. | No — called in RLS policies |
 | `is_platform_admin()` | SECURITY DEFINER | Checks if `auth.uid()` maps to a user with `role = 'platform_admin'`. Used in RLS for cross-tenant access. | No — called in RLS policies |
 | `replace_recipe_lines(uuid, jsonb)` | SECURITY DEFINER | **DEPRECATED (v3.1.0).** Atomically deletes existing recipe_lines for a recipe and inserts new lines. Was used by recipe BOM management — BOM removed from v1 scope. | No — called via RPC |
+| `auto_generate_invoice_number()` | INVOKER, `search_path=''` | Auto-increment invoice counter. Reads current counter from `shops.invoice_counter`, increments atomically, returns formatted invoice number. Used inside `checkout_complete()` RPC. | No — called by `checkout_complete()` RPC |
+| `check_inventory_alerts()` | INVOKER, `search_path=''` | Alert system: checks product stock levels against configured thresholds in `alert_configurations`. Returns products that breach low-stock or out-of-stock thresholds. | No — called by pg_cron or Edge Function |
+| `deduct_product_stock(uuid, integer)` | SECURITY DEFINER, `search_path=''` | Deducts stock during checkout. Decrements `products.stock` by the given quantity for the specified product. Includes `CHECK (stock >= 0)` guard. Called inside `checkout_complete()` RPC for inventory-tracked products. | No — called by `checkout_complete()` RPC |
+| `get_alert_recipients(uuid)` | INVOKER, `search_path=''` | Alert system: returns active alert recipients for a given shop. Filters by `shop_id` and `is_active = true`. Returns recipient contact info and alert type preferences. | No — called by Edge Function |
+| `should_send_alert(uuid, text)` | INVOKER, `search_path=''` | Alert system: throttling check. Returns `true` if no alert of the given type was sent to the shop within the configured cooldown window (`alert_configurations.cooldown_minutes`, default 24h). Prevents duplicate alert floods. | No — called by Edge Function |
+| `update_customer_stats(uuid, decimal)` | SECURITY DEFINER, `search_path=''` | Updates customer purchase totals. Increments `customers.total_purchases` by the sale total and sets `customers.last_purchase` to `now()`. Called inside `checkout_complete()` RPC. | No — called by `checkout_complete()` RPC |
 
 ---
 
@@ -504,7 +521,7 @@ feature_definitions
 
 **Pattern:** All tables have RLS enabled. Policies use shop-scoped role-aware pattern.
 
-**`platform_admin` rule:** NEVER appears in RLS policies. Platform admin bypasses RLS entirely via `service_role` key in Edge Functions. No `OR users.role = 'platform_admin'` in any policy. (VISION.md v3.0.0 Section 4.3)
+**`platform_admin` rule:** NEVER appears in RLS policies. Platform admin bypasses RLS entirely via `service_role` key in Edge Functions. No `OR users.role = 'platform_admin'` in any policy. (VISION.md v3.1.0 §4.3)
 
 **RLS helper:** `current_shop_ids()` returns `uuid[]` of shops where the current user has active membership. Used in all shop-scoped policies.
 
@@ -520,14 +537,8 @@ feature_definitions
 | `users` | All authenticated | All authenticated | Self OR admin | (none — no DELETE policy) |
 | `sales` | Shop members | Shop members | admin/manager | admin/manager |
 | `sales_tabs` | Own tabs only | Own tabs only | Own tabs only | Own tabs only |
-| `currency_config` | Shop members | admin/manager | admin/manager | admin/manager |
-| `exchange_rates` | Shop members | admin/manager | admin/manager | admin/manager |
-| `exchange_rate_history` | Shop members | admin/manager | admin/manager | admin/manager |
 | `feature_definitions` | All authenticated | (Edge Function only) | (Edge Function only) | (Edge Function only) |
 | `shop_features` | Shop members | admin only | admin only | admin only |
-| `recipes` | Shop members | admin/manager | admin/manager | admin/manager |
-| `recipe_items` | Shop members | admin/manager | admin/manager | admin/manager |
-| `consumption_log` | Shop members | (RPC only) | (none) | (none) |
 | `print_jobs` | Shop members | (RPC/Edge Function) | (Edge Function) | (none) |
 | `cash_shifts` | Shop members | cashier+ (own) | cashier+ (own) | admin/manager |
 
@@ -588,8 +599,8 @@ FOR INSERT WITH CHECK (
 | `invoice_prefix` | text | `'INV'` | Invoice prefix |
 | `invoice_counter` | integer | `1000` | Mutated only by atomic invoice DB function |
 | `draft_retention_days` | integer | `30` | Cleanup retention for draft sales |
-| `subscription_tier` | text | `'free'` | CHECK: `'free'` \| `'growth'` \| `'pro'`. 3-tier model (VISION.md v3.0.0 Section 3). |
-| `daily_order_limit` | integer | `50` | Free tier: 50. Growth/Pro: NULL (unlimited). Enforced in `checkout_complete` RPC. |
+| `subscription_tier` | text | `'free'` | CHECK: `'free'` \| `'growth'` \| `'pro'`. 3-tier model (VISION.md v3.1.0 §3). |
+| `daily_order_limit` | integer | `50` | Free tier: 50. Growth/Pro: NULL (unlimited). Enforced in `checkout_complete` RPC. (VISION.md v3.1.0 §16) |
 | `receipt_setting` | text | `'ask'` | CHECK: `'always'` \| `'ask'` \| `'never'`. Growth+ only. Controls post-checkout receipt prompt. |
 | `is_active` | boolean | `true` | Pending approval keeps this false |
 | `created_at` | timestamptz | `now()` | NOT NULL |
@@ -763,7 +774,7 @@ All 7 new tables have RLS enabled with **temporary permissive policies** (`auth.
 
 ## 7. Feature Flag, Recipe, Printer & Cash Drawer Tables
 
-> Added 2026-06-29. Aligned with VISION.md v3.0.0 Sections 5, 8, 9, 10, 12.
+> Added 2026-06-29. Aligned with VISION.md v3.1.0 §§5, 8, 9, 10, 12.
 
 ### 7.1 `feature_definitions`
 
@@ -868,7 +879,7 @@ Logs actual ingredient consumption per sale. Used for COGS calculation. Inserted
 
 ### 7.6 `print_jobs`
 
-Print job queue for receipt and kitchen printers. Growth+ only (VISION.md v3.0.0 Section 8).
+Print job queue for receipt and kitchen printers. Growth+ only (VISION.md v3.1.0 §8).
 
 | Column | Type | Default | Notes |
 |--------|------|---------|-------|
@@ -880,7 +891,7 @@ Print job queue for receipt and kitchen printers. Growth+ only (VISION.md v3.0.0
 | `connection_type` | text NOT NULL | | CHECK: `'bluetooth'` \| `'network'` |
 | `printer_address` | text NOT NULL | | BT MAC address or IP:port |
 | `payload` | jsonb NOT NULL | | Formatted print content |
-| `is_reprint` | boolean | `false` | True if reprinted from history (VISION.md v3.0.0 Section 9.3) |
+| `is_reprint` | boolean | `false` | True if reprinted from history (VISION.md v3.1.0 §9.3) |
 | `retry_count` | integer | `0` | |
 | `error_message` | text | | |
 | `created_at` | timestamptz NOT NULL | `now()` | |
@@ -890,7 +901,7 @@ Print job queue for receipt and kitchen printers. Growth+ only (VISION.md v3.0.0
 
 ### 7.7 `cash_shifts`
 
-Cash drawer shift tracking. Growth+ only (VISION.md v3.0.0 Section 12).
+Cash drawer shift tracking. Growth+ only (VISION.md v3.1.0 §12).
 
 | Column | Type | Default | Notes |
 |--------|------|---------|-------|
@@ -933,14 +944,14 @@ Cash drawer shift tracking. Growth+ only (VISION.md v3.0.0 Section 12).
 
 ```sql
 -- Timezone: Asia/Yangon (locked at database level)
--- VISION.md v3.0.0 Decision #14
+-- VISION.md v3.1.0 §18.2
 ALTER DATABASE ejvvwnupiqytximrbmfw SET timezone = 'Asia/Yangon';
 
 -- Verify
 SHOW timezone;  -- Should return 'Asia/Yangon'
 ```
 
-**Impact:** `CURRENT_DATE`, `now()`, and all `timestamptz` operations use Asia/Yangon. The daily order limit check in `checkout_complete` uses `CURRENT_DATE` which resolves to Asia/Yangon midnight.
+**Impact:** `CURRENT_DATE`, `now()`, and all `timestamptz` operations use Asia/Yangon. The daily order limit check in `checkout_complete` uses `CURRENT_DATE` which resolves to Asia/Yangon midnight. (VISION.md v3.1.0 §18.2)
 
 ### 8.2 Search Path Security
 
@@ -948,7 +959,7 @@ All user-defined functions use `SET search_path = ''` to prevent search path inj
 
 ---
 
-## 9. VISION.md v3.0.0 Consistency Checklist
+## 9. VISION.md v3.1.0 Consistency Checklist
 
 | VISION.md Decision | database.md Location |
 |--------------------|---------------------|
@@ -958,11 +969,17 @@ All user-defined functions use `SET search_path = ''` to prevent search path inj
 | Free: 50 products max | Client + server validation (no DB constraint) |
 | 4 roles | `users.role` CHECK + `shop_memberships.role` |
 | Feature flags (capability-based) | `feature_definitions` + `shop_features` |
-| Recipe/BOM (Growth+) | `recipes` + `recipe_items` + `consumption_log` |
-| Printer integration (Growth+) | `print_jobs` |
-| Receipt management | `shops.receipt_setting` + `print_jobs.is_reprint` |
-| Cash drawer (Growth+) | `cash_shifts` |
-| Checkout atomicity | `checkout_complete()` RPC |
-| Race condition protection | `SELECT ... FOR UPDATE` in `checkout_complete` |
-| Timezone: Asia/Yangon | `ALTER DATABASE SET timezone` |
-| platform_admin (Edge Function only) | `users.role` CHECK, not in RLS policies |
+| Recipe/BOM **OUT OF SCOPE** | `recipes` + `recipe_lines` deprecated (§10.3, §19) |
+| COGS / consumption log **OUT OF SCOPE** | `consumption_log` deprecated (§10.3, §19) |
+| Multi-currency **DEAD** | `currency_config` + `exchange_rates` + `exchange_rate_history` deprecated (§19) |
+| KDS **OUT OF SCOPE** | `kitchen_orders` deprecated — use thermal printer (§8, §19) |
+| Printer integration (Growth+) | `print_jobs` (§8) |
+| Receipt management | `shops.receipt_setting` + `print_jobs.is_reprint` (§9) |
+| Cash drawer (Growth+) | `cash_shifts` (§12) |
+| Checkout atomicity | `checkout_complete()` RPC (§11) |
+| Race condition protection | `SELECT ... FOR UPDATE` in `checkout_complete` (§16.2) |
+| Timezone: Asia/Yangon | `ALTER DATABASE SET timezone` (§18.2) |
+| platform_admin (Edge Function only) | `users.role` CHECK, not in RLS policies (§4.3, §17) |
+| MMK only — no multi-currency | No active currency conversion tables (§19) |
+| Simplified inventory (Growth+) | Purchase log, stock overview, low stock alerts (§10) |
+| Simple profit report (Pro) | Revenue − Purchases (§10.2, §13) |

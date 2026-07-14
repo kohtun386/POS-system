@@ -228,7 +228,7 @@ The client stores a `capabilities: string[]` array. Components check this array 
 | `cash_drawer` | Shift start/end | growth | all |
 | `owner_insights` | P&L dashboard | pro | all |
 | `simple_profit_report` | Revenue − Purchases | pro | all |
-| `advanced_reports` | Consolidated Pro reports gate (parent of `owner_insights`, `profit_analytics`) | pro | all |
+| `advanced_reports` | Consolidated Pro reports gate (parent of `owner_insights`, `simple_profit_report`) | pro | all |
 
 ---
 

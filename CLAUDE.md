@@ -139,6 +139,47 @@ If a request implies any of the following → **STOP and ask before proceeding:*
 - Multi-currency support or exchange rate integration
 - UOM conversion tables or logic
 
+### Documentation-Driven Development (DDD)
+
+**ALWAYS refer to `docs/vision/VISION.md` v3.1.0 as the Single Source of Truth for business logic.** Technical implementation details belong in architecture docs (`docs/architecture/`) and feature specs (`docs/specs/`).
+
+**When in doubt about feature scope, check VISION.md §19 (What We Are NOT Building).**
+
+Document precedence: VISION.md (scope) > tier-spec.md (implementation) > CLAUDE.md (agent rules). See `docs/GOVERNANCE.md` for conflict resolution.
+
+### Valid Capability Keys (18 total — VISION.md v3.1.0 §5.5)
+
+**DO NOT invent capability keys not in this list.** Components check these via `state.capabilities.includes('key')`.
+
+| Capability | Min Tier |
+|------------|----------|
+| `pos` | free |
+| `inventory` | free |
+| `discounts` | free |
+| `draft_sales` | free |
+| `customer_management` | free |
+| `batch_tracking` | free |
+| `weight_based_products` | free |
+| `credit_system` | free |
+| `multi_tab_sales` | free |
+| `printer_integration` | growth |
+| `purchase_log` | growth |
+| `stock_overview` | growth |
+| `low_stock_alerts` | growth |
+| `staff_accounts` | growth |
+| `cash_drawer` | growth |
+| `owner_insights` | pro |
+| `simple_profit_report` | pro |
+| `advanced_reports` | pro |
+
+### MMK-Only Currency Rule
+
+Myanmar market only — MMK currency. No multi-currency, no exchange rates, no currency conversion. `multi_currency` is DEAD (VISION.md v3.1.0 §19).
+
+### Platform Admin Pattern
+
+Platform admin operations MUST use `supabase.functions.invoke()` only. Never use `supabase.from()` for platform admin operations. All operations route through Edge Functions with `service_role` key, bypassing RLS entirely (VISION.md v3.1.0 §4.3, §17).
+
 ---
 
 ## Common Pitfalls

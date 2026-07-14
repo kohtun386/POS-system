@@ -1,6 +1,6 @@
 # State Management Architecture — CoffeeShop POS
 
-**Last updated:** 2026-07-10 (aligned with VISION.md v3.1.0)
+**Last updated:** 2026-07-14 (Aligned with VISION.md v3.1.0: receipt state §9, shift state §12, checkout RPC §11)
 **Source of truth:** `src/context/SupabaseAppContext.tsx` (active), `src/context/AuthContext.tsx`, `src/context/ThemeContext.tsx`
 
 ---
@@ -418,6 +418,52 @@ supabase.auth.onAuthStateChange(event, session)
   │     dispatch SET_CAPABILITIES([])
   │     setInitialized(false)
 ```
+
+---
+
+## 7.4 Receipt Management State (Growth+, VISION.md v3.1.0 §9)
+
+Receipt state lives in component-local state (not AppState reducer) because it is transient — only relevant during the post-checkout prompt flow.
+
+| State | Location | Purpose |
+|-------|----------|---------|
+| `showPrintPrompt` | `CheckoutModal` local state | Whether "Print Receipt?" dialog is visible post-checkout |
+| `shop.receipt_setting` | `state.shop` (persisted) | Shop-level preference: `'always'` \| `'ask'` \| `'never'` |
+
+**Post-checkout flow (VISION.md v3.1.0 §9.1):**
+1. Sale completes via `checkout_complete` RPC (always committed)
+2. If `capabilities.includes('printer_integration')` AND printer connected:
+   - `receipt_setting === 'always'` → auto-print, no prompt
+   - `receipt_setting === 'ask'` → show `showPrintPrompt` dialog
+   - `receipt_setting === 'never'` → no prompt
+3. If Free tier (no `printer_integration` capability): no prompt, no print option
+4. If Growth+ but no printer configured: no prompt
+
+---
+
+## 7.5 Shift Management State (Growth+, VISION.md v3.1.0 §12)
+
+Shift state is managed via `cashShiftsService` and component-local state. The current shift is loaded on shift page entry, not persisted in AppState.
+
+| State | Location | Purpose |
+|-------|----------|---------|
+| `currentShift` | `ShiftManager` local state | Currently open shift row from `cash_shifts` table |
+| `openingCash` | `ShiftManager` form state | Physical cash count entered at shift start |
+| `closingCash` | `ShiftManager` form state | Physical cash count entered at shift end |
+| `expectedCash` | Computed | `opening_cash + cash_sales - cash_refunds` |
+| `variance` | Computed | `closing_cash - expected_cash` |
+
+**Shift lifecycle (VISION.md v3.1.0 §12.2):**
+```
+Open:  INSERT cash_shifts (opening_cash, cashier_id, status='open')
+  → All sales during shift linked via cashier_id
+Close: UPDATE cash_shifts (closing_cash, expected_cash, variance, status='closed')
+  → Variance thresholds: Green ≤1,000 | Yellow ≤10,000 | Red >10,000 MMK
+```
+
+**DB table:** `cash_shifts` (§7.7 in database.md). Columns: `id`, `shop_id`, `cashier_id`, `opening_cash`, `closing_cash`, `expected_cash`, `variance`, `status`, `opened_at`, `closed_at`.
+
+**RLS:** Cashiers can SELECT/INSERT/UPDATE own shifts; admin/manager can SELECT all, UPDATE all, DELETE (admin only).
 
 ---
 
