@@ -1450,12 +1450,11 @@ export const shopsService = {
     const shop = await shopMembershipsService.getShopByUserId(userId)
     if (!shop) return null
 
-    const [features, overrides] = await Promise.all([
+    const [features, overrides, capabilities] = await Promise.all([
       featureDefinitionsService.getAll(),
       shopFeaturesService.getByShopId(shop.id),
+      resolveCapabilitiesRpc(shop.id),
     ])
-
-    const capabilities = resolveCapabilities(shop, features, overrides)
 
     return { capabilities, shop, features, overrides }
   },

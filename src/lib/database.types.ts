@@ -1795,14 +1795,6 @@ export type Database = {
         }
         Returns: Json
       }
-      convert_currency_amount: {
-        Args: {
-          p_amount: number
-          p_from_currency: string
-          p_to_currency: string
-        }
-        Returns: number
-      }
       current_shop_ids: { Args: never; Returns: string[] }
       generate_invoice_number: { Args: never; Returns: string }
       get_alert_recipients: {
@@ -1815,15 +1807,7 @@ export type Database = {
           role: string
         }[]
       }
-      get_current_exchange_rate: {
-        Args: { p_base_currency: string; p_target_currency: string }
-        Returns: number
-      }
       is_platform_admin: { Args: never; Returns: boolean }
-      replace_recipe_lines: {
-        Args: { p_lines: Json; p_recipe_id: string }
-        Returns: undefined
-      }
       resolve_capabilities: { Args: { p_shop_id: string }; Returns: string[] }
       should_send_alert: {
         Args: {
@@ -1832,16 +1816,6 @@ export type Database = {
           recipient_id_param: string
         }
         Returns: boolean
-      }
-      update_exchange_rate: {
-        Args: {
-          p_base_currency: string
-          p_is_manual_override?: boolean
-          p_rate: number
-          p_source?: string
-          p_target_currency: string
-        }
-        Returns: undefined
       }
     }
     Enums: {
