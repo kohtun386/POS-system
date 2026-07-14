@@ -354,6 +354,55 @@ export interface ShopFeature {
 }
 
 // ================================================================
+// Purchase Log Types (VISION v3.1.0 §10.2 — Simplified Inventory)
+// ================================================================
+
+export interface PurchaseLog {
+  id: string;
+  shopId: string;
+  supplier: string;
+  item: string;
+  quantity: number;
+  unit: string;
+  unitCost: number;
+  totalCost: number;
+  purchaseDate: Date;
+  notes: string;
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ================================================================
+// Stock Item Types (VISION v3.1.0 §10.2 — Simplified Inventory)
+// ================================================================
+
+export interface StockItem {
+  id: string;
+  shopId: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  lowThreshold: number;
+  category: string;
+  notes: string;
+  lastAdjustedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface StockAdjustment {
+  id: string;
+  shopId: string;
+  stockItemId: string;
+  previousQty: number;
+  newQty: number;
+  reason: string;
+  adjustedBy?: string;
+  adjustedAt: Date;
+}
+
+// ================================================================
 // Print Job Types (kept — used by printJobsService for Growth+ receipt printing)
 // ================================================================
 

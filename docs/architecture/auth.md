@@ -500,20 +500,7 @@ CREATE POLICY "shop_admin_write" ON shop_features
   );
 ```
 
-### 5.10 Consumption Log Pattern (RPC Only)
-
-```sql
--- SELECT: shop members
-CREATE POLICY "shop_member_select" ON consumption_log
-  FOR SELECT USING (
-    shop_id = ANY(current_shop_ids())
-  );
-
--- INSERT: via checkout_complete RPC only (SECURITY DEFINER)
--- No direct client INSERT policy
-```
-
-### 5.11 Print Jobs Pattern
+### 5.10 Print Jobs Pattern
 
 ```sql
 -- SELECT: shop members

@@ -571,7 +571,6 @@ FOR INSERT WITH CHECK (
 - `users` DELETE: No policy defined (implicit deny — no one can delete users via RLS)
 - `sales_tabs`: Only `user_id = auth.uid()` — complete user isolation
 - `sales`: Cashiers can INSERT (record transactions) but not UPDATE/DELETE
-- `consumption_log`: INSERT only via `checkout_complete` RPC (no direct client insert)
 - `print_jobs`: INSERT via `checkout_complete` RPC, UPDATE via Edge Function (pg_cron worker)
 - `feature_definitions`: Managed exclusively by `platform_admin` via Edge Functions
 
@@ -783,7 +782,7 @@ Platform-level feature catalog. Managed exclusively by `platform_admin` via Edge
 | Column | Type | Default | Notes |
 |--------|------|---------|-------|
 | `id` | uuid PK | `gen_random_uuid()` | |
-| `key` | text NOT NULL | | UNIQUE. e.g. `'printer_integration'`, `'recipe_bom'` |
+| `key` | text NOT NULL | | UNIQUE. e.g. `'printer_integration'`, `'purchase_log'` |
 | `name` | text NOT NULL | | Human-readable name |
 | `description` | text | | |
 | `category` | text NOT NULL | `'general'` | |

@@ -119,7 +119,7 @@ These limits are NOT capability keys — they're enforced in the business logic 
 - Offline-first mode
 - Session tracking / analytics
 - Audit logs (basic void tracking is v1, full audit trail is v2)
-- `kitchen_display`, `online_ordering`, `supplier_management` (dead keys)
+- `kitchen_display`, `online_ordering`, `supplier_management` (dead keys — deleted from DB by migration `20260714050000`)
 
 ---
 

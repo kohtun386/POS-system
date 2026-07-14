@@ -19,6 +19,8 @@ const Settings = lazy(() => import('./components/settings/Settings').then(m => (
 const DiscountManager = lazy(() => import('./components/discounts/DiscountManager').then(m => ({ default: m.DiscountManager })));
 const UserManager = lazy(() => import('./components/users/UserManager').then(m => ({ default: m.UserManager })));
 const AlertManager = lazy(() => import('./components/alerts/AlertManager').then(m => ({ default: m.AlertManager })));
+const PurchaseLogManager = lazy(() => import('./components/inventory/PurchaseLogManager').then(m => ({ default: m.PurchaseLogManager })));
+const StockOverviewManager = lazy(() => import('./components/inventory/StockOverviewManager').then(m => ({ default: m.StockOverviewManager })));
 
 function AppContent() {
   const { user, loading, profile, isPendingApproval } = useAuth();
@@ -27,6 +29,8 @@ function AppContent() {
   const inventoryEnabled = useCapability('inventory');
   const customerEnabled = useCapability('customer_management');
   const discountEnabled = useCapability('discounts');
+  const purchaseLogEnabled = useCapability('purchase_log');
+  const stockOverviewEnabled = useCapability('stock_overview');
 
   // Show loading spinner while auth is loading
   if (loading) {
@@ -77,6 +81,18 @@ function AppContent() {
         // Only allow admin and manager to access inventory (feature-gated)
         if ((userRole === 'admin' || userRole === 'manager') && inventoryEnabled) {
           return <InventoryManager />;
+        }
+        setCurrentView('pos');
+        return <POSTerminal />;
+      case 'purchase-log':
+        if ((userRole === 'admin' || userRole === 'manager') && purchaseLogEnabled) {
+          return <PurchaseLogManager />;
+        }
+        setCurrentView('pos');
+        return <POSTerminal />;
+      case 'stock-overview':
+        if ((userRole === 'admin' || userRole === 'manager') && stockOverviewEnabled) {
+          return <StockOverviewManager />;
         }
         setCurrentView('pos');
         return <POSTerminal />;

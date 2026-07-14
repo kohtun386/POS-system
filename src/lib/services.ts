@@ -35,7 +35,10 @@ import {
   CashShift,
   CapabilityResolution,
   PrintJob,
-  PrintJobStatus
+  PrintJobStatus,
+  PurchaseLog,
+  StockItem,
+  StockAdjustment
 } from '../types'
 
 // ================================================================
@@ -1812,5 +1815,251 @@ export const platformAdminService = {
       body: { shop_id: shopId, is_active: isActive },
     })
     if (error) throw error
+  },
+}
+
+// ================================================================
+// Purchase Logs Service (VISION v3.1.0 §10.2 — Simplified Inventory)
+// ================================================================
+
+function mapPurchaseLogRow(row: Record<string, unknown>): PurchaseLog {
+  return {
+    id: row.id as string,
+    shopId: row.shop_id as string,
+    supplier: (row.supplier as string) || '',
+    item: row.item as string,
+    quantity: Number(row.quantity),
+    unit: (row.unit as string) || 'piece',
+    unitCost: Number(row.unit_cost),
+    totalCost: Number(row.total_cost),
+    purchaseDate: new Date(row.purchase_date as string),
+    notes: (row.notes as string) || '',
+    createdBy: (row.created_by as string) || undefined,
+    createdAt: new Date(row.created_at as string),
+    updatedAt: new Date(row.updated_at as string),
+  }
+}
+
+export const purchaseLogsService = {
+  async getAll(shopId: string, fromDate?: Date, toDate?: Date): Promise<PurchaseLog[]> {
+    let q = supabase.from('purchase_logs').select('*').eq('shop_id', shopId).order('purchase_date', { ascending: false })
+    if (fromDate) q = q.gte('purchase_date', fromDate.toISOString().split('T')[0])
+    if (toDate) q = q.lte('purchase_date', toDate.toISOString().split('T')[0])
+    const { data, error } = await q
+    if (error) throw error
+    return (data || []).map(mapPurchaseLogRow)
+  },
+
+  async create(input: Omit<PurchaseLog, 'id' | 'createdAt' | 'updatedAt' | 'totalCost'>): Promise<PurchaseLog> {
+    const { data, error } = await supabase
+      .from('purchase_logs')
+      .insert({
+        shop_id: input.shopId,
+        supplier: input.supplier,
+        item: input.item,
+        quantity: input.quantity,
+        unit: input.unit,
+        unit_cost: input.unitCost,
+        purchase_date: input.purchaseDate.toISOString().split('T')[0],
+        notes: input.notes,
+        created_by: input.createdBy,
+      })
+      .select()
+      .single()
+    if (error) throw error
+    return mapPurchaseLogRow(data)
+  },
+
+  async update(id: string, input: Partial<PurchaseLog>): Promise<PurchaseLog> {
+    const updates: Record<string, unknown> = {}
+    if (input.supplier !== undefined) updates.supplier = input.supplier
+    if (input.item !== undefined) updates.item = input.item
+    if (input.quantity !== undefined) updates.quantity = input.quantity
+    if (input.unit !== undefined) updates.unit = input.unit
+    if (input.unitCost !== undefined) updates.unit_cost = input.unitCost
+    if (input.purchaseDate !== undefined) updates.purchase_date = input.purchaseDate.toISOString().split('T')[0]
+    if (input.notes !== undefined) updates.notes = input.notes
+    updates.updated_at = new Date().toISOString()
+
+    const { data, error } = await supabase
+      .from('purchase_logs')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return mapPurchaseLogRow(data)
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from('purchase_logs').delete().eq('id', id)
+    if (error) throw error
+  },
+
+  async getMonthlyTotal(shopId: string, year: number, month: number): Promise<number> {
+    const from = new Date(year, month - 1, 1).toISOString().split('T')[0]
+    const to = new Date(year, month, 0).toISOString().split('T')[0]
+    const { data, error } = await supabase
+      .from('purchase_logs')
+      .select('total_cost')
+      .eq('shop_id', shopId)
+      .gte('purchase_date', from)
+      .lte('purchase_date', to)
+    if (error) throw error
+    return (data || []).reduce((sum, r) => sum + Number(r.total_cost), 0)
+  },
+}
+
+// ================================================================
+// Stock Items Service (VISION v3.1.0 §10.2 — Simplified Inventory)
+// ================================================================
+
+function mapStockItemRow(row: Record<string, unknown>): StockItem {
+  return {
+    id: row.id as string,
+    shopId: row.shop_id as string,
+    name: row.name as string,
+    quantity: Number(row.quantity),
+    unit: (row.unit as string) || 'piece',
+    lowThreshold: Number(row.low_threshold ?? 0),
+    category: (row.category as string) || '',
+    notes: (row.notes as string) || '',
+    lastAdjustedAt: row.last_adjusted_at ? new Date(row.last_adjusted_at as string) : undefined,
+    createdAt: new Date(row.created_at as string),
+    updatedAt: new Date(row.updated_at as string),
+  }
+}
+
+function mapStockAdjustmentRow(row: Record<string, unknown>, shopId: string): StockAdjustment {
+  return {
+    id: row.id as string,
+    shopId,
+    stockItemId: row.stock_item_id as string,
+    previousQty: Number(row.previous_qty),
+    newQty: Number(row.new_qty),
+    reason: (row.reason as string) || '',
+    adjustedBy: (row.adjusted_by as string) || undefined,
+    adjustedAt: new Date(row.adjusted_at as string),
+  }
+}
+
+export const stockItemsService = {
+  async getAll(shopId: string): Promise<StockItem[]> {
+    const { data, error } = await supabase
+      .from('stock_items')
+      .select('*')
+      .eq('shop_id', shopId)
+      .order('name')
+    if (error) throw error
+    return (data || []).map(mapStockItemRow)
+  },
+
+  async getById(id: string): Promise<StockItem | null> {
+    const { data, error } = await supabase
+      .from('stock_items')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
+    if (error) throw error
+    return data ? mapStockItemRow(data) : null
+  },
+
+  async create(input: Omit<StockItem, 'id' | 'createdAt' | 'updatedAt' | 'lastAdjustedAt'>): Promise<StockItem> {
+    const { data, error } = await supabase
+      .from('stock_items')
+      .insert({
+        shop_id: input.shopId,
+        name: input.name,
+        quantity: input.quantity,
+        unit: input.unit,
+        low_threshold: input.lowThreshold,
+        category: input.category,
+        notes: input.notes,
+      })
+      .select()
+      .single()
+    if (error) throw error
+    return mapStockItemRow(data)
+  },
+
+  async update(id: string, input: Partial<StockItem>): Promise<StockItem> {
+    const updates: Record<string, unknown> = {}
+    if (input.name !== undefined) updates.name = input.name
+    if (input.quantity !== undefined) updates.quantity = input.quantity
+    if (input.unit !== undefined) updates.unit = input.unit
+    if (input.lowThreshold !== undefined) updates.low_threshold = input.lowThreshold
+    if (input.category !== undefined) updates.category = input.category
+    if (input.notes !== undefined) updates.notes = input.notes
+    updates.updated_at = new Date().toISOString()
+
+    const { data, error } = await supabase
+      .from('stock_items')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return mapStockItemRow(data)
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from('stock_items').delete().eq('id', id)
+    if (error) throw error
+  },
+
+  async adjust(
+    id: string,
+    newQty: number,
+    reason: string,
+    adjustedBy?: string
+  ): Promise<{ item: StockItem; adjustment: StockAdjustment }> {
+    const item = await this.getById(id)
+    if (!item) throw new Error('Stock item not found')
+
+    const previousQty = item.quantity
+    const now = new Date().toISOString()
+
+    const { data: adjData, error: adjError } = await supabase
+      .from('stock_adjustments')
+      .insert({
+        shop_id: item.shopId,
+        stock_item_id: id,
+        previous_qty: previousQty,
+        new_qty: newQty,
+        reason,
+        adjusted_by: adjustedBy,
+        adjusted_at: now,
+      })
+      .select()
+      .single()
+    if (adjError) throw adjError
+
+    const { data: itemData, error: itemError } = await supabase
+      .from('stock_items')
+      .update({ quantity: newQty, last_adjusted_at: now, updated_at: now })
+      .eq('id', id)
+      .select()
+      .single()
+    if (itemError) throw itemError
+
+    return {
+      item: mapStockItemRow(itemData),
+      adjustment: mapStockAdjustmentRow(adjData, item.shopId),
+    }
+  },
+
+  async getAdjustments(stockItemId: string): Promise<StockAdjustment[]> {
+    const { data, error } = await supabase
+      .from('stock_adjustments')
+      .select('*')
+      .eq('stock_item_id', stockItemId)
+      .order('adjusted_at', { ascending: false })
+    if (error) throw error
+    return (data || []).map(row => mapStockAdjustmentRow(row, row.shop_id))
+  },
+
+  async getLowStock(shopId: string): Promise<StockItem[]> {
+    const items = await this.getAll(shopId)
+    return items.filter(i => i.quantity <= i.lowThreshold)
   },
 }

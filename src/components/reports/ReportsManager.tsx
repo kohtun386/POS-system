@@ -8,10 +8,12 @@ import { UpgradePrompt } from '../ui/UpgradePrompt';
 import { OwnerInsights } from './OwnerInsights';
 import { ProfitMarginAnalytics } from './ProfitMarginAnalytics';
 import { WhatsAppReportConfig } from './WhatsAppReportConfig';
+import { SimpleProfitReport } from './SimpleProfitReport';
 
 export function ReportsManager() {
   const { state } = useApp();
   const hasProReports = useCapability('advanced_reports');
+  const hasSimpleProfit = useCapability('simple_profit_report');
   const [dateRange, setDateRange] = useState('7');
   const [reportType, setReportType] = useState('sales');
   const [startDateInput, setStartDateInput] = useState('');
@@ -293,6 +295,7 @@ export function ReportsManager() {
               <option value="sales">Sales Report</option>
               <option value="inventory">Inventory Report</option>
               <option value="customers">Customer Report</option>
+              <option value="simple-profit" disabled={!hasSimpleProfit}>Simple Profit {hasSimpleProfit ? '' : '(Pro)'}</option>
               <option value="owner-insights" disabled={!hasProReports}>Owner Insights {hasProReports ? '' : '(Pro)'}</option>
               <option value="profit-margin" disabled={!hasProReports}>Profit Margin {hasProReports ? '' : '(Pro)'}</option>
               <option value="whatsapp" disabled={!hasProReports}>WhatsApp Reports {hasProReports ? '' : '(Pro)'}</option>
@@ -911,6 +914,15 @@ export function ReportsManager() {
             </table>
           </div>
         </div>
+      )}
+
+      {/* Pro: Simple Profit Report (Revenue - Purchases) */}
+      {reportType === 'simple-profit' && (
+        hasSimpleProfit
+          ? <SimpleProfitReport />
+          : <div className="space-y-4">
+              <UpgradePrompt feature="Simple Profit Report" tier="pro" onClose={() => setReportType('sales')} />
+            </div>
       )}
 
       {/* Pro: Owner Insights */}

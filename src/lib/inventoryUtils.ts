@@ -2,7 +2,7 @@ import { CartItem } from '../types'
 
 /**
  * Simplified stock check — verifies product-level stock only.
- * Recipe-based ingredient checking is out of scope per VISION.md §10.
+ * ponytail: add supply-level stock validation when VISION.md §10 is revisited.
  * The checkout RPC handles server-side stock validation atomically.
  */
 export async function checkStockAvailability(

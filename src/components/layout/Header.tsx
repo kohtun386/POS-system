@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   User, Settings, LogOut, ShoppingCart, Monitor, Smartphone, Bell, Menu, X, Percent,
-  Receipt, Package, Users, BarChart3, Sun, Moon
+  Receipt, Package, Users, BarChart3, Sun, Moon, ClipboardList, Layers
 } from 'lucide-react';
 import { useApp, useCapability } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -20,6 +20,8 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
   const inventoryEnabled = useCapability('inventory');
   const customerEnabled = useCapability('customer_management');
   const discountEnabled = useCapability('discounts');
+  const purchaseLogEnabled = useCapability('purchase_log');
+  const stockOverviewEnabled = useCapability('stock_overview');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
@@ -72,6 +74,16 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
     // Inventory - Manager and Admin can access (feature-gated)
     if ((role === 'admin' || role === 'manager') && inventoryEnabled) {
       items.push({ id: 'inventory', label: 'Inventory', icon: Package, color: 'text-primary-600' });
+    }
+
+    // Purchase Log - Manager and Admin can access (Growth+ feature-gated)
+    if ((role === 'admin' || role === 'manager') && purchaseLogEnabled) {
+      items.push({ id: 'purchase-log', label: 'Purchases', icon: ClipboardList, color: 'text-blue-600' });
+    }
+
+    // Stock Overview - Manager and Admin can access (Growth+ feature-gated)
+    if ((role === 'admin' || role === 'manager') && stockOverviewEnabled) {
+      items.push({ id: 'stock-overview', label: 'Stock', icon: Layers, color: 'text-purple-600' });
     }
 
     // Customers - Manager and Admin can access (feature-gated)
