@@ -18,7 +18,7 @@
 
 ---
 
-## 2. Capability Mapping (All 19 Active Features)
+## 2. Capability Mapping (All 18 Active Features)
 
 ### 2.1 Canonical Feature Table
 
@@ -41,8 +41,7 @@
 | 16 | `low_stock_alerts` | **growth** | true | Threshold-based stock alerts |
 | 17 | `advanced_reports` | **pro** | false | Consolidated Pro reports gate |
 | 18 | `owner_insights` | **pro** | false | P&L dashboard |
-| 19 | `profit_analytics` | **pro** | false | Profit margin analytics |
-| 20 | `simple_profit_report` | **pro** | false | Revenue − Purchases profit calculation |
+| 19 | `simple_profit_report` | **pro** | false | Revenue − Purchases profit calculation |
 
 ### 2.2 Dead Keys (DB rows only — no UI or code reference)
 
@@ -109,7 +108,7 @@ These limits are NOT capability keys — they're enforced in the business logic 
 
 ### IN SCOPE (must have for v1.0)
 
-- All 19 active features listed in §2.1
+- All 18 active features listed in §2.1
 - 3-tier gating (free → growth → pro)
 - Per-shop feature overrides via `shop_features`
 - `advanced_reports` as consolidated Pro reports gate
@@ -156,7 +155,7 @@ When modifying feature gating, capability keys, or tier assignments:
 | 2026-07-03 | VISION.md is single source of truth | Business scope drives technical implementation |
 | 2026-07-03 | batch_tracking, weight_based_products, credit_system, multi_tab_sales stay Free | They're embedded in ProductModal/POS; no standalone component to gate |
 | 2026-07-03 | kitchen_display, online_ordering, supplier_management are dead keys | No UI components; code uses printer_integration instead |
-| 2026-07-03 | owner_insights, profit_analytics gated by advanced_reports | Code consolidates Pro reports under single gate |
+| 2026-07-03 | owner_insights gated by advanced_reports | Code consolidates Pro reports under single gate |
 | 2026-07-03 | printer_integration, staff_accounts, cash_drawer → growth (not free) | VISION §5.5 and §3.2 define these as Growth features |
 | 2026-07-03 | recipe_bom, raw_materials → growth (not pro) | VISION §5.5 defines these as Growth features; Growth selling point |
 | 2026-07-10 | Cross-document SSOT audit completed | 15 governance decisions resolved. VISION.md confirmed as product-scope authority. |

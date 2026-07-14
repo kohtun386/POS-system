@@ -94,7 +94,6 @@ const initialState: AppState = {
     storePhone: '+94 11 234 5678',
     storeEmail: 'info@sekalabs.lk',
     taxRate: 0,
-    currency: 'LKR',
     interfaceMode: 'touch',
     autoBackup: true,
     receiptPrinter: true,

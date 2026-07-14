@@ -47,7 +47,7 @@ const mockState = {
     discountType: 'fixed' as const,
     subtotal: 11,
   }],
-  settings: { interfaceMode: 'desktop', currency: 'USD', taxRate: 0, storeName: 'Test' },
+  settings: { interfaceMode: 'desktop', taxRate: 0, storeName: 'Test' },
   customer: null,
   selectedCustomer: null,
   discounts: [],

@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X, CreditCard, Banknote, Smartphone, Check, Receipt, AlertCircle, Gift } from 'lucide-react';
 import { Sale, CardDetails, AppliedDiscount, CartItem, Payment } from '../../types';
 import { useApp, checkDiscountEligibility, useCapability } from '../../context/SupabaseAppContext';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { useAuth } from '../../context/AuthContext';
 import { ReceiptPrint } from './ReceiptPrint';
 import { UpgradePrompt } from '../ui/UpgradePrompt';
@@ -445,7 +446,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                           <div key={index} className="text-sm text-success-700 dark:text-[#4ade80]">
                             <span className="font-medium">{discount.discountName}</span>
                             {discount.type !== 'free_gift' && (
-                              <span className="ml-2">- {state.settings.currency} {discount.discountAmount.toFixed(2)}</span>
+                              <span className="ml-2">- {DEFAULT_CURRENCY} {discount.discountAmount.toFixed(2)}</span>
                             )}
                           </div>
                         ))}
@@ -479,7 +480,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                       <span className="truncate flex-1 mr-2">
                         {item.product.name} × {item.weight ? `${item.weight}${item.product.unit}` : item.quantity}
                       </span>
-                      <span className="font-medium text-secondary-900 dark:text-secondary-100">{state.settings.currency} {item.subtotal.toFixed(2)}</span>
+                      <span className="font-medium text-secondary-900 dark:text-secondary-100">{DEFAULT_CURRENCY} {item.subtotal.toFixed(2)}</span>
                     </div>
                   ))}
                   {freeGifts.map((gift, index) => (
@@ -487,7 +488,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                       <span className="truncate flex-1 mr-2">
                         🎁 {gift.product.name} × {gift.quantity} (FREE)
                       </span>
-                      <span className="font-medium">{state.settings.currency} 0.00</span>
+                      <span className="font-medium">{DEFAULT_CURRENCY} 0.00</span>
                     </div>
                   ))}
                 </div>
@@ -495,21 +496,21 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                 <div className="space-y-2 pt-4 border-t border-secondary-200 dark:border-secondary-800">
                   <div className="flex justify-between text-secondary-600 dark:text-secondary-300">
                     <span>Subtotal:</span>
-                    <span className="font-medium text-secondary-900 dark:text-secondary-100">{state.settings.currency} {subtotal.toFixed(2)}</span>
+                    <span className="font-medium text-secondary-900 dark:text-secondary-100">{DEFAULT_CURRENCY} {subtotal.toFixed(2)}</span>
                   </div>
                   {totalDiscount > 0 && (
                     <div className="flex justify-between text-success-600">
                       <span>Total Discount:</span>
-                      <span className="font-medium">-{state.settings.currency} {totalDiscount.toFixed(2)}</span>
+                      <span className="font-medium">-{DEFAULT_CURRENCY} {totalDiscount.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-secondary-600 dark:text-secondary-300">
                     <span>Tax ({state.settings.taxRate}%):</span>
-                    <span className="font-medium text-secondary-900 dark:text-secondary-100">{state.settings.currency} {taxAmount.toFixed(2)}</span>
+                    <span className="font-medium text-secondary-900 dark:text-secondary-100">{DEFAULT_CURRENCY} {taxAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold text-secondary-900 dark:text-secondary-100 pt-2 border-t border-secondary-200 dark:border-secondary-800">
                     <span>Total:</span>
-                    <span className="text-primary-600 dark:text-primary-400">{state.settings.currency} {total.toFixed(2)}</span>
+                    <span className="text-primary-600 dark:text-primary-400">{DEFAULT_CURRENCY} {total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -616,7 +617,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                       value={amountPaid}
                       onChange={(e) => setAmountPaid(e.target.value)}
                       className={`input ${isTouchMode ? 'h-12 text-lg' : 'h-11'}`}
-                      placeholder={`Minimum: ${state.settings.currency} ${total.toFixed(2)}`}
+                      placeholder={`Minimum: ${DEFAULT_CURRENCY} ${total.toFixed(2)}`}
                       disabled={isProcessing}
                     />
                     <AnimatePresence>
@@ -631,7 +632,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                           <div className="flex justify-between items-center">
                             <span className="font-semibold text-success-800 dark:text-[#86efac] text-sm">Change Due:</span>
                             <span className="text-base font-bold text-success-800 dark:text-[#86efac]">
-                              {state.settings.currency} {change.toFixed(2)}
+                              {DEFAULT_CURRENCY} {change.toFixed(2)}
                             </span>
                           </div>
                         </motion.div>
@@ -655,7 +656,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                   <div className={`overflow-hidden transition-all duration-300 ease-in-out ${splitPaymentEnabled ? 'max-h-[500px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
                     <div className="space-y-3 border border-secondary-200 dark:border-secondary-800 rounded-xl p-3 bg-secondary-50 dark:bg-surface-dark">
                       <div className="text-sm text-secondary-600 dark:text-secondary-300">
-                        Remaining to pay: <span className="font-semibold text-secondary-900 dark:text-secondary-100">{state.settings.currency} {remaining.toFixed(2)}</span>
+                        Remaining to pay: <span className="font-semibold text-secondary-900 dark:text-secondary-100">{DEFAULT_CURRENCY} {remaining.toFixed(2)}</span>
                       </div>
 
                       <div className="flex items-center space-x-2">
@@ -678,7 +679,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                               <div className="text-xs text-secondary-600 dark:text-secondary-300">{p.cardDetails ? `${p.cardDetails.cardType} ••••${p.cardDetails.lastFourDigits}` : ''}</div>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <div className="font-semibold text-secondary-900 dark:text-secondary-100">{state.settings.currency} {p.amount.toFixed(2)}</div>
+                              <div className="font-semibold text-secondary-900 dark:text-secondary-100">{DEFAULT_CURRENCY} {p.amount.toFixed(2)}</div>
                               <button onClick={() => removePayment(p.id)} className="btn-ghost text-sm font-medium !text-red-600 hover:!text-red-800">Remove</button>
                             </div>
                           </div>
@@ -707,15 +708,15 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     <div className="text-sm text-secondary-900 dark:text-secondary-100">
                       <div className="flex justify-between">
                         <span>Credit Limit:</span>
-                        <span className="font-medium">{state.settings.currency} {state.selectedCustomer.creditLimit.toFixed(2)}</span>
+                        <span className="font-medium">{DEFAULT_CURRENCY} {state.selectedCustomer.creditLimit.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Used:</span>
-                        <span className="font-medium">{state.settings.currency} {state.selectedCustomer.creditUsed.toFixed(2)}</span>
+                        <span className="font-medium">{DEFAULT_CURRENCY} {state.selectedCustomer.creditUsed.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between font-semibold border-t border-primary-300 dark:border-primary-700/50 pt-1 mt-1">
                         <span>Available:</span>
-                        <span className="text-success-600">{state.settings.currency} {(state.selectedCustomer.creditLimit - state.selectedCustomer.creditUsed).toFixed(2)}</span>
+                        <span className="text-success-600">{DEFAULT_CURRENCY} {(state.selectedCustomer.creditLimit - state.selectedCustomer.creditUsed).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

@@ -10,8 +10,6 @@ function makeSettings(overrides: Partial<AppSettings> = {}): AppSettings {
     storePhone: '555-0100',
     storeEmail: 'test@coffee.com',
     taxRate: 0.1,
-    currency: 'USD',
-    baseCurrency: 'USD',
     interfaceMode: 'touch',
     autoBackup: true,
     receiptPrinter: true,

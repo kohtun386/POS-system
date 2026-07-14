@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Search, Plus, Package, Scale, X, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { Product } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 
 interface ProductGridProps {
   onAddToCart: (product: Product, weight?: number) => void;
@@ -187,7 +188,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
                   product={product}
                   onAddToCart={handleProductClick}
                   isTouchMode={isTouchMode}
-                  currency={state.settings.currency}
+                  currency={DEFAULT_CURRENCY}
                   isRecentlyAdded={recentlyAdded === product.id}
                 />
               ))}
@@ -217,7 +218,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
                 </div>
                 <h4 className="font-semibold text-secondary-900 dark:text-secondary-100">{showWeightModal.name}</h4>
                 <p className="text-sm text-secondary-600 dark:text-secondary-300">
-                  {state.settings.currency} {showWeightModal.pricePerUnit?.toFixed(2)} per {showWeightModal.unit}
+                  {DEFAULT_CURRENCY} {showWeightModal.pricePerUnit?.toFixed(2)} per {showWeightModal.unit}
                 </p>
               </div>
 
@@ -241,7 +242,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
                   <div className="flex justify-between text-sm text-secondary-900 dark:text-secondary-100">
                     <span>Total Price:</span>
                     <span className="font-semibold">
-                      {state.settings.currency} {((showWeightModal.pricePerUnit || 0) * parseFloat(weight)).toFixed(2)}
+                      {DEFAULT_CURRENCY} {((showWeightModal.pricePerUnit || 0) * parseFloat(weight)).toFixed(2)}
                     </span>
                   </div>
                 </div>

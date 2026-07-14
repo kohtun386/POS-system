@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Trash2, Plus, Minus, User, Percent, FileText, ShoppingCart } from 'lucide-react';
 import { CartItem, Customer } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 
 interface CartProps {
   onCheckout: () => void;
@@ -214,7 +215,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
                   onRemove={removeFromCart}
                   onApplyDiscount={applyDiscount}
                   isTouchMode={isTouchMode}
-                  currency={state.settings.currency}
+                  currency={DEFAULT_CURRENCY}
                 />
               </motion.div>
             ))}
@@ -235,17 +236,17 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
           <div className="space-y-2.5">
             <div className="flex justify-between text-sm">
               <span className="text-secondary-600 dark:text-secondary-300">Subtotal</span>
-              <span className="font-medium text-secondary-900 dark:text-secondary-100 tabular-nums">{state.settings.currency} {subtotal.toFixed(2)}</span>
+              <span className="font-medium text-secondary-900 dark:text-secondary-100 tabular-nums">{DEFAULT_CURRENCY} {subtotal.toFixed(2)}</span>
             </div>
             {totalDiscount > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-success-600">Discount</span>
-                <span className="font-medium text-success-600 tabular-nums">-{state.settings.currency} {totalDiscount.toFixed(2)}</span>
+                <span className="font-medium text-success-600 tabular-nums">-{DEFAULT_CURRENCY} {totalDiscount.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
               <span className="text-secondary-600 dark:text-secondary-300">Tax ({state.settings.taxRate}%)</span>
-              <span className="font-medium text-secondary-900 dark:text-secondary-100 tabular-nums">{state.settings.currency} {taxAmount.toFixed(2)}</span>
+              <span className="font-medium text-secondary-900 dark:text-secondary-100 tabular-nums">{DEFAULT_CURRENCY} {taxAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-baseline pt-3 mt-1 border-t-2 border-primary-600/15">
               <span className="text-base font-semibold text-secondary-900 dark:text-secondary-100">Total</span>
@@ -255,7 +256,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
                 animate={{ scale: 1 }}
                 className="text-2xl font-bold text-primary-600 dark:text-primary-400 tabular-nums"
               >
-                {state.settings.currency} {total.toFixed(2)}
+                {DEFAULT_CURRENCY} {total.toFixed(2)}
               </motion.span>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { swalConfig } from '../../lib/sweetAlert';
 import { useApp } from '../../context/SupabaseAppContext';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 
 export function WhatsAppReportConfig() {
@@ -108,7 +109,7 @@ export function WhatsAppReportConfig() {
           </div>
           <div className="space-y-1 text-secondary-600 dark:text-secondary-300">
             <div>📅 {new Date().toLocaleDateString()}</div>
-            <div>💰 Revenue: {state.settings.currency} —</div>
+            <div>💰 Revenue: {DEFAULT_CURRENCY} —</div>
             <div>🧾 Transactions: —</div>
             <div>📦 Top Products: —</div>
             <div className="mt-2 text-xs text-[#a8978a]">

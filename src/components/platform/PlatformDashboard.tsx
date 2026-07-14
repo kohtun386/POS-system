@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { platformAdminService, PlatformDailyStats } from '../../lib/services';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 
 export function PlatformDashboard() {
   useAuth();
-  const [stats, setStats] = useState<PlatformDailyStats>({ totalShops: 0, activeShops: 0, pendingApprovals: 0, mrr: 0, currency: 'MMK' });
+  const [stats, setStats] = useState<PlatformDailyStats>({ totalShops: 0, activeShops: 0, pendingApprovals: 0, mrr: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export function PlatformDashboard() {
         </div>
         <div className="card p-4 text-center">
           <div className="text-3xl font-bold text-secondary-900 dark:text-secondary-100">
-            {stats.mrr.toLocaleString()} {stats.currency}
+            {stats.mrr.toLocaleString()} {DEFAULT_CURRENCY}
           </div>
           <div className="text-sm text-secondary-600 dark:text-secondary-300 mt-1">Monthly Recurring Revenue</div>
         </div>

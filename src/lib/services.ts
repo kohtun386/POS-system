@@ -1750,7 +1750,6 @@ export interface PlatformDailyStats {
   activeShops: number;
   pendingApprovals: number;
   mrr: number;
-  currency: string;
 }
 
 export const platformAdminService = {

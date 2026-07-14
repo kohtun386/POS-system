@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Product } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { ProductModal } from './ProductModal';
 import { swalConfig } from '../../lib/sweetAlert';
 import { UpgradePrompt } from '../ui/UpgradePrompt';
@@ -147,7 +148,7 @@ export function InventoryManager() {
           <div className="flex items-center justify-between relative z-10">
             <div>
               <p className="text-green-100 text-sm font-medium">Inventory Value</p>
-              <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {totalValue.toFixed(2)}</p>
+              <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {totalValue.toFixed(2)}</p>
             </div>
             <div className="bg-white/20 p-3 rounded-2xl">
               <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -252,10 +253,10 @@ export function InventoryManager() {
                       <span className="badge badge-info">{product.category}</span>
                     </td>
                     <td className="table-cell font-semibold">
-                      {state.settings.currency} {product.price.toFixed(2)}
+                      {DEFAULT_CURRENCY} {product.price.toFixed(2)}
                     </td>
                     <td className="table-cell text-gray-600">
-                      {state.settings.currency} {product.cost.toFixed(2)}
+                      {DEFAULT_CURRENCY} {product.cost.toFixed(2)}
                     </td>
                     <td className="table-cell">
                       <div className="flex items-center space-x-2">

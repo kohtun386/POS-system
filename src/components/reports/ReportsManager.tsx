@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
 import { DollarSign, ShoppingCart, Users, TrendingUp, Download, BarChart3 } from 'lucide-react';
 import { useApp, useCapability } from '../../context/SupabaseAppContext';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { UpgradePrompt } from '../ui/UpgradePrompt';
 import { OwnerInsights } from './OwnerInsights';
@@ -352,7 +353,7 @@ export function ReportsManager() {
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Total Revenue</p>
-                <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {totalRevenue.toFixed(2)}</p>
+                <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {totalRevenue.toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <DollarSign className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -376,7 +377,7 @@ export function ReportsManager() {
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Avg. Transaction</p>
-                <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {averageTransaction.toFixed(2)}</p>
+                <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {averageTransaction.toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -388,7 +389,7 @@ export function ReportsManager() {
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Total Discounts</p>
-                <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {totalDiscounts.toFixed(2)}</p>
+                <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {totalDiscounts.toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <Users className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -431,7 +432,7 @@ export function ReportsManager() {
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Avg. Customer Value</p>
-                <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {(customerData.reduce((sum, c) => sum + c.totalSpent, 0) / Math.max(customerData.filter(c => c.totalTransactions > 0).length, 1)).toFixed(2)}</p>
+                <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {(customerData.reduce((sum, c) => sum + c.totalSpent, 0) / Math.max(customerData.filter(c => c.totalTransactions > 0).length, 1)).toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <DollarSign className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -444,7 +445,7 @@ export function ReportsManager() {
               <div>
                 <p className="text-white/80 text-sm font-medium">Top Customer</p>
                 <p className="text-lg lg:text-xl font-bold">{customerData[0]?.name || 'N/A'}</p>
-                <p className="text-white/80 text-xs">{customerData[0] ? `${state.settings.currency} ${customerData[0].totalSpent.toFixed(2)}` : ''}</p>
+                <p className="text-white/80 text-xs">{customerData[0] ? `${DEFAULT_CURRENCY} ${customerData[0].totalSpent.toFixed(2)}` : ''}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -487,7 +488,7 @@ export function ReportsManager() {
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Total Stock Value</p>
-                <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {inventoryData.reduce((sum, item) => sum + item.stockValue, 0).toFixed(2)}</p>
+                <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {inventoryData.reduce((sum, item) => sum + item.stockValue, 0).toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <DollarSign className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -499,7 +500,7 @@ export function ReportsManager() {
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Potential Revenue</p>
-                <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {inventoryData.reduce((sum, item) => sum + item.potentialRevenue, 0).toFixed(2)}</p>
+                <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {inventoryData.reduce((sum, item) => sum + item.potentialRevenue, 0).toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -525,7 +526,7 @@ export function ReportsManager() {
                 <YAxis stroke="#6b7280" fontSize={12} />
                 <Tooltip 
                   formatter={(value: string | number | (string | number)[], name: string) => [
-                    name === 'sales' ? `${state.settings.currency} ${Number(value).toFixed(2)}` : value,
+                    name === 'sales' ? `${DEFAULT_CURRENCY} ${Number(value).toFixed(2)}` : value,
                     name === 'sales' ? 'Sales' : 'Transactions'
                   ]}
                   contentStyle={{
@@ -581,7 +582,7 @@ export function ReportsManager() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: number | string) => [`${state.settings.currency} ${Number(value).toFixed(2)}`, 'Revenue']}
+                  formatter={(value: number | string) => [`${DEFAULT_CURRENCY} ${Number(value).toFixed(2)}`, 'Revenue']}
                   contentStyle={{
                     backgroundColor: '#faf8f5',
                     border: '1px solid #ded7cc',
@@ -614,7 +615,7 @@ export function ReportsManager() {
                 <YAxis stroke="#6b7280" fontSize={12} />
                 <Tooltip 
                   formatter={(value: string | number | (string | number)[], name: string) => [
-                    name === 'spending' ? `${state.settings.currency} ${Number(value).toFixed(2)}` : value,
+                    name === 'spending' ? `${DEFAULT_CURRENCY} ${Number(value).toFixed(2)}` : value,
                     name === 'spending' ? 'Total Spent' : 'Transactions'
                   ]}
                   contentStyle={{
@@ -709,7 +710,7 @@ export function ReportsManager() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: number | string) => [`${state.settings.currency} ${Number(value).toFixed(2)}`, 'Stock Value']}
+                  formatter={(value: number | string) => [`${DEFAULT_CURRENCY} ${Number(value).toFixed(2)}`, 'Stock Value']}
                   contentStyle={{
                     backgroundColor: '#faf8f5',
                     border: '1px solid #ded7cc',
@@ -758,10 +759,10 @@ export function ReportsManager() {
                       <span className="badge badge-info">{product.quantity}</span>
                     </td>
                     <td className="table-cell font-semibold text-green-600">
-                      {state.settings.currency} {product.revenue.toFixed(2)}
+                      {DEFAULT_CURRENCY} {product.revenue.toFixed(2)}
                     </td>
                     <td className="table-cell text-secondary-600 dark:text-secondary-300">
-                      {state.settings.currency} {(product.revenue / product.quantity).toFixed(2)}
+                      {DEFAULT_CURRENCY} {(product.revenue / product.quantity).toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -803,7 +804,7 @@ export function ReportsManager() {
                       </div>
                     </td>
                     <td className="table-cell font-semibold text-green-600">
-                      {state.settings.currency} {customer.totalSpent.toFixed(2)}
+                      {DEFAULT_CURRENCY} {customer.totalSpent.toFixed(2)}
                     </td>
                     <td className="table-cell">
                       <span className="badge badge-info">{customer.totalTransactions}</span>
@@ -812,7 +813,7 @@ export function ReportsManager() {
                       <span className="badge badge-secondary">{customer.totalItems}</span>
                     </td>
                     <td className="table-cell text-secondary-600 dark:text-secondary-300">
-                      {state.settings.currency} {customer.avgTransactionValue.toFixed(2)}
+                      {DEFAULT_CURRENCY} {customer.avgTransactionValue.toFixed(2)}
                     </td>
                     <td className="table-cell text-secondary-600 dark:text-secondary-300">
                       {format(customer.lastPurchase, 'MMM dd, yyyy')}
@@ -878,13 +879,13 @@ export function ReportsManager() {
                       </span>
                     </td>
                     <td className="table-cell font-semibold text-blue-600">
-                      {state.settings.currency} {item.stockValue.toFixed(2)}
+                      {DEFAULT_CURRENCY} {item.stockValue.toFixed(2)}
                     </td>
                     <td className="table-cell">
                       <span className="badge badge-info">{item.soldQuantity}</span>
                     </td>
                     <td className="table-cell font-semibold text-green-600">
-                      {state.settings.currency} {item.revenue.toFixed(2)}
+                      {DEFAULT_CURRENCY} {item.revenue.toFixed(2)}
                     </td>
                     <td className="table-cell">
                       <span className={`badge ${
