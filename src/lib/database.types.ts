@@ -216,39 +216,6 @@ export type Database = {
           },
         ]
       }
-      alert_schedules: {
-        Row: {
-          alert_type: string
-          created_at: string
-          id: string
-          is_active: boolean | null
-          last_run: string | null
-          next_run: string | null
-          run_count: number | null
-          updated_at: string
-        }
-        Insert: {
-          alert_type: string
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          last_run?: string | null
-          next_run?: string | null
-          run_count?: number | null
-          updated_at?: string
-        }
-        Update: {
-          alert_type?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          last_run?: string | null
-          next_run?: string | null
-          run_count?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       alert_templates: {
         Row: {
           body: string
@@ -299,12 +266,8 @@ export type Database = {
       app_settings: {
         Row: {
           auto_backup: boolean | null
-          base_currency: string | null
           created_at: string
           currency: string | null
-          exchange_rate_api_key: string | null
-          exchange_rate_provider: string | null
-          exchange_rate_update_interval: number | null
           id: string
           interface_mode: string | null
           invoice_counter: number | null
@@ -322,12 +285,8 @@ export type Database = {
         }
         Insert: {
           auto_backup?: boolean | null
-          base_currency?: string | null
           created_at?: string
           currency?: string | null
-          exchange_rate_api_key?: string | null
-          exchange_rate_provider?: string | null
-          exchange_rate_update_interval?: number | null
           id?: string
           interface_mode?: string | null
           invoice_counter?: number | null
@@ -345,12 +304,8 @@ export type Database = {
         }
         Update: {
           auto_backup?: boolean | null
-          base_currency?: string | null
           created_at?: string
           currency?: string | null
-          exchange_rate_api_key?: string | null
-          exchange_rate_provider?: string | null
-          exchange_rate_update_interval?: number | null
           id?: string
           interface_mode?: string | null
           invoice_counter?: number | null
@@ -369,6 +324,57 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fk_app_settings_shop"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          details: Json
+          id: string
+          ip_address: string | null
+          shop_id: string | null
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          details?: Json
+          id?: string
+          ip_address?: string | null
+          shop_id?: string | null
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          ip_address?: string | null
+          shop_id?: string | null
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_logs_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -461,139 +467,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fk_categories_shop"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      consumption_log: {
-        Row: {
-          consumed_at: string
-          id: string
-          product_id: string
-          product_name: string
-          quantity_base: number
-          quantity_consumed: number
-          raw_material_id: string
-          raw_material_name: string
-          sale_id: string
-          sale_item_index: number | null
-          shop_id: string
-          stock_after: number
-          stock_before: number
-          unit: string
-          wastage_amount: number | null
-        }
-        Insert: {
-          consumed_at?: string
-          id?: string
-          product_id: string
-          product_name: string
-          quantity_base: number
-          quantity_consumed: number
-          raw_material_id: string
-          raw_material_name: string
-          sale_id: string
-          sale_item_index?: number | null
-          shop_id: string
-          stock_after: number
-          stock_before: number
-          unit: string
-          wastage_amount?: number | null
-        }
-        Update: {
-          consumed_at?: string
-          id?: string
-          product_id?: string
-          product_name?: string
-          quantity_base?: number
-          quantity_consumed?: number
-          raw_material_id?: string
-          raw_material_name?: string
-          sale_id?: string
-          sale_item_index?: number | null
-          shop_id?: string
-          stock_after?: number
-          stock_before?: number
-          unit?: string
-          wastage_amount?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "consumption_log_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "consumption_log_raw_material_id_fkey"
-            columns: ["raw_material_id"]
-            isOneToOne: false
-            referencedRelation: "raw_materials"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "consumption_log_sale_id_fkey"
-            columns: ["sale_id"]
-            isOneToOne: false
-            referencedRelation: "sales"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "consumption_log_shop_id_fkey"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      currency_config: {
-        Row: {
-          code: string
-          created_at: string
-          decimal_places: number | null
-          id: string
-          is_active: boolean | null
-          is_base_currency: boolean | null
-          name: string
-          shop_id: string
-          symbol: string
-          symbol_position: string | null
-          updated_at: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          decimal_places?: number | null
-          id?: string
-          is_active?: boolean | null
-          is_base_currency?: boolean | null
-          name: string
-          shop_id?: string
-          symbol: string
-          symbol_position?: string | null
-          updated_at?: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          decimal_places?: number | null
-          id?: string
-          is_active?: boolean | null
-          is_base_currency?: boolean | null
-          name?: string
-          shop_id?: string
-          symbol?: string
-          symbol_position?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_currency_config_shop"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -722,103 +595,6 @@ export type Database = {
           },
         ]
       }
-      exchange_rate_history: {
-        Row: {
-          base_currency: string
-          change_percentage: number | null
-          id: string
-          is_manual_override: boolean | null
-          previous_rate: number | null
-          rate: number
-          recorded_at: string
-          shop_id: string
-          source: string
-          target_currency: string
-        }
-        Insert: {
-          base_currency: string
-          change_percentage?: number | null
-          id?: string
-          is_manual_override?: boolean | null
-          previous_rate?: number | null
-          rate: number
-          recorded_at?: string
-          shop_id?: string
-          source?: string
-          target_currency: string
-        }
-        Update: {
-          base_currency?: string
-          change_percentage?: number | null
-          id?: string
-          is_manual_override?: boolean | null
-          previous_rate?: number | null
-          rate?: number
-          recorded_at?: string
-          shop_id?: string
-          source?: string
-          target_currency?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_exchange_rate_history_shop"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      exchange_rates: {
-        Row: {
-          base_currency: string
-          created_at: string
-          effective_from: string
-          effective_to: string | null
-          id: string
-          is_manual_override: boolean | null
-          rate: number
-          shop_id: string
-          source: string
-          target_currency: string
-          updated_at: string
-        }
-        Insert: {
-          base_currency: string
-          created_at?: string
-          effective_from?: string
-          effective_to?: string | null
-          id?: string
-          is_manual_override?: boolean | null
-          rate: number
-          shop_id?: string
-          source?: string
-          target_currency: string
-          updated_at?: string
-        }
-        Update: {
-          base_currency?: string
-          created_at?: string
-          effective_from?: string
-          effective_to?: string | null
-          id?: string
-          is_manual_override?: boolean | null
-          rate?: number
-          shop_id?: string
-          source?: string
-          target_currency?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_exchange_rates_shop"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       feature_definitions: {
         Row: {
           category: string
@@ -851,47 +627,6 @@ export type Database = {
           subscription_tier?: string
         }
         Relationships: []
-      }
-      kitchen_orders: {
-        Row: {
-          completed_at: string | null
-          created_at: string | null
-          id: string
-          items: Json
-          picked_up_at: string | null
-          shop_id: string | null
-          started_at: string | null
-          status: string
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string | null
-          id?: string
-          items: Json
-          picked_up_at?: string | null
-          shop_id?: string | null
-          started_at?: string | null
-          status?: string
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string | null
-          id?: string
-          items?: Json
-          picked_up_at?: string | null
-          shop_id?: string | null
-          started_at?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "kitchen_orders_shop_id_fkey"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       notification_service_config: {
         Row: {
@@ -939,27 +674,30 @@ export type Database = {
       }
       print_jobs: {
         Row: {
+          completed_at: string | null
           config_data: Json
-          created_at: string | null
+          created_at: string
           id: string
           order_id: string | null
-          shop_id: string | null
+          shop_id: string
           status: string
         }
         Insert: {
-          config_data: Json
-          created_at?: string | null
+          completed_at?: string | null
+          config_data?: Json
+          created_at?: string
           id?: string
           order_id?: string | null
-          shop_id?: string | null
+          shop_id: string
           status?: string
         }
         Update: {
+          completed_at?: string | null
           config_data?: Json
-          created_at?: string | null
+          created_at?: string
           id?: string
           order_id?: string | null
-          shop_id?: string | null
+          shop_id?: string
           status?: string
         }
         Relationships: [
@@ -967,7 +705,7 @@ export type Database = {
             foreignKeyName: "print_jobs_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
-            referencedRelation: "kitchen_orders"
+            referencedRelation: "sales"
             referencedColumns: ["id"]
           },
           {
@@ -1040,7 +778,6 @@ export type Database = {
         Row: {
           active: boolean | null
           barcode: string | null
-          base_currency: string | null
           category: string
           cost: number | null
           created_at: string
@@ -1051,7 +788,6 @@ export type Database = {
           min_stock: number | null
           name: string
           price: number
-          price_in_base_currency: number | null
           price_per_unit: number | null
           shop_id: string
           sku: string
@@ -1064,7 +800,6 @@ export type Database = {
         Insert: {
           active?: boolean | null
           barcode?: string | null
-          base_currency?: string | null
           category: string
           cost?: number | null
           created_at?: string
@@ -1075,7 +810,6 @@ export type Database = {
           min_stock?: number | null
           name: string
           price: number
-          price_in_base_currency?: number | null
           price_per_unit?: number | null
           shop_id?: string
           sku: string
@@ -1088,7 +822,6 @@ export type Database = {
         Update: {
           active?: boolean | null
           barcode?: string | null
-          base_currency?: string | null
           category?: string
           cost?: number | null
           created_at?: string
@@ -1099,7 +832,6 @@ export type Database = {
           min_stock?: number | null
           name?: string
           price?: number
-          price_in_base_currency?: number | null
           price_per_unit?: number | null
           shop_id?: string
           sku?: string
@@ -1119,199 +851,16 @@ export type Database = {
           },
         ]
       }
-      raw_materials: {
-        Row: {
-          base_unit: string
-          category: string
-          cost_per_unit: number | null
-          created_at: string
-          current_stock: number
-          id: string
-          is_active: boolean | null
-          minimum_stock: number | null
-          name: string
-          notes: string | null
-          shop_id: string
-          sku: string | null
-          updated_at: string
-        }
-        Insert: {
-          base_unit: string
-          category?: string
-          cost_per_unit?: number | null
-          created_at?: string
-          current_stock?: number
-          id?: string
-          is_active?: boolean | null
-          minimum_stock?: number | null
-          name: string
-          notes?: string | null
-          shop_id: string
-          sku?: string | null
-          updated_at?: string
-        }
-        Update: {
-          base_unit?: string
-          category?: string
-          cost_per_unit?: number | null
-          created_at?: string
-          current_stock?: number
-          id?: string
-          is_active?: boolean | null
-          minimum_stock?: number | null
-          name?: string
-          notes?: string | null
-          shop_id?: string
-          sku?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "raw_materials_shop_id_fkey"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      recipe_lines: {
-        Row: {
-          created_at: string
-          id: string
-          is_optional: boolean | null
-          notes: string | null
-          quantity: number
-          raw_material_id: string
-          raw_material_name: string
-          recipe_id: string
-          recipe_quantity: number | null
-          recipe_unit: string | null
-          shop_id: string
-          wastage_percent: number | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_optional?: boolean | null
-          notes?: string | null
-          quantity: number
-          raw_material_id: string
-          raw_material_name: string
-          recipe_id: string
-          recipe_quantity?: number | null
-          recipe_unit?: string | null
-          shop_id: string
-          wastage_percent?: number | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_optional?: boolean | null
-          notes?: string | null
-          quantity?: number
-          raw_material_id?: string
-          raw_material_name?: string
-          recipe_id?: string
-          recipe_quantity?: number | null
-          recipe_unit?: string | null
-          shop_id?: string
-          wastage_percent?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recipe_lines_raw_material_id_fkey"
-            columns: ["raw_material_id"]
-            isOneToOne: false
-            referencedRelation: "raw_materials"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipe_lines_recipe_id_fkey"
-            columns: ["recipe_id"]
-            isOneToOne: false
-            referencedRelation: "recipes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipe_lines_shop_id_fkey"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      recipes: {
-        Row: {
-          created_at: string
-          id: string
-          instructions: string | null
-          is_active: boolean | null
-          prep_time_seconds: number | null
-          product_id: string
-          product_name: string
-          serving_size: number | null
-          serving_unit: string | null
-          shop_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          instructions?: string | null
-          is_active?: boolean | null
-          prep_time_seconds?: number | null
-          product_id: string
-          product_name: string
-          serving_size?: number | null
-          serving_unit?: string | null
-          shop_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          instructions?: string | null
-          is_active?: boolean | null
-          prep_time_seconds?: number | null
-          product_id?: string
-          product_name?: string
-          serving_size?: number | null
-          serving_unit?: string | null
-          shop_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recipes_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipes_shop_id_fkey"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       sales: {
         Row: {
           applied_discounts: Json | null
-          base_currency_amount: number | null
           card_details: Json | null
           cashier: string | null
-          cashier_id: string | null
           cashier_role: string | null
           created_at: string
           customer_id: string | null
           customer_name: string | null
           discount_amount: number | null
-          exchange_rate_used: number | null
           free_gifts: Json | null
           id: string
           invoice_number: string
@@ -1325,21 +874,17 @@ export type Database = {
           subtotal: number
           tax_amount: number | null
           total: number
-          transaction_currency: string | null
           updated_at: string
         }
         Insert: {
           applied_discounts?: Json | null
-          base_currency_amount?: number | null
           card_details?: Json | null
           cashier?: string | null
-          cashier_id?: string | null
           cashier_role?: string | null
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
           discount_amount?: number | null
-          exchange_rate_used?: number | null
           free_gifts?: Json | null
           id?: string
           invoice_number: string
@@ -1353,21 +898,17 @@ export type Database = {
           subtotal?: number
           tax_amount?: number | null
           total: number
-          transaction_currency?: string | null
           updated_at?: string
         }
         Update: {
           applied_discounts?: Json | null
-          base_currency_amount?: number | null
           card_details?: Json | null
           cashier?: string | null
-          cashier_id?: string | null
           cashier_role?: string | null
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
           discount_amount?: number | null
-          exchange_rate_used?: number | null
           free_gifts?: Json | null
           id?: string
           invoice_number?: string
@@ -1381,7 +922,6 @@ export type Database = {
           subtotal?: number
           tax_amount?: number | null
           total?: number
-          transaction_currency?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1390,13 +930,6 @@ export type Database = {
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sales_cashier_id_fkey"
-            columns: ["cashier_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -1554,14 +1087,10 @@ export type Database = {
           daily_order_limit: number | null
           email: string | null
           id: string
-          invoice_counter: number
-          invoice_prefix: string
           is_active: boolean | null
           name: string
           owner_id: string | null
           phone: string | null
-          receipt_footer: string | null
-          receipt_show_logo: boolean | null
           subscription_tier: string | null
           updated_at: string
         }
@@ -1571,14 +1100,10 @@ export type Database = {
           daily_order_limit?: number | null
           email?: string | null
           id?: string
-          invoice_counter?: number
-          invoice_prefix?: string
           is_active?: boolean | null
           name: string
           owner_id?: string | null
           phone?: string | null
-          receipt_footer?: string | null
-          receipt_show_logo?: boolean | null
           subscription_tier?: string | null
           updated_at?: string
         }
@@ -1588,14 +1113,10 @@ export type Database = {
           daily_order_limit?: number | null
           email?: string | null
           id?: string
-          invoice_counter?: number
-          invoice_prefix?: string
           is_active?: boolean | null
           name?: string
           owner_id?: string | null
           phone?: string | null
-          receipt_footer?: string | null
-          receipt_show_logo?: boolean | null
           subscription_tier?: string | null
           updated_at?: string
         }
@@ -1647,27 +1168,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      uom_conversions: {
-        Row: {
-          factor: number
-          from_unit: string
-          id: string
-          to_unit: string
-        }
-        Insert: {
-          factor: number
-          from_unit: string
-          id?: string
-          to_unit: string
-        }
-        Update: {
-          factor?: number
-          from_unit?: string
-          id?: string
-          to_unit?: string
-        }
-        Relationships: []
       }
       users: {
         Row: {
@@ -1724,54 +1224,7 @@ export type Database = {
       }
     }
     Views: {
-      alert_monitoring: {
-        Row: {
-          alert_type: string | null
-          channel: string | null
-          created_at: string | null
-          current_stock: number | null
-          delivered_at: string | null
-          id: string | null
-          min_stock: number | null
-          product_name: string | null
-          product_sku: string | null
-          recipient_name: string | null
-          sent_at: string | null
-          status: string | null
-          status_display: string | null
-        }
-        Insert: {
-          alert_type?: string | null
-          channel?: string | null
-          created_at?: string | null
-          current_stock?: number | null
-          delivered_at?: string | null
-          id?: string | null
-          min_stock?: number | null
-          product_name?: string | null
-          product_sku?: string | null
-          recipient_name?: string | null
-          sent_at?: string | null
-          status?: string | null
-          status_display?: never
-        }
-        Update: {
-          alert_type?: string | null
-          channel?: string | null
-          created_at?: string | null
-          current_stock?: number | null
-          delivered_at?: string | null
-          id?: string | null
-          min_stock?: number | null
-          product_name?: string | null
-          product_sku?: string | null
-          recipient_name?: string | null
-          sent_at?: string | null
-          status?: string | null
-          status_display?: never
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       check_inventory_alerts: {
@@ -1807,8 +1260,12 @@ export type Database = {
           role: string
         }[]
       }
-      is_platform_admin: { Args: never; Returns: boolean }
-      resolve_capabilities: { Args: { p_shop_id: string }; Returns: string[] }
+      resolve_capabilities: {
+        Args: { p_shop_id: string }
+        Returns: {
+          capability: string
+        }[]
+      }
       should_send_alert: {
         Args: {
           alert_type_param: string
