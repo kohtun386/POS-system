@@ -348,6 +348,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   async function loadData() {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
+      // VISION.md §17.4: Platform admins use Edge Functions, not direct DB access.
+      // Skip ALL shop-specific data loading for platform_admin role.
+      // Platform dashboard uses platformAdminService (Edge Functions) exclusively.
+      if (profile?.role === 'platform_admin') {
+        dispatch({ type: 'SET_ERROR', payload: null });
+        return;
+      }
+
       // Load most data in parallel — shop-dependent queries follow sequentially
       const [
         products,
