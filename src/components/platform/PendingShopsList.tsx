@@ -87,7 +87,7 @@ export function PendingShopsList() {
                   Registered: {new Date(shop.createdAt).toLocaleDateString()}
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   className="btn btn-success btn-sm"
                   onClick={() => handleApprove(shop.shopId)}

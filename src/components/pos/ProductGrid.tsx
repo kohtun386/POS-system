@@ -103,7 +103,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
               {showLeftScroll && (
                 <button
                   onClick={() => scrollCategories('left')}
-                  className="absolute left-0 z-10 flex items-center justify-center w-8 h-8 bg-secondary-50 border border-secondary-200 rounded-full shadow-sm hover:bg-secondary-100 transition-all"
+                  className="absolute left-0 z-10 flex items-center justify-center min-w-[44px] min-h-[44px] bg-secondary-50 border border-secondary-200 rounded-full shadow-sm hover:bg-secondary-100 transition-all"
                 >
                   <ChevronLeft className="h-4 w-4 text-secondary-600" />
                 </button>
@@ -134,7 +134,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
               {showRightScroll && (
                 <button
                   onClick={() => scrollCategories('right')}
-                  className="absolute right-0 z-10 flex items-center justify-center w-8 h-8 bg-secondary-50 border border-secondary-200 rounded-full shadow-sm hover:bg-secondary-100 transition-all"
+                  className="absolute right-0 z-10 flex items-center justify-center min-w-[44px] min-h-[44px] bg-secondary-50 border border-secondary-200 rounded-full shadow-sm hover:bg-secondary-100 transition-all"
                 >
                   <ChevronRight className="h-4 w-4 text-secondary-600" />
                 </button>

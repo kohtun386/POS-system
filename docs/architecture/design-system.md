@@ -496,6 +496,19 @@ VISION.md v3.1.0 defines three device layers. Each has distinct form factors, in
 | Tables | Standard `.table` with horizontal scroll |
 | Modals | Full-width on small tablets, `max-w-md` on larger |
 
+#### 10.1.1 POS Touch Target Requirements
+
+| Element | Touch Mode | Traditional Mode |
+|---------|------------|------------------|
+| Product "Add" button | `btn-lg touch-friendly` (48px+) | `btn-md` (44px+) |
+| Category filter buttons | `btn-lg touch-friendly` (48px+) | `btn-md` (44px+) |
+| Cart quantity buttons | `.qty-btn` (48px coarse pointer) | `.qty-btn` (44px) |
+| Cart item remove | `min-w-[44px] min-h-[44px]` | `min-w-[44px] min-h-[44px]` |
+| Checkout payment buttons | `min-h-[80px]` | `min-h-[70px]` |
+| Tab close button | `min-w-[44px] min-h-[44px]` touch area | `min-w-[44px] min-h-[44px]` touch area |
+
+**Rule:** All interactive elements must have minimum 44x44px touch area. In touch mode, prefer 48x48px.
+
 ---
 
 ### 10.2 Owner Mobile (Mobile-First, Read-Only)
@@ -604,6 +617,16 @@ VISION.md v3.1.0 defines three device layers. Each has distinct form factors, in
 - Tables support keyboard navigation (Tab between rows)
 - Modal dialogs trap focus, Escape to close
 - Status badges use color + text (not color alone)
+
+#### 10.3.5 Mobile Navigation Patterns
+
+| Element | Minimum Size | Implementation |
+|---------|--------------|----------------|
+| Hamburger button | 48x48px | `p-3 min-w-[48px] min-h-[48px]` |
+| Sidebar nav items | 44px height | `px-4 py-3` with `min-h-[44px]` |
+| Overlay backdrop | Full screen | `fixed inset-0 bg-secondary-950/40 z-30` |
+
+**Table handling on mobile:** Use `overflow-x-auto` wrapper. Tables scroll horizontally — no card-view transformation needed.
 
 ---
 

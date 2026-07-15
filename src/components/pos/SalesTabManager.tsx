@@ -142,11 +142,11 @@ export function SalesTabManager() {
                         closeTab(tab.id);
                       }
                     }}
-                    className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-danger-600 text-white flex items-center justify-center hover:bg-danger-700 transition-colors ${
+                    className={`absolute -bottom-2 -right-2 w-6 h-6 min-w-[44px] min-h-[44px] rounded-full bg-danger-600 text-white flex items-center justify-center hover:bg-danger-700 transition-colors ${
                       isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                     }`}
                   >
-                    <X className="h-2 w-2" />
+                    <X className="h-3 w-3" />
                   </span>
                 )}
               </button>
@@ -166,7 +166,7 @@ export function SalesTabManager() {
             createNewTab();
           }}
           disabled={!canManageTabs}
-          className={`w-12 h-10 rounded-md transition-all duration-300 flex items-center justify-center mx-auto shadow-soft ${
+          className={`w-12 min-h-[48px] rounded-md transition-all duration-300 flex items-center justify-center mx-auto shadow-soft ${
             canManageTabs
               ? 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white'
               : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'

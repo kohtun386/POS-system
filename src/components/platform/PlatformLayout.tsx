@@ -39,9 +39,9 @@ export function PlatformLayout() {
   return (
     <div className="h-dvh bg-secondary-50 dark:bg-primary-950 flex flex-col">
       {/* Mobile Header */}
-      <header className="h-12 flex items-center px-4 bg-secondary-100 dark:bg-[#2a1f15] border-b border-secondary-200 dark:border-[#3d2d1f] md:hidden">
+      <header className="h-12 flex items-center px-4 bg-secondary-100 dark:bg-surface-dark border-b border-secondary-200 dark:border-secondary-800 md:hidden">
         <button
-          className="p-2 rounded-lg hover:bg-secondary-200 dark:hover:bg-[#3d2d1f] transition-colors"
+          className="p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg hover:bg-secondary-200 dark:hover:bg-secondary-800 transition-colors"
           onClick={() => setSidebarOpen(!sidebarOpen)}
           aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
         >
@@ -63,7 +63,7 @@ export function PlatformLayout() {
         <aside
           className={`
             fixed md:static inset-y-0 left-0 z-40
-            w-64 bg-secondary-100 dark:bg-[#2a1f15] border-r border-secondary-200 dark:border-[#3d2d1f]
+            w-64 bg-secondary-100 dark:bg-surface-dark border-r border-secondary-200 dark:border-secondary-800
             flex flex-col pt-4 pb-4
             transition-transform duration-200 ease-out
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -83,7 +83,7 @@ export function PlatformLayout() {
                   className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     view === item.key
                       ? 'bg-primary-600 text-white'
-                      : 'text-secondary-900 dark:text-secondary-100 hover:bg-secondary-200 dark:hover:bg-[#3d2d1f]'
+                      : 'text-secondary-900 dark:text-secondary-100 hover:bg-secondary-200 dark:hover:bg-secondary-800'
                   }`}
                 >
                   <Icon size={18} />

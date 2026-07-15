@@ -40,13 +40,13 @@ export function PlatformDashboard() {
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="stat-card-warning">
+        <div className="stat-card stat-card-warning">
           <div className="relative z-10">
             <div className="text-3xl font-bold">{stats.pendingApprovals}</div>
             <div className="text-sm opacity-90 mt-1">Pending Approvals</div>
           </div>
         </div>
-        <div className="stat-card-success">
+        <div className="stat-card stat-card-success">
           <div className="relative z-10">
             <div className="text-3xl font-bold">{stats.activeShops}</div>
             <div className="text-sm opacity-90 mt-1">Active Shops</div>

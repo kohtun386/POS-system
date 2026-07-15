@@ -829,8 +829,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
               <button
                 onClick={onClose}
                 disabled={isProcessing}
-                className="btn btn-secondary btn-md px-6 py-3"
-                style={{ minHeight: '44px' }}
+                className="btn btn-secondary btn-md px-6 py-3 touch-friendly"
               >
                 Cancel
               </button>
@@ -838,8 +837,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
               <button
                 onClick={handlePayment}
                 disabled={!canProcessPayment()}
-                className="btn btn-primary btn-md flex items-center space-x-2 min-w-[160px] justify-center px-6 py-3"
-                style={{ minHeight: '44px' }}
+                className="btn btn-primary btn-md flex items-center space-x-2 min-w-[160px] justify-center px-6 py-3 touch-friendly"
               >
                 {isProcessing ? (
                   <>

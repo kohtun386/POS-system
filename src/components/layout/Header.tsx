@@ -206,7 +206,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
             )}
 
             {/* Notifications */}
-            <button className="btn-ghost p-2 rounded-2xl transition-all duration-300 relative" aria-label="Notifications">
+            <button className="btn-ghost p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl transition-all duration-300 relative" aria-label="Notifications">
               <Bell className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-accent-600 rounded-full animate-pulse"></span>
             </button>
@@ -230,7 +230,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                 <div className="hidden md:flex items-center space-x-1">
                   <button
                     onClick={() => onViewChange('settings')}
-                    className="p-2 rounded-2xl text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300"
+                    className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300"
                     aria-label="Settings"
                   >
                     <Settings className="h-4 w-4" />
@@ -238,7 +238,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
 
                   <button
                     onClick={handleLogout}
-                    className="p-2 rounded-2xl text-secondary-600 hover:text-danger-600 hover:bg-[#fee2e2] transition-all duration-300"
+                    className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-danger-600 hover:bg-[#fee2e2] transition-all duration-300"
                     aria-label="Sign out"
                   >
                     <LogOut className="h-4 w-4" />
@@ -250,7 +250,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="xl:hidden p-2 rounded-2xl text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300"
+              className="xl:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300"
               aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
             >
               {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
