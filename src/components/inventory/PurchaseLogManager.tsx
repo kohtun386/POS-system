@@ -11,7 +11,7 @@ import { UpgradePrompt } from '../ui/UpgradePrompt';
 export function PurchaseLogManager() {
   const { state } = useApp();
   const canPurchaseLog = useCapability('purchase_log');
-  const currentShop = state.currentShop;
+  const currentShop = state.shop;
 
   const [purchases, setPurchases] = useState<PurchaseLog[]>([]);
   const [loading, setLoading] = useState(true);

@@ -420,6 +420,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Expose dispatch globally for E2E tests to set capabilities without page reload
+  if (typeof window !== 'undefined') {
+    (window as any).__appDispatch = dispatch;
+  }
+
   return (
     <AppContext.Provider value={{ state, dispatch }}>
       {children}

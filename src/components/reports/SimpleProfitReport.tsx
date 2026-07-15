@@ -6,7 +6,7 @@ import { DEFAULT_CURRENCY } from '../../lib/constants';
 
 export function SimpleProfitReport() {
   const { state } = useApp();
-  const currentShop = state.currentShop;
+  const currentShop = state.shop;
 
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
@@ -23,8 +23,8 @@ export function SimpleProfitReport() {
       const from = new Date(selectedYear, selectedMonth, 1);
       const to = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
 
-      const salesData = await salesService.getAll(currentShop.id);
-      const monthSales = salesData.filter(s => {
+      const { data: salesData } = await salesService.getAll();
+      const monthSales = (salesData || []).filter(s => {
         const d = new Date(s.timestamp);
         return d >= from && d <= to && s.status === 'completed';
       });

@@ -80,3 +80,4 @@ test-results/
 
 # Claude Code skills (AI tooling config)
 .claude/skills/
+supabase/snippets/

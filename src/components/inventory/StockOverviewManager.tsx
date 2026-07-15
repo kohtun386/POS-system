@@ -16,7 +16,7 @@ interface StockItemModalProps {
 
 function StockItemModal({ isOpen, onClose, item, onSaved }: StockItemModalProps) {
   const { state } = useApp();
-  const currentShop = state.currentShop;
+  const currentShop = state.shop;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -215,7 +215,7 @@ function AdjustModal({ isOpen, onClose, item, onSaved }: { isOpen: boolean; onCl
 export function StockOverviewManager() {
   const { state } = useApp();
   const canStockOverview = useCapability('stock_overview');
-  const currentShop = state.currentShop;
+  const currentShop = state.shop;
 
   const [items, setItems] = useState<StockItem[]>([]);
   const [loading, setLoading] = useState(true);

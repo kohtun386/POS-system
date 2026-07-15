@@ -14,7 +14,7 @@ interface PurchaseLogModalProps {
 
 export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: PurchaseLogModalProps) {
   const { state } = useApp();
-  const currentShop = state.currentShop;
+  const currentShop = state.shop;
 
   const [formData, setFormData] = useState({
     supplier: '',

@@ -12,6 +12,12 @@ export const TEST_ADMIN = {
   password: 'TestAdmin123!',
 }
 
+// Regular admin user (not platform_admin) — renders normal POS nav
+export const TEST_ADMIN_MANAGER = {
+  email: 'test-admin-manager@coffeeshop.local',
+  password: 'TestAdmin123!',
+}
+
 /**
  * Login via the app's login page (for Playwright)
  */
