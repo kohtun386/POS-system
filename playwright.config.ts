@@ -22,7 +22,7 @@ try {
 } catch { /* .env.test not found — fall back to shell env */ }
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: './tests/e2e/journeys',
   fullyParallel: false, // serial for DB-dependent tests
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
