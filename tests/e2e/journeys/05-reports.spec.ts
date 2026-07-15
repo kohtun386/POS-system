@@ -4,12 +4,12 @@
  * Journey 5.1: Navigate to Simple Profit Report
  * Journey 5.2: Verify the report calculates Profit = Revenue - Purchases
  *
- * Uses tierPage fixture with pro-tier capabilities intercepted before login.
+ * Sets up pro-tier intercept BEFORE login so loadData() picks up
+ * the correct capabilities from the start.
  */
 import { test, expect } from '../fixtures'
-import { setShopTier, reloadForCapabilities, resetCapabilitiesIntercept } from '../helpers/tier-helpers'
-
-const TEST_SHOP_ID = process.env.TEST_SHOP_ID || '4f3dab19-144e-4a29-95a5-2ee82f160ce5'
+import { setupTier, resetCapabilitiesIntercept } from '../helpers/tier-helpers'
+import { loginViaUI, TEST_ADMIN_MANAGER } from '../helpers/test-users'
 
 test.describe('Simple Profit Report', () => {
   test.afterEach(async ({ page }) => {
@@ -17,30 +17,28 @@ test.describe('Simple Profit Report', () => {
   })
 
   test('5.1: Navigate to Simple Profit Report', async ({
-    tierPage: page,
+    page,
   }) => {
-    // Set pro tier capabilities
-    setShopTier(page, TEST_SHOP_ID, 'pro')
-    await reloadForCapabilities(page)
+    // Set up pro-tier intercept BEFORE login
+    await setupTier(page, 'pro')
+    await loginViaUI(page, TEST_ADMIN_MANAGER.email, TEST_ADMIN_MANAGER.password)
+    await expect(page.locator('nav button', { hasText: 'Reports' })).toBeVisible({ timeout: 15000 })
 
     // Navigate to Reports
-    const reportsBtn = page.locator('nav button', { hasText: 'Reports' })
-    await expect(reportsBtn).toBeVisible({ timeout: 10000 })
-    await reportsBtn.click()
+    await page.locator('nav button', { hasText: 'Reports' }).click()
 
     // Wait for ReportsManager
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
 
     // Select Simple Profit from dropdown
-    // Note: label is "Simple Profit" when pro is enabled, "Simple Profit (Pro)" when not
     const reportDropdown = page.locator('select').first()
     await reportDropdown.selectOption({ value: 'simple-profit' }, { timeout: 5000 })
 
     // Verify key elements
     await expect(page.locator('text=Revenue').first()).toBeVisible()
     await expect(page.locator('text=Purchases').first()).toBeVisible()
-    await expect(page.locator('text=Profit').first()).toBeVisible()
+    await expect(page.locator('text=Net Profit')).toBeVisible()
 
     await expect(page.locator('h3', { hasText: 'Profit Calculation' })).toBeVisible()
 
@@ -50,15 +48,14 @@ test.describe('Simple Profit Report', () => {
   })
 
   test('5.2: Verify Profit = Revenue - Purchases calculation', async ({
-    tierPage: page,
+    page,
   }) => {
-    setShopTier(page, TEST_SHOP_ID, 'pro')
-    await reloadForCapabilities(page)
+    await setupTier(page, 'pro')
+    await loginViaUI(page, TEST_ADMIN_MANAGER.email, TEST_ADMIN_MANAGER.password)
+    await expect(page.locator('nav button', { hasText: 'Reports' })).toBeVisible({ timeout: 15000 })
 
     // Navigate to Reports
-    const reportsBtn = page.locator('nav button', { hasText: 'Reports' })
-    await expect(reportsBtn).toBeVisible({ timeout: 10000 })
-    await reportsBtn.click()
+    await page.locator('nav button', { hasText: 'Reports' }).click()
 
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
@@ -70,18 +67,19 @@ test.describe('Simple Profit Report', () => {
     // Wait for data
     await page.waitForTimeout(2000)
 
-    // Extract values
-    const revenueRow = page.locator('tr', { hasText: 'Total Revenue' })
-    const purchasesRow = page.locator('tr', { hasText: 'Total Purchases' })
-    const profitRow = page.locator('tr', { hasText: 'Net Profit' })
+    // Extract values — structure is div>span, not tr>td
+    const revenueLabel = page.locator('text=Total Revenue')
+    const purchasesLabel = page.locator('text=Total Purchases')
+    const profitLabel = page.locator('text=Net Profit')
 
-    await expect(revenueRow).toBeVisible({ timeout: 10000 })
-    await expect(purchasesRow).toBeVisible()
-    await expect(profitRow).toBeVisible()
+    await expect(revenueLabel).toBeVisible({ timeout: 10000 })
+    await expect(purchasesLabel).toBeVisible()
+    await expect(profitLabel).toBeVisible()
 
-    const revenueText = await revenueRow.locator('td').last().innerText()
-    const purchasesText = await purchasesRow.locator('td').last().innerText()
-    const profitText = await profitRow.locator('td').last().innerText()
+    // Values are in the sibling span within the same flex div
+    const revenueText = await revenueLabel.locator('..').locator('span').last().innerText()
+    const purchasesText = await purchasesLabel.locator('..').locator('span').last().innerText()
+    const profitText = await profitLabel.locator('..').locator('span').last().innerText()
 
     const parseMMK = (s: string): number => {
       const cleaned = s.replace(/[^0-9-]/g, '')
@@ -95,9 +93,9 @@ test.describe('Simple Profit Report', () => {
     expect(profit).toBe(revenue - purchases)
 
     if (revenue > 0) {
-      const marginRow = page.locator('tr', { hasText: 'Profit Margin' })
-      await expect(marginRow).toBeVisible()
-      const marginText = await marginRow.locator('td').last().innerText()
+      const marginLabel = page.locator('text=Profit Margin')
+      await expect(marginLabel).toBeVisible()
+      const marginText = await marginLabel.locator('..').locator('span').last().innerText()
       expect(marginText).toMatch(/%/)
     }
 

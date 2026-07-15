@@ -15,14 +15,11 @@ test.describe('Authentication & Onboarding', () => {
     // Login with existing test-admin
     await loginViaUI(page, TEST_ADMIN.email, TEST_ADMIN.password)
 
-    // Should be on main app (POS or dashboard)
-    const url = page.url()
-    expect(url).not.toContain('/login')
-
-    // Verify main app elements are visible
-    await expect(page.locator('text=POS').first()).toBeVisible({
+    // Should be on main app — platform_admin sees PlatformLayout, not POS
+    await page.waitForURL((url) => !url.toString().includes('/login'), {
       timeout: 10000,
     })
+    expect(page.url()).not.toContain('/login')
   })
 
   test('1.2: Login with invalid credentials shows error', async ({ page }) => {

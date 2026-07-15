@@ -24,7 +24,11 @@ export const test = base.extend<TestFixtures>({
   },
 
   tierPage: async ({ page }, use) => {
-    // Read tier from test metadata, default to 'free'
+    // Read tier from test metadata, default to 'free'.
+    // IMPORTANT: pass this tier to the intercept so that loadData()'s
+    // resolveCapabilitiesRpc() call sets the correct tier from the start.
+    // Without this, the intercept returns free caps and overwrites any
+    // caps the test dispatches later (loadData is async and completes after).
     const tier: Tier = (test.info().project.metadata?.tier as Tier) || 'free'
 
     // Set up route interception BEFORE any navigation

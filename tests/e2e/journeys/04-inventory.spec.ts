@@ -5,14 +5,14 @@
  * Journey 4.2: Verify the purchase appears in the PurchaseLogManager list
  * Journey 4.3: Perform a manual stock adjustment in StockOverviewManager
  *
- * Uses tierPage fixture which intercepts resolve_capabilities RPC
- * BEFORE login with growth-tier capabilities.
+ * Sets up growth-tier intercept BEFORE login so loadData() picks up
+ * the correct capabilities from the start (avoids the race where
+ * loadData's resolveCapabilitiesRpc overwrites dispatched caps).
  */
 import { test, expect } from '../fixtures'
-import { setShopTier, reloadForCapabilities, resetCapabilitiesIntercept } from '../helpers/tier-helpers'
+import { setupTier, resetCapabilitiesIntercept } from '../helpers/tier-helpers'
+import { loginViaUI, TEST_ADMIN_MANAGER } from '../helpers/test-users'
 import { cleanupTestPurchases, cleanupTestStockItems, cleanupTestAdjustments } from '../helpers/db-helpers'
-
-const TEST_SHOP_ID = process.env.TEST_SHOP_ID || '4f3dab19-144e-4a29-95a5-2ee82f160ce5'
 
 test.describe('Simplified Inventory', () => {
   test.afterEach(async ({ page }) => {
@@ -23,16 +23,16 @@ test.describe('Simplified Inventory', () => {
   })
 
   test('4.1: Record a new supplier purchase via PurchaseLogModal', async ({
-    tierPage: page,
+    page,
   }) => {
-    // Set growth tier capabilities (needed for purchase_log)
-    setShopTier(page, TEST_SHOP_ID, 'growth')
-    await reloadForCapabilities(page)
+    // Set up growth-tier intercept BEFORE login so loadData() gets correct caps
+    await setupTier(page, 'growth')
+    await loginViaUI(page, TEST_ADMIN_MANAGER.email, TEST_ADMIN_MANAGER.password)
+    // Wait for data to fully load
+    await expect(page.locator('nav button', { hasText: 'Purchases' })).toBeVisible({ timeout: 15000 })
 
     // Navigate to Purchases
-    const purchasesBtn = page.locator('nav button', { hasText: 'Purchases' })
-    await expect(purchasesBtn).toBeVisible({ timeout: 10000 })
-    await purchasesBtn.click()
+    await page.locator('nav button', { hasText: 'Purchases' }).click()
 
     // Wait for Purchase Log page
     await expect(page.locator('h1', { hasText: 'Purchase Log' })).toBeVisible({
@@ -66,46 +66,53 @@ test.describe('Simplified Inventory', () => {
   })
 
   test('4.2: Verify the purchase appears in the PurchaseLogManager list', async ({
-    tierPage: page,
+    page,
   }) => {
-    setShopTier(page, TEST_SHOP_ID, 'growth')
-    await reloadForCapabilities(page)
+    await setupTier(page, 'growth')
+    await loginViaUI(page, TEST_ADMIN_MANAGER.email, TEST_ADMIN_MANAGER.password)
+    await expect(page.locator('nav button', { hasText: 'Purchases' })).toBeVisible({ timeout: 15000 })
 
     // Navigate to Purchases
-    const purchasesBtn = page.locator('nav button', { hasText: 'Purchases' })
-    await expect(purchasesBtn).toBeVisible({ timeout: 10000 })
-    await purchasesBtn.click()
+    await page.locator('nav button', { hasText: 'Purchases' }).click()
 
     await expect(page.locator('h1', { hasText: 'Purchase Log' })).toBeVisible({
       timeout: 10000,
     })
 
-    // Search for test purchase
-    const searchInput = page.locator('input[placeholder*="Search"]')
-    if (await searchInput.isVisible()) {
-      await searchInput.fill('E2E Test Coffee Beans')
-      await page.waitForTimeout(500)
-    }
+    // Create a purchase first (tests are independent — no data from 4.1)
+    const addBtn = page.locator('button', { hasText: 'Record Purchase' })
+    await expect(addBtn).toBeVisible()
+    await addBtn.click()
 
-    // Verify row exists
+    const modal = page.locator('.modal-overlay .modal')
+    await expect(modal).toBeVisible({ timeout: 5000 })
+
+    await modal.locator('input[type="text"]').first().fill('E2E Test Coffee Beans')
+    await modal.locator('input[type="text"]').nth(1).fill('E2E Test Supplier')
+    await modal.locator('input[type="number"]').first().fill('50')
+    await modal.locator('select').first().selectOption('kg')
+    await modal.locator('input[type="number"]').nth(1).fill('25000')
+
+    await modal.locator('button[type="submit"]').click()
+    await expect(modal).not.toBeVisible({ timeout: 10000 })
+
+    // Now verify it appears in the list
     const row = page.locator('tr', { hasText: 'E2E Test Coffee Beans' })
-    await expect(row).toBeVisible({ timeout: 5000 })
+    await expect(row).toBeVisible({ timeout: 10000 })
 
     // Verify key columns
     await expect(row.locator('td', { hasText: 'E2E Test Supplier' })).toBeVisible()
-    await expect(row.locator('td', { hasText: /50/ })).toBeVisible()
+    await expect(row.locator('td', { hasText: '50 kg' })).toBeVisible()
   })
 
   test('4.3: Perform a manual stock adjustment in StockOverviewManager', async ({
-    tierPage: page,
+    page,
   }) => {
-    setShopTier(page, TEST_SHOP_ID, 'growth')
-    await reloadForCapabilities(page)
+    await setupTier(page, 'growth')
+    await loginViaUI(page, TEST_ADMIN_MANAGER.email, TEST_ADMIN_MANAGER.password)
+    await expect(page.locator('nav button', { hasText: 'Stock' })).toBeVisible({ timeout: 15000 })
 
-    // Navigate to Stock
-    const stockBtn = page.locator('nav button', { hasText: 'Stock' })
-    await expect(stockBtn).toBeVisible({ timeout: 10000 })
-    await stockBtn.click()
+    await page.locator('nav button', { hasText: 'Stock' }).click()
 
     await expect(page.locator('h1', { hasText: 'Stock Overview' })).toBeVisible({
       timeout: 10000,

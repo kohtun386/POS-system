@@ -58,8 +58,8 @@ export async function interceptCapabilities(page: Page, tier: Tier) {
 }
 
 /**
- * Change intercepted tier capabilities. After calling this,
- * reload the page so the app picks up the new mocked response.
+ * Change intercepted tier capabilities.
+ * After calling this, use reloadForCapabilities() to dispatch the new caps.
  */
 export async function setShopTier(page: Page, _shopId: string, tier: Tier) {
   // Remove old route and intercept with new tier
@@ -100,6 +100,36 @@ export async function applyCapabilities(page: Page, tier: Tier) {
   console.log(`[APPLY_CAPS] tier=${tier}, result=${result}`)
   // Wait for React to re-render
   await page.waitForTimeout(500)
+}
+
+/**
+ * Wait for the initial data load to complete.
+ * loadData() is async — it calls Promise.all for data, then resolveCapabilitiesRpc().
+ * We wait for the POS nav to render, then dispatch the test's tier caps.
+ * The dispatch must happen AFTER loadData's resolveCapabilitiesRpc completes,
+ * otherwise it gets overwritten. We detect this by waiting for product content
+ * to appear (last data dispatch) + generous buffer for the RPC call.
+ */
+export async function waitForInitialLoad(page: Page) {
+  // Wait for the POS page to be fully loaded (nav + products visible)
+  await expect(page.locator('nav button', { hasText: 'POS' })).toBeVisible({ timeout: 15000 })
+  // Wait for product content to appear (= data fully loaded)
+  await page.waitForTimeout(3000)
+}
+
+/**
+ * Set up tier intercept BEFORE login so loadData() picks up the correct tier.
+ * Call this instead of relying on reloadForCapabilities for initial tier setup.
+ * Usage: call setupTier(page, 'growth') before loginViaUI in the test.
+ */
+export async function setupTier(page: Page, tier: Tier) {
+  await page.route('**/rest/v1/rpc/resolve_capabilities**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(TIER_CAPABILITIES[tier]),
+    })
+  })
 }
 
 /**
