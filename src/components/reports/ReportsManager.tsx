@@ -58,6 +58,7 @@ export function ReportsManager() {
     
     filteredSales.forEach(sale => {
       sale.items.forEach(item => {
+        if (!item.product) return;
         const productId = item.product.id;
         if (!productSales[productId]) {
           productSales[productId] = {
@@ -82,6 +83,7 @@ export function ReportsManager() {
     
     filteredSales.forEach(sale => {
       sale.items.forEach(item => {
+        if (!item.product) return;
         const category = item.product.category;
         if (!categories[category]) {
           categories[category] = { name: category, value: 0 };
@@ -160,13 +162,13 @@ export function ReportsManager() {
     const inventoryStats = state.products.map(product => {
       const soldQuantity = filteredSales.reduce((sum, sale) => {
         return sum + sale.items
-          .filter(item => item.product.id === product.id)
+          .filter(item => item.product && item.product.id === product.id)
           .reduce((itemSum, item) => itemSum + item.quantity, 0);
       }, 0);
 
       const revenue = filteredSales.reduce((sum, sale) => {
         return sum + sale.items
-          .filter(item => item.product.id === product.id)
+          .filter(item => item.product && item.product.id === product.id)
           .reduce((itemSum, item) => itemSum + item.subtotal, 0);
       }, 0);
 

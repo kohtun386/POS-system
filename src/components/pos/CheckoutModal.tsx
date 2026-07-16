@@ -204,7 +204,6 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
           }
 
           if (discountAmount > 0) {
-            autoDiscountAmount += discountAmount;
             eligibleDiscounts.push({
               discountId: discount.id,
               discountName: discount.name,
