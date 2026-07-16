@@ -144,7 +144,7 @@ A multi-tenant SaaS point-of-sale platform built for coffee shops and tea shops 
 | Icons | Lucide React |
 | Notifications | SweetAlert2 |
 | Dates | date-fns |
-| Analytics | PostHog (production only) |
+| Analytics | Vercel Analytics |
 | Testing | Vitest + React Testing Library, Playwright (e2e) |
 
 ---
@@ -230,7 +230,6 @@ src/
 │   ├── AuthContext.tsx          # Supabase auth wrapper
 │   └── ThemeContext.tsx         # Light/dark/system theme
 ├── lib/
-│   ├── analytics.ts             # PostHog analytics (production only)
 │   ├── services.ts              # 22 service objects (all DB access)
 │   ├── supabase.ts              # Supabase client init
 │   ├── sweetAlert.ts            # SweetAlert2 themed configs
@@ -409,6 +408,17 @@ test: add Vitest with React Testing Library
 - Include screenshots for UI changes
 - Run `npm run lint` before submitting
 - Update relevant docs if schema or behavior changes
+
+---
+
+## Analytics
+
+This project uses Vercel Analytics for:
+- Page views tracking
+- Real-time visitor data
+- Performance monitoring
+
+No configuration needed — works automatically on Vercel.
 
 ---
 
