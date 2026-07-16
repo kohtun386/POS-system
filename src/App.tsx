@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppProvider, useApp } from './context/SupabaseAppContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -10,6 +10,7 @@ import { Header } from './components/layout/Header';
 import { PlatformLayout } from './components/platform/PlatformLayout';
 import { useCapability } from './context/SupabaseAppContext';
 import { ReportsManager } from './lazyComponents';
+import { trackEvent } from './lib/analytics';
 // Lazy-loaded route components for code-splitting
 const POSTerminal = lazy(() => import('./components/pos/POSTerminal').then(m => ({ default: m.POSTerminal })));
 const TransactionsManager = lazy(() => import('./components/transactions/TransactionsManager').then(m => ({ default: m.TransactionsManager })));
@@ -31,6 +32,11 @@ function AppContent() {
   const discountEnabled = useCapability('discounts');
   const purchaseLogEnabled = useCapability('purchase_log');
   const stockOverviewEnabled = useCapability('stock_overview');
+
+  // Track page views when the current view changes
+  useEffect(() => {
+    trackEvent('$pageview', { view: currentView });
+  }, [currentView]);
 
   // Show loading spinner while auth is loading
   if (loading) {

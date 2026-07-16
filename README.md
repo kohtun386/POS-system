@@ -1,8 +1,8 @@
 # CoffeeShop POS
 
-**Last updated:** 2026-07-14
+**Last updated:** 2026-07-16
 
-A web-based point-of-sale platform built for coffee shops and tea shops in Myanmar. Supports 9 payment methods including KBZpay, WavePay, AYAPay, CBPay, and MPU. Installable as a PWA on iPad and Android. Multi-tenancy foundation is in place with `shop_id` scoping and role-based access; dynamic per-shop configuration is specified and pending implementation.
+A multi-tenant SaaS point-of-sale platform built for coffee shops and tea shops in Myanmar. Supports 9 payment methods including KBZpay, WavePay, AYAPay, CBPay, and MPU. Installable as a PWA on iPad and Android. Platform admin manages all shops via dedicated Edge Functions with service_role key.
 
 ![Version](https://img.shields.io/badge/Version-3.1.0-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)
@@ -56,12 +56,22 @@ A web-based point-of-sale platform built for coffee shops and tea shops in Myanm
 - Auto-apply at checkout — no barista intervention needed
 
 ### Reports & Analytics
+- Owner Insights — P&L dashboard with revenue, expenses, and profit margins (Pro)
+- Simple Profit Report — Monthly Revenue − Purchases (Pro)
+- Profit Margin Analytics — per-category and per-product margin analysis (Pro)
 - Sales trends (line chart), category distribution (pie chart)
 - Top products, customer spending patterns
-- Inventory analytics: stock status, value by category, turnover
 - Date range filter: today, 7/30/90 days, custom range
 - CSV export for all reports
 - Coffee-themed stat cards with gradient backgrounds
+
+### Platform Admin (Cross-Tenant)
+- Platform Dashboard — aggregate stats across all shops
+- Shop Management — view, approve, or reject shop registrations
+- Subscription Management — assign Free/Growth/Pro tiers to shops
+- Feature Definitions — manage platform-wide feature flags
+- Shop Detail — per-shop overview with membership and feature data
+- Audit logging for all admin actions
 
 ### User Management & RBAC
 - 4 roles: Platform Admin (cross-tenant), Admin (full shop access), Manager (POS + inventory + reports + settings), Cashier (POS only)
@@ -125,7 +135,7 @@ A web-based point-of-sale platform built for coffee shops and tea shops in Myanm
 |-------|-----------|
 | Frontend | React 18.3, TypeScript 5.5 (strict) |
 | Styling | Tailwind CSS 3.4 — Espresso & Copper design system |
-| State | React Context + useReducer (4 providers) |
+| State | React Context + useReducer (30 actions) |
 | Backend | Supabase (PostgreSQL, Auth, REST API) |
 | Build | Vite 5.4 with code-splitting |
 | PWA | vite-plugin-pwa (Workbox) |
@@ -134,7 +144,8 @@ A web-based point-of-sale platform built for coffee shops and tea shops in Myanm
 | Icons | Lucide React |
 | Notifications | SweetAlert2 |
 | Dates | date-fns |
-| Testing | Vitest + React Testing Library |
+| Analytics | PostHog (production only) |
+| Testing | Vitest + React Testing Library, Playwright (e2e) |
 
 ---
 
@@ -191,7 +202,8 @@ UPDATE users SET role = 'admin', active = true WHERE email = 'your@email.com';
 | `npm run build` | Production build to `dist/` |
 | `npm run preview` | Preview production build locally |
 | `npm run lint` | ESLint across all source files |
-| `npx vitest` | Run test suite (Vitest + React Testing Library) |
+| `npx vitest` | Run unit/component tests (Vitest + React Testing Library) |
+| `npx playwright test` | Run end-to-end tests (Playwright) |
 
 ---
 
@@ -200,34 +212,48 @@ UPDATE users SET role = 'admin', active = true WHERE email = 'your@email.com';
 ```
 src/
 ├── components/
-│   ├── auth/            # Login page
-│   ├── customers/       # Customer manager, modal, detail view
-│   ├── discounts/       # Discount manager and modal
-│   ├── inventory/       # Product manager, modal
-│   ├── layout/          # Header with role-based navigation
-│   ├── pos/             # POS terminal, product grid, cart, checkout, receipt, sales tabs
-│   ├── reports/         # Sales/customer/inventory reports with charts
-│   ├── settings/        # Store settings, logo upload
-│   ├── transactions/    # Transaction history with filters
-│   ├── users/           # User manager and modal
-│   └── ui/              # Reusable: Button, Card, Input, CurrencyDisplay, LoadingSpinner, ErrorBoundary
+│   ├── alerts/            # Alert manager, config, recipient/service/template modals
+│   ├── auth/              # Login page, pending approval page
+│   ├── customers/         # Customer manager, modal, detail view
+│   ├── discounts/         # Discount manager and modal
+│   ├── inventory/         # Product manager, modal, purchase log, stock overview
+│   ├── layout/            # Header with role-based navigation
+│   ├── platform/          # Platform admin: dashboard, shops, subscriptions, features
+│   ├── pos/               # POS terminal, product grid, cart, checkout, receipt, sales tabs
+│   ├── reports/           # Owner insights, profit reports, margin analytics, WhatsApp config
+│   ├── settings/          # Store settings, logo upload
+│   ├── transactions/      # Transaction history with filters
+│   ├── ui/                # Reusable: Button, Card, Input, ErrorBoundary, LoadingComponents, UpgradePrompt
+│   └── users/             # User manager and modal
 ├── context/
-│   ├── SupabaseAppContext.tsx   # Active state management (useReducer, 25+ actions)
+│   ├── SupabaseAppContext.tsx   # Active state management (useReducer, 30 actions)
 │   ├── AuthContext.tsx          # Supabase auth wrapper
 │   └── ThemeContext.tsx         # Light/dark/system theme
-├── hooks/
-│   └── useFeatureFlag.ts        # Feature flag hook (reads from shop_features)
 ├── lib/
-│   ├── services.ts              # 19 service objects (all DB access)
+│   ├── analytics.ts             # PostHog analytics (production only)
+│   ├── services.ts              # 22 service objects (all DB access)
 │   ├── supabase.ts              # Supabase client init
 │   ├── sweetAlert.ts            # SweetAlert2 themed configs
 │   ├── inventoryUtils.ts        # Inventory helper utilities
 │   ├── modalUtils.ts            # Modal helper utilities
 │   └── database.types.ts        # Auto-generated Supabase types
+├── lazyComponents.ts            # Shared lazy-loading for ReportsManager
 ├── types/
 │   └── index.ts                 # All TypeScript interfaces
 ├── App.tsx                      # Provider tree + route rendering
 └── main.tsx                     # Entry point
+
+supabase/
+├── functions/
+│   ├── _shared/                 # Shared Edge Function utilities
+│   ├── platform-admin-approve-shop/
+│   ├── platform-admin-daily-stats/
+│   ├── platform-admin-get-shop-detail/
+│   ├── platform-admin-list-shops/
+│   ├── platform-admin-manage-features/
+│   ├── platform-admin-reject-shop/
+│   └── platform-admin-update-subscription/
+└── migrations/                  # 34 SQL migration files
 ```
 
 ---
@@ -265,7 +291,7 @@ src/
 
 ### Deprecated Tables (9)
 
-> Preserved for backward compatibility. NOT used in v1.0.
+> Preserved for backward compatibility. NOT used in v3.1.0.
 
 | Table | Reason |
 |-------|--------|
@@ -281,7 +307,7 @@ src/
 
 ### Migrations
 
-21 migration files in `supabase/migrations/`. Run `supabase db push` to apply.
+34 migration files in `supabase/migrations/`. Run `supabase db push` to apply.
 
 ### Key Database Features
 
@@ -351,7 +377,7 @@ Documentation-Driven Development (DDD) workflow. Docs are source of truth.
 
 | Measure | Status |
 |---------|--------|
-| RLS on all 20 active tables | ✅ Enabled |
+| RLS on all 21 active tables | ✅ Enabled |
 | Role-aware policies (not blanket authenticated) | ✅ Since migration `20260618000001` |
 | shop_id RLS scoping via `current_shop_ids()` | ✅ Since migration `20260620000002` |
 | Card data purge (cardNumber stripped) | ✅ Since migration `20260618000001` |
