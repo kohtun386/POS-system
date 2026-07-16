@@ -77,12 +77,12 @@ export function TransactionsManager() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-green-100 text-success-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'refunded': return 'bg-red-100 text-red-800';
-      case 'credit': return 'bg-blue-100 text-blue-800';
-      case 'draft': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'refunded': return 'bg-red-100 text-danger-800';
+      case 'credit': return 'bg-primary-100 text-primary-800';
+      case 'draft': return 'bg-accent-100 text-accent-800';
+      default: return 'bg-secondary-100 text-secondary-800';
     }
   };
 
@@ -115,14 +115,14 @@ export function TransactionsManager() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Transactions</h1>
-          <p className="text-gray-600 mt-1">View and manage all sales transactions</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-secondary-900">Transactions</h1>
+          <p className="text-secondary-600 mt-1">View and manage all sales transactions</p>
         </div>
         
         <div className="flex items-center space-x-3">
           <button
             onClick={exportTransactions}
-            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all font-medium shadow-lg hover:shadow-xl"
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-indigo-600 text-white rounded-xl hover:from-primary-700 hover:to-indigo-700 transition-all font-medium shadow-lg hover:shadow-xl"
           >
             <Download className="h-4 w-4" />
             <span>Export</span>
@@ -132,10 +132,10 @@ export function TransactionsManager() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 md:p-6 rounded-2xl text-white">
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-4 md:p-6 rounded-2xl text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm font-medium">Total Revenue</p>
+              <p className="text-primary-100 text-sm font-medium">Total Revenue</p>
               <p className="text-xl md:text-2xl font-bold">{DEFAULT_CURRENCY} {totalRevenue.toFixed(2)}</p>
             </div>
             <div className="bg-white/20 p-3 rounded-xl">
@@ -144,10 +144,10 @@ export function TransactionsManager() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 md:p-6 rounded-2xl text-white">
+        <div className="bg-gradient-to-r from-success-500 to-success-600 p-4 md:p-6 rounded-2xl text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-green-100 text-sm font-medium">Total Transactions</p>
+              <p className="text-success-100 text-sm font-medium">Total Transactions</p>
               <p className="text-xl md:text-2xl font-bold">{totalTransactions}</p>
             </div>
             <div className="bg-white/20 p-3 rounded-xl">
@@ -156,10 +156,10 @@ export function TransactionsManager() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 md:p-6 rounded-2xl text-white">
+        <div className="bg-gradient-to-r from-accent-500 to-accent-600 p-4 md:p-6 rounded-2xl text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-100 text-sm font-medium">Average Sale</p>
+              <p className="text-accent-100 text-sm font-medium">Average Sale</p>
               <p className="text-xl md:text-2xl font-bold">{DEFAULT_CURRENCY} {averageTransaction.toFixed(2)}</p>
             </div>
             <div className="bg-white/20 p-3 rounded-xl">
@@ -170,17 +170,17 @@ export function TransactionsManager() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
+      <div className="bg-white p-4 md:p-6 rounded-2xl border border-secondary-100 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="lg:col-span-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400 h-5 w-5" />
               <input
                 type="text"
                 placeholder="Search by receipt, customer, or cashier..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-secondary-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -188,7 +188,7 @@ export function TransactionsManager() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-3 border border-secondary-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
             <option value="all">All Status</option>
             <option value="completed">Completed</option>
@@ -201,7 +201,7 @@ export function TransactionsManager() {
           <select
             value={paymentFilter}
             onChange={(e) => setPaymentFilter(e.target.value)}
-            className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-3 border border-secondary-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
             <option value="all">All Payments</option>
             <option value="cash">Cash</option>
@@ -218,7 +218,7 @@ export function TransactionsManager() {
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-3 border border-secondary-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
             <option value="all">All Time</option>
             <option value="today">Today</option>
@@ -229,67 +229,67 @@ export function TransactionsManager() {
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-secondary-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-secondary-200">
+            <thead className="bg-secondary-50">
               <tr>
-                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">
                   Receipt
                 </th>
-                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">
                   Date & Time
                 </th>
-                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">
                   Customer
                 </th>
-                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">
                   Items
                 </th>
-                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">
                   Total
                 </th>
-                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">
                   Payment
                 </th>
-                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden lg:table-cell">
+                <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider hidden lg:table-cell">
                   Cashier
                 </th>
-                <th className="px-4 md:px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 md:px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-secondary-50 divide-y divide-secondary-200">
               {filteredTransactions.map((transaction) => (
-                <tr key={transaction.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={transaction.id} className="hover:bg-secondary-50 transition-colors">
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
-                      {isDraftSale(transaction) && <FileText className="h-4 w-4 text-purple-500" />}
-                      <div className="text-sm font-semibold text-gray-900">#{transaction.receiptNumber ?? 'N/A'}</div>
+                      {isDraftSale(transaction) && <FileText className="h-4 w-4 text-accent-500" />}
+                      <div className="text-sm font-semibold text-secondary-900">#{transaction.receiptNumber ?? 'N/A'}</div>
                     </div>
                   </td>
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-secondary-900">
                       {format(new Date(transaction.timestamp), 'MMM dd, yyyy')}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-secondary-500">
                       {format(new Date(transaction.timestamp), 'HH:mm')}
                     </div>
                   </td>
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900 truncate max-w-32">
+                    <div className="text-sm font-medium text-secondary-900 truncate max-w-32">
                       {transaction.customerName || 'Walk-in Customer'}
                     </div>
                   </td>
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{transaction.items.length} items</div>
+                    <div className="text-sm text-secondary-900">{transaction.items.length} items</div>
                   </td>
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-gray-900">
+                    <div className="text-sm font-semibold text-secondary-900">
                       {DEFAULT_CURRENCY} {transaction.total.toFixed(2)}
                     </div>
                   </td>
@@ -297,11 +297,11 @@ export function TransactionsManager() {
                                 <div className="flex items-center space-x-2">
                                   {getPaymentIcon(transaction.paymentMethod)}
                                   {transaction.payments && transaction.payments.length > 0 ? (
-                                    <span className="text-sm text-gray-900">
+                                    <span className="text-sm text-secondary-900">
                                       {transaction.payments.map(p => `${p.method} ${DEFAULT_CURRENCY} ${p.amount.toFixed(2)}`).join(' | ')}
                                     </span>
                                   ) : (
-                                    <span className="text-sm text-gray-900 capitalize">{transaction.paymentMethod}</span>
+                                    <span className="text-sm text-secondary-900 capitalize">{transaction.paymentMethod}</span>
                                   )}
                                 </div>
                               </td>
@@ -310,13 +310,13 @@ export function TransactionsManager() {
                       {isDraftSale(transaction) ? 'draft' : transaction.status}
                     </span>
                   </td>
-                  <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">
+                  <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-secondary-900 hidden lg:table-cell">
                     <div className="truncate max-w-24">{transaction.cashier ?? 'N/A'}</div>
                   </td>
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => setSelectedTransaction(transaction)}
-                      className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                      className="btn btn-ghost text-primary-600 hover:text-primary-900 p-2 rounded-xl hover:bg-primary-50 transition-colors"
                     >
                       <Eye className="h-4 w-4" />
                     </button>
@@ -391,12 +391,12 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90dvh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-secondary-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900 font-fraunces">Transaction Details</h2>
+            <h2 className="text-xl font-bold text-secondary-900 font-fraunces">Transaction Details</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-2 rounded-xl hover:bg-gray-100 transition-colors"
+              className="text-secondary-400 hover:text-secondary-600 p-2 rounded-xl hover:bg-secondary-100 transition-colors"
             >
               <X className="h-6 w-6" />
             </button>
@@ -407,46 +407,46 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
           {/* Transaction Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <p className="text-sm font-medium text-gray-600">Receipt Number</p>
-              <p className="text-lg font-semibold text-gray-900">#{transaction.receiptNumber ?? 'N/A'}</p>
+              <p className="text-sm font-medium text-secondary-600">Receipt Number</p>
+              <p className="text-lg font-semibold text-secondary-900">#{transaction.receiptNumber ?? 'N/A'}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600">Date & Time</p>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-sm font-medium text-secondary-600">Date & Time</p>
+              <p className="text-lg font-semibold text-secondary-900">
                 {format(new Date(transaction.timestamp), 'MMM dd, yyyy HH:mm')}
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600">Customer</p>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-sm font-medium text-secondary-600">Customer</p>
+              <p className="text-lg font-semibold text-secondary-900">
                 {transaction.customerName || 'Walk-in Customer'}
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600">Cashier</p>
-              <p className="text-lg font-semibold text-gray-900">{transaction.cashier ?? 'N/A'}</p>
+              <p className="text-sm font-medium text-secondary-600">Cashier</p>
+              <p className="text-lg font-semibold text-secondary-900">{transaction.cashier ?? 'N/A'}</p>
             </div>
           </div>
 
           {/* Card Details */}
           {transaction.cardDetails && (
-            <div className="bg-gray-50 rounded-2xl p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3 font-fraunces">Card Details</h3>
+            <div className="bg-secondary-50 rounded-2xl p-4">
+              <h3 className="text-lg font-semibold text-secondary-900 mb-3 font-fraunces">Card Details</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-gray-600">Bank</p>
+                  <p className="text-secondary-600">Bank</p>
                   <p className="font-medium">{transaction.cardDetails.bankName}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Card Type</p>
+                  <p className="text-secondary-600">Card Type</p>
                   <p className="font-medium capitalize">{transaction.cardDetails.cardType}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Card Ending</p>
+                  <p className="text-secondary-600">Card Ending</p>
                   <p className="font-medium">****{transaction.cardDetails.lastFourDigits}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Holder</p>
+                  <p className="text-secondary-600">Holder</p>
                   <p className="font-medium">{transaction.cardDetails.holderName}</p>
                 </div>
               </div>
@@ -455,13 +455,13 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
 
           {/* Items */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Items</h3>
+            <h3 className="text-lg font-semibold text-secondary-900 mb-4 font-fraunces">Items</h3>
             <div className="space-y-3">
               {transaction.items.map((item, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                <div key={index} className="flex justify-between items-center p-3 bg-secondary-50 rounded-xl">
                   <div>
-                    <p className="font-medium text-gray-900">{item.product.name}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="font-medium text-secondary-900">{item.product.name}</p>
+                    <p className="text-sm text-secondary-600">
                       {DEFAULT_CURRENCY} {
                         item.product.isWeightBased 
                           ? (item.product.pricePerUnit || 0).toFixed(2)
@@ -471,7 +471,7 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
                       }
                     </p>
                   </div>
-                  <p className="font-semibold text-gray-900">
+                  <p className="font-semibold text-secondary-900">
                     {DEFAULT_CURRENCY} {item.subtotal.toFixed(2)}
                   </p>
                 </div>
@@ -480,22 +480,22 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
           </div>
 
           {/* Totals */}
-          <div className="space-y-2 pt-4 border-t border-gray-200">
+          <div className="space-y-2 pt-4 border-t border-secondary-200">
             <div className="flex justify-between">
-              <span className="text-gray-600">Subtotal:</span>
+              <span className="text-secondary-600">Subtotal:</span>
               <span className="font-medium">{DEFAULT_CURRENCY} {transaction.subtotal.toFixed(2)}</span>
             </div>
             {transaction.discountAmount > 0 && (
-              <div className="flex justify-between text-green-600">
+              <div className="flex justify-between text-success-600">
                 <span>Discount:</span>
                 <span className="font-medium">-{DEFAULT_CURRENCY} {transaction.discountAmount.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-gray-600">Tax:</span>
+              <span className="text-secondary-600">Tax:</span>
               <span className="font-medium">{DEFAULT_CURRENCY} {transaction.taxAmount.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
+            <div className="flex justify-between text-lg font-bold pt-2 border-t border-secondary-200">
               <span>Total:</span>
               <span>{DEFAULT_CURRENCY} {transaction.total.toFixed(2)}</span>
             </div>
@@ -503,19 +503,19 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
 
           {/* Notes */}
           {transaction.notes && (
-            <div className="bg-blue-50 rounded-2xl p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 font-fraunces">Notes</h3>
-              <p className="text-gray-700">{transaction.notes}</p>
+            <div className="bg-primary-50 rounded-2xl p-4">
+              <h3 className="text-lg font-semibold text-secondary-900 mb-2 font-fraunces">Notes</h3>
+              <p className="text-secondary-700">{transaction.notes}</p>
             </div>
           )}
 
           {/* Actions for Draft Sales */}
           {isDraftSale(transaction) && (
-            <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4">
+            <div className="bg-accent-50 border border-purple-200 rounded-2xl p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-purple-900 mb-1 font-fraunces">Draft Sale</h3>
-                  <p className="text-purple-700 text-sm">This sale is pending payment completion.</p>
+                  <h3 className="text-lg font-semibold text-accent-900 mb-1 font-fraunces">Draft Sale</h3>
+                  <p className="text-accent-700 text-sm">This sale is pending payment completion.</p>
                 </div>
                 <button
                   onClick={handleCompleteDraft}

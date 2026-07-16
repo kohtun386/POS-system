@@ -116,12 +116,12 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
     <div className="modal-overlay">
       <div className="modal max-w-md">
         <div className="modal-header">
-          <h2 className="text-xl font-bold text-gray-900 font-fraunces">
+          <h2 className="text-xl font-bold text-secondary-900 font-fraunces">
             {customer ? 'Edit Customer' : 'Add New Customer'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-2 rounded-xl hover:bg-gray-100 transition-colors"
+            className="text-secondary-400 hover:text-secondary-600 p-2 rounded-xl hover:bg-secondary-100 transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
@@ -129,7 +129,7 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
 
         <div className="modal-body space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-secondary-700 mb-2">
               Full Name *
             </label>
             <input
@@ -144,7 +144,7 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-secondary-700 mb-2">
               Email Address *
             </label>
             <input
@@ -159,7 +159,7 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-secondary-700 mb-2">
               Phone Number *
             </label>
             <input
@@ -174,7 +174,7 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-secondary-700 mb-2">
               Address
             </label>
             <textarea
@@ -188,7 +188,7 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-secondary-700 mb-2">
               Credit Limit
             </label>
             <input
@@ -204,7 +204,7 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-secondary-700 mb-2">
               Price Tier
             </label>
             <select

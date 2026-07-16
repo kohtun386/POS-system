@@ -121,7 +121,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90dvh] overflow-y-auto">
+            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90dvh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
                     <h2 className="text-xl font-semibold font-fraunces">
@@ -129,7 +129,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                     </h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="text-secondary-400 hover:text-secondary-600 transition-colors"
                     >
                         <X className="h-6 w-6" />
                     </button>
@@ -142,16 +142,16 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                         <h3 className="text-lg font-medium">Service Configuration</h3>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-secondary-700 mb-2">
                                 Service Provider *
                             </label>
                             <div className="grid grid-cols-1 gap-3">
                                 {serviceOptions.map((option) => (
                                     <label
                                         key={option.value}
-                                        className={`flex items-center space-x-3 p-4 border rounded-lg cursor-pointer transition-colors ${formData.serviceName === option.value
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-gray-300 hover:border-gray-400'
+                                        className={`flex items-center space-x-3 p-4 border rounded-xl cursor-pointer transition-colors ${formData.serviceName === option.value
+                                                ? 'border-primary-500 bg-primary-50'
+                                                : 'border-secondary-300 hover:border-secondary-400'
                                             }`}
                                     >
                                         <input
@@ -171,7 +171,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                                             {option.icon}
                                             <div>
                                                 <div className="font-medium">{option.label}</div>
-                                                <div className="text-sm text-gray-500">{option.description}</div>
+                                                <div className="text-sm text-secondary-500">{option.description}</div>
                                             </div>
                                         </div>
                                     </label>
@@ -180,12 +180,12 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-secondary-700 mb-1">
                                 Service Type
                             </label>
                             <div className="flex items-center space-x-2">
-                                {formData.serviceType === 'email' && <Mail className="h-4 w-4 text-blue-600" />}
-                                {formData.serviceType === 'sms' && <MessageSquare className="h-4 w-4 text-green-600" />}
+                                {formData.serviceType === 'email' && <Mail className="h-4 w-4 text-primary-600" />}
+                                {formData.serviceType === 'sms' && <MessageSquare className="h-4 w-4 text-success-600" />}
                                 <span className="text-sm font-medium capitalize">{formData.serviceType}</span>
                             </div>
                         </div>
@@ -202,8 +202,8 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                             <div className="space-y-4">
                                 {selectedService.fields.map((field) => (
                                     <div key={field.key}>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            {field.label} {field.required && <span className="text-red-500">*</span>}
+                                        <label className="block text-sm font-medium text-secondary-700 mb-1">
+                                            {field.label} {field.required && <span className="text-danger-500">*</span>}
                                         </label>
                                         <input
                                             type={field.type}
@@ -230,9 +230,9 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                                     id="isActive"
                                     checked={formData.isActive}
                                     onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
                                 />
-                                <label htmlFor="isActive" className="text-sm font-medium text-gray-700 cursor-pointer">
+                                <label htmlFor="isActive" className="text-sm font-medium text-secondary-700 cursor-pointer">
                                     Active (can be used for sending notifications)
                                 </label>
                             </div>
@@ -243,9 +243,9 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                                     id="isDefault"
                                     checked={formData.isDefault}
                                     onChange={(e) => setFormData(prev => ({ ...prev, isDefault: e.target.checked }))}
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
                                 />
-                                <label htmlFor="isDefault" className="text-sm font-medium text-gray-700 cursor-pointer">
+                                <label htmlFor="isDefault" className="text-sm font-medium text-secondary-700 cursor-pointer">
                                     Default service for this type
                                 </label>
                             </div>
@@ -256,8 +256,8 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                     {selectedService && formData.configData && Object.keys(formData.configData).length > 0 && (
                         <div className="space-y-4">
                             <h3 className="text-lg font-medium">Test Configuration</h3>
-                            <div className="p-4 bg-gray-50 rounded-lg">
-                                <p className="text-sm text-gray-600 mb-2">
+                            <div className="p-4 bg-secondary-50 rounded-xl">
+                                <p className="text-sm text-secondary-600 mb-2">
                                     Test your configuration to ensure it's working correctly:
                                 </p>
                                 <button

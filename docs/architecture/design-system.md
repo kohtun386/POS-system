@@ -271,10 +271,10 @@ All shadows use warm brown tones (`rgba(42, 24, 16, ...)`) — not neutral gray.
 
 | Variant | Class | Gradient |
 |---------|-------|----------|
-| Default | `.stat-card` | `from-[#b8854a] via-[#9a693a] to-[#7a4f2c]` |
-| Success | `.stat-card-success` | `from-green-500 via-green-600 to-green-700` |
-| Warning | `.stat-card-warning` | `from-yellow-500 via-yellow-600 to-yellow-700` |
-| Danger | `.stat-card-danger` | `from-red-500 via-red-600 to-red-700` |
+| Default | `.stat-card` | `from-primary-500 via-primary-600 to-primary-700` |
+| Success | `.stat-card-success` | `from-success-500 via-success-600 to-success-700` |
+| Warning | `.stat-card-warning` | `from-warning-500 via-warning-600 to-warning-700` |
+| Danger | `.stat-card-danger` | `from-danger-500 via-danger-600 to-danger-700` |
 
 Has `::before` pseudo-element for glass overlay effect.
 
@@ -398,6 +398,63 @@ Base: `inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold`
 ```
 
 Uses Framer Motion `animate={{ rotate: 360 }}` for spinner. Primary-200 border, primary-600 top.
+
+---
+
+### 6.10 Select (Native Wrapper)
+
+Native `<select>` elements use the `.select` CSS class directly — no React wrapper component needed. Pair with `.input`-style labels.
+
+```tsx
+<label className="block text-sm font-semibold text-secondary-700 dark:text-secondary-300">
+  Category
+</label>
+<select className="select">
+  <option value="beans">Beans</option>
+  <option value="dairy">Dairy</option>
+</select>
+```
+
+| Property | Value |
+|----------|-------|
+| Class | `.select` |
+| Radius | `rounded-2xl` (16px) |
+| Focus | `ring-2 ring-primary-300 border-primary-500` |
+| Dark | `dark:bg-surface-dark dark:border-secondary-800` |
+
+---
+
+### 6.11 Modal Pattern
+
+No single `<Modal>` component exists. Modals are composed from CSS classes:
+
+```tsx
+<div className="modal-overlay">
+  <div className="modal max-w-md">
+    <div className="modal-header">
+      <h2 className="text-xl font-bold font-fraunces">Title</h2>
+      <button className="btn btn-ghost btn-sm">×</button>
+    </div>
+    <div className="modal-body">
+      {/* Content */}
+    </div>
+    <div className="modal-footer">
+      <button className="btn btn-secondary btn-md">Cancel</button>
+      <button className="btn btn-primary btn-md">Save</button>
+    </div>
+  </div>
+</div>
+```
+
+| Part | Class | Key Properties |
+|------|-------|----------------|
+| Overlay | `.modal-overlay` | `fixed inset-0`, backdrop blur, centered flex, `z-50` |
+| Container | `.modal` | `rounded-3xl`, glass bg, max-height `calc(100dvh - 2rem)` |
+| Header | `.modal-header` | `px-6 py-5`, bottom border, flex between |
+| Body | `.modal-body` | `p-6`, overflow-y auto, flex-1 |
+| Footer | `.modal-footer` | `px-6 py-5`, top border, flex end with gap |
+
+**Entrance animation:** `.modal-overlay` uses `animate-fade-in`, `.modal` uses `animate-scale-in`.
 
 ---
 
@@ -846,3 +903,5 @@ No special components needed — standard design system applies.
 6. **Touch mode check:** `state.settings.interfaceMode === 'touch'` → apply `.touch-friendly` class.
 7. **Framer Motion:** `transition={{ duration: 0.2 }}` always. `whileHover={{ scale: 1.02 }}` for cards, `scale: 1.05` for small buttons.
 8. **Animations:** Use Tailwind `animate-*` classes for CSS animations. Use Framer Motion for interactive/conditional animations.
+9. **Never use `rounded-lg` or `rounded-md`.** The radius scale is `xl (12px) → 2xl (16px) → 3xl (24px) → 4xl (32px)`. Use `rounded-xl` minimum.
+10. **Use Espresso & Copper palette tokens.** Never use `text-green-*`/`text-red-*` — use `text-success-*`/`text-danger-*` instead.

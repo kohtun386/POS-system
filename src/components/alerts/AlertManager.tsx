@@ -115,12 +115,12 @@ export function AlertManager() {
     };
 
     return (
-        <div className="p-4 lg:p-6 space-y-6 bg-gray-50 min-h-full">
+        <div className="p-4 lg:p-6 space-y-6 bg-secondary-50 min-h-full">
             {/* Header */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
                 <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Inventory Alerts</h1>
-                    <p className="text-gray-600 mt-1">Manage automated inventory notifications</p>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-secondary-900">Inventory Alerts</h1>
+                    <p className="text-secondary-600 mt-1">Manage automated inventory notifications</p>
                 </div>
 
                 <div className="flex space-x-3">
@@ -137,10 +137,10 @@ export function AlertManager() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-                <div className="stat-card bg-gradient-to-br from-blue-500 to-blue-600">
+                <div className="stat-card bg-gradient-to-br from-primary-500 to-primary-600">
                     <div className="flex items-center justify-between relative z-10">
                         <div>
-                            <p className="text-blue-100 text-sm font-medium">Recipients</p>
+                            <p className="text-primary-100 text-sm font-medium">Recipients</p>
                             <p className="text-2xl lg:text-3xl font-bold">{stats.activeRecipients}/{stats.totalRecipients}</p>
                         </div>
                         <div className="bg-white/20 p-3 rounded-2xl">
@@ -149,10 +149,10 @@ export function AlertManager() {
                     </div>
                 </div>
 
-                <div className="stat-card bg-gradient-to-br from-green-500 to-green-600">
+                <div className="stat-card bg-gradient-to-br from-success-500 to-success-600">
                     <div className="flex items-center justify-between relative z-10">
                         <div>
-                            <p className="text-green-100 text-sm font-medium">Templates</p>
+                            <p className="text-success-100 text-sm font-medium">Templates</p>
                             <p className="text-2xl lg:text-3xl font-bold">{stats.activeTemplates}/{stats.totalTemplates}</p>
                         </div>
                         <div className="bg-white/20 p-3 rounded-2xl">
@@ -161,10 +161,10 @@ export function AlertManager() {
                     </div>
                 </div>
 
-                <div className="stat-card bg-gradient-to-br from-purple-500 to-purple-600">
+                <div className="stat-card bg-gradient-to-br from-accent-500 to-accent-600">
                     <div className="flex items-center justify-between relative z-10">
                         <div>
-                            <p className="text-purple-100 text-sm font-medium">Alerts Sent</p>
+                            <p className="text-accent-100 text-sm font-medium">Alerts Sent</p>
                             <p className="text-2xl lg:text-3xl font-bold">{stats.sentAlerts}</p>
                         </div>
                         <div className="bg-white/20 p-3 rounded-2xl">
@@ -173,10 +173,10 @@ export function AlertManager() {
                     </div>
                 </div>
 
-                <div className="stat-card bg-gradient-to-br from-red-500 to-red-600">
+                <div className="stat-card bg-gradient-to-br from-danger-500 to-danger-600">
                     <div className="flex items-center justify-between relative z-10">
                         <div>
-                            <p className="text-red-100 text-sm font-medium">Failed Alerts</p>
+                            <p className="text-danger-100 text-sm font-medium">Failed Alerts</p>
                             <p className="text-2xl lg:text-3xl font-bold">{stats.failedAlerts}</p>
                         </div>
                         <div className="bg-white/20 p-3 rounded-2xl">
@@ -200,9 +200,9 @@ export function AlertManager() {
                         <button
                             key={id}
                             onClick={() => setActiveTab(id as typeof activeTab)}
-                            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${activeTab === id
-                                    ? 'bg-blue-500 text-white'
-                                    : 'text-gray-600 hover:bg-gray-100'
+                            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-colors ${activeTab === id
+                                    ? 'bg-primary-500 text-white'
+                                    : 'text-secondary-600 hover:bg-secondary-100'
                                 }`}
                         >
                             <Icon className="h-4 w-4" />
@@ -303,12 +303,12 @@ function OverviewTab({
             {/* Alert Types Status */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {configurations.map((config) => (
-                    <div key={config.id} className="p-4 border rounded-lg">
+                    <div key={config.id} className="p-4 border rounded-xl">
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="font-medium capitalize">{config.alertType.replace('_', ' ')}</h3>
                             <div className={`w-3 h-3 rounded-full ${config.isEnabled ? 'bg-green-500' : 'bg-red-500'}`} />
                         </div>
-                        <div className="text-sm text-gray-600 space-y-1">
+                        <div className="text-sm text-secondary-600 space-y-1">
                             <p>Check Frequency: {config.checkFrequencyMinutes} min</p>
                             <p>Cooldown: {config.cooldownMinutes} min</p>
                             {config.thresholdValue && (
@@ -321,18 +321,18 @@ function OverviewTab({
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                    <h3 className="font-medium text-blue-900 mb-2">Recent Activity</h3>
-                    <div className="text-sm text-blue-700">
+                <div className="p-4 bg-primary-50 rounded-xl">
+                    <h3 className="font-medium text-primary-900 mb-2">Recent Activity</h3>
+                    <div className="text-sm text-primary-700">
                         <p>• {stats.sentAlerts} alerts sent successfully</p>
                         <p>• {stats.failedAlerts} alerts failed</p>
                         <p>• {stats.pendingAlerts} alerts pending</p>
                     </div>
                 </div>
 
-                <div className="p-4 bg-green-50 rounded-lg">
-                    <h3 className="font-medium text-green-900 mb-2">System Status</h3>
-                    <div className="text-sm text-green-700">
+                <div className="p-4 bg-green-50 rounded-xl">
+                    <h3 className="font-medium text-success-900 mb-2">System Status</h3>
+                    <div className="text-sm text-success-700">
                         <p>• {stats.activeRecipients} active recipients</p>
                         <p>• {stats.activeTemplates} active templates</p>
                         <p>• All systems operational</p>
@@ -401,7 +401,7 @@ function RecipientsTab({
                             <th className="table-header-cell text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-secondary-50 divide-y divide-secondary-200">
                         {recipients.map((recipient) => (
                             <tr key={recipient.id} className="table-row">
                                 <td className="table-cell font-medium">{recipient.name}</td>
@@ -428,13 +428,13 @@ function RecipientsTab({
                                     <div className="flex items-center justify-end space-x-2">
                                         <button
                                             onClick={() => handleEdit(recipient)}
-                                            className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                                            className="text-primary-600 hover:text-primary-900 p-2 rounded-xl hover:bg-primary-50 transition-colors"
                                         >
                                             <Edit className="h-4 w-4" />
                                         </button>
                                         <button
                                             onClick={() => handleDelete(recipient.id)}
-                                            className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                                            className="text-danger-600 hover:text-danger-900 p-2 rounded-xl hover:bg-danger-50 transition-colors"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </button>
@@ -514,7 +514,7 @@ function TemplatesTab({
                             <th className="table-header-cell text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-secondary-50 divide-y divide-secondary-200">
                         {templates.map((template) => (
                             <tr key={template.id} className="table-row">
                                 <td className="table-cell font-medium">{template.name}</td>
@@ -534,13 +534,13 @@ function TemplatesTab({
                                     <div className="flex items-center justify-end space-x-2">
                                         <button
                                             onClick={() => handleEdit(template)}
-                                            className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                                            className="text-primary-600 hover:text-primary-900 p-2 rounded-xl hover:bg-primary-50 transition-colors"
                                         >
                                             <Edit className="h-4 w-4" />
                                         </button>
                                         <button
                                             onClick={() => handleDelete(template.id)}
-                                            className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                                            className="text-danger-600 hover:text-danger-900 p-2 rounded-xl hover:bg-danger-50 transition-colors"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </button>
@@ -632,7 +632,7 @@ function HistoryTab({
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400 h-5 w-5" />
                     <input
                         type="text"
                         placeholder="Search alerts..."
@@ -666,13 +666,13 @@ function HistoryTab({
                             <th className="table-header-cell">Sent At</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-secondary-50 divide-y divide-secondary-200">
                         {history.map((alert) => (
                             <tr key={alert.id} className="table-row">
                                 <td className="table-cell">
                                     <div>
                                         <div className="font-medium">{alert.productName}</div>
-                                        <div className="text-sm text-gray-500">{alert.productSku}</div>
+                                        <div className="text-sm text-secondary-500">{alert.productSku}</div>
                                     </div>
                                 </td>
                                 <td className="table-cell">
@@ -748,7 +748,7 @@ function ServicesTab({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {services.map((service) => (
-                    <div key={service.id} className="p-4 border rounded-lg">
+                    <div key={service.id} className="p-4 border rounded-xl">
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="font-medium">{service.serviceName}</h3>
                             <div className="flex items-center space-x-2">
@@ -756,20 +756,20 @@ function ServicesTab({
                                 <div className="flex space-x-1">
                                     <button
                                         onClick={() => handleEdit(service)}
-                                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                                        className="text-primary-600 hover:text-primary-900 p-1 rounded hover:bg-primary-50 transition-colors"
                                     >
                                         <Edit className="h-4 w-4" />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(service.id)}
-                                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                                        className="text-danger-600 hover:text-danger-900 p-1 rounded hover:bg-danger-50 transition-colors"
                                     >
                                         <Trash2 className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
                         </div>
-                        <div className="text-sm text-gray-600 space-y-1">
+                        <div className="text-sm text-secondary-600 space-y-1">
                             <p>Type: {service.serviceType}</p>
                             <p>Default: {service.isDefault ? 'Yes' : 'No'}</p>
                         </div>

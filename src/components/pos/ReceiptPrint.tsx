@@ -175,10 +175,10 @@ export function ReceiptPrint({ sale, onClose }: ReceiptPrintProps) {
       <div className="modal-overlay no-print">
         <div className="modal max-w-md">
           <div className="modal-header">
-            <h2 className="text-xl font-bold text-gray-900 font-fraunces">Print Receipt</h2>
+            <h2 className="text-xl font-bold text-secondary-900 font-fraunces">Print Receipt</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100"
+              className="btn btn-ghost btn-sm p-2"
             >
               &times;
             </button>

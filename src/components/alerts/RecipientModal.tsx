@@ -100,7 +100,7 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90dvh] overflow-y-auto">
+            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90dvh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
                     <h2 className="text-xl font-semibold font-fraunces">
@@ -108,7 +108,7 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
                     </h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="text-secondary-400 hover:text-secondary-600 transition-colors"
                     >
                         <X className="h-6 w-6" />
                     </button>
@@ -125,7 +125,7 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">
                                     Name *
                                 </label>
                                 <input
@@ -139,7 +139,7 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">
                                     Role
                                 </label>
                                 <select
@@ -164,7 +164,7 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">
                                     Email Address
                                 </label>
                                 <input
@@ -174,13 +174,13 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
                                     className="input"
                                     placeholder="recipient@example.com"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-secondary-500 mt-1">
                                     Required for email alerts
                                 </p>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">
                                     Phone Number
                                 </label>
                                 <input
@@ -190,7 +190,7 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
                                     className="input"
                                     placeholder="+1 (555) 123-4567"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-secondary-500 mt-1">
                                     Required for SMS alerts
                                 </p>
                             </div>
@@ -212,13 +212,13 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
                                         id={option.value}
                                         checked={formData.alertTypes.includes(option.value)}
                                         onChange={() => handleAlertTypeToggle(option.value)}
-                                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
                                     />
                                     <div className="flex-1">
-                                        <label htmlFor={option.value} className="text-sm font-medium text-gray-700 cursor-pointer">
+                                        <label htmlFor={option.value} className="text-sm font-medium text-secondary-700 cursor-pointer">
                                             {option.label}
                                         </label>
-                                        <p className="text-xs text-gray-500">{option.description}</p>
+                                        <p className="text-xs text-secondary-500">{option.description}</p>
                                     </div>
                                 </div>
                             ))}
@@ -238,9 +238,9 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
                                 id="isActive"
                                 checked={formData.isActive}
                                 onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
                             />
-                            <label htmlFor="isActive" className="text-sm font-medium text-gray-700 cursor-pointer">
+                            <label htmlFor="isActive" className="text-sm font-medium text-secondary-700 cursor-pointer">
                                 Active (can receive alerts)
                             </label>
                         </div>

@@ -519,7 +519,7 @@ export function ReportsManager() {
           {/* Sales Trend */}
           <div className="card p-6">
             <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
-              <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
+              <TrendingUp className="h-5 w-5 mr-2 text-primary-600" />
               Sales Trend
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -565,7 +565,7 @@ export function ReportsManager() {
           {/* Category Distribution */}
           <div className="card p-6">
             <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
-              <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
+              <BarChart3 className="h-5 w-5 mr-2 text-accent-600" />
               Sales by Category
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -604,7 +604,7 @@ export function ReportsManager() {
           {/* Customer Spending Chart */}
           <div className="card p-6">
             <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
-              <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
+              <TrendingUp className="h-5 w-5 mr-2 text-primary-600" />
               Top Customer Spending
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -649,7 +649,7 @@ export function ReportsManager() {
           {/* Stock Status Chart */}
           <div className="card p-6">
             <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
-              <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
+              <BarChart3 className="h-5 w-5 mr-2 text-accent-600" />
               Stock Status Distribution
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -688,7 +688,7 @@ export function ReportsManager() {
           {/* Category Stock Value */}
           <div className="card p-6">
             <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
-              <DollarSign className="h-5 w-5 mr-2 text-green-600" />
+              <DollarSign className="h-5 w-5 mr-2 text-success-600" />
               Stock Value by Category
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -732,7 +732,7 @@ export function ReportsManager() {
         <div className="card overflow-hidden">
           <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-800">
             <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 flex items-center font-fraunces">
-              <ShoppingCart className="h-5 w-5 mr-2 text-green-600" />
+              <ShoppingCart className="h-5 w-5 mr-2 text-success-600" />
               Top Selling Products
             </h3>
           </div>
@@ -761,7 +761,7 @@ export function ReportsManager() {
                     <td className="table-cell">
                       <span className="badge badge-info">{product.quantity}</span>
                     </td>
-                    <td className="table-cell font-semibold text-green-600">
+                    <td className="table-cell font-semibold text-success-600">
                       {DEFAULT_CURRENCY} {product.revenue.toFixed(2)}
                     </td>
                     <td className="table-cell text-secondary-600 dark:text-secondary-300">
@@ -779,7 +779,7 @@ export function ReportsManager() {
         <div className="card overflow-hidden">
           <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-800">
             <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 flex items-center font-fraunces">
-              <Users className="h-5 w-5 mr-2 text-blue-600" />
+              <Users className="h-5 w-5 mr-2 text-primary-600" />
               Customer Analytics
             </h3>
           </div>
@@ -806,7 +806,7 @@ export function ReportsManager() {
                         <span className="font-semibold text-secondary-900 dark:text-secondary-100">{customer.name}</span>
                       </div>
                     </td>
-                    <td className="table-cell font-semibold text-green-600">
+                    <td className="table-cell font-semibold text-success-600">
                       {DEFAULT_CURRENCY} {customer.totalSpent.toFixed(2)}
                     </td>
                     <td className="table-cell">
@@ -833,7 +833,7 @@ export function ReportsManager() {
         <div className="card overflow-hidden">
           <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-800">
             <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 flex items-center font-fraunces">
-              <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
+              <BarChart3 className="h-5 w-5 mr-2 text-accent-600" />
               Inventory Analytics
             </h3>
           </div>
@@ -869,7 +869,7 @@ export function ReportsManager() {
                     <td className="table-cell font-semibold">
                       {item.currentStock}
                       {item.minStock > 0 && (
-                        <span className="text-xs text-gray-500 ml-1">/ {item.minStock}</span>
+                        <span className="text-xs text-secondary-500 ml-1">/ {item.minStock}</span>
                       )}
                     </td>
                     <td className="table-cell">
@@ -881,13 +881,13 @@ export function ReportsManager() {
                         {item.stockStatus}
                       </span>
                     </td>
-                    <td className="table-cell font-semibold text-blue-600">
+                    <td className="table-cell font-semibold text-primary-600">
                       {DEFAULT_CURRENCY} {item.stockValue.toFixed(2)}
                     </td>
                     <td className="table-cell">
                       <span className="badge badge-info">{item.soldQuantity}</span>
                     </td>
-                    <td className="table-cell font-semibold text-green-600">
+                    <td className="table-cell font-semibold text-success-600">
                       {DEFAULT_CURRENCY} {item.revenue.toFixed(2)}
                     </td>
                     <td className="table-cell">
@@ -901,9 +901,9 @@ export function ReportsManager() {
                     </td>
                     <td className="table-cell">
                       <span className={`font-semibold ${
-                        item.profitMargin > 50 ? 'text-green-600' :
-                        item.profitMargin > 20 ? 'text-orange-600' :
-                        'text-red-600'
+                        item.profitMargin > 50 ? 'text-success-600' :
+                        item.profitMargin > 20 ? 'text-warning-600' :
+                        'text-danger-600'
                       }`}>
                         {item.profitMargin.toFixed(1)}%
                       </span>

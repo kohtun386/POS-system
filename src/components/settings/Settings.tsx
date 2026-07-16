@@ -145,16 +145,16 @@ export function Settings() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-secondary-700 mb-2">
                       Currency
                     </label>
                     <input
                       type="text"
                       value="MMK (Myanmar Kyat)"
                       disabled
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-100 cursor-not-allowed"
+                      className="w-full px-4 py-3 border border-secondary-300 rounded-xl bg-secondary-100 cursor-not-allowed"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-secondary-500 mt-1">
                       Myanmar market — MMK only
                     </p>
                   </div>
@@ -249,7 +249,7 @@ export function Settings() {
                   disabled={!canEditSettings}
                   className={`input ${!canEditSettings ? 'bg-secondary-100 dark:bg-primary-900 cursor-not-allowed' : ''}`}
                 />
-                <div className="mt-2 p-3 bg-primary-50 border border-primary-100 rounded-lg">
+                <div className="mt-2 p-3 bg-primary-50 border border-primary-100 rounded-xl">
                   <div className="text-xs text-primary-700">
                     <div className="font-medium mb-1">Invoice Preview:</div>
                     <div>Next: <span className="font-mono font-bold">{invoiceStats.nextInvoiceNumber}</span></div>
@@ -302,14 +302,14 @@ export function Settings() {
               {!canPrint && (
                 <UpgradePrompt feature="Receipt printing" tier="growth" onClose={() => {}} />
               )}
-              <label className={`flex items-center p-4 border border-gray-200 rounded-xl transition-colors ${!canEditSettings || !canPrint ? 'bg-gray-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
+              <label className={`flex items-center p-4 border border-secondary-200 rounded-xl transition-colors ${!canEditSettings || !canPrint ? 'bg-secondary-50 cursor-not-allowed' : 'hover:bg-secondary-50 cursor-pointer'}`}>
                 <input
                   type="checkbox"
                   name="receiptPrinter"
                   checked={formData.receiptPrinter && canPrint}
                   onChange={handleChange}
                   disabled={!canEditSettings || !canPrint}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-5 w-5"
+                  className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500 h-5 w-5"
                 />
                 <div className="ml-4">
                   <span className="text-sm font-semibold text-secondary-900 dark:text-secondary-100">Enable Receipt Printer</span>

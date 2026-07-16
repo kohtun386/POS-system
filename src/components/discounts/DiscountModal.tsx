@@ -242,12 +242,12 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
     <div className="modal-overlay">
       <div className="modal max-w-4xl">
         <div className="modal-header">
-          <h2 className="text-xl font-bold text-gray-900 font-fraunces">
+          <h2 className="text-xl font-bold text-secondary-900 font-fraunces">
             {discount ? 'Edit Discount' : 'Add New Discount'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-2 rounded-xl hover:bg-gray-100 transition-colors"
+            className="text-secondary-400 hover:text-secondary-600 p-2 rounded-xl hover:bg-secondary-100 transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
@@ -256,10 +256,10 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
         <div className="modal-body space-y-6">
           {/* Basic Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Basic Information</h3>
+            <h3 className="text-lg font-semibold text-secondary-900 mb-4 font-fraunces">Basic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Discount Name *
                 </label>
                 <input
@@ -274,7 +274,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Discount Type *
                 </label>
                 <select
@@ -291,7 +291,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-secondary-700 mb-2">
                 Description
               </label>
               <textarea
@@ -307,11 +307,11 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
 
           {/* Discount Value */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Discount Value</h3>
+            <h3 className="text-lg font-semibold text-secondary-900 mb-4 font-fraunces">Discount Value</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {formData.type !== 'free_gift' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
                     {formData.type === 'percentage' ? 'Percentage (%)' : `Amount (${DEFAULT_CURRENCY})`} *
                   </label>
                   <input
@@ -329,7 +329,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Minimum Amount ({DEFAULT_CURRENCY})
                 </label>
                 <input
@@ -346,7 +346,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
 
               {formData.type === 'percentage' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
                     Maximum Discount ({DEFAULT_CURRENCY})
                   </label>
                   <input
@@ -367,33 +367,33 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
           {/* Free Gift Products */}
           {formData.type === 'free_gift' && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Free Gift Products</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-48 overflow-y-auto border border-gray-200 rounded-xl p-4">
+              <h3 className="text-lg font-semibold text-secondary-900 mb-4 font-fraunces">Free Gift Products</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-48 overflow-y-auto border border-secondary-200 rounded-xl p-4">
                 {state.products.map(product => (
-                  <label key={product.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+                  <label key={product.id} className="flex items-center space-x-3 p-3 border border-secondary-200 rounded-xl hover:bg-secondary-50 cursor-pointer transition-colors">
                     <input
                       type="checkbox"
                       checked={freeGiftProducts.includes(product.id)}
                       onChange={() => toggleProduct(product.id)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
                     />
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-gray-900 truncate block">{product.name}</span>
-                      <span className="text-xs text-gray-500">{DEFAULT_CURRENCY} {product.price.toFixed(2)}</span>
+                      <span className="text-sm font-medium text-secondary-900 truncate block">{product.name}</span>
+                      <span className="text-xs text-secondary-500">{DEFAULT_CURRENCY} {product.price.toFixed(2)}</span>
                     </div>
                   </label>
                 ))}
               </div>
               {freeGiftProducts.length === 0 && (
-                <p className="text-sm text-gray-500 mt-2">Please select at least one product for free gift</p>
+                <p className="text-sm text-secondary-500 mt-2">Please select at least one product for free gift</p>
               )}
             </div>
           )}
 
           {/* Valid Days */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Valid Days (Optional)</h3>
-            <p className="text-sm text-gray-600 mb-3">Select specific days when this discount is valid. Leave empty for all days.</p>
+            <h3 className="text-lg font-semibold text-secondary-900 mb-4 font-fraunces">Valid Days (Optional)</h3>
+            <p className="text-sm text-secondary-600 mb-3">Select specific days when this discount is valid. Leave empty for all days.</p>
             <div className="grid grid-cols-7 gap-2">
               {dayNames.map((day, index) => (
                 <button
@@ -414,8 +414,8 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 font-fraunces">Additional Conditions</h3>
-                <p className="text-sm text-gray-600">Add specific conditions that must be met for this discount to apply</p>
+                <h3 className="text-lg font-semibold text-secondary-900 font-fraunces">Additional Conditions</h3>
+                <p className="text-sm text-secondary-600">Add specific conditions that must be met for this discount to apply</p>
               </div>
               <button
                 type="button"
@@ -432,12 +432,12 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
               const warning = getCardConditionWarning();
               if (!warning) return null;
               
-              const bgColor = warning.type === 'error' ? 'bg-red-50 border-red-200' : 
+              const bgColor = warning.type === 'error' ? 'bg-red-50 border-danger-200' : 
                              warning.type === 'warning' ? 'bg-yellow-50 border-yellow-200' : 
-                             'bg-blue-50 border-blue-200';
-              const textColor = warning.type === 'error' ? 'text-red-700' : 
+                             'bg-primary-50 border-primary-200';
+              const textColor = warning.type === 'error' ? 'text-danger-700' : 
                                warning.type === 'warning' ? 'text-yellow-700' : 
-                               'text-blue-700';
+                               'text-primary-700';
               const icon = warning.type === 'error' ? '⚠️' : 
                           warning.type === 'warning' ? '⚡' : 
                           '💡';
@@ -455,10 +455,10 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
             {conditions.length > 0 && (
               <div className="space-y-4 max-h-64 overflow-y-auto">
                 {conditions.map((condition, index) => (
-                  <div key={index} className="card p-4 border border-gray-200">
+                  <div key={index} className="card p-4 border border-secondary-200">
                     <div className={`grid gap-4 ${condition.type === 'specific_products' ? 'grid-cols-1 md:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
                           Condition Type
                         </label>
                         <select
@@ -476,13 +476,13 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
                       </div>
 
                       <div className={condition.type === 'specific_products' ? 'md:col-span-2' : ''}>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
                           {condition.type === 'specific_products' ? 'Products & Minimum Quantity' : 'Value'}
                         </label>
                         {condition.type === 'specific_products' ? (
                           <div className="space-y-3">
-                            <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                              <label className="block text-xs font-medium text-gray-700 mb-2">
+                            <div className="border border-secondary-200 rounded-xl p-3 bg-secondary-50">
+                              <label className="block text-xs font-medium text-secondary-700 mb-2">
                                 Select Products
                               </label>
                               <select
@@ -503,7 +503,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
                               </select>
                             </div>
                             <div className="mt-3">
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                              <label className="block text-xs font-medium text-secondary-700 mb-1">
                                 Minimum Quantity Required
                               </label>
                               <input
@@ -515,10 +515,10 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
                                 placeholder="1"
                               />
                             </div>
-                            <p className="text-xs text-blue-600 mt-2">
+                            <p className="text-xs text-primary-600 mt-2">
                               💡 Customer must purchase at least {condition.minQuantity || 1} of any selected product(s)
                               {condition.value && Array.isArray(condition.value) && condition.value.length > 0 && (
-                                <span className="block mt-1 text-gray-600">
+                                <span className="block mt-1 text-secondary-600">
                                   Example: Buy {condition.minQuantity || 1} or more from: {condition.value.map((productId: string) => {
                                     const product = state.products.find(p => p.id === productId);
                                     return product?.name;
@@ -564,7 +564,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
                               <option value="amex">American Express</option>
                               <option value="discover">Discover</option>
                             </select>
-                            <p className="text-xs text-blue-600 mt-1">
+                            <p className="text-xs text-primary-600 mt-1">
                               💡 This condition only applies when payment method is 'Card'
                             </p>
                           </div>
@@ -597,7 +597,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
                               <option value="Deutsche Bank AG">Deutsche Bank AG</option>
                               <option value="ICBC">ICBC</option>
                             </select>
-                            <p className="text-xs text-blue-600 mt-1">
+                            <p className="text-xs text-primary-600 mt-1">
                               💡 This condition only applies when payment method is 'Card'
                             </p>
                           </div>
@@ -633,10 +633,10 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
 
           {/* Validity Period */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Validity Period</h3>
+            <h3 className="text-lg font-semibold text-secondary-900 mb-4 font-fraunces">Validity Period</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Valid From *
                 </label>
                 <input
@@ -650,7 +650,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Valid To *
                 </label>
                 <input
@@ -666,26 +666,26 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
           </div>
 
           {/* Status */}
-          <div className="border-t border-gray-200 pt-6">
+          <div className="border-t border-secondary-200 pt-6">
             <label className="flex items-center space-x-3">
               <input
                 type="checkbox"
                 name="active"
                 checked={formData.active}
                 onChange={handleChange}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-5 w-5"
+                className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500 h-5 w-5"
               />
               <div>
-                <span className="text-sm font-medium text-gray-700">Active</span>
-                <p className="text-xs text-gray-500">Enable this discount to be automatically applied</p>
+                <span className="text-sm font-medium text-secondary-700">Active</span>
+                <p className="text-xs text-secondary-500">Enable this discount to be automatically applied</p>
               </div>
             </label>
           </div>
 
           {/* Card Condition Warning */}
           {cardConditionWarning && (
-            <div className={`p-4 rounded-lg ${cardConditionWarning.type === 'error' ? 'bg-red-50 border-red-400' : 'bg-yellow-50 border-yellow-400'} border`}>
-              <p className="text-sm font-medium text-gray-900">
+            <div className={`p-4 rounded-xl ${cardConditionWarning.type === 'error' ? 'bg-red-50 border-danger-400' : 'bg-yellow-50 border-yellow-400'} border`}>
+              <p className="text-sm font-medium text-secondary-900">
                 {cardConditionWarning.message}
               </p>
             </div>

@@ -41,7 +41,7 @@ export function PlatformLayout() {
       {/* Mobile Header */}
       <header className="h-12 flex items-center px-4 bg-secondary-100 dark:bg-surface-dark border-b border-secondary-200 dark:border-secondary-800 md:hidden">
         <button
-          className="p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg hover:bg-secondary-200 dark:hover:bg-secondary-800 transition-colors"
+          className="p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-xl hover:bg-secondary-200 dark:hover:bg-secondary-800 transition-colors"
           onClick={() => setSidebarOpen(!sidebarOpen)}
           aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
         >
@@ -80,7 +80,7 @@ export function PlatformLayout() {
                 <button
                   key={item.key}
                   onClick={() => handleNav(item.key as PlatformView)}
-                  className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                     view === item.key
                       ? 'bg-primary-600 text-white'
                       : 'text-secondary-900 dark:text-secondary-100 hover:bg-secondary-200 dark:hover:bg-secondary-800'

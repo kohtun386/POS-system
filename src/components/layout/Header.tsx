@@ -78,7 +78,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
 
     // Purchase Log - Manager and Admin can access (Growth+ feature-gated)
     if ((role === 'admin' || role === 'manager') && purchaseLogEnabled) {
-      items.push({ id: 'purchase-log', label: 'Purchases', icon: ClipboardList, color: 'text-blue-600' });
+      items.push({ id: 'purchase-log', label: 'Purchases', icon: ClipboardList, color: 'text-primary-600' });
     }
 
     // Stock Overview - Manager and Admin can access (Growth+ feature-gated)
@@ -127,7 +127,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                 <img
                   src={state.settings.storeLogo}
                   alt="Store Logo"
-                  className="h-8 w-8 lg:h-10 lg:w-10 object-contain rounded-lg"
+                  className="h-8 w-8 lg:h-10 lg:w-10 object-contain rounded-xl"
                 />
               ) : (
                 <div className="h-8 w-8 lg:h-10 lg:w-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl flex items-center justify-center shadow-medium">

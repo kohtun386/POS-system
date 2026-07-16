@@ -156,11 +156,11 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
                   <div className="flex flex-col h-full">
                     <div className="skeleton aspect-[4/3] max-h-[140px] rounded-2xl mb-4" />
                     <div className="flex-1 space-y-2">
-                      <div className="skeleton h-4 w-3/4 rounded-lg" />
-                      <div className="skeleton h-3 w-1/2 rounded-lg" />
+                      <div className="skeleton h-4 w-3/4 rounded-xl" />
+                      <div className="skeleton h-3 w-1/2 rounded-xl" />
                       <div className="flex items-center justify-between">
-                        <div className="skeleton h-4 w-1/4 rounded-lg" />
-                        <div className="skeleton h-3 w-1/6 rounded-lg" />
+                        <div className="skeleton h-4 w-1/4 rounded-xl" />
+                        <div className="skeleton h-3 w-1/6 rounded-xl" />
                       </div>
                     </div>
                     <div className="skeleton h-10 w-full rounded-2xl mt-3" />

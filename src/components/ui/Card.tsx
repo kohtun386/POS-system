@@ -13,10 +13,8 @@ export function Card({ children, className = '', hover = false, glass = false, o
     const baseClasses = glass ? 'card-glass' : 'card';
     const hoverClasses = hover ? 'card-hover' : '';
 
-    const Component = onClick ? motion.div : motion.div;
-
     return (
-        <Component
+        <motion.div
             className={`${baseClasses} ${hoverClasses} ${className}`}
             onClick={onClick}
             whileHover={hover ? { y: -2 } : {}}
@@ -24,7 +22,7 @@ export function Card({ children, className = '', hover = false, glass = false, o
             layout
         >
             {children}
-        </Component>
+        </motion.div>
     );
 }
 
@@ -79,7 +77,7 @@ export function StatCard({
 
                 {trend && (
                     <div className="flex items-center mt-2 text-sm">
-                        <span className={`font-medium ${trend.isPositive ? 'text-green-200' : 'text-red-200'}`}>
+                        <span className={`font-medium ${trend.isPositive ? 'text-success-200' : 'text-danger-200'}`}>
                             {trend.isPositive ? '+' : ''}{trend.value}%
                         </span>
                         <span className="ml-1 opacity-80">vs last period</span>

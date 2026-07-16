@@ -274,12 +274,12 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
     <div className="modal-overlay">
       <div className="modal max-w-4xl">
         <div className="modal-header">
-          <h2 className="text-xl font-bold text-gray-900 font-fraunces">
+          <h2 className="text-xl font-bold text-secondary-900 font-fraunces">
             {product ? 'Edit Product' : 'Add New Product'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-2 rounded-xl hover:bg-gray-100 transition-colors"
+            className="text-secondary-400 hover:text-secondary-600 p-2 rounded-xl hover:bg-secondary-100 transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
@@ -287,10 +287,10 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
 
         <div className="modal-body space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Basic Information</h3>
+            <h3 className="text-lg font-semibold text-secondary-900 mb-4 font-fraunces">Basic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Product Name *
                 </label>
                 <input
@@ -305,7 +305,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Category *
                 </label>
                 <input
@@ -320,7 +320,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   SKU *
                 </label>
                 <input
@@ -335,7 +335,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Barcode
                 </label>
                 <input
@@ -349,7 +349,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Description
                 </label>
                 <textarea
@@ -365,7 +365,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Pricing & Stock</h3>
+            <h3 className="text-lg font-semibold text-secondary-900 mb-4 font-fraunces">Pricing & Stock</h3>
             
             <div className="mb-4">
               <label className="flex items-center space-x-3">
@@ -374,11 +374,11 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   name="isWeightBased"
                   checked={formData.isWeightBased}
                   onChange={handleChange}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-5 w-5"
+                  className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500 h-5 w-5"
                 />
                 <div className="flex items-center space-x-2">
-                  <Scale className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">Weight-based pricing</span>
+                  <Scale className="h-4 w-4 text-secondary-500" />
+                  <span className="text-sm font-medium text-secondary-700">Weight-based pricing</span>
                 </div>
               </label>
             </div>
@@ -387,7 +387,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
               {formData.isWeightBased ? (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary-700 mb-2">
                       Price per Unit *
                     </label>
                     <input
@@ -403,7 +403,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary-700 mb-2">
                       Unit *
                     </label>
                     <select
@@ -423,7 +423,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                 </>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
                     Sale Price *
                   </label>
                   <input
@@ -441,7 +441,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Cost Price *
                 </label>
                 <input
@@ -465,13 +465,13 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   name="trackInventory"
                   checked={formData.trackInventory}
                   onChange={handleChange}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-5 w-5"
+                  className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500 h-5 w-5"
                 />
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-700">Track inventory for this product</span>
+                  <span className="text-sm font-medium text-secondary-700">Track inventory for this product</span>
                 </div>
               </label>
-              <p className="text-xs text-gray-500 mt-1 ml-8">
+              <p className="text-xs text-secondary-500 mt-1 ml-8">
                 When disabled, stock levels won't be managed and inventory won't be deducted during sales
               </p>
             </div>
@@ -479,7 +479,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
             {formData.trackInventory && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
                     Current Stock *
                   </label>
                   <input
@@ -495,7 +495,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
                     Minimum Stock Level *
                   </label>
                   <input
@@ -514,10 +514,10 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-fraunces">Product Image</h3>
+            <h3 className="text-lg font-semibold text-secondary-900 mb-4 font-fraunces">Product Image</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Upload Image
                 </label>
                 <input
@@ -533,7 +533,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   <img
                     src={formData.image}
                     alt="Product preview"
-                    className="h-20 w-20 object-cover rounded-lg border border-gray-200"
+                    className="h-20 w-20 object-cover rounded-xl border border-secondary-200"
                   />
                   <button
                     type="button"
@@ -550,8 +550,8 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 font-fraunces">Batch Management</h3>
-                <p className="text-sm text-gray-600">Track manufacturing and expiry dates for better inventory control</p>
+                <h3 className="text-lg font-semibold text-secondary-900 font-fraunces">Batch Management</h3>
+                <p className="text-sm text-secondary-600">Track manufacturing and expiry dates for better inventory control</p>
               </div>
               <button
                 type="button"
@@ -565,10 +565,10 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
             {batches.length > 0 && (
               <div className="space-y-4 max-h-64 overflow-y-auto">
                 {batches.map((batch, index) => (
-                  <div key={batch.id} className="card p-4 border border-gray-200">
+                  <div key={batch.id} className="card p-4 border border-secondary-200">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-secondary-700 mb-1">
                           Batch Number
                         </label>
                         <input
@@ -580,7 +580,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-secondary-700 mb-1">
                           Manufacturing Date
                         </label>
                         <input
@@ -592,7 +592,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-secondary-700 mb-1">
                           Expiry Date
                         </label>
                         <input
@@ -604,7 +604,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-secondary-700 mb-1">
                           Quantity
                         </label>
                         <input
@@ -617,7 +617,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-secondary-700 mb-1">
                           Cost Price
                         </label>
                         <input
@@ -646,7 +646,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
             )}
           </div>
 
-          <div className="border-t border-gray-200 pt-6">
+          <div className="border-t border-secondary-200 pt-6">
             <div className="flex space-x-6">
               <label className="flex items-center">
                 <input
@@ -654,9 +654,9 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   name="taxable"
                   checked={formData.taxable}
                   onChange={handleChange}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-5 w-5"
+                  className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500 h-5 w-5"
                 />
-                <span className="ml-2 text-sm text-gray-700">Taxable</span>
+                <span className="ml-2 text-sm text-secondary-700">Taxable</span>
               </label>
 
               <label className="flex items-center">
@@ -665,9 +665,9 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   name="active"
                   checked={formData.active}
                   onChange={handleChange}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-5 w-5"
+                  className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500 h-5 w-5"
                 />
-                <span className="ml-2 text-sm text-gray-700">Active</span>
+                <span className="ml-2 text-sm text-secondary-700">Active</span>
               </label>
             </div>
           </div>

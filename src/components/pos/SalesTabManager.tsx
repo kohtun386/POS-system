@@ -105,7 +105,7 @@ export function SalesTabManager() {
             <div key={tab.id} className="relative flex flex-col items-center">
               <button
                 onClick={() => switchTab(tab.id)}
-                className={`relative w-12 h-20 rounded-md text-xs font-medium transition-all group flex items-center justify-center ${
+                className={`relative w-12 h-20 rounded-xl text-xs font-medium transition-all group flex items-center justify-center ${
                   isActive
                     ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white shadow-copper'
                     : 'bg-secondary-100 dark:bg-primary-900 text-secondary-600 dark:text-secondary-300 hover:bg-hover-border dark:hover:bg-secondary-900 hover:shadow-md'
@@ -166,10 +166,10 @@ export function SalesTabManager() {
             createNewTab();
           }}
           disabled={!canManageTabs}
-          className={`w-12 min-h-[48px] rounded-md transition-all duration-300 flex items-center justify-center mx-auto shadow-soft ${
+          className={`w-12 min-h-[48px] rounded-xl transition-all duration-300 flex items-center justify-center mx-auto shadow-soft ${
             canManageTabs
               ? 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white'
-              : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+              : 'bg-secondary-300 dark:bg-secondary-700 text-secondary-500 dark:text-secondary-400 cursor-not-allowed'
           }`}
           title={canManageTabs ? 'Add New Sale' : 'Multi-tab sales disabled'}
         >

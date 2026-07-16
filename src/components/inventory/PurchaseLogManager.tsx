@@ -85,11 +85,11 @@ export function PurchaseLogManager() {
 
   if (!canPurchaseLog) {
     return (
-      <div className="p-4 lg:p-6 space-y-6 bg-gray-50 min-h-full">
+      <div className="p-4 lg:p-6 space-y-6 bg-secondary-50 min-h-full">
         <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
-          <ShoppingCart className="h-16 w-16 text-gray-300" />
-          <h2 className="text-2xl font-bold text-gray-900">Purchase Log</h2>
-          <p className="text-gray-500 max-w-md">This feature is available on Growth tier and above.</p>
+          <ShoppingCart className="h-16 w-16 text-secondary-300" />
+          <h2 className="text-2xl font-bold text-secondary-900">Purchase Log</h2>
+          <p className="text-secondary-500 max-w-md">This feature is available on Growth tier and above.</p>
           <UpgradePrompt feature="Purchase Log" tier="growth" onClose={() => setShowUpgrade(false)} />
         </div>
       </div>
@@ -97,12 +97,12 @@ export function PurchaseLogManager() {
   }
 
   return (
-    <div className="p-4 lg:p-6 space-y-6 bg-gray-50 min-h-full">
+    <div className="p-4 lg:p-6 space-y-6 bg-secondary-50 min-h-full">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Purchase Log</h1>
-          <p className="text-gray-600 mt-1">Record supplier purchases and stock intake</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-secondary-900">Purchase Log</h1>
+          <p className="text-secondary-600 mt-1">Record supplier purchases and stock intake</p>
         </div>
         <button onClick={() => { setEditingEntry(null); setShowModal(true); }} className="btn btn-primary">
           <Plus className="h-5 w-5" />
@@ -112,10 +112,10 @@ export function PurchaseLogManager() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-        <div className="stat-card bg-gradient-to-br from-blue-500 to-blue-600">
+        <div className="stat-card bg-gradient-to-br from-primary-500 to-primary-600">
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-blue-100 text-sm font-medium">Total Purchases</p>
+              <p className="text-primary-100 text-sm font-medium">Total Purchases</p>
               <p className="text-2xl lg:text-3xl font-bold">{purchases.length}</p>
             </div>
             <div className="bg-white/20 p-3 rounded-2xl">
@@ -123,10 +123,10 @@ export function PurchaseLogManager() {
             </div>
           </div>
         </div>
-        <div className="stat-card bg-gradient-to-br from-green-500 to-green-600">
+        <div className="stat-card bg-gradient-to-br from-success-500 to-success-600">
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-green-100 text-sm font-medium">Total Cost ({DEFAULT_CURRENCY})</p>
+              <p className="text-success-100 text-sm font-medium">Total Cost ({DEFAULT_CURRENCY})</p>
               <p className="text-xl lg:text-2xl font-bold">{totalCost.toLocaleString()}</p>
             </div>
             <div className="bg-white/20 p-3 rounded-2xl">
@@ -134,10 +134,10 @@ export function PurchaseLogManager() {
             </div>
           </div>
         </div>
-        <div className="stat-card bg-gradient-to-br from-purple-500 to-purple-600">
+        <div className="stat-card bg-gradient-to-br from-accent-500 to-accent-600">
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-purple-100 text-sm font-medium">Unique Items</p>
+              <p className="text-accent-100 text-sm font-medium">Unique Items</p>
               <p className="text-2xl lg:text-3xl font-bold">{new Set(purchases.map(p => p.item)).size}</p>
             </div>
             <div className="bg-white/20 p-3 rounded-2xl">
@@ -152,7 +152,7 @@ export function PurchaseLogManager() {
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 gap-4">
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 flex-1 w-full lg:w-auto">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400 h-5 w-5" />
               <input
                 type="text"
                 placeholder="Search by item or supplier..."
@@ -162,7 +162,7 @@ export function PurchaseLogManager() {
               />
             </div>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400 h-5 w-5" />
               <select
                 value={`${filterYear}-${filterMonth}`}
                 onChange={(e) => {
@@ -186,10 +186,10 @@ export function PurchaseLogManager() {
       {/* Purchases Table */}
       <div className="card overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-500">Loading...</div>
+          <div className="p-8 text-center text-secondary-500">Loading...</div>
         ) : filteredPurchases.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <ShoppingCart className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+          <div className="p-8 text-center text-secondary-500">
+            <ShoppingCart className="h-12 w-12 mx-auto text-secondary-300 mb-3" />
             <p>No purchases recorded for this period.</p>
           </div>
         ) : (
@@ -206,14 +206,14 @@ export function PurchaseLogManager() {
                   <th className="table-header-cell text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-secondary-50 divide-y divide-secondary-200">
                 {filteredPurchases.map((purchase) => (
                   <tr key={purchase.id} className="table-row">
-                    <td className="table-cell text-sm text-gray-600">
+                    <td className="table-cell text-sm text-secondary-600">
                       {purchase.purchaseDate.toLocaleDateString()}
                     </td>
-                    <td className="table-cell font-semibold text-gray-900">{purchase.item}</td>
-                    <td className="table-cell text-gray-600">{purchase.supplier || '—'}</td>
+                    <td className="table-cell font-semibold text-secondary-900">{purchase.item}</td>
+                    <td className="table-cell text-secondary-600">{purchase.supplier || '—'}</td>
                     <td className="table-cell text-right">{purchase.quantity} {purchase.unit}</td>
                     <td className="table-cell text-right">{DEFAULT_CURRENCY} {purchase.unitCost.toLocaleString()}</td>
                     <td className="table-cell text-right font-semibold">{DEFAULT_CURRENCY} {purchase.totalCost.toLocaleString()}</td>
@@ -221,13 +221,13 @@ export function PurchaseLogManager() {
                       <div className="flex items-center justify-end space-x-2">
                         <button
                           onClick={() => handleEdit(purchase)}
-                          className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                          className="text-primary-600 hover:text-primary-900 p-2 rounded-xl hover:bg-primary-50 transition-colors"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(purchase.id, purchase.item)}
-                          className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                          className="text-danger-600 hover:text-danger-900 p-2 rounded-xl hover:bg-danger-50 transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

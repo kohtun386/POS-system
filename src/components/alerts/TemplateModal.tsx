@@ -129,7 +129,7 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90dvh] overflow-y-auto">
+            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90dvh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
                     <h2 className="text-xl font-semibold font-fraunces">
@@ -137,7 +137,7 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
                     </h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="text-secondary-400 hover:text-secondary-600 transition-colors"
                     >
                         <X className="h-6 w-6" />
                     </button>
@@ -154,7 +154,7 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">
                                     Template Name *
                                 </label>
                                 <input
@@ -168,7 +168,7 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">
                                     Alert Type *
                                 </label>
                                 <select
@@ -187,16 +187,16 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-secondary-700 mb-1">
                                 Channel *
                             </label>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 {channelOptions.map((option) => (
                                     <label
                                         key={option.value}
-                                        className={`flex items-center space-x-2 p-3 border rounded-lg cursor-pointer transition-colors ${formData.channel === option.value
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-gray-300 hover:border-gray-400'
+                                        className={`flex items-center space-x-2 p-3 border rounded-xl cursor-pointer transition-colors ${formData.channel === option.value
+                                                ? 'border-primary-500 bg-blue-50'
+                                                : 'border-secondary-300 hover:border-secondary-400'
                                             }`}
                                     >
                                         <input
@@ -226,7 +226,7 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
                             </h3>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">
                                     Subject Line *
                                 </label>
                                 <input
@@ -251,17 +251,17 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                             {/* Template Variables */}
                             <div className="lg:col-span-1">
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">Available Variables</h4>
+                                <h4 className="text-sm font-medium text-secondary-700 mb-2">Available Variables</h4>
                                 <div className="space-y-2">
                                     {templateVariables.map((variable) => (
                                         <button
                                             key={variable.variable}
                                             type="button"
                                             onClick={() => insertVariable(variable.variable)}
-                                            className="w-full text-left p-2 text-xs bg-gray-100 hover:bg-gray-200 rounded border transition-colors"
+                                            className="w-full text-left p-2 text-xs bg-secondary-100 hover:bg-secondary-200 rounded border transition-colors"
                                         >
-                                            <div className="font-mono text-blue-600">{variable.variable}</div>
-                                            <div className="text-gray-500">{variable.description}</div>
+                                            <div className="font-mono text-primary-600">{variable.variable}</div>
+                                            <div className="text-secondary-500">{variable.description}</div>
                                         </button>
                                     ))}
                                 </div>
@@ -269,7 +269,7 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
 
                             {/* Template Editor */}
                             <div className="lg:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">
                                     Template Content *
                                 </label>
                                 <textarea
@@ -280,7 +280,7 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
                                     placeholder="Enter template content..."
                                     required
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-secondary-500 mt-1">
                                     Click on variables to insert them into the template
                                 </p>
                             </div>
@@ -291,8 +291,8 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
                     {formData.body && (
                         <div className="space-y-4">
                             <h3 className="text-lg font-medium">Preview</h3>
-                            <div className="p-4 bg-gray-50 rounded-lg border">
-                                <div className="text-sm text-gray-600 mb-2">
+                            <div className="p-4 bg-secondary-50 rounded-xl border">
+                                <div className="text-sm text-secondary-600 mb-2">
                                     <strong>Subject:</strong> {formData.subject || 'N/A'}
                                 </div>
                                 <div className="text-sm whitespace-pre-wrap">
@@ -321,9 +321,9 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
                                 id="isActive"
                                 checked={formData.isActive}
                                 onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
                             />
-                            <label htmlFor="isActive" className="text-sm font-medium text-gray-700 cursor-pointer">
+                            <label htmlFor="isActive" className="text-sm font-medium text-secondary-700 cursor-pointer">
                                 Active (can be used for alerts)
                             </label>
                         </div>

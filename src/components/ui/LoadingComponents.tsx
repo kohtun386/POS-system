@@ -84,7 +84,7 @@ export function SkeletonLoader({ className = '', lines = 1 }: SkeletonLoaderProp
             {Array.from({ length: lines }).map((_, index) => (
                 <motion.div
                     key={index}
-                    className="h-4 bg-secondary-200 dark:bg-secondary-700 rounded-lg mb-2"
+                    className="h-4 bg-secondary-200 dark:bg-secondary-700 rounded-xl mb-2"
                     initial={{ opacity: 0.6 }}
                     animate={{ opacity: [0.6, 1, 0.6] }}
                     transition={{

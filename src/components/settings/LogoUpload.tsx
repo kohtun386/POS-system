@@ -60,7 +60,7 @@ export function LogoUpload({ currentLogo, onLogoChange, disabled = false }: Logo
 
   return (
     <div className="space-y-4">
-      <label className="block text-sm font-semibold text-gray-700">
+      <label className="block text-sm font-semibold text-secondary-700">
         Store Logo
       </label>
       
@@ -69,15 +69,15 @@ export function LogoUpload({ currentLogo, onLogoChange, disabled = false }: Logo
           <img
             src={currentLogo}
             alt="Store Logo"
-            className="h-24 w-24 object-contain border border-gray-200 rounded-xl bg-white p-2"
+            className="h-24 w-24 object-contain border border-secondary-200 rounded-xl bg-white p-2"
           />
           <button
             onClick={removeLogo}
             disabled={disabled}
             className={`absolute -top-2 -right-2 rounded-full p-1 transition-colors ${
               disabled 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                : 'bg-red-500 text-white hover:bg-red-600'
+                ? 'bg-secondary-300 text-secondary-500 cursor-not-allowed' 
+                : 'bg-red-500 text-white hover:bg-danger-600'
             }`}
           >
             <X className="h-4 w-4" />
@@ -87,10 +87,10 @@ export function LogoUpload({ currentLogo, onLogoChange, disabled = false }: Logo
         <div
           className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
             disabled 
-              ? 'border-gray-200 bg-gray-100 cursor-not-allowed' 
+              ? 'border-secondary-200 bg-secondary-100 cursor-not-allowed' 
               : dragOver
-              ? 'border-blue-400 bg-blue-50 cursor-pointer'
-              : 'border-gray-300 hover:border-gray-400 cursor-pointer'
+              ? 'border-primary-400 bg-primary-50 cursor-pointer'
+              : 'border-secondary-300 hover:border-secondary-400 cursor-pointer'
           }`}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -98,14 +98,14 @@ export function LogoUpload({ currentLogo, onLogoChange, disabled = false }: Logo
           onClick={() => !disabled && fileInputRef.current?.click()}
         >
           <div className="flex flex-col items-center space-y-3">
-            <div className="bg-gray-100 p-3 rounded-xl">
-              <Image className="h-8 w-8 text-gray-400" />
+            <div className="bg-secondary-100 p-3 rounded-xl">
+              <Image className="h-8 w-8 text-secondary-400" />
             </div>
             <div>
-              <p className={`text-sm font-medium ${disabled ? 'text-gray-500' : 'text-gray-900'}`}>
+              <p className={`text-sm font-medium ${disabled ? 'text-secondary-500' : 'text-secondary-900'}`}>
                 {disabled ? 'Upload disabled' : 'Click to upload or drag and drop'}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-secondary-500">
                 PNG, JPG, GIF up to 2MB
               </p>
             </div>

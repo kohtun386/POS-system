@@ -76,23 +76,23 @@ export function DiscountManager() {
   const getDiscountTypeColor = (type: string) => {
     switch (type) {
       case 'percentage':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary-100 text-primary-800';
       case 'fixed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-success-800';
       case 'free_gift':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-accent-100 text-accent-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-secondary-100 text-secondary-800';
     }
   };
 
   return (
-    <div className="p-4 lg:p-6 space-y-6 bg-gray-50 min-h-full">
+    <div className="p-4 lg:p-6 space-y-6 bg-secondary-50 min-h-full">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Discounts & Promotions</h1>
-          <p className="text-gray-600 mt-1">Manage automatic discounts and promotional offers</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-secondary-900">Discounts & Promotions</h1>
+          <p className="text-secondary-600 mt-1">Manage automatic discounts and promotional offers</p>
         </div>
         
         <button
@@ -106,10 +106,10 @@ export function DiscountManager() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        <div className="stat-card bg-gradient-to-br from-blue-500 to-blue-600">
+        <div className="stat-card bg-gradient-to-br from-primary-500 to-primary-600">
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-blue-100 text-sm font-medium">Total Discounts</p>
+              <p className="text-primary-100 text-sm font-medium">Total Discounts</p>
               <p className="text-2xl lg:text-3xl font-bold">{state.discounts.length}</p>
             </div>
             <div className="bg-white/20 p-3 rounded-2xl">
@@ -118,10 +118,10 @@ export function DiscountManager() {
           </div>
         </div>
 
-        <div className="stat-card bg-gradient-to-br from-green-500 to-green-600">
+        <div className="stat-card bg-gradient-to-br from-success-500 to-success-600">
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-green-100 text-sm font-medium">Active Discounts</p>
+              <p className="text-success-100 text-sm font-medium">Active Discounts</p>
               <p className="text-2xl lg:text-3xl font-bold">
                 {state.discounts.filter(d => d.active).length}
               </p>
@@ -132,10 +132,10 @@ export function DiscountManager() {
           </div>
         </div>
 
-        <div className="stat-card bg-gradient-to-br from-purple-500 to-purple-600">
+        <div className="stat-card bg-gradient-to-br from-accent-500 to-accent-600">
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-purple-100 text-sm font-medium">Percentage Discounts</p>
+              <p className="text-accent-100 text-sm font-medium">Percentage Discounts</p>
               <p className="text-2xl lg:text-3xl font-bold">
                 {state.discounts.filter(d => d.type === 'percentage').length}
               </p>
@@ -146,10 +146,10 @@ export function DiscountManager() {
           </div>
         </div>
 
-        <div className="stat-card bg-gradient-to-br from-orange-500 to-orange-600">
+        <div className="stat-card bg-gradient-to-br from-warning-500 to-warning-600">
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-orange-100 text-sm font-medium">Free Gift Offers</p>
+              <p className="text-warning-100 text-sm font-medium">Free Gift Offers</p>
               <p className="text-2xl lg:text-3xl font-bold">
                 {state.discounts.filter(d => d.type === 'free_gift').length}
               </p>
@@ -165,7 +165,7 @@ export function DiscountManager() {
       <div className="card p-4 lg:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 gap-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400 h-5 w-5" />
             <input
               type="text"
               placeholder="Search discounts..."
@@ -192,13 +192,13 @@ export function DiscountManager() {
                 <th className="table-header-cell text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-secondary-50 divide-y divide-secondary-200">
               {filteredDiscounts.map((discount) => (
                 <tr key={discount.id} className="table-row">
                   <td className="table-cell">
                     <div>
-                      <div className="text-sm font-semibold text-gray-900">{discount.name}</div>
-                      <div className="text-xs text-gray-500">{discount.description}</div>
+                      <div className="text-sm font-semibold text-secondary-900">{discount.name}</div>
+                      <div className="text-xs text-secondary-500">{discount.description}</div>
                     </div>
                   </td>
                   <td className="table-cell">
@@ -213,14 +213,14 @@ export function DiscountManager() {
                     {discount.type === 'free_gift' && 'Free Gift'}
                   </td>
                   <td className="table-cell">
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-secondary-600">
                       {discount.conditions.length} condition(s)
                     </div>
                   </td>
                   <td className="table-cell">
                     <div className="text-xs">
                       <div>{format(new Date(discount.validFrom), 'MMM dd, yyyy')}</div>
-                      <div className="text-gray-500">to {format(new Date(discount.validTo), 'MMM dd, yyyy')}</div>
+                      <div className="text-secondary-500">to {format(new Date(discount.validTo), 'MMM dd, yyyy')}</div>
                     </div>
                   </td>
                   <td className="table-cell">
@@ -237,13 +237,13 @@ export function DiscountManager() {
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         onClick={() => handleEditDiscount(discount)}
-                        className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                        className="text-primary-600 hover:text-primary-900 p-2 rounded-xl hover:bg-primary-50 transition-colors"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteDiscount(discount.id)}
-                        className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                        className="text-danger-600 hover:text-danger-900 p-2 rounded-xl hover:bg-danger-50 transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

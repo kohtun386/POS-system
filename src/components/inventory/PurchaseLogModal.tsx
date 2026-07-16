@@ -98,11 +98,11 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">
+        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
+          <h2 className="text-xl font-bold text-secondary-900">
             {editingEntry ? 'Edit Purchase' : 'Record Purchase'}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+          <button onClick={onClose} className="btn btn-ghost btn-sm p-2">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -110,7 +110,7 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Item *</label>
+              <label className="block text-sm font-medium text-secondary-700 mb-1">Item *</label>
               <input
                 type="text"
                 value={formData.item}
@@ -121,7 +121,7 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
+              <label className="block text-sm font-medium text-secondary-700 mb-1">Supplier</label>
               <input
                 type="text"
                 value={formData.supplier}
@@ -131,7 +131,7 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
+              <label className="block text-sm font-medium text-secondary-700 mb-1">Quantity *</label>
               <input
                 type="number"
                 step="any"
@@ -144,7 +144,7 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+              <label className="block text-sm font-medium text-secondary-700 mb-1">Unit</label>
               <select
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
@@ -160,7 +160,7 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost (MMK) *</label>
+              <label className="block text-sm font-medium text-secondary-700 mb-1">Unit Cost (MMK) *</label>
               <input
                 type="number"
                 step="any"
@@ -173,7 +173,7 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Date</label>
+              <label className="block text-sm font-medium text-secondary-700 mb-1">Purchase Date</label>
               <input
                 type="date"
                 value={formData.purchaseDate}
@@ -184,7 +184,7 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-secondary-700 mb-1">Notes</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -195,15 +195,15 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
           </div>
 
           {formData.quantity && formData.unitCost && (
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-sm text-gray-500">Total Cost</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="bg-secondary-50 rounded-xl p-4">
+              <p className="text-sm text-secondary-500">Total Cost</p>
+              <p className="text-2xl font-bold text-secondary-900">
                 MMK {(parseFloat(formData.quantity || '0') * parseFloat(formData.unitCost || '0')).toLocaleString()}
               </p>
             </div>
           )}
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-secondary-200">
             <button type="button" onClick={onClose} className="btn btn-secondary">
               Cancel
             </button>

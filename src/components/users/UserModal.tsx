@@ -164,14 +164,14 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90dvh] overflow-y-auto">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-2 font-fraunces">
-            <User className="h-6 w-6 text-blue-600" />
+        <div className="px-6 py-4 border-b border-secondary-100 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-secondary-900 flex items-center space-x-2 font-fraunces">
+            <User className="h-6 w-6 text-primary-600" />
             <span>{user ? 'Edit User' : 'Add New User'}</span>
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-secondary-400 hover:text-secondary-600 transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
@@ -180,11 +180,11 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-secondary-700 mb-2">
                 Full Name *
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
                 <input
                   type="text"
                   name="name"
@@ -198,7 +198,7 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-secondary-700 mb-2">
                 Username *
               </label>
               <input
@@ -214,11 +214,11 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-secondary-700 mb-2">
                 Email *
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
                 <input
                   type="email"
                   name="email"
@@ -235,11 +235,11 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
             {/* Password Field - Only show for new users */}
             {!user && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Password *
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
                   <input
                     type="password"
                     name="password"
@@ -255,11 +255,11 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-secondary-700 mb-2">
                 Role *
               </label>
               <div className="relative">
-                <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
                 <select
                   name="role"
                   value={formData.role}
@@ -276,17 +276,17 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
           </div>
 
           {/* Role Permissions Display */}
-          <div className="bg-gray-50 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center space-x-2 font-fraunces">
+          <div className="bg-secondary-50 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-secondary-900 mb-3 flex items-center space-x-2 font-fraunces">
               {formData.role === 'admin' && <Crown className="h-4 w-4 text-amber-500" />}
-              {formData.role === 'manager' && <Shield className="h-4 w-4 text-blue-500" />}
-              {formData.role === 'cashier' && <User className="h-4 w-4 text-gray-500" />}
+              {formData.role === 'manager' && <Shield className="h-4 w-4 text-primary-500" />}
+              {formData.role === 'cashier' && <User className="h-4 w-4 text-secondary-500" />}
               <span className="capitalize">{formData.role} Permissions</span>
             </h3>
-            <ul className="text-xs text-gray-600 space-y-1">
+            <ul className="text-xs text-secondary-600 space-y-1">
               {rolePermissions[formData.role].map((permission, index) => (
                 <li key={index} className="flex items-center space-x-2">
-                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                  <div className="w-1 h-1 bg-secondary-400 rounded-full"></div>
                   <span>{permission}</span>
                 </li>
               ))}
@@ -294,7 +294,7 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-secondary-700 mb-2">
               Avatar URL (Optional)
             </label>
             <input
@@ -314,15 +314,15 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
               name="active"
               checked={formData.active}
               onChange={handleChange}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
               disabled={user?.id === state.currentUser?.id} // Prevent self-deactivation
             />
-            <label htmlFor="active" className="text-sm font-medium text-gray-700">
+            <label htmlFor="active" className="text-sm font-medium text-secondary-700">
               Active User
             </label>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-100">
+          <div className="flex justify-end space-x-3 pt-6 border-t border-secondary-100">
             <button
               type="button"
               onClick={onClose}

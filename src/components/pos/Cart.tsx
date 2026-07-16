@@ -113,7 +113,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
               onClick={() => {
                 state.cart.forEach(() => dispatch({ type: 'REMOVE_FROM_CART', payload: 0 }));
               }}
-              className="text-xs text-secondary-400 hover:text-danger-600 transition-colors px-3 py-2 min-h-[44px] rounded-lg hover:bg-[#fee2e2]"
+              className="btn btn-ghost btn-sm text-xs text-secondary-400 hover:text-danger-600 min-h-[44px] rounded-xl hover:bg-danger-100"
             >
               Clear all
             </button>
@@ -135,7 +135,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
                 </div>
                 <button
                   onClick={() => dispatch({ type: 'SET_SELECTED_CUSTOMER', payload: null })}
-                  className="text-success-600 hover:text-success-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-[#dcfce7] transition-colors flex-shrink-0"
+                  className="btn btn-ghost text-success-600 hover:text-success-700 p-2 min-w-[44px] min-h-[44px] rounded-xl hover:bg-success-100 flex-shrink-0"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -171,7 +171,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
                   <button
                     key={customer.id}
                     onClick={() => selectCustomer(customer)}
-                    className="w-full text-left p-4 hover:bg-secondary-100 dark:hover:bg-primary-900 border-t border-secondary-200/50 dark:border-secondary-800/50 transition-colors"
+                    className="btn btn-ghost w-full text-left p-4 border-t border-secondary-200/50 dark:border-secondary-800/50"
                   >
                     <p className="font-medium text-sm text-secondary-900 dark:text-secondary-100 truncate">{customer.name}</p>
                     <p className="text-xs text-secondary-600 dark:text-secondary-300 truncate">{customer.email}</p>
@@ -339,7 +339,7 @@ function CartItemCard({ item, index, onUpdateQuantity, onRemove, onApplyDiscount
         </div>
         <button
           onClick={() => onRemove(index)}
-          className="text-danger-600 hover:text-danger-700 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-[#fee2e2] transition-colors flex-shrink-0"
+          className="btn btn-ghost text-danger-600 hover:text-danger-700 p-2.5 min-w-[44px] min-h-[44px] rounded-xl hover:bg-danger-100 flex-shrink-0"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -377,7 +377,7 @@ function CartItemCard({ item, index, onUpdateQuantity, onRemove, onApplyDiscount
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowDiscountInput(!showDiscountInput)}
-            className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors ${
+            className={`btn btn-sm min-w-[44px] min-h-[44px] rounded-xl ${
               showDiscountInput
                 ? 'bg-primary-50 text-primary-600 dark:bg-primary-900 dark:text-primary-400'
                 : 'text-secondary-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900'

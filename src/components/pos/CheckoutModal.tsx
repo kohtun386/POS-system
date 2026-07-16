@@ -680,7 +680,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                             </div>
                             <div className="flex items-center space-x-2">
                               <div className="font-semibold text-secondary-900 dark:text-secondary-100">{DEFAULT_CURRENCY} {p.amount.toFixed(2)}</div>
-                              <button onClick={() => removePayment(p.id)} className="btn-ghost text-sm font-medium !text-red-600 hover:!text-red-800">Remove</button>
+                              <button onClick={() => removePayment(p.id)} className="btn-ghost text-sm font-medium !text-danger-600 hover:!text-danger-800">Remove</button>
                             </div>
                           </div>
                         ))}
