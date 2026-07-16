@@ -159,13 +159,15 @@ export class AlertService {
     private async initializeServices() {
         try {
             // Get notification service configurations
+            // Use maybeSingle() instead of single() — returns null for 0 rows
+            // instead of 406 error (PostgREST can't produce object from empty result)
             const { data: emailConfigs, error: emailError } = await supabase
                 .from('notification_service_config')
                 .select('*')
                 .eq('service_type', 'email')
                 .eq('is_active', true)
                 .eq('is_default', true)
-                .single();
+                .maybeSingle();
 
             const { data: smsConfigs, error: smsError } = await supabase
                 .from('notification_service_config')
@@ -173,7 +175,7 @@ export class AlertService {
                 .eq('service_type', 'sms')
                 .eq('is_active', true)
                 .eq('is_default', true)
-                .single();
+                .maybeSingle();
 
             if (!emailError && emailConfigs) {
                 this.emailService = this.createEmailService(emailConfigs);
