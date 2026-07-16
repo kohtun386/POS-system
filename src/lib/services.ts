@@ -1755,6 +1755,25 @@ export interface PlatformDailyStats {
   mrr: number;
 }
 
+export interface PlatformUserMembership {
+  membershipId: string;
+  shopId: string;
+  shopName: string;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface PlatformUser {
+  userId: string;
+  username: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+  isActive: boolean;
+  memberships: PlatformUserMembership[];
+}
+
 export const platformAdminService = {
   async approveShop(shopId: string): Promise<void> {
     const { error } = await supabase.functions.invoke('platform-admin-approve-shop', {
@@ -1813,6 +1832,47 @@ export const platformAdminService = {
   async toggleShopActive(shopId: string, isActive: boolean): Promise<void> {
     const { error } = await supabase.functions.invoke('platform-admin-update-subscription', {
       body: { shop_id: shopId, is_active: isActive },
+    })
+    if (error) throw error
+  },
+
+  // ── User Management (Option A — Demo Day MVP) ──────────────────
+
+  async listUsers(filters?: {
+    shop_id?: string
+    role?: string
+    is_active?: boolean
+    page?: number
+    page_size?: number
+  }): Promise<{ users: PlatformUser[]; total: number; page: number; pageSize: number }> {
+    const { data, error } = await supabase.functions.invoke('platform-admin-list-users', {
+      body: filters ?? {},
+    })
+    if (error) throw error
+    return data as { users: PlatformUser[]; total: number; page: number; pageSize: number }
+  },
+
+  async updateUserRole(
+    membershipId: string,
+    userId: string,
+    shopId: string,
+    role: 'admin' | 'manager' | 'cashier',
+  ): Promise<{ previousRole: string; newRole: string }> {
+    const { data, error } = await supabase.functions.invoke('platform-admin-update-user-role', {
+      body: { membership_id: membershipId, user_id: userId, shop_id: shopId, role },
+    })
+    if (error) throw error
+    return data as { previousRole: string; newRole: string }
+  },
+
+  async toggleUserActive(
+    membershipId: string,
+    userId: string,
+    shopId: string,
+    isActive: boolean,
+  ): Promise<void> {
+    const { error } = await supabase.functions.invoke('platform-admin-toggle-user-active', {
+      body: { membership_id: membershipId, user_id: userId, shop_id: shopId, is_active: isActive },
     })
     if (error) throw error
   },

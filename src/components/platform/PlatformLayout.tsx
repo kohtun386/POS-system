@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import { LayoutDashboard, Clock, CreditCard, Settings, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Clock, CreditCard, Settings, Users, Menu, X } from 'lucide-react';
 import { PlatformDashboard } from './PlatformDashboard';
 import { PendingShopsList } from './PendingShopsList';
 import { SubscriptionManager } from './SubscriptionManager';
 import { FeatureDefinitions } from './FeatureDefinitions';
+import { UserManagement } from './UserManagement';
 
-type PlatformView = 'dashboard' | 'pending' | 'subscriptions' | 'features';
+type PlatformView = 'dashboard' | 'pending' | 'subscriptions' | 'features' | 'users';
 
 const navItems = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'pending', label: 'Pending Shops', icon: Clock },
   { key: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
+  { key: 'users', label: 'Users', icon: Users },
   { key: 'features', label: 'Features', icon: Settings },
 ] as const;
 
@@ -29,6 +31,8 @@ export function PlatformLayout() {
         return <PendingShopsList />;
       case 'subscriptions':
         return <SubscriptionManager />;
+      case 'users':
+        return <UserManagement />;
       case 'features':
         return <FeatureDefinitions />;
       default:
