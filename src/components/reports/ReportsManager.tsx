@@ -9,11 +9,13 @@ import { OwnerInsights } from './OwnerInsights';
 import { ProfitMarginAnalytics } from './ProfitMarginAnalytics';
 import { WhatsAppReportConfig } from './WhatsAppReportConfig';
 import { SimpleProfitReport } from './SimpleProfitReport';
+import { usePostHog } from '@posthog/react';
 
 export function ReportsManager() {
   const { state } = useApp();
   const hasProReports = useCapability('advanced_reports');
   const hasSimpleProfit = useCapability('simple_profit_report');
+  const posthog = usePostHog();
   const [dateRange, setDateRange] = useState('7');
   const [reportType, setReportType] = useState('sales');
   const [startDateInput, setStartDateInput] = useState('');
@@ -214,6 +216,12 @@ export function ReportsManager() {
   const COLORS = ['#9a693a', '#f57323', '#16a34a', '#dc2626', '#7c3aed', '#ec4899'];
 
   const exportReport = () => {
+    posthog?.capture('report_exported', {
+      report_type: reportType,
+      date_range: dateRange,
+      record_count: filteredSales.length,
+    });
+
     let csvHeader = '';
     let csvData = '';
     let fileName = '';

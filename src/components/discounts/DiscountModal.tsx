@@ -4,6 +4,7 @@ import { Discount, DiscountCondition } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { swalConfig } from '../../lib/sweetAlert';
+import { usePostHog } from '@posthog/react';
 
 interface DiscountModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface DiscountModalProps {
 
 export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps) {
   const { state, dispatch } = useApp();
+  const posthog = usePostHog();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -141,10 +143,22 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
       if (discount) {
         await discountsService.update(discount.id, discountData);
         dispatch({ type: 'UPDATE_DISCOUNT', payload: discountData });
+        posthog?.capture('discount_updated', {
+          discount_id: discountData.id,
+          discount_type: discountData.type,
+          is_active: discountData.active,
+          has_conditions: (discountData.conditions?.length ?? 0) > 0,
+        });
         swalConfig.success('Discount updated successfully!');
       } else {
         const newDiscount = await discountsService.create(discountData);
         dispatch({ type: 'ADD_DISCOUNT', payload: newDiscount });
+        posthog?.capture('discount_created', {
+          discount_id: newDiscount.id,
+          discount_type: newDiscount.type,
+          is_active: newDiscount.active,
+          has_conditions: (newDiscount.conditions?.length ?? 0) > 0,
+        });
         swalConfig.success('Discount created successfully!');
       }
       

@@ -9,10 +9,12 @@ import { useAuth } from '../../context/AuthContext';
 import { salesService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
 import { ReportsManager } from '../../lazyComponents';
+import { usePostHog } from '@posthog/react';
 
 export function POSTerminal() {
   const { state, dispatch } = useApp();
   const { user } = useAuth();
+  const posthog = usePostHog();
   const [showCheckout, setShowCheckout] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
@@ -61,6 +63,13 @@ export function POSTerminal() {
       };
       dispatch({ type: 'ADD_TO_CART', payload: newItem });
     }
+
+    posthog?.capture('cart_item_added', {
+      product_id: product.id,
+      product_name: product.name,
+      product_category: product.category,
+      is_weight_based: product.isWeightBased ?? false,
+    });
 
     // Update current sales tab
     if (state.activeSalesTab) {
@@ -140,6 +149,11 @@ export function POSTerminal() {
         });
       }
 
+      posthog?.capture('draft_sale_saved', {
+        item_count: state.cart.length,
+        total_amount: total,
+        has_customer: !!state.selectedCustomer,
+      });
       swalConfig.success('Draft sale saved successfully!');
     } catch (error) {
       console.error('Error saving draft:', error);

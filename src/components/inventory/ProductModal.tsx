@@ -4,6 +4,7 @@ import { Product, ProductBatch } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 import { productsService } from '../../lib/services';
 import Swal from 'sweetalert2';
+import { usePostHog } from '@posthog/react';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface ProductModalProps {
 
 export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
   const { dispatch } = useApp();
+  const posthog = usePostHog();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -197,6 +199,13 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
       if (product) {
         await productsService.update(productData.id, productData);
         dispatch({ type: 'UPDATE_PRODUCT', payload: productData });
+        posthog?.capture('product_updated', {
+          product_id: productData.id,
+          product_name: productData.name,
+          category: productData.category,
+          is_weight_based: productData.isWeightBased ?? false,
+          track_inventory: productData.trackInventory,
+        });
         await Swal.fire({
           title: 'Success!',
           text: 'Product updated successfully',
@@ -206,6 +215,13 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
       } else {
         const newProduct = await productsService.create(productData);
         dispatch({ type: 'ADD_PRODUCT', payload: newProduct });
+        posthog?.capture('product_created', {
+          product_id: newProduct.id,
+          product_name: newProduct.name,
+          category: newProduct.category,
+          is_weight_based: newProduct.isWeightBased ?? false,
+          track_inventory: newProduct.trackInventory,
+        });
         await Swal.fire({
           title: 'Success!',
           text: 'Product added successfully',

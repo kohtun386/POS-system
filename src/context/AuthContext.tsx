@@ -5,6 +5,7 @@ import { User } from '../types'
 import { usersService } from '../lib/services'
 import Swal from 'sweetalert2'
 import { swalConfig } from '../lib/sweetAlert'
+import posthog from 'posthog-js'
 
 interface AuthContextType {
   user: SupabaseUser | null
@@ -117,6 +118,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
 
         setIsPendingApproval(data.active === false)
+
+        posthog.identify(userId, {
+          role: data.role,
+          email: data.email,
+          name: data.name,
+        })
       }
     } catch (error) {
       console.error('Error loading profile:', error)
@@ -144,6 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       if (error) throw error
       
+      posthog.capture('user_signed_in')
       // Show success toast with our styled config
       swalConfig.success('Welcome back! You have successfully signed in.');
     } catch (error: unknown) {
@@ -204,9 +212,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // Mark profile as loaded so onAuthStateChange doesn't re-fetch
           loadedProfileUserId.current = profileData.id
+
+          posthog.identify(profileData.id, {
+            role: profileData.role,
+            email: profileData.email,
+            name: profileData.name,
+          })
         }
       }
 
+      posthog.capture('user_signed_up')
       setLoading(false)
 
       // Show success toast with our styled config
@@ -226,6 +241,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
       
+      posthog.capture('user_signed_out')
+      posthog.reset()
       // Show success toast with our styled config
       swalConfig.success('Signed Out! You have been successfully signed out.');
     } catch (error: unknown) {

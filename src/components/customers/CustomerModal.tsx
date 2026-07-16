@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { Customer } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
 import { swalConfig } from '../../lib/sweetAlert';
+import { usePostHog } from '@posthog/react';
 
 interface CustomerModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface CustomerModalProps {
 
 export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps) {
   const { dispatch } = useApp();
+  const posthog = usePostHog();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -94,6 +96,10 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
       } else {
         const newCustomer = await customersService.create(customerData);
         dispatch({ type: 'ADD_CUSTOMER', payload: newCustomer });
+        posthog?.capture('customer_created', {
+          price_tier: newCustomer.priceTier,
+          has_credit_limit: newCustomer.creditLimit > 0,
+        });
         swalConfig.success('Customer created successfully!');
       }
       

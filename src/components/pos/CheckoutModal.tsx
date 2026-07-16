@@ -10,6 +10,7 @@ import { UpgradePrompt } from '../ui/UpgradePrompt';
 import { checkoutService, DailyLimitError } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
 import { checkStockAvailability } from '../../lib/inventoryUtils';
+import { usePostHog } from '@posthog/react';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface CheckoutModalProps {
 export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProps) {
   const { state, dispatch } = useApp();
   const { user } = useAuth();
+  const posthog = usePostHog();
   const creditEnabled = useCapability('credit_system');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [amountPaid, setAmountPaid] = useState('');
@@ -376,8 +378,19 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         throw err;
       }
       dispatch({ type: 'ADD_SALE', payload: savedSale });
-
       dispatch({ type: 'CLEAR_CART' });
+
+      posthog?.capture('sale_completed', {
+        total_amount: savedSale.total,
+        subtotal: savedSale.subtotal,
+        discount_amount: savedSale.discountAmount,
+        tax_amount: savedSale.taxAmount,
+        payment_method: savedSale.paymentMethod,
+        item_count: savedSale.items.length,
+        has_customer: !!savedSale.customerId,
+        has_discounts: (savedSale.appliedDiscounts?.length ?? 0) > 0,
+        is_credit_sale: savedSale.status === 'credit',
+      });
 
       setCompletedSale(savedSale);
       onComplete(savedSale);
