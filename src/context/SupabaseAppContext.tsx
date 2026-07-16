@@ -479,9 +479,11 @@ export function checkDiscountEligibility(
   }
 
   // Check conditions
-  for (const condition of discount.conditions) {
-    if (!checkCondition(condition, cart, customer, paymentMethod, total, cardDetails)) {
-      return false;
+  if (Array.isArray(discount.conditions)) {
+    for (const condition of discount.conditions) {
+      if (!checkCondition(condition, cart, customer, paymentMethod, total, cardDetails)) {
+        return false;
+      }
     }
   }
 

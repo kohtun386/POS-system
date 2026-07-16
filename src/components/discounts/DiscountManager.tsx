@@ -214,7 +214,7 @@ export function DiscountManager() {
                   </td>
                   <td className="table-cell">
                     <div className="text-xs text-secondary-600">
-                      {discount.conditions.length} condition(s)
+                      {discount.conditions?.length || 0} condition(s)
                     </div>
                   </td>
                   <td className="table-cell">
