@@ -35,11 +35,10 @@
 | Document | Description | Status |
 |----------|-------------|--------|
 | [Multi-Tenancy](specs/multi-tenancy.md) | Multi-tenant schema with shop_id foundation, 4 roles, subscription tiers | Foundation complete, dynamic config pending |
+| [Inventory Model](specs/inventory-model.md) | Simplified inventory: purchase log, stock overview, low stock alerts, simple profit report | Active (v1) |
 | [Inventory Alerts](specs/inventory-alerts.md) | Alert system: 5 alert types, email/SMS, templates, scheduling | Planned |
-| [Kitchen Workflow](specs/kitchen-workflow.md) | Kitchen Display System (KDS), real-time orders, print jobs, station routing | Planned |
-| [Recipe BOM](specs/recipe-bom.md) | Bill of Materials, raw materials, recipes, consumption logging, UoM conversion | Planned |
-| [Feature Flags](specs/feature-flags.md) | Capability-based per-shop feature toggling, subscription tier gating (Free/Growth/Pro) | Planned |
-| [Waste Tracking](specs/waste-tracking.md) | Recording spoiled/damaged ingredients, waste reports, impact on profitability | Pro tier — Planned |
+| [Feature Gating](specs/feature-gating.md) | Capability-based per-shop feature toggling, subscription tier gating (Free/Growth/Pro) | Active |
+| [Tier Spec](specs/tier-spec.md) | Canonical tier definitions, capability mapping, v1.0 scope | Active |
 
 ### User Workflow Guides
 
@@ -48,8 +47,7 @@ User-facing guides written for shop owners and staff — no technical jargon.
 | Document | Description | Audience |
 |----------|-------------|----------|
 | [User Onboarding](specs/user-onboarding.md) | Signup → approval → first login tour → Free tier setup → upgrade flow → grace period | New shop owners |
-| [Recipe & Inventory](specs/recipe-bom-user-workflow.md) | Raw materials, recipes, auto-deduction, stock levels, low stock alerts, COGS, profit margins | Growth+ shop owners |
-| [Waste Tracking](specs/waste-tracking.md) | Recording waste, waste reports, analyzing waste impact on profitability | Pro tier shop owners |
+| [Inventory Model](specs/inventory-model.md) | Purchase log, stock overview, low stock alerts, simple profit report | Growth+ shop owners |
 
 ---
 
@@ -67,16 +65,16 @@ User-facing guides written for shop owners and staff — no technical jargon.
 - [PRD](specs/prd.md) → [Decisions](architecture/decisions.md) → [Patterns](architecture/patterns.md) → [Database](architecture/database.md) → [State Management](architecture/state-management.md)
 
 **Backend/Focus:**
-- [Database](architecture/database.md) → [Auth](architecture/auth.md) → [Multi-Tenancy](specs/multi-tenancy.md) → [Recipe BOM](specs/recipe-bom.md)
+- [Database](architecture/database.md) → [Auth](architecture/auth.md) → [Multi-Tenancy](specs/multi-tenancy.md) → [Inventory Model](specs/inventory-model.md)
 
 **Frontend/Focus:**
-- [Design System](architecture/design-system.md) → [State Management](architecture/state-management.md) → [Patterns](architecture/patterns.md) → [Kitchen Workflow](specs/kitchen-workflow.md)
+- [Design System](architecture/design-system.md) → [State Management](architecture/state-management.md) → [Patterns](architecture/patterns.md)
 
 **Shop Owner / Non-Technical:**
-- [User Onboarding](specs/user-onboarding.md) → [Recipe & Inventory](specs/recipe-bom-user-workflow.md) → [Waste Tracking](specs/waste-tracking.md)
+- [User Onboarding](specs/user-onboarding.md) → [Inventory Model](specs/inventory-model.md)
 
 **DevOps/Infra:**
-- [Deployment](architecture/deployment.md) → [Multi-Tenancy](specs/multi-tenancy.md) → [Feature Flags](specs/feature-flags.md)
+- [Deployment](architecture/deployment.md) → [Multi-Tenancy](specs/multi-tenancy.md) → [Feature Gating](specs/feature-gating.md)
 
 ### Key Links
 

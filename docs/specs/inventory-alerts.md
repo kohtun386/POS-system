@@ -1,8 +1,8 @@
 # Inventory Alert System
 
-**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
+**Last updated:** 2026-07-15 (aligned with VISION.md v3.1.0 Simplified Inventory)
 
-> **Tier requirement:** Low stock alerts and inventory tracking features are **Growth+ tier** only (VISION.md §10.4). Free tier shops can toggle `track_inventory` for basic stock counts but do not receive alerts, raw material tracking, recipe BOM, or COGS calculation. See [VISION.md §10](../vision/VISION.md) for full tier gating details.
+> **Tier requirement:** Low stock alerts and inventory tracking features are **Growth+ tier** only (VISION.md §10.4). Free tier shops can toggle `track_inventory` for basic stock counts but do not receive alerts. Purchase Log and Stock Overview are also Growth+ features (VISION.md v3.1.0 §10.2). See [VISION.md §10](../vision/VISION.md) for full tier gating details.
 
 This document describes the comprehensive inventory alert system implemented for the POS system, providing automated email and SMS notifications for various inventory conditions.
 
@@ -80,7 +80,8 @@ Service functions for:
 Run the SQL migration to create the alert system tables:
 
 ```sql
--- Execute the contents of SupaBase/inventory_alerts_schema.sql
+-- Migration: supabase/migrations/20260703000001_inventory_alerts_schema.sql
+-- Applied automatically via `supabase db push` or branch creation
 ```
 
 ### 2. Service Configuration
@@ -181,7 +182,7 @@ function App() {
 | **Expiry Warning** | Based on product expiry dates | Growth+ |
 | **Batch Expiry** | Based on batch expiry dates | Growth+ |
 
-**Free tier:** Basic stock count tracking only (if `track_inventory` enabled). No alerts, no raw materials, no recipe BOM.
+**Free tier:** Basic stock count tracking only (if `track_inventory` enabled). No alerts.
 
 ### Threshold Settings
 

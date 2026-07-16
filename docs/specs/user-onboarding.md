@@ -359,6 +359,5 @@ Ko Min's Growth subscription expires on June 1st.
 
 ## Related Features
 
-- [Recipe & Inventory Management](recipe-bom-user-workflow.md) — What to do after upgrading to Growth
-- [Waste Tracking](waste-tracking.md) — Pro tier feature for tracking ingredient waste
+- [Simplified Inventory Model](inventory-model.md) — Purchase log, stock overview, low stock alerts (Growth+)
 - [Inventory Alerts](inventory-alerts.md) — Automatic low-stock notifications (Growth+)

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Product } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { ProductModal } from './ProductModal';
 import { swalConfig } from '../../lib/sweetAlert';
+import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 export function InventoryManager() {
   const { state } = useApp();
@@ -13,6 +15,8 @@ export function InventoryManager() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [sortBy, setSortBy] = useState<'name' | 'stock' | 'price'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const atProductLimit = state.products.length >= 50;
 
   const categories = ['All', ...Array.from(new Set(state.products.map((p: Product) => p.category)))];
 
@@ -92,13 +96,26 @@ export function InventoryManager() {
           <p className="text-gray-600 mt-1">Manage your products and stock levels</p>
         </div>
         
-        <button
-          onClick={handleAddProduct}
-          className="btn btn-primary btn-lg"
-        >
-          <Plus className="h-5 w-5" />
-          <span>Add Product</span>
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => {
+              if (atProductLimit) {
+                setShowUpgrade(true);
+                return;
+              }
+              handleAddProduct();
+            }}
+            className={`btn btn-lg ${atProductLimit ? 'btn-secondary opacity-60' : 'btn-primary'}`}
+          >
+            <Plus className="h-5 w-5" />
+            <span>Add Product {atProductLimit && `(${state.products.length}/50)`}</span>
+          </button>
+          {showUpgrade && (
+            <div className="absolute right-0 top-full mt-2 z-50 w-72">
+              <UpgradePrompt feature="More than 50 products" tier="growth" onClose={() => setShowUpgrade(false)} />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -131,7 +148,7 @@ export function InventoryManager() {
           <div className="flex items-center justify-between relative z-10">
             <div>
               <p className="text-green-100 text-sm font-medium">Inventory Value</p>
-              <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {totalValue.toFixed(2)}</p>
+              <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {totalValue.toFixed(2)}</p>
             </div>
             <div className="bg-white/20 p-3 rounded-2xl">
               <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -236,10 +253,10 @@ export function InventoryManager() {
                       <span className="badge badge-info">{product.category}</span>
                     </td>
                     <td className="table-cell font-semibold">
-                      {state.settings.currency} {product.price.toFixed(2)}
+                      {DEFAULT_CURRENCY} {product.price.toFixed(2)}
                     </td>
                     <td className="table-cell text-gray-600">
-                      {state.settings.currency} {product.cost.toFixed(2)}
+                      {DEFAULT_CURRENCY} {product.cost.toFixed(2)}
                     </td>
                     <td className="table-cell">
                       <div className="flex items-center space-x-2">

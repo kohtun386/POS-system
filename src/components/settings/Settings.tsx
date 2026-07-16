@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Save, Store, DollarSign, Printer, Users, Globe, FileText, Lock } from 'lucide-react';
-import { useApp, useInvoiceStats } from '../../context/SupabaseAppContext';
+import { useApp, useInvoiceStats, useCapability } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
 import { LogoUpload } from './LogoUpload';
 import { swalConfig } from '../../lib/sweetAlert';
-import { getSupportedCurrencies } from '../../lib/currencyUtils';
-import { CurrencyConfig } from '../../types';
+import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 export function Settings() {
   const { state, dispatch } = useApp();
@@ -19,8 +18,6 @@ export function Settings() {
     storeEmail: state.settings.storeEmail || '',
     storeLogo: state.settings.storeLogo,
     taxRate: state.settings.taxRate.toString(),
-    currency: state.settings.currency,
-    baseCurrency: state.settings.baseCurrency || 'USD',
     receiptPrinter: state.settings.receiptPrinter,
     autoBackup: state.settings.autoBackup,
     theme: state.settings.theme || 'light',
@@ -28,31 +25,9 @@ export function Settings() {
     invoiceCounter: state.settings.invoiceCounter?.toString() || '1000',
   });
 
-  // Currency-related state
-  const [supportedCurrencies, setSupportedCurrencies] = useState<CurrencyConfig[]>([]);
-  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(false);
-
   // Check if user has permission to change settings
   const canEditSettings = profile?.role === 'admin' || profile?.role === 'manager';
-
-  // Load supported currencies on component mount
-  useEffect(() => {
-    loadSupportedCurrencies();
-  }, []);
-
-  // Load supported currencies
-  const loadSupportedCurrencies = async () => {
-    setIsLoadingCurrencies(true);
-    try {
-      const currencies = await getSupportedCurrencies();
-      setSupportedCurrencies(currencies);
-    } catch (error) {
-      console.error('Error loading currencies:', error);
-      swalConfig.error('Failed to load supported currencies');
-    } finally {
-      setIsLoadingCurrencies(false);
-    }
-  };
+  const canPrint = useCapability('printer_integration');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (!canEditSettings) return;
@@ -100,9 +75,9 @@ export function Settings() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-8">
       <div className="card overflow-hidden">
-        <div className="px-8 py-6 border-b border-[#ded7cc] dark:border-[#54463b] bg-gradient-to-r from-[#fcf5eb] to-[#f0ece5]">
-          <h1 className="text-3xl font-bold text-[#473b32]">System Settings</h1>
-          <p className="text-[#7d6b57] dark:text-[#c6bbab] mt-2">Configure your POS system preferences and store information</p>
+        <div className="px-8 py-6 border-b border-secondary-200 dark:border-secondary-800 bg-gradient-to-r from-primary-50 to-secondary-100">
+          <h1 className="text-3xl font-bold text-secondary-900">System Settings</h1>
+          <p className="text-secondary-600 dark:text-secondary-300 mt-2">Configure your POS system preferences and store information</p>
           {!canEditSettings && (
             <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center space-x-3">
               <Lock className="h-5 w-5 text-yellow-600" />
@@ -117,17 +92,17 @@ export function Settings() {
           {/* Store Information */}
           <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-[#fcf5eb] p-2 rounded-xl">
-                <Store className="h-6 w-6 text-[#9a693a]" />
+              <div className="bg-primary-50 p-2 rounded-xl">
+                <Store className="h-6 w-6 text-primary-600" />
               </div>
-              <h2 className="text-xl font-bold text-[#473b32] dark:text-[#f0ece5] font-fraunces">Store Information</h2>
+              <h2 className="text-xl font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">Store Information</h2>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-[#473b32] dark:text-[#f0ece5] mb-2">
+                    <label className="block text-sm font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
                       Store Name *
                     </label>
                     <input
@@ -137,12 +112,12 @@ export function Settings() {
                       onChange={handleChange}
                       disabled={!canEditSettings}
                       required
-                      className={`input ${!canEditSettings ? 'bg-[#f0ece5] dark:bg-[#3b2613] cursor-not-allowed' : ''}`}
+                      className={`input ${!canEditSettings ? 'bg-secondary-100 dark:bg-primary-900 cursor-not-allowed' : ''}`}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-[#473b32] dark:text-[#f0ece5] mb-2">
+                    <label className="block text-sm font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
                       Phone Number
                     </label>
                     <input
@@ -151,12 +126,12 @@ export function Settings() {
                       value={formData.storePhone}
                       onChange={handleChange}
                       disabled={!canEditSettings}
-                      className={`input ${!canEditSettings ? 'bg-[#f0ece5] dark:bg-[#3b2613] cursor-not-allowed' : ''}`}
+                      className={`input ${!canEditSettings ? 'bg-secondary-100 dark:bg-primary-900 cursor-not-allowed' : ''}`}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-[#473b32] dark:text-[#f0ece5] mb-2">
+                    <label className="block text-sm font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
                       Email Address
                     </label>
                     <input
@@ -165,65 +140,28 @@ export function Settings() {
                       value={formData.storeEmail}
                       onChange={handleChange}
                       disabled={!canEditSettings}
-                      className={`input ${!canEditSettings ? 'bg-[#f0ece5] dark:bg-[#3b2613] cursor-not-allowed' : ''}`}
+                      className={`input ${!canEditSettings ? 'bg-secondary-100 dark:bg-primary-900 cursor-not-allowed' : ''}`}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-[#473b32] dark:text-[#f0ece5] mb-2">
-                      Display Currency
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Currency
                     </label>
-                    <select
-                      name="currency"
-                      value={formData.currency}
-                      onChange={handleChange}
-                      disabled={!canEditSettings || isLoadingCurrencies}
-                      className={`select ${!canEditSettings || isLoadingCurrencies ? 'bg-[#f0ece5] dark:bg-[#3b2613] cursor-not-allowed' : ''}`}
-                    >
-                      {isLoadingCurrencies ? (
-                        <option>Loading currencies...</option>
-                      ) : (
-                        supportedCurrencies.map(currency => (
-                          <option key={currency.code} value={currency.code}>
-                            {currency.code} - {currency.name} ({currency.symbol})
-                          </option>
-                        ))
-                      )}
-                    </select>
-                    <p className="text-xs text-[#7d6b57] dark:text-[#c6bbab] mt-1">
-                      Currency displayed to customers in the POS interface
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-[#473b32] dark:text-[#f0ece5] mb-2">
-                      Base Currency
-                    </label>
-                    <select
-                      name="baseCurrency"
-                      value={formData.baseCurrency}
-                      onChange={handleChange}
-                      disabled={!canEditSettings || isLoadingCurrencies}
-                      className={`select ${!canEditSettings || isLoadingCurrencies ? 'bg-[#f0ece5] dark:bg-[#3b2613] cursor-not-allowed' : ''}`}
-                    >
-                      {isLoadingCurrencies ? (
-                        <option>Loading currencies...</option>
-                      ) : (
-                        supportedCurrencies.map(currency => (
-                          <option key={currency.code} value={currency.code}>
-                            {currency.code} - {currency.name} ({currency.symbol})
-                          </option>
-                        ))
-                      )}
-                    </select>
-                    <p className="text-xs text-[#7d6b57] dark:text-[#c6bbab] mt-1">
-                      Base currency for product pricing and exchange rate calculations
+                    <input
+                      type="text"
+                      value="MMK (Myanmar Kyat)"
+                      disabled
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-100 cursor-not-allowed"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Myanmar market — MMK only
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-[#473b32] dark:text-[#f0ece5] mb-2">
+                  <label className="block text-sm font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
                     Store Address
                   </label>
                   <textarea
@@ -232,7 +170,7 @@ export function Settings() {
                     onChange={handleChange}
                     disabled={!canEditSettings}
                     rows={3}
-                    className={`textarea ${!canEditSettings ? 'bg-[#f0ece5] dark:bg-[#3b2613] cursor-not-allowed' : ''}`}
+                    className={`textarea ${!canEditSettings ? 'bg-secondary-100 dark:bg-primary-900 cursor-not-allowed' : ''}`}
                   />
                 </div>
               </div>
@@ -251,14 +189,14 @@ export function Settings() {
           <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
               <div className="bg-[#dcfce7] p-2 rounded-xl">
-                <DollarSign className="h-6 w-6 text-[#16a34a]" />
+                <DollarSign className="h-6 w-6 text-success-600" />
               </div>
-              <h2 className="text-xl font-bold text-[#473b32] dark:text-[#f0ece5] font-fraunces">Financial Settings</h2>
+              <h2 className="text-xl font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">Financial Settings</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-[#473b32] dark:text-[#f0ece5] mb-2">
+                <label className="block text-sm font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
                   Tax Rate (%)
                 </label>
                 <input
@@ -268,7 +206,7 @@ export function Settings() {
                   value={formData.taxRate}
                   onChange={handleChange}
                   disabled={!canEditSettings}
-                  className={`input ${!canEditSettings ? 'bg-[#f0ece5] dark:bg-[#3b2613] cursor-not-allowed' : ''}`}
+                  className={`input ${!canEditSettings ? 'bg-secondary-100 dark:bg-primary-900 cursor-not-allowed' : ''}`}
                 />
               </div>
             </div>
@@ -278,14 +216,14 @@ export function Settings() {
           <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
               <div className="bg-[#fef3c7] p-2 rounded-xl">
-                <FileText className="h-6 w-6 text-[#d97706]" />
+                <FileText className="h-6 w-6 text-warning-600" />
               </div>
-              <h2 className="text-xl font-bold text-[#473b32] dark:text-[#f0ece5] font-fraunces">Invoice Settings</h2>
+              <h2 className="text-xl font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">Invoice Settings</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-[#473b32] dark:text-[#f0ece5] mb-2">
+                <label className="block text-sm font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
                   Invoice Prefix
                 </label>
                 <input
@@ -294,13 +232,13 @@ export function Settings() {
                   value={formData.invoicePrefix}
                   onChange={handleChange}
                   disabled={!canEditSettings}
-                  className={`input ${!canEditSettings ? 'bg-[#f0ece5] dark:bg-[#3b2613] cursor-not-allowed' : ''}`}
+                  className={`input ${!canEditSettings ? 'bg-secondary-100 dark:bg-primary-900 cursor-not-allowed' : ''}`}
                   placeholder="INV"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-[#473b32] dark:text-[#f0ece5] mb-2">
+                <label className="block text-sm font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
                   Next Invoice Number
                 </label>
                 <input
@@ -309,10 +247,10 @@ export function Settings() {
                   value={formData.invoiceCounter}
                   onChange={handleChange}
                   disabled={!canEditSettings}
-                  className={`input ${!canEditSettings ? 'bg-[#f0ece5] dark:bg-[#3b2613] cursor-not-allowed' : ''}`}
+                  className={`input ${!canEditSettings ? 'bg-secondary-100 dark:bg-primary-900 cursor-not-allowed' : ''}`}
                 />
-                <div className="mt-2 p-3 bg-[#fcf5eb] border border-[#f5e6d0] rounded-lg">
-                  <div className="text-xs text-[#7a4f2c]">
+                <div className="mt-2 p-3 bg-primary-50 border border-primary-100 rounded-lg">
+                  <div className="text-xs text-primary-700">
                     <div className="font-medium mb-1">Invoice Preview:</div>
                     <div>Next: <span className="font-mono font-bold">{invoiceStats.nextInvoiceNumber}</span></div>
                     <div>Total Generated: {invoiceStats.totalInvoices}</div>
@@ -328,12 +266,12 @@ export function Settings() {
               <div className="bg-[#ede9fe] p-2 rounded-xl">
                 <Globe className="h-6 w-6 text-[#7c3aed]" />
               </div>
-              <h2 className="text-xl font-bold text-[#473b32] dark:text-[#f0ece5] font-fraunces">System Preferences</h2>
+              <h2 className="text-xl font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">System Preferences</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-[#473b32] dark:text-[#f0ece5] mb-2">
+                <label className="block text-sm font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
                   Theme
                 </label>
                 <select
@@ -341,7 +279,7 @@ export function Settings() {
                   value={formData.theme}
                   onChange={handleChange}
                   disabled={!canEditSettings}
-                  className={`select ${!canEditSettings ? 'bg-[#f0ece5] dark:bg-[#3b2613] cursor-not-allowed' : ''}`}
+                  className={`select ${!canEditSettings ? 'bg-secondary-100 dark:bg-primary-900 cursor-not-allowed' : ''}`}
                 >
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
@@ -357,37 +295,40 @@ export function Settings() {
               <div className="bg-[#fed7aa] p-2 rounded-xl">
                 <Printer className="h-6 w-6 text-[#ea580c]" />
               </div>
-              <h2 className="text-xl font-bold text-[#473b32] dark:text-[#f0ece5] font-fraunces">Hardware Settings</h2>
+              <h2 className="text-xl font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">Hardware Settings</h2>
             </div>
 
             <div className="space-y-4">
-              <label className={`flex items-center p-4 border border-[#ded7cc] dark:border-[#54463b] rounded-xl transition-colors ${!canEditSettings ? 'bg-[#faf8f5] dark:bg-[#1f1309] cursor-not-allowed' : 'hover:bg-[#faf8f5] dark:bg-[#1f1309] cursor-pointer'}`}>
+              {!canPrint && (
+                <UpgradePrompt feature="Receipt printing" tier="growth" onClose={() => {}} />
+              )}
+              <label className={`flex items-center p-4 border border-gray-200 rounded-xl transition-colors ${!canEditSettings || !canPrint ? 'bg-gray-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}>
                 <input
                   type="checkbox"
                   name="receiptPrinter"
-                  checked={formData.receiptPrinter}
+                  checked={formData.receiptPrinter && canPrint}
                   onChange={handleChange}
-                  disabled={!canEditSettings}
-                  className="rounded border-[#ded7cc] dark:border-[#54463b] text-[#9a693a] focus:ring-[#9a693a] h-5 w-5"
+                  disabled={!canEditSettings || !canPrint}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-5 w-5"
                 />
                 <div className="ml-4">
-                  <span className="text-sm font-semibold text-[#473b32] dark:text-[#f0ece5]">Enable Receipt Printer</span>
-                  <p className="text-xs text-[#7d6b57] dark:text-[#c6bbab]">Automatically print receipts after each transaction</p>
+                  <span className="text-sm font-semibold text-secondary-900 dark:text-secondary-100">Enable Receipt Printer</span>
+                  <p className="text-xs text-secondary-600 dark:text-secondary-300">Automatically print receipts after each transaction</p>
                 </div>
               </label>
 
-              <label className={`flex items-center p-4 border border-[#ded7cc] dark:border-[#54463b] rounded-xl transition-colors ${!canEditSettings ? 'bg-[#faf8f5] dark:bg-[#1f1309] cursor-not-allowed' : 'hover:bg-[#faf8f5] dark:bg-[#1f1309] cursor-pointer'}`}>
+              <label className={`flex items-center p-4 border border-secondary-200 dark:border-secondary-800 rounded-xl transition-colors ${!canEditSettings ? 'bg-secondary-50 dark:bg-primary-950 cursor-not-allowed' : 'hover:bg-secondary-50 dark:bg-primary-950 cursor-pointer'}`}>
                 <input
                   type="checkbox"
                   name="autoBackup"
                   checked={formData.autoBackup}
                   onChange={handleChange}
                   disabled={!canEditSettings}
-                  className="rounded border-[#ded7cc] dark:border-[#54463b] text-[#9a693a] focus:ring-[#9a693a] h-5 w-5"
+                  className="rounded border-secondary-200 dark:border-secondary-800 text-primary-600 focus:ring-primary-600 h-5 w-5"
                 />
                 <div className="ml-4">
-                  <span className="text-sm font-semibold text-[#473b32] dark:text-[#f0ece5]">Enable Automatic Backup</span>
-                  <p className="text-xs text-[#7d6b57] dark:text-[#c6bbab]">Automatically backup data to local storage</p>
+                  <span className="text-sm font-semibold text-secondary-900 dark:text-secondary-100">Enable Automatic Backup</span>
+                  <p className="text-xs text-secondary-600 dark:text-secondary-300">Automatically backup data to local storage</p>
                 </div>
               </label>
             </div>
@@ -399,22 +340,22 @@ export function Settings() {
               <div className="bg-[#fce7f3] p-2 rounded-xl">
                 <Users className="h-6 w-6 text-[#db2777]" />
               </div>
-              <h2 className="text-xl font-bold text-[#473b32] dark:text-[#f0ece5] font-fraunces">Current User</h2>
+              <h2 className="text-xl font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">Current User</h2>
             </div>
 
-            <div className="bg-gradient-to-r from-[#fcf5eb] to-[#f0ece5] p-6 rounded-xl border border-[#ded7cc] dark:border-[#54463b]">
+            <div className="bg-gradient-to-r from-primary-50 to-secondary-100 p-6 rounded-xl border border-secondary-200 dark:border-secondary-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="h-12 w-12 bg-gradient-to-r from-[#9a693a] to-[#7a4f2c] rounded-full flex items-center justify-center">
+                  <div className="h-12 w-12 bg-gradient-to-r from-primary-600 to-primary-700 rounded-full flex items-center justify-center">
                     <Users className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-[#473b32] dark:text-[#f0ece5] font-fraunces">{state.currentUser?.name}</h3>
-                    <p className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">Role: {state.currentUser?.role}</p>
-                    <p className="text-sm text-[#7d6b57] dark:text-[#c6bbab]">Email: {state.currentUser?.email}</p>
+                    <h3 className="font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">{state.currentUser?.name}</h3>
+                    <p className="text-sm text-secondary-600 dark:text-secondary-300">Role: {state.currentUser?.role}</p>
+                    <p className="text-sm text-secondary-600 dark:text-secondary-300">Email: {state.currentUser?.email}</p>
                   </div>
                 </div>
-                <span className="inline-flex px-4 py-2 text-sm font-semibold rounded-full bg-[#dcfce7] text-[#166534]">
+                <span className="inline-flex px-4 py-2 text-sm font-semibold rounded-full bg-[#dcfce7] text-success-800">
                   Active
                 </span>
               </div>
@@ -422,7 +363,7 @@ export function Settings() {
           </div>
 
           {/* Save Button */}
-          <div className="sticky bottom-6 flex justify-end pt-8 border-t border-[#ded7cc] dark:border-[#54463b]">
+          <div className="sticky bottom-6 flex justify-end pt-8 border-t border-secondary-200 dark:border-secondary-800">
             <button
               type="submit"
               disabled={!canEditSettings}

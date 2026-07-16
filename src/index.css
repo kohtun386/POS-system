@@ -24,19 +24,19 @@
   }
 
   ::selection {
-    background-color: #fcd3a0;
-    color: #3b2613;
+    background-color: var(--color-accent-200, #fcd3a0);
+    color: var(--color-primary-900, #3b2613);
   }
 
   .dark ::selection {
-    background-color: #7a4f2c;
-    color: #faf8f5;
+    background-color: var(--color-primary-700, #7a4f2c);
+    color: var(--color-secondary-50, #faf8f5);
   }
 
   /* Light mode base — café cream paper */
   body {
-    background-color: #faf8f5;
-    color: #473b32;
+    background-color: var(--color-secondary-50, #faf8f5);
+    color: var(--color-secondary-900, #473b32);
   }
 
   /* Dark mode base — deep espresso */
@@ -45,8 +45,8 @@
   }
 
   .dark body {
-    background-color: #1f1309;
-    color: #f0ece5;
+    background-color: var(--color-primary-950, #1f1309);
+    color: var(--color-secondary-100, #f0ece5);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -60,20 +60,20 @@
 @layer components {
   /* — Coffee Card Components — */
   .card {
-    @apply bg-[#faf8f5]/90 backdrop-blur-sm rounded-3xl border border-[#ded7cc]/60 shadow-soft;
-    @apply dark:bg-[#2a1a10]/90 dark:border-[#54463b]/50 dark:shadow-large;
+    @apply bg-secondary-50/90 backdrop-blur-sm rounded-3xl border border-secondary-200/60 shadow-soft;
+    @apply dark:bg-surface-dark/90 dark:border-secondary-800/50 dark:shadow-large;
     transition: background-color 0.35s ease, border-color 0.35s ease, box-shadow 0.3s ease;
   }
 
   .card-glass {
-    @apply bg-[#faf8f5]/60 backdrop-blur-md rounded-3xl border border-[#ded7cc]/40 shadow-medium;
-    @apply dark:bg-[#2a1a10]/60 dark:border-[#54463b]/30;
+    @apply bg-secondary-50/60 backdrop-blur-md rounded-3xl border border-secondary-200/40 shadow-medium;
+    @apply dark:bg-surface-dark/60 dark:border-secondary-800/30;
   }
 
   .card-hover {
     @apply transition-all duration-300 hover:shadow-medium hover:scale-[1.02];
-    @apply hover:border-[#ddb889]/40;
-    @apply dark:hover:border-[#7a4f2c]/50 dark:hover:shadow-glow;
+    @apply hover:border-primary-300/40;
+    @apply dark:hover:border-primary-700/50 dark:hover:shadow-glow;
   }
 
   /* — Coffee Button Components — */
@@ -84,43 +84,43 @@
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-[#9a693a] to-[#7a4f2c] text-white shadow-medium;
-    @apply hover:from-[#b8854a] hover:to-[#9a693a] hover:shadow-copper hover:shadow-[#b8854a]/25;
-    @apply focus:ring-[#9a693a] focus:shadow-glow;
-    @apply dark:from-[#b8854a] dark:to-[#9a693a] dark:hover:from-[#cfa16a] dark:hover:to-[#b8854a];
+    @apply bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-medium;
+    @apply hover:from-primary-500 hover:to-primary-600 hover:shadow-copper hover:shadow-primary-500/25;
+    @apply focus:ring-primary-600 focus:shadow-glow;
+    @apply dark:from-primary-500 dark:to-primary-600 dark:hover:from-primary-400 dark:hover:to-primary-500;
   }
 
   .btn-secondary {
-    @apply bg-[#f0ece5] text-[#473b32] border border-[#ded7cc] shadow-soft;
-    @apply hover:bg-[#e5ddd2] hover:shadow-medium hover:border-[#c6bbab];
-    @apply focus:ring-[#96846e];
-    @apply dark:bg-[#3b2613] dark:text-[#f0ece5] dark:border-[#54463b];
-    @apply dark:hover:bg-[#473b32] dark:hover:border-[#655547];
+    @apply bg-secondary-100 text-secondary-900 border border-secondary-200 shadow-soft;
+    @apply hover:bg-hover-border hover:shadow-medium hover:border-secondary-300;
+    @apply focus:ring-secondary-500;
+    @apply dark:bg-primary-900 dark:text-secondary-100 dark:border-secondary-800;
+    @apply dark:hover:bg-secondary-900 dark:hover:border-secondary-700;
   }
 
   .btn-accent {
-    @apply bg-gradient-to-r from-[#f57323] to-[#e55c13] text-white shadow-medium;
-    @apply hover:from-[#f89341] hover:to-[#f57323] hover:shadow-copper hover:shadow-[#f57323]/30;
-    @apply focus:ring-[#f57323] focus:shadow-glow;
+    @apply bg-gradient-to-r from-accent-500 to-accent-600 text-white shadow-medium;
+    @apply hover:from-accent-400 hover:to-accent-500 hover:shadow-copper hover:shadow-accent-500/30;
+    @apply focus:ring-accent-500 focus:shadow-glow;
   }
 
   .btn-success {
-    @apply bg-gradient-to-r from-[#16a34a] to-[#15803d] text-white shadow-medium;
-    @apply hover:from-[#22c55e] hover:to-[#16a34a] hover:shadow-[#22c55e]/25;
-    @apply focus:ring-[#16a34a] focus:shadow-glow;
+    @apply bg-gradient-to-r from-success-600 to-success-700 text-white shadow-medium;
+    @apply hover:from-success-500 hover:to-success-600 hover:shadow-success-500/25;
+    @apply focus:ring-success-600 focus:shadow-glow;
   }
 
   .btn-danger {
-    @apply bg-gradient-to-r from-[#dc2626] to-[#b91c1c] text-white shadow-medium;
-    @apply hover:from-[#ef4444] hover:to-[#dc2626] hover:shadow-[#ef4444]/25;
-    @apply focus:ring-[#dc2626] focus:shadow-glow;
+    @apply bg-gradient-to-r from-danger-600 to-danger-700 text-white shadow-medium;
+    @apply hover:from-danger-500 hover:to-danger-600 hover:shadow-danger-500/25;
+    @apply focus:ring-danger-600 focus:shadow-glow;
   }
 
   .btn-ghost {
-    @apply bg-transparent text-[#7d6b57] border border-transparent;
-    @apply hover:bg-[#f0ece5] hover:text-[#473b32] hover:border-[#ded7cc];
-    @apply focus:ring-[#96846e];
-    @apply dark:text-[#c6bbab] dark:hover:bg-[#3b2613] dark:hover:text-[#f0ece5];
+    @apply bg-transparent text-secondary-600 border border-transparent;
+    @apply hover:bg-secondary-100 hover:text-secondary-900 hover:border-secondary-200;
+    @apply focus:ring-secondary-500;
+    @apply dark:text-secondary-300 dark:hover:bg-primary-900 dark:hover:text-secondary-100;
   }
 
   .btn-sm {
@@ -135,11 +135,11 @@
 
   /* — Coffee Form Components — */
   .input {
-    @apply w-full px-4 py-3 border border-[#ded7cc] rounded-2xl;
-    @apply focus:ring-2 focus:ring-[#ddb889] focus:border-[#b8854a] transition-all duration-300;
-    @apply bg-[#faf8f5]/80 backdrop-blur-sm shadow-soft;
-    @apply dark:bg-[#2a1a10]/80 dark:border-[#54463b] dark:text-[#f0ece5];
-    @apply dark:focus:border-[#cfa16a] dark:focus:ring-[#7a4f2c];
+    @apply w-full px-4 py-3 border border-secondary-200 rounded-2xl;
+    @apply focus:ring-2 focus:ring-primary-300 focus:border-primary-500 transition-all duration-300;
+    @apply bg-secondary-50/80 backdrop-blur-sm shadow-soft;
+    @apply dark:bg-surface-dark/80 dark:border-secondary-800 dark:text-secondary-100;
+    @apply dark:focus:border-primary-400 dark:focus:ring-primary-700;
   }
 
   .input-sm {
@@ -147,34 +147,34 @@
   }
 
   .select {
-    @apply w-full px-4 py-3 border border-[#ded7cc] rounded-2xl;
-    @apply focus:ring-2 focus:ring-[#ddb889] focus:border-[#b8854a] transition-all duration-300;
-    @apply bg-[#faf8f5]/80 backdrop-blur-sm shadow-soft;
-    @apply dark:bg-[#2a1a10]/80 dark:border-[#54463b] dark:text-[#f0ece5];
-    @apply dark:focus:border-[#cfa16a] dark:focus:ring-[#7a4f2c];
+    @apply w-full px-4 py-3 border border-secondary-200 rounded-2xl;
+    @apply focus:ring-2 focus:ring-primary-300 focus:border-primary-500 transition-all duration-300;
+    @apply bg-secondary-50/80 backdrop-blur-sm shadow-soft;
+    @apply dark:bg-surface-dark/80 dark:border-secondary-800 dark:text-secondary-100;
+    @apply dark:focus:border-primary-400 dark:focus:ring-primary-700;
   }
 
   .textarea {
-    @apply w-full px-4 py-3 border border-[#ded7cc] rounded-2xl resize-none;
-    @apply focus:ring-2 focus:ring-[#ddb889] focus:border-[#b8854a] transition-all duration-300;
-    @apply bg-[#faf8f5]/80 backdrop-blur-sm shadow-soft;
-    @apply dark:bg-[#2a1a10]/80 dark:border-[#54463b] dark:text-[#f0ece5];
-    @apply dark:focus:border-[#cfa16a] dark:focus:ring-[#7a4f2c];
+    @apply w-full px-4 py-3 border border-secondary-200 rounded-2xl resize-none;
+    @apply focus:ring-2 focus:ring-primary-300 focus:border-primary-500 transition-all duration-300;
+    @apply bg-secondary-50/80 backdrop-blur-sm shadow-soft;
+    @apply dark:bg-surface-dark/80 dark:border-secondary-800 dark:text-secondary-100;
+    @apply dark:focus:border-primary-400 dark:focus:ring-primary-700;
   }
 
   /* — Stat Cards — */
   .stat-card {
     @apply p-6 rounded-3xl text-white relative overflow-hidden shadow-large;
-    @apply bg-gradient-to-br from-[#b8854a] via-[#9a693a] to-[#7a4f2c];
+    @apply bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700;
   }
   .stat-card-success {
-    @apply bg-gradient-to-br from-[#22c55e] via-[#16a34a] to-[#15803d];
+    @apply bg-gradient-to-br from-success-500 via-success-600 to-success-700;
   }
   .stat-card-warning {
-    @apply bg-gradient-to-br from-[#f59e0b] via-[#d97706] to-[#b45309];
+    @apply bg-gradient-to-br from-warning-500 via-warning-600 to-warning-700;
   }
   .stat-card-danger {
-    @apply bg-gradient-to-br from-[#ef4444] via-[#dc2626] to-[#b91c1c];
+    @apply bg-gradient-to-br from-danger-500 via-danger-600 to-danger-700;
   }
   .stat-card::before {
     content: '';
@@ -183,13 +183,13 @@
 
   /* — Modal Components — */
   .modal-overlay {
-    @apply fixed inset-0 bg-[#251e18]/60 backdrop-blur-md flex items-center justify-center z-50 p-4;
+    @apply fixed inset-0 bg-secondary-950/60 backdrop-blur-md flex items-center justify-center z-50 p-4;
     @apply animate-fade-in;
   }
 
   .modal {
-    @apply bg-[#faf8f5]/95 backdrop-blur-xl rounded-3xl shadow-large w-full overflow-hidden;
-    @apply dark:bg-[#2a1a10]/95 dark:border dark:border-[#54463b]/50;
+    @apply bg-secondary-50/95 backdrop-blur-xl rounded-3xl shadow-large w-full overflow-hidden;
+    @apply dark:bg-surface-dark/95 dark:border dark:border-secondary-800/50;
     max-height: calc(100dvh - 2rem);
     display: flex;
     flex-direction: column;
@@ -197,8 +197,8 @@
   }
 
   .modal-header {
-    @apply px-6 py-5 border-b border-[#ded7cc]/50 flex items-center justify-between flex-shrink-0;
-    @apply dark:border-[#54463b]/50;
+    @apply px-6 py-5 border-b border-secondary-200/50 flex items-center justify-between flex-shrink-0;
+    @apply dark:border-secondary-800/50;
   }
 
   .modal-body {
@@ -207,30 +207,30 @@
   }
 
   .modal-footer {
-    @apply px-6 py-5 border-t border-[#ded7cc]/50 flex justify-end space-x-3 flex-shrink-0;
-    @apply dark:border-[#54463b]/50;
+    @apply px-6 py-5 border-t border-secondary-200/50 flex justify-end space-x-3 flex-shrink-0;
+    @apply dark:border-secondary-800/50;
   }
 
   /* — Table Components — */
   .table {
-    @apply min-w-full divide-y divide-[#ded7cc];
-    @apply dark:divide-[#54463b];
+    @apply min-w-full divide-y divide-secondary-200;
+    @apply dark:divide-secondary-800;
   }
   .table-header {
-    @apply bg-[#f0ece5]/80 backdrop-blur-sm;
-    @apply dark:bg-[#3b2613]/80;
+    @apply bg-secondary-100/80 backdrop-blur-sm;
+    @apply dark:bg-primary-900/80;
   }
   .table-header-cell {
-    @apply px-6 py-4 text-left text-xs font-semibold text-[#7d6b57] uppercase tracking-wider;
-    @apply dark:text-[#c6bbab];
+    @apply px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider;
+    @apply dark:text-secondary-300;
   }
   .table-row {
-    @apply hover:bg-[#f0ece5]/50 transition-colors duration-200;
-    @apply dark:hover:bg-[#3b2613]/50;
+    @apply hover:bg-secondary-100/50 transition-colors duration-200;
+    @apply dark:hover:bg-primary-900/50;
   }
   .table-cell {
-    @apply px-6 py-4 whitespace-nowrap text-sm text-[#473b32];
-    @apply dark:text-[#f0ece5];
+    @apply px-6 py-4 whitespace-nowrap text-sm text-secondary-900;
+    @apply dark:text-secondary-100;
   }
 
   /* — Badge Components — */
@@ -238,39 +238,39 @@
     @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
   }
   .badge-success {
-    @apply bg-[#dcfce7] text-[#166534] border border-[#bbf7d0];
-    @apply dark:bg-[#14532d]/30 dark:text-[#86efac] dark:border-[#166534]/50;
+    @apply bg-success-100 text-success-800 border border-success-200;
+    @apply dark:bg-success-900/30 dark:text-success-300 dark:border-success-700/50;
   }
   .badge-warning {
-    @apply bg-[#fef3c7] text-[#92400e] border border-[#fde68a];
-    @apply dark:bg-[#78350f]/30 dark:text-[#fcd34d] dark:border-[#92400e]/50;
+    @apply bg-warning-100 text-warning-800 border border-warning-200;
+    @apply dark:bg-warning-900/30 dark:text-warning-300 dark:border-warning-700/50;
   }
   .badge-danger {
-    @apply bg-[#fee2e2] text-[#991b1b] border border-[#fecaca];
-    @apply dark:bg-[#7f1d1d]/30 dark:text-[#fca5a5] dark:border-[#991b1b]/50;
+    @apply bg-danger-100 text-danger-800 border border-danger-200;
+    @apply dark:bg-danger-900/30 dark:text-danger-300 dark:border-danger-700/50;
   }
   .badge-info {
-    @apply bg-[#fcf5eb] text-[#7a4f2c] border border-[#f5e6d0];
-    @apply dark:bg-[#3b2613]/30 dark:text-[#ddb889] dark:border-[#5a3a20]/50;
+    @apply bg-primary-50 text-primary-700 border border-primary-100;
+    @apply dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-800/50;
   }
   .badge-accent {
-    @apply bg-[#feebd0] text-[#973916] border border-[#fcd3a0];
-    @apply dark:bg-[#7a3015]/30 dark:text-[#fab665] dark:border-[#973916]/50;
+    @apply bg-accent-100 text-accent-800 border border-accent-200;
+    @apply dark:bg-accent-900/30 dark:text-accent-300 dark:border-accent-700/50;
   }
 
   /* — Navigation Components — */
   .sidebar {
-    @apply bg-[#faf8f5]/80 backdrop-blur-sm border-r border-[#ded7cc]/50 flex flex-col;
-    @apply dark:bg-[#2a1a10]/80 dark:border-[#54463b]/50;
+    @apply bg-secondary-50/80 backdrop-blur-sm border-r border-secondary-200/50 flex flex-col;
+    @apply dark:bg-surface-dark/80 dark:border-secondary-800/50;
   }
 
   .nav-item {
-    @apply flex items-center space-x-3 px-4 py-3 text-[#7d6b57] hover:bg-[#e5ddd2]/50 hover:text-[#473b32] transition-all duration-200 rounded-2xl mx-2;
-    @apply dark:text-[#c6bbab] dark:hover:bg-[#3b2613]/50 dark:hover:text-[#f0ece5];
+    @apply flex items-center space-x-3 px-4 py-3 text-secondary-600 hover:bg-hover-border/50 hover:text-secondary-900 transition-all duration-200 rounded-2xl mx-2;
+    @apply dark:text-secondary-300 dark:hover:bg-primary-900/50 dark:hover:text-secondary-100;
   }
   .nav-item-active {
-    @apply bg-[#fcf5eb] text-[#7a4f2c] font-semibold shadow-soft;
-    @apply dark:bg-[#3b2613]/50 dark:text-[#ddb889];
+    @apply bg-primary-50 text-primary-700 font-semibold shadow-soft;
+    @apply dark:bg-primary-900/50 dark:text-primary-300;
   }
 
   /* Settings section card */
@@ -280,9 +280,9 @@
 
   /* Quantity stepper buttons */
   .qty-btn {
-    @apply inline-flex items-center justify-center rounded-xl border border-[#ded7cc] bg-[#faf8f5];
-    @apply hover:bg-[#f0ece5] active:scale-95 transition-all duration-150;
-    @apply dark:bg-[#2a1a10] dark:border-[#54463b] dark:hover:bg-[#3b2613];
+    @apply inline-flex items-center justify-center rounded-xl border border-secondary-200 bg-secondary-50;
+    @apply hover:bg-secondary-100 active:scale-95 transition-all duration-150;
+    @apply dark:bg-surface-dark dark:border-secondary-800 dark:hover:bg-primary-900;
     min-width: 44px;
     min-height: 44px;
   }
@@ -351,31 +351,31 @@
 
   /* Glassmorphism utilities */
   .glass {
-    @apply bg-[#faf8f5]/20 backdrop-blur-md border border-[#ded7cc]/30;
-    @apply dark:bg-[#2a1a10]/20 dark:border-[#54463b]/30;
+    @apply bg-secondary-50/20 backdrop-blur-md border border-secondary-200/30;
+    @apply dark:bg-surface-dark/20 dark:border-secondary-800/30;
   }
   .glass-strong {
-    @apply bg-[#faf8f5]/40 backdrop-blur-lg border border-[#ded7cc]/50;
-    @apply dark:bg-[#2a1a10]/40 dark:border-[#54463b]/50;
+    @apply bg-secondary-50/40 backdrop-blur-lg border border-secondary-200/50;
+    @apply dark:bg-surface-dark/40 dark:border-secondary-800/50;
   }
 
   /* Gradient text utilities */
   .gradient-text {
-    @apply bg-gradient-to-r from-[#9a693a] to-[#f57323] bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary-600 to-accent-500 bg-clip-text text-transparent;
   }
   .gradient-text-copper {
-    @apply bg-gradient-to-r from-[#f57323] to-[#e55c13] bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-accent-500 to-accent-600 bg-clip-text text-transparent;
   }
   .gradient-text-success {
-    @apply bg-gradient-to-r from-[#16a34a] to-[#22c55e] bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-success-600 to-success-500 bg-clip-text text-transparent;
   }
   .gradient-text-danger {
-    @apply bg-gradient-to-r from-[#dc2626] to-[#ef4444] bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-danger-600 to-danger-500 bg-clip-text text-transparent;
   }
 
   /* Coffee-themed decorative utility */
   .copper-ring {
-    @apply ring-2 ring-[#f57323]/30;
+    @apply ring-2 ring-accent-500/30;
   }
   .bg-coffee-pattern {
     background-image:
@@ -422,11 +422,11 @@
 /* Firefox scrollbar — light mode */
 .cart-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #c6bbab #f0ece5;
+  scrollbar-color: var(--color-secondary-300, #c6bbab) var(--color-secondary-100, #f0ece5);
 }
 /* Firefox scrollbar — dark mode */
 .dark .cart-scrollbar {
-  scrollbar-color: #54463b #3b2613;
+  scrollbar-color: var(--color-secondary-800, #54463b) var(--color-primary-900, #3b2613);
 }
 
 /* Animations */
@@ -482,12 +482,12 @@
 
 /* Focus styles for accessibility — keyboard-only */
 *:focus-visible {
-  outline: 2px solid #b8854a;
+  outline: 2px solid var(--color-primary-500, #b8854a);
   outline-offset: 2px;
   border-radius: 0.5rem;
 }
 .dark *:focus-visible {
-  outline-color: #cfa16a;
+  outline-color: var(--color-primary-400, #cfa16a);
 }
 
 /* Skip to main content link for keyboard users */

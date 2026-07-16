@@ -1,11 +1,19 @@
 import { useState, useMemo } from 'react';
 import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
 import { DollarSign, ShoppingCart, Users, TrendingUp, Download, BarChart3 } from 'lucide-react';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp, useCapability } from '../../context/SupabaseAppContext';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { UpgradePrompt } from '../ui/UpgradePrompt';
+import { OwnerInsights } from './OwnerInsights';
+import { ProfitMarginAnalytics } from './ProfitMarginAnalytics';
+import { WhatsAppReportConfig } from './WhatsAppReportConfig';
+import { SimpleProfitReport } from './SimpleProfitReport';
 
 export function ReportsManager() {
   const { state } = useApp();
+  const hasProReports = useCapability('advanced_reports');
+  const hasSimpleProfit = useCapability('simple_profit_report');
   const [dateRange, setDateRange] = useState('7');
   const [reportType, setReportType] = useState('sales');
   const [startDateInput, setStartDateInput] = useState('');
@@ -251,12 +259,12 @@ export function ReportsManager() {
   };
 
   return (
-    <div className="p-4 lg:p-6 space-y-6 bg-[#faf8f5] dark:bg-[#1f1309] min-h-full">
+    <div className="p-4 lg:p-6 space-y-6 bg-secondary-50 dark:bg-primary-950 min-h-full">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-[#473b32] dark:text-[#f0ece5]">Reports & Analytics</h1>
-          <p className="text-[#7d6b57] dark:text-[#c6bbab] mt-1">
+          <h1 className="text-2xl lg:text-3xl font-bold text-secondary-900 dark:text-secondary-100">Reports & Analytics</h1>
+          <p className="text-secondary-600 dark:text-secondary-300 mt-1">
             {format(validStartDate, 'MMM dd, yyyy')} - {format(validEndDate, 'MMM dd, yyyy')}
           </p>
         </div>
@@ -274,8 +282,8 @@ export function ReportsManager() {
       <div className="card p-4 lg:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 gap-4">
           <div className="flex items-center space-x-2">
-            <BarChart3 className="h-5 w-5 text-[#ad9e8a]" />
-            <span className="font-medium text-[#473b32] dark:text-[#f0ece5]">Report Filters</span>
+            <BarChart3 className="h-5 w-5 text-secondary-400" />
+            <span className="font-medium text-secondary-900 dark:text-secondary-100">Report Filters</span>
           </div>
           
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
@@ -287,6 +295,10 @@ export function ReportsManager() {
               <option value="sales">Sales Report</option>
               <option value="inventory">Inventory Report</option>
               <option value="customers">Customer Report</option>
+              <option value="simple-profit" disabled={!hasSimpleProfit}>Simple Profit {hasSimpleProfit ? '' : '(Pro)'}</option>
+              <option value="owner-insights" disabled={!hasProReports}>Owner Insights {hasProReports ? '' : '(Pro)'}</option>
+              <option value="profit-margin" disabled={!hasProReports}>Profit Margin {hasProReports ? '' : '(Pro)'}</option>
+              <option value="whatsapp" disabled={!hasProReports}>WhatsApp Reports {hasProReports ? '' : '(Pro)'}</option>
             </select>
 
             <select
@@ -335,13 +347,16 @@ export function ReportsManager() {
       </div>
 
       {/* Summary Cards */}
+      {reportType === 'sales' && !hasProReports && (
+        <UpgradePrompt feature="Profit analytics" tier="pro" onClose={() => {}} />
+      )}
       {reportType === 'sales' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <div className="stat-card bg-gradient-to-br from-[#9a693a] to-[#7a4f2c]">
+          <div className="stat-card bg-gradient-to-br from-primary-600 to-primary-700">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Total Revenue</p>
-                <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {totalRevenue.toFixed(2)}</p>
+                <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {totalRevenue.toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <DollarSign className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -349,7 +364,7 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-[#f57323] to-[#e55c13]">
+          <div className="stat-card bg-gradient-to-br from-accent-500 to-accent-600">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Transactions</p>
@@ -361,11 +376,11 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-[#16a34a] to-[#15803d]">
+          <div className="stat-card bg-gradient-to-br from-success-600 to-success-700">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Avg. Transaction</p>
-                <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {averageTransaction.toFixed(2)}</p>
+                <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {averageTransaction.toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -377,7 +392,7 @@ export function ReportsManager() {
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Total Discounts</p>
-                <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {totalDiscounts.toFixed(2)}</p>
+                <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {totalDiscounts.toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <Users className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -387,9 +402,12 @@ export function ReportsManager() {
         </div>
       )}
 
+      {reportType === 'customers' && !hasProReports && (
+        <UpgradePrompt feature="Owner insights" tier="pro" onClose={() => {}} />
+      )}
       {reportType === 'customers' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <div className="stat-card bg-gradient-to-br from-[#9a693a] to-[#7a4f2c]">
+          <div className="stat-card bg-gradient-to-br from-primary-600 to-primary-700">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Total Customers</p>
@@ -401,7 +419,7 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-[#f57323] to-[#e55c13]">
+          <div className="stat-card bg-gradient-to-br from-accent-500 to-accent-600">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Active Customers</p>
@@ -413,11 +431,11 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-[#16a34a] to-[#15803d]">
+          <div className="stat-card bg-gradient-to-br from-success-600 to-success-700">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Avg. Customer Value</p>
-                <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {(customerData.reduce((sum, c) => sum + c.totalSpent, 0) / Math.max(customerData.filter(c => c.totalTransactions > 0).length, 1)).toFixed(2)}</p>
+                <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {(customerData.reduce((sum, c) => sum + c.totalSpent, 0) / Math.max(customerData.filter(c => c.totalTransactions > 0).length, 1)).toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <DollarSign className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -430,7 +448,7 @@ export function ReportsManager() {
               <div>
                 <p className="text-white/80 text-sm font-medium">Top Customer</p>
                 <p className="text-lg lg:text-xl font-bold">{customerData[0]?.name || 'N/A'}</p>
-                <p className="text-white/80 text-xs">{customerData[0] ? `${state.settings.currency} ${customerData[0].totalSpent.toFixed(2)}` : ''}</p>
+                <p className="text-white/80 text-xs">{customerData[0] ? `${DEFAULT_CURRENCY} ${customerData[0].totalSpent.toFixed(2)}` : ''}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -440,9 +458,12 @@ export function ReportsManager() {
         </div>
       )}
 
+      {reportType === 'inventory' && !hasProReports && (
+        <UpgradePrompt feature="Advanced reports" tier="pro" onClose={() => {}} />
+      )}
       {reportType === 'inventory' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <div className="stat-card bg-gradient-to-br from-[#9a693a] to-[#7a4f2c]">
+          <div className="stat-card bg-gradient-to-br from-primary-600 to-primary-700">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Total Products</p>
@@ -454,7 +475,7 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-[#f57323] to-[#e55c13]">
+          <div className="stat-card bg-gradient-to-br from-accent-500 to-accent-600">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Low Stock Items</p>
@@ -466,11 +487,11 @@ export function ReportsManager() {
             </div>
           </div>
 
-          <div className="stat-card bg-gradient-to-br from-[#16a34a] to-[#15803d]">
+          <div className="stat-card bg-gradient-to-br from-success-600 to-success-700">
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Total Stock Value</p>
-                <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {inventoryData.reduce((sum, item) => sum + item.stockValue, 0).toFixed(2)}</p>
+                <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {inventoryData.reduce((sum, item) => sum + item.stockValue, 0).toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <DollarSign className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -482,7 +503,7 @@ export function ReportsManager() {
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="text-white/80 text-sm font-medium">Potential Revenue</p>
-                <p className="text-xl lg:text-2xl font-bold">{state.settings.currency} {inventoryData.reduce((sum, item) => sum + item.potentialRevenue, 0).toFixed(2)}</p>
+                <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {inventoryData.reduce((sum, item) => sum + item.potentialRevenue, 0).toFixed(2)}</p>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl">
                 <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8" />
@@ -497,7 +518,7 @@ export function ReportsManager() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Sales Trend */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
               <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
               Sales Trend
             </h3>
@@ -508,7 +529,7 @@ export function ReportsManager() {
                 <YAxis stroke="#6b7280" fontSize={12} />
                 <Tooltip 
                   formatter={(value: string | number | (string | number)[], name: string) => [
-                    name === 'sales' ? `${state.settings.currency} ${Number(value).toFixed(2)}` : value,
+                    name === 'sales' ? `${DEFAULT_CURRENCY} ${Number(value).toFixed(2)}` : value,
                     name === 'sales' ? 'Sales' : 'Transactions'
                   ]}
                   contentStyle={{
@@ -543,7 +564,7 @@ export function ReportsManager() {
 
           {/* Category Distribution */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
               <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
               Sales by Category
             </h3>
@@ -564,7 +585,7 @@ export function ReportsManager() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: any) => [`${state.settings.currency} ${Number(value).toFixed(2)}`, 'Revenue']}
+                  formatter={(value: number | string) => [`${DEFAULT_CURRENCY} ${Number(value).toFixed(2)}`, 'Revenue']}
                   contentStyle={{
                     backgroundColor: '#faf8f5',
                     border: '1px solid #ded7cc',
@@ -582,7 +603,7 @@ export function ReportsManager() {
         <div className="grid grid-cols-1 gap-6">
           {/* Customer Spending Chart */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
               <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
               Top Customer Spending
             </h3>
@@ -597,7 +618,7 @@ export function ReportsManager() {
                 <YAxis stroke="#6b7280" fontSize={12} />
                 <Tooltip 
                   formatter={(value: string | number | (string | number)[], name: string) => [
-                    name === 'spending' ? `${state.settings.currency} ${Number(value).toFixed(2)}` : value,
+                    name === 'spending' ? `${DEFAULT_CURRENCY} ${Number(value).toFixed(2)}` : value,
                     name === 'spending' ? 'Total Spent' : 'Transactions'
                   ]}
                   contentStyle={{
@@ -627,7 +648,7 @@ export function ReportsManager() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Stock Status Chart */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
               <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
               Stock Status Distribution
             </h3>
@@ -652,7 +673,7 @@ export function ReportsManager() {
                   <Cell fill="#DC2626" />
                 </Pie>
                 <Tooltip 
-                  formatter={(value: any) => [value, 'Products']}
+                  formatter={(value: number | string) => [value, 'Products']}
                   contentStyle={{
                     backgroundColor: '#faf8f5',
                     border: '1px solid #ded7cc',
@@ -666,7 +687,7 @@ export function ReportsManager() {
 
           {/* Category Stock Value */}
           <div className="card p-6">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] mb-6 flex items-center font-fraunces">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 mb-6 flex items-center font-fraunces">
               <DollarSign className="h-5 w-5 mr-2 text-green-600" />
               Stock Value by Category
             </h3>
@@ -692,7 +713,7 @@ export function ReportsManager() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: any) => [`${state.settings.currency} ${Number(value).toFixed(2)}`, 'Stock Value']}
+                  formatter={(value: number | string) => [`${DEFAULT_CURRENCY} ${Number(value).toFixed(2)}`, 'Stock Value']}
                   contentStyle={{
                     backgroundColor: '#faf8f5',
                     border: '1px solid #ded7cc',
@@ -709,8 +730,8 @@ export function ReportsManager() {
       {/* Data Tables */}
       {reportType === 'sales' && (
         <div className="card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#ded7cc] dark:border-[#54463b]">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] flex items-center font-fraunces">
+          <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-800">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 flex items-center font-fraunces">
               <ShoppingCart className="h-5 w-5 mr-2 text-green-600" />
               Top Selling Products
             </h3>
@@ -726,25 +747,25 @@ export function ReportsManager() {
                   <th className="table-header-cell">Avg. Price</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#ded7cc] dark:divide-[#54463b]">
+              <tbody className="divide-y divide-secondary-200 dark:divide-secondary-800">
                 {topProducts.map((product, index) => (
                   <tr key={index} className="table-row">
                     <td className="table-cell">
-                      <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-[#9a693a] to-[#7a4f2c] text-white rounded-full font-bold text-sm">
+                      <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary-600 to-primary-700 text-white rounded-full font-bold text-sm">
                         {index + 1}
                       </div>
                     </td>
-                    <td className="table-cell font-semibold text-[#473b32] dark:text-[#f0ece5]">
+                    <td className="table-cell font-semibold text-secondary-900 dark:text-secondary-100">
                       {product.name}
                     </td>
                     <td className="table-cell">
                       <span className="badge badge-info">{product.quantity}</span>
                     </td>
                     <td className="table-cell font-semibold text-green-600">
-                      {state.settings.currency} {product.revenue.toFixed(2)}
+                      {DEFAULT_CURRENCY} {product.revenue.toFixed(2)}
                     </td>
-                    <td className="table-cell text-[#7d6b57] dark:text-[#c6bbab]">
-                      {state.settings.currency} {(product.revenue / product.quantity).toFixed(2)}
+                    <td className="table-cell text-secondary-600 dark:text-secondary-300">
+                      {DEFAULT_CURRENCY} {(product.revenue / product.quantity).toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -756,8 +777,8 @@ export function ReportsManager() {
 
       {reportType === 'customers' && (
         <div className="card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#ded7cc] dark:border-[#54463b]">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] flex items-center font-fraunces">
+          <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-800">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 flex items-center font-fraunces">
               <Users className="h-5 w-5 mr-2 text-blue-600" />
               Customer Analytics
             </h3>
@@ -774,19 +795,19 @@ export function ReportsManager() {
                   <th className="table-header-cell">Last Purchase</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#ded7cc] dark:divide-[#54463b]">
+              <tbody className="divide-y divide-secondary-200 dark:divide-secondary-800">
                 {customerData.slice(0, 20).map((customer) => (
                   <tr key={customer.id} className="table-row">
                     <td className="table-cell">
                       <div className="flex items-center">
-                        <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-[#9a693a] to-[#7a4f2c] text-white rounded-full font-bold text-sm mr-3">
+                        <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary-600 to-primary-700 text-white rounded-full font-bold text-sm mr-3">
                           {customer.name.charAt(0).toUpperCase()}
                         </div>
-                        <span className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{customer.name}</span>
+                        <span className="font-semibold text-secondary-900 dark:text-secondary-100">{customer.name}</span>
                       </div>
                     </td>
                     <td className="table-cell font-semibold text-green-600">
-                      {state.settings.currency} {customer.totalSpent.toFixed(2)}
+                      {DEFAULT_CURRENCY} {customer.totalSpent.toFixed(2)}
                     </td>
                     <td className="table-cell">
                       <span className="badge badge-info">{customer.totalTransactions}</span>
@@ -794,10 +815,10 @@ export function ReportsManager() {
                     <td className="table-cell">
                       <span className="badge badge-secondary">{customer.totalItems}</span>
                     </td>
-                    <td className="table-cell text-[#7d6b57] dark:text-[#c6bbab]">
-                      {state.settings.currency} {customer.avgTransactionValue.toFixed(2)}
+                    <td className="table-cell text-secondary-600 dark:text-secondary-300">
+                      {DEFAULT_CURRENCY} {customer.avgTransactionValue.toFixed(2)}
                     </td>
-                    <td className="table-cell text-[#7d6b57] dark:text-[#c6bbab]">
+                    <td className="table-cell text-secondary-600 dark:text-secondary-300">
                       {format(customer.lastPurchase, 'MMM dd, yyyy')}
                     </td>
                   </tr>
@@ -810,8 +831,8 @@ export function ReportsManager() {
 
       {reportType === 'inventory' && (
         <div className="card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#ded7cc] dark:border-[#54463b]">
-            <h3 className="text-lg font-bold text-[#473b32] dark:text-[#f0ece5] flex items-center font-fraunces">
+          <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-800">
+            <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 flex items-center font-fraunces">
               <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
               Inventory Analytics
             </h3>
@@ -832,16 +853,16 @@ export function ReportsManager() {
                   <th className="table-header-cell">Margin</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#ded7cc] dark:divide-[#54463b]">
+              <tbody className="divide-y divide-secondary-200 dark:divide-secondary-800">
                 {inventoryData.slice(0, 50).map((item) => (
                   <tr key={item.id} className="table-row">
                     <td className="table-cell">
                       <div className="flex items-center">
-                        <span className="font-semibold text-[#473b32] dark:text-[#f0ece5]">{item.name}</span>
+                        <span className="font-semibold text-secondary-900 dark:text-secondary-100">{item.name}</span>
                         {!item.active && <span className="ml-2 badge badge-error text-xs">Inactive</span>}
                       </div>
                     </td>
-                    <td className="table-cell font-mono text-sm text-[#7d6b57] dark:text-[#c6bbab]">{item.sku}</td>
+                    <td className="table-cell font-mono text-sm text-secondary-600 dark:text-secondary-300">{item.sku}</td>
                     <td className="table-cell">
                       <span className="badge badge-secondary">{item.category}</span>
                     </td>
@@ -861,13 +882,13 @@ export function ReportsManager() {
                       </span>
                     </td>
                     <td className="table-cell font-semibold text-blue-600">
-                      {state.settings.currency} {item.stockValue.toFixed(2)}
+                      {DEFAULT_CURRENCY} {item.stockValue.toFixed(2)}
                     </td>
                     <td className="table-cell">
                       <span className="badge badge-info">{item.soldQuantity}</span>
                     </td>
                     <td className="table-cell font-semibold text-green-600">
-                      {state.settings.currency} {item.revenue.toFixed(2)}
+                      {DEFAULT_CURRENCY} {item.revenue.toFixed(2)}
                     </td>
                     <td className="table-cell">
                       <span className={`badge ${
@@ -893,6 +914,42 @@ export function ReportsManager() {
             </table>
           </div>
         </div>
+      )}
+
+      {/* Pro: Simple Profit Report (Revenue - Purchases) */}
+      {reportType === 'simple-profit' && (
+        hasSimpleProfit
+          ? <SimpleProfitReport />
+          : <div className="space-y-4">
+              <UpgradePrompt feature="Simple Profit Report" tier="pro" onClose={() => setReportType('sales')} />
+            </div>
+      )}
+
+      {/* Pro: Owner Insights */}
+      {reportType === 'owner-insights' && (
+        hasProReports
+          ? <OwnerInsights dateRange={dateRange} />
+          : <div className="space-y-4">
+              <UpgradePrompt feature="Owner Insights" tier="pro" onClose={() => setReportType('sales')} />
+            </div>
+      )}
+
+      {/* Pro: Profit Margin Analytics */}
+      {reportType === 'profit-margin' && (
+        hasProReports
+          ? <ProfitMarginAnalytics dateRange={dateRange} />
+          : <div className="space-y-4">
+              <UpgradePrompt feature="Profit Margin Analytics" tier="pro" onClose={() => setReportType('sales')} />
+            </div>
+      )}
+
+      {/* Pro: WhatsApp Reports */}
+      {reportType === 'whatsapp' && (
+        hasProReports
+          ? <WhatsAppReportConfig />
+          : <div className="space-y-4">
+              <UpgradePrompt feature="WhatsApp Daily Reports" tier="pro" onClose={() => setReportType('sales')} />
+            </div>
       )}
     </div>
   );

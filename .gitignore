@@ -23,7 +23,13 @@ dist-ssr
 *.sln
 *.sw?
 .env
+<<<<<<< HEAD
 .env.*
+=======
+.env.development
+.env.production
+.env.backup-*
+>>>>>>> feature/vision-v3-migration
 !.env.example
 supabase-mcp-server-supabase-0.8.2.tgz
 
@@ -43,9 +49,35 @@ AGENTS.md
 *.Zone.Identifier
 master-execution-plan.md
 
+<<<<<<< HEAD
 # Supabase remote schema dumps (never commit these — they contain insecure grants)
 *_remote_schema.sql
 
 # Playwright MCP session logs and test artifacts
 .playwright-mcp/
 *.png
+=======
+# Remote schema dumps (supabase db pull snapshots — not versioned migrations)
+supabase/migrations/*_remote_schema.sql
+
+# Legacy pre-migration SQL folder (superseded by supabase/migrations/)
+SupaBase/
+.planning/
+
+# Guardian logs (keep for debugging, but don't commit)
+.harness/guardian-*.json
+.harness/guardian-log.md
+
+# Seed files (contain dev credentials — never commit)
+supabase/seed.sql
+test-results/
+.env.test
+
+playwright-report/
+test-results/
+.mcp.json
+>>>>>>> feature/vision-v3-migration
+
+# Claude Code skills (AI tooling config)
+.claude/skills/
+supabase/snippets/

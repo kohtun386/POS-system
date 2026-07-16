@@ -1,7 +1,7 @@
 # State Management Architecture — CoffeeShop POS
 
-**Last updated:** 2026-06-29 (aligned with VISION.md v3.0.0)
-**Source of truth:** `src/context/SupabaseAppContext.tsx` (active), `src/context/AuthContext.tsx`, `src/context/ThemeContext.tsx`, `src/context/CurrencyContext.tsx`
+**Last updated:** 2026-07-14 (Aligned with VISION.md v3.1.0: receipt state §9, shift state §12, checkout RPC §11)
+**Source of truth:** `src/context/SupabaseAppContext.tsx` (active), `src/context/AuthContext.tsx`, `src/context/ThemeContext.tsx`
 
 ---
 
@@ -11,9 +11,9 @@
 <ThemeProvider>                    — theme state (light/dark/system)
   <AuthProvider>                   — Supabase auth session + user profile
     <AppProvider>                  — ALL app state (products, cart, sales, etc.)
-      <CurrencyProvider>           — Multi-currency + exchange rates
+      <ErrorBoundary>              — catch rendering errors
         <AppContent />             — Routes + header
-      </CurrencyProvider>
+      </ErrorBoundary>
     </AppProvider>
   </AuthProvider>
 </ThemeProvider>
@@ -21,7 +21,7 @@
 
 Defined in `src/App.tsx`.
 
-**Rule:** Providers must wrap in this exact order. `AppProvider` depends on `useAuth()`. `CurrencyProvider` depends on nothing from `AppProvider` but logically sits inside it.
+**Rule:** Providers must wrap in this exact order. `AppProvider` depends on `useAuth()`. CurrencyContext was removed — MMK-only formatting is inline where needed.
 
 ---
 
@@ -32,7 +32,6 @@ Defined in `src/App.tsx`.
 | `ThemeContext` | `src/context/ThemeContext.tsx` | `useState` | `isDark`, `toggleTheme`, `setTheme`, `theme` |
 | `AuthContext` | `src/context/AuthContext.tsx` | `useState` × 4 | `user`, `profile`, `session`, `loading`, `signIn`, `signUp`, `signOut`, `updateProfile` |
 | `AppContext` (active) | `src/context/SupabaseAppContext.tsx` | `useReducer` | `state`, `dispatch` |
-| `CurrencyContext` | `src/context/CurrencyContext.tsx` | `useReducer` | `state`, `loadSupportedCurrencies`, `convertAmount`, `formatAmount`, `updateExchangeRates`, etc. |
 | `AppContext` (deprecated) | `src/context/AppContext.tsx` | `useReducer` | **DO NOT IMPORT.** localStorage mock data only. |
 
 ---
@@ -66,9 +65,9 @@ interface AppState {
 
 `AppSettings` owns interface mode, auto backup, receipt printer, theme, and exchange-rate provider/key/update interval. It must not contain store identity, tax, currency, or invoice fields in the target architecture.
 
-`capabilities` is a flat string array of capability keys (e.g., `['pos', 'inventory', 'printer_integration', 'recipe_bom']`). Resolved server-side at login from subscription tier, business type, and per-shop overrides. Components check `capabilities.includes('key')` — never check `shop.subscriptionTier` or `shop.businessType` directly. (VISION.md v3.0.0 Section 5)
+`capabilities` is a flat string array of capability keys (e.g., `['pos', 'inventory', 'printer_integration', 'purchase_log']`). Resolved server-side at login from subscription tier, business type, and per-shop overrides. Components check `capabilities.includes('key')` — never check `shop.subscriptionTier` or `shop.businessType` directly. (VISION.md v3.1.0 Section 5)
 
-### 3.2 Action Types (25 actions)
+### 3.2 Action Types (~44 actions)
 
 | Action | Payload | Behavior |
 |--------|---------|----------|
@@ -236,43 +235,9 @@ interface ThemeContextType {
 
 ---
 
-## 6. CurrencyContext
+## 6. Component → State Access Patterns
 
-### 6.1 State Shape
-
-```typescript
-interface CurrencyState {
-  supportedCurrencies: CurrencyConfig[];
-  baseCurrency: CurrencyConfig | null;
-  displayCurrency: string;
-  exchangeRates: ExchangeRate[];
-  isLoading: boolean;
-  error: string | null;
-  lastUpdateTime: Date | null;
-}
-```
-
-### 6.2 Behavior
-
-- Loads supported currencies from `currency_config` table on mount
-- Loads base currency from `CurrencyUtils.getBaseCurrency()`
-- Loads exchange rates when base currency set
-- Background auto-update DISABLED (commented out). Manual updates only via Settings.
-- 5-minute in-memory cache on exchange rates (`CurrencyUtils.cachedRates`)
-
-### 6.3 Exported Hooks
-
-| Hook | Purpose |
-|------|---------|
-| `useCurrency()` | Full context access |
-| `useCurrencyFormat()` | Returns `{ format, displayCurrency }` |
-| `useCurrencyConversion()` | Returns `{ convert, getRate, baseCurrency, displayCurrency }` |
-
----
-
-## 7. Component → State Access Patterns
-
-### 7.1 POS Components
+### 6.1 POS Components
 
 | Component | Reads | Dispatches |
 |-----------|-------|------------|
@@ -282,7 +247,7 @@ interface CurrencyState {
 | `CheckoutModal` | `state.cart`, `state.selectedCustomer`, `state.discounts`, `state.products`, `state.shop`, `state.settings`, `state.currentUser`, `state.capabilities` | `ADD_SALE`, `CLEAR_CART` (inventory deduction, customer stats, print jobs, consumption logging all handled by `checkout_complete` RPC) |
 | `SalesTabManager` | `state.salesTabs`, `state.activeSalesTab`, `state.cart`, `state.selectedCustomer` | `ADD_SALES_TAB`, `UPDATE_SALES_TAB`, `REMOVE_SALES_TAB`, `SET_ACTIVE_SALES_TAB` |
 
-### 7.2 Management Components
+### 6.2 Management Components
 
 | Component | Reads | Dispatches |
 |-----------|-------|------------|
@@ -297,17 +262,16 @@ interface CurrencyState {
 | `UserManager` | `state.users`, `state.currentUser` | `SET_USERS` |
 | `UserModal` | `state.users`, `state.currentUser` | `SET_USERS` |
 | `Settings` | `state.shop`, `state.settings`, `state.currentUser`, `state.capabilities` | `SET_SHOP`, `SET_SETTINGS` |
-| `RecipeManager` | `state.products`, `state.capabilities` | — |
 | `ShiftManager` | `state.capabilities` | — |
 
-### 7.3 Layout Components
+### 6.3 Layout Components
 
 | Component | Reads | Dispatches |
 |-----------|-------|------------|
 | `Header` | `state.currentUser`, `state.shop`, `state.settings`, `state.cart`, `state.capabilities` | `SET_SETTINGS` (interface mode toggle) |
 | `LoginPage` | — | — (uses `useAuth()` only) |
 
-### 7.4 Capability-Based Feature Gating
+### 6.4 Capability-Based Feature Gating
 
 Components check `state.capabilities` to show/hide features. Never check `shop.subscriptionTier` or `shop.businessType` directly.
 
@@ -315,7 +279,7 @@ Components check `state.capabilities` to show/hide features. Never check `shop.s
 // CORRECT — check capabilities
 const { state } = useApp();
 const canUsePrinter = state.capabilities.includes('printer_integration');
-const canUseRecipe = state.capabilities.includes('recipe_bom');
+const canUsePurchaseLog = state.capabilities.includes('purchase_log');
 const canUseCashDrawer = state.capabilities.includes('cash_drawer');
 const canUseOwnerInsights = state.capabilities.includes('owner_insights');
 
@@ -329,18 +293,19 @@ if (shop.businessType === 'coffee_shop') { ... }
 | Capability | Used By | Purpose |
 |------------|---------|---------|
 | `printer_integration` | CheckoutModal, TransactionsManager, Settings | Show/hide print buttons, receipt settings |
-| `recipe_bom` | InventoryManager, ProductModal, RecipeManager | Show/hide recipe management, raw materials |
-| `raw_materials` | InventoryManager, ProductModal | Show/hide raw material product type |
+| `purchase_log` | InventoryManager, ReportsManager | Show/hide purchase log (Growth+) |
+| `stock_overview` | InventoryManager | Show/hide stock overview (Growth+) |
+| `low_stock_alerts` | AlertManager, InventoryManager | Show/hide low stock alert config (Growth+) |
+| `inventory` | InventoryManager, ReportsManager | Show/hide simplified inventory features (Growth+) |
 | `cash_drawer` | Header, ShiftManager | Show/hide shift management nav |
 | `owner_insights` | Header, ReportsManager | Show/hide P&L dashboard, owner reports |
-| `profit_analytics` | ReportsManager | Show/hide profit margin analytics |
-| `waste_tracking` | InventoryManager | Show/hide waste tracking UI |
+| `profit_report` | ReportsManager | Show/hide simple profit report (Pro) |
 
 ---
 
-## 8. State Flow Diagrams
+## 7. State Flow Diagrams
 
-### 8.1 Checkout Flow (VISION.md v3.0.0 — Atomic RPC)
+### 7.1 Checkout Flow (VISION.md v3.1.0 — Atomic RPC)
 
 ```
 Cart (user taps "Checkout")
@@ -374,10 +339,9 @@ CheckoutModal opens
   │   ▼
   │   Success (all steps atomic):
   │     ✓ Sale created
-  │     ✓ Inventory deducted (recipe-based if Growth+)
+  │     ✓ Inventory deducted (simple stock deduction)
   │     ✓ Print jobs created (kitchen printer, if Growth+)
   │     ✓ Customer stats updated
-  │     ✓ Consumption logged (COGS, if Growth+)
   │     ✓ Daily order limit checked (race condition safe)
   │   │
   │   ▼
@@ -396,7 +360,7 @@ onComplete(sale) → POSTerminal clears tab cart
 
 **Key difference from pre-v3.0.0:** No sequential JavaScript service calls. Single `supabase.rpc('checkout_complete', ...)` call handles everything atomically. All steps succeed together or all roll back together.
 
-### 8.2 Sales Tab Switch Flow
+### 7.2 Sales Tab Switch Flow
 
 ```
 User clicks tab button
@@ -419,7 +383,7 @@ dispatch SET_ACTIVE_SALES_TAB(tabId)
 Cart renders with new tab's items
 ```
 
-### 8.3 Auth State Change Flow
+### 7.3 Auth State Change Flow
 
 ```
 supabase.auth.onAuthStateChange(event, session)
@@ -457,7 +421,53 @@ supabase.auth.onAuthStateChange(event, session)
 
 ---
 
-## 9. Anti-Patterns (What NOT To Do)
+## 7.4 Receipt Management State (Growth+, VISION.md v3.1.0 §9)
+
+Receipt state lives in component-local state (not AppState reducer) because it is transient — only relevant during the post-checkout prompt flow.
+
+| State | Location | Purpose |
+|-------|----------|---------|
+| `showPrintPrompt` | `CheckoutModal` local state | Whether "Print Receipt?" dialog is visible post-checkout |
+| `shop.receipt_setting` | `state.shop` (persisted) | Shop-level preference: `'always'` \| `'ask'` \| `'never'` |
+
+**Post-checkout flow (VISION.md v3.1.0 §9.1):**
+1. Sale completes via `checkout_complete` RPC (always committed)
+2. If `capabilities.includes('printer_integration')` AND printer connected:
+   - `receipt_setting === 'always'` → auto-print, no prompt
+   - `receipt_setting === 'ask'` → show `showPrintPrompt` dialog
+   - `receipt_setting === 'never'` → no prompt
+3. If Free tier (no `printer_integration` capability): no prompt, no print option
+4. If Growth+ but no printer configured: no prompt
+
+---
+
+## 7.5 Shift Management State (Growth+, VISION.md v3.1.0 §12)
+
+Shift state is managed via `cashShiftsService` and component-local state. The current shift is loaded on shift page entry, not persisted in AppState.
+
+| State | Location | Purpose |
+|-------|----------|---------|
+| `currentShift` | `ShiftManager` local state | Currently open shift row from `cash_shifts` table |
+| `openingCash` | `ShiftManager` form state | Physical cash count entered at shift start |
+| `closingCash` | `ShiftManager` form state | Physical cash count entered at shift end |
+| `expectedCash` | Computed | `opening_cash + cash_sales - cash_refunds` |
+| `variance` | Computed | `closing_cash - expected_cash` |
+
+**Shift lifecycle (VISION.md v3.1.0 §12.2):**
+```
+Open:  INSERT cash_shifts (opening_cash, cashier_id, status='open')
+  → All sales during shift linked via cashier_id
+Close: UPDATE cash_shifts (closing_cash, expected_cash, variance, status='closed')
+  → Variance thresholds: Green ≤1,000 | Yellow ≤10,000 | Red >10,000 MMK
+```
+
+**DB table:** `cash_shifts` (§7.7 in database.md). Columns: `id`, `shop_id`, `cashier_id`, `opening_cash`, `closing_cash`, `expected_cash`, `variance`, `status`, `opened_at`, `closed_at`.
+
+**RLS:** Cashiers can SELECT/INSERT/UPDATE own shifts; admin/manager can SELECT all, UPDATE all, DELETE (admin only).
+
+---
+
+## 8. Anti-Patterns (What NOT To Do)
 
 | Anti-Pattern | Why | Correct Pattern |
 |-------------|-----|-----------------|
@@ -471,16 +481,13 @@ supabase.auth.onAuthStateChange(event, session)
 | Check `shop.subscriptionTier` in components | Couples component code to tier logic. Adding a new tier requires component changes. | Check `state.capabilities.includes('key')` |
 | Check `shop.businessType` in components | Couples component code to business type. Adding a new type requires component changes. | Check `state.capabilities.includes('key')` |
 | Read `feature_definitions` table client-side | Server resolves capabilities at login. Client only needs the flat array. | Use `state.capabilities` only |
-| `any` type in reducer payloads | Loses type safety. 73 lint errors already. | Use discriminated union (planned cleanup). |
 
 ---
 
-## 10. Planned Changes
+## 9. Planned Changes
 
 | Change | Impact | Status |
 |--------|--------|--------|
 | Discriminated union for actions | Eliminates `payload: any`. Type-safe dispatch. | Planned (tech debt #1) |
-| Split context exports to separate files | Fixes React Refresh warnings (26 warnings, 6 files). | Planned (tech debt #2) |
-| Zustand or Redux Toolkit evaluation | Current useReducer pattern works but scales poorly with 25 actions. | Not started |
-| Owner Mobile state | Separate read-only state for owner mobile view (Pro tier). | v2 |
-| Offline queue state | IndexedDB-backed queue for cash-only offline transactions. | v2 |
+| Split context exports to separate files | Fixes React Refresh warnings (15 warnings, 6 files). | Planned (tech debt #2) |
+| Zustand or Redux Toolkit evaluation | Current useReducer pattern works but scales poorly with ~44 actions. | Not started |

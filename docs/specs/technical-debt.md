@@ -1,55 +1,28 @@
 # Technical Debt — CoffeeShop POS
 
-Captured 2026-06-16 during POS Helper lint + theme consistency audit.
+Originally captured 2026-06-16 during POS Helper lint + theme consistency audit.
 Commit: `8556dc3` (159 → 140 lint problems).
+
+Last updated: 2026-07-13 (aligned with VISION.md v3.1.0).
 
 ---
 
 ## 1. `any` Types Eroding Type Safety
 
-**Lint count:** 73 `@typescript-eslint/no-explicit-any` errors across 17 files.
+**Lint count:** 0 `@typescript-eslint/no-explicit-any` errors across 17 files.
+**Status:** ✅ RESOLVED (2026-07-13) — all `any` errors eliminated via typed intermediate interfaces.
 
-### Distribution
+### Root Cause (historical)
 
-| File | Count | Context |
-|---|---|---|
-| `src/lib/services.ts` | 34 | Supabase query response objects cast as `any` in map callbacks, destructured assignments, and `.single()` results |
-| `src/context/AppContext.tsx` | 9 | Deprecated context — most are legacy reducer dispatch payloads |
-| `src/components/reports/ReportsManager.tsx` | 5 | Recharts `Tooltip` payload, chart data mappers |
-| `src/context/AuthContext.tsx` | 5 | Auth state type parameter, session/profle hydration |
-| `src/components/alerts/AlertManager.tsx` | 3 | Catch-block error objects, mapped config data |
-| `src/context/SupabaseAppContext.tsx` | 3 | Reducer action payloads, Supabase query results |
-| `src/components/alerts/ServiceModal.tsx` | 2 | Form field references, config payloads |
-| `src/components/users/UserManager.tsx` | 2 | Table sort/ilter callbacks |
-| `src/types/index.ts` | 2 | `AlertContext.variables: any`, `useCurrencyConversion` return type |
-| 8 other files | 1 each | Scattered — catch blocks, Recharts tooltips, dynamic form values |
-
-### Root Cause
-
-- **services.ts:** Service methods build camelCase-to-snake_case mapping inline without typed intermediate shapes. Each `.select()` return is typed `any` because the full joined-query shape isn't declared.
-- **Context files:** `useReducer` dispatch isn't discriminated — action types carry `payload: any`.
-- **Third-party escape hatches:** Recharts `Tooltip` passes `any` for `payload`, form libs use `any` for event targets.
-
-### Recommended Next Steps
-
-1. **services.ts (highest impact, 34 occurrences):** Create typed intermediate interfaces for each service method's query result. Pattern:
-   ```ts
-   interface ProductRow { id: string; name: string; price: number; /* … */ }
-   const { data, error } = await supabase.from('products').select('*').returns<ProductRow[]>();
-   ```
-   This eliminates map-callback `any` casts. Do `productsService` first as template, then replicate.
-
-2. **Context reducers:** Define a discriminated union for each reducer's action types. Replace `payload: any` with the specific payload per action name.
-
-3. **Scattered ~5:** These are Recharts tooltips and form-event targets — lowest priority, standard React escape-hatch patterns. Suppress with inline `// eslint-disable-next-line` comments after confirming type is unrepresentable.
-
-**Effort:** Medium (mostly mechanical typing — ~2-3 hours for services.ts, ~1 hour for context reducers).
+- **services.ts:** Service methods built camelCase-to-snake_case mapping inline without typed intermediate shapes. Each `.select()` return was typed `any` because the full joined-query shape wasn't declared.
+- **Context files:** `useReducer` dispatch wasn't discriminated — action types carried `payload: any`.
+- **Third-party escape hatches:** Recharts `Tooltip` passed `any` for `payload`, form libs used `any` for event targets.
 
 ---
 
 ## 2. React Refresh Warnings in Context Files
 
-**Lint count:** 26 warnings across 6 files.
+**Lint count:** 15 warnings across 6 files.
 
 ### Affected Files
 
@@ -57,7 +30,6 @@ Commit: `8556dc3` (159 → 140 lint problems).
 |---|---|
 | `src/context/AppContext.tsx` | Exports `AppProvider` + `useApp` hook + `checkDiscountEligibility` utility |
 | `src/context/AuthContext.tsx` | Exports `AuthProvider` + `useAuth` hook |
-| `src/context/CurrencyContext.tsx` | Exports `CurrencyProvider` + `useCurrencyConversion` + `useCurrencyFormat` hooks |
 | `src/context/SupabaseAppContext.tsx` | Exports `AppProvider` + `useApp` + `useInvoiceGeneration` + `checkDiscountEligibility` |
 | `src/context/ThemeContext.tsx` | Exports `ThemeProvider` + `useTheme` hook |
 | `src/lib/alertScheduler.tsx` | Exports `useAlertScheduler` hook + `AlertStatusIndicator` component |
@@ -91,11 +63,13 @@ React Fast Refresh expects a file to export **only** React components OR **only*
 
 ## 3. Color Palette Drift — Inline Hex Without Tailwind Config
 
-**Affected files:** ~10 components using 20+ non-standard hex values.
+**Status:** 🟡 IN PROGRESS — ~401 inline hex instances remaining in 40+ files.
 
-### Non-Palette Colors in Use
+**Affected files:** ~40 components using non-standard hex values outside the approved Espresso & Copper palette.
 
-The approved Espresso & Copper palette defines only 6 colors:
+### Background
+
+The approved Espresso & Copper palette defines 6 tier-1 colors:
 
 | Token | Hex |
 |---|---|
@@ -169,12 +143,69 @@ The Tailwind config never defined a full color scale. Components needed semantic
 
 ---
 
-## Summary
+## 4. Migration Return Type Change Requires DROP FUNCTION
 
-| Issue | Count | Severity | Effort |
-|---|---|---|---|
-| `any` types | 73 errors across 17 files | Medium — erodes type safety, no runtime impact | 3-4 hours |
-| React Refresh warnings | 26 warnings across 6 files | Low — dev experience only, no production impact | 1 hour |
-| Color palette drift | ~10 files, 20+ hex values | Low — visual inconsistency, no functional impact | 1-2 hours |
+**Migration:** `20260704000005_fix_checkout_return_invoice_number.sql`
+**Severity:** High — blocks `supabase db reset`
+**Date identified:** 2026-07-05
+**Status:** ✅ Resolved (2026-07-05) — `DROP FUNCTION IF EXISTS` added to migration
 
-**Recommended order:** React Refresh splits → Color palette formalization → `any` type cleanup (safest to riskiest, each builds confidence).
+### Problem
+
+PostgreSQL does not allow changing a function's return type with `CREATE OR REPLACE`. The migration attempts to change `checkout_complete` from `RETURNS UUID` to `RETURNS JSONB`, but uses only `CREATE OR REPLACE FUNCTION`, which fails with:
+
+```
+ERROR: cannot change return type of existing function (SQLSTATE 42P13)
+```
+
+This blocks `supabase db reset` and prevents fresh database setup.
+
+### Root Cause
+
+PostgreSQL requires `DROP FUNCTION` before changing return types. The `CREATE OR REPLACE` keyword only allows changing the function body, not its signature.
+
+### Fix Required
+
+Add `DROP FUNCTION IF EXISTS` before the `CREATE OR REPLACE`:
+
+```sql
+-- Drop existing function first (PostgreSQL requires DROP to change return type)
+DROP FUNCTION IF EXISTS checkout_complete(UUID, JSONB, JSONB, UUID);
+
+CREATE OR REPLACE FUNCTION checkout_complete(
+  p_shop_id UUID,
+  p_sale_data JSONB,
+  p_payments JSONB,
+  p_cashier_id UUID
+)
+RETURNS JSONB
+...
+```
+
+### Prevention
+
+Add to `docs/architecture/database.md`:
+
+> **Rule:** When changing a function's return type, always `DROP FUNCTION` first. `CREATE OR REPLACE` only updates the function body, not its signature.
+
+**Effort:** Low (1 line fix + doc update)
+
+---
+
+## 5. Resolved Items (v3.1.0)
+
+### CurrencyContext — ✅ RESOLVED (2026-07-10)
+
+Removed in scope reframe. MMK-only formatting is inline where needed. No multi-currency support in v1.
+
+### FeatureFlagsManager — ✅ RESOLVED (2026-07-10)
+
+Deleted. Capabilities are now resolved server-side via `resolveCapabilities()` and stored as `state.capabilities: string[]`. No client-side feature flag management.
+
+### useFeatureFlag — ✅ RESOLVED (2026-07-10)
+
+Deleted. Components use `useCapability('key')` hook instead of `useFeatureFlag`.
+
+### Checkout Atomic RPC — ✅ RESOLVED (2026-07-10)
+
+`checkoutService.complete()` single atomic RPC call replaces sequential JS service calls. Handles sale creation, inventory deduction, print jobs, and customer stats in one transaction. Race condition protection via `SELECT ... FOR UPDATE` in `checkout_complete` DB function.

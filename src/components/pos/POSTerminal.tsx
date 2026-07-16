@@ -151,14 +151,14 @@ export function POSTerminal() {
   // On mobile (< 768px), admin/manager see the dashboard, not POS
   if (isMobile && state.currentUser?.role !== 'cashier') {
     return (
-      <Suspense fallback={<div className="flex items-center justify-center h-full text-[#ad9e8a]">Loading dashboard...</div>}>
+      <Suspense fallback={<div className="flex items-center justify-center h-full text-secondary-400">Loading dashboard...</div>}>
         <ReportsManager />
       </Suspense>
     );
   }
 
   return (
-    <div className="flex h-full bg-[#faf8f5] dark:bg-[#1f1309]">
+    <div className="flex h-full bg-secondary-50 dark:bg-primary-950">
       <SalesTabManager />
       <div className="flex flex-col md:flex-row flex-1 min-h-0">
         <ProductGrid onAddToCart={addToCart} />

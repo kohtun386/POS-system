@@ -14,13 +14,13 @@ import {
   Product,
   ProductBatch,
   Customer,
+  CartItem,
   Sale,
   Discount,
   DiscountCondition,
-  CartItem,
-  AppliedDiscount,
   Payment,
   CardDetails,
+  AppliedDiscount,
   User,
   AppSettings,
   SalesTab,
@@ -32,19 +32,122 @@ import {
   Shop,
   FeatureDefinition,
   ShopFeature,
-  RawMaterial,
-  Recipe,
-  RecipeLine,
-  ConsumptionLog,
-  UomConversion,
-  KitchenOrder,
-  KitchenOrderItem,
-  KitchenOrderItemsPayload,
-  KitchenOrderStatus,
-  KitchenStation,
+  CashShift,
+  CapabilityResolution,
   PrintJob,
-  PrintJobStatus
+  PrintJobStatus,
+  PurchaseLog,
+  StockItem,
+  StockAdjustment
 } from '../types'
+
+// ================================================================
+// Error Classes
+// ================================================================
+
+export class DailyLimitError extends Error {
+  constructor(message = 'Daily order limit reached. Upgrade to Growth.') {
+    super(message)
+    this.name = 'DailyLimitError'
+  }
+}
+
+// ================================================================
+// Helper: map DB row → Shop (shared by shopsService + shopMembershipsService)
+// ================================================================
+
+function mapShopRow(row: Record<string, unknown>): Shop {
+  return {
+    id: row.id as string,
+    name: (row.name as string) || '',
+    address: (row.address as string) || '',
+    phone: (row.phone as string) || '',
+    email: (row.email as string) || '',
+    logo: (row.logo as string) || undefined,
+    ownerId: (row.owner_id as string) || undefined,
+    businessType: (row.business_type as string) || 'coffee_shop',
+    taxRate: Number(row.tax_rate ?? 0),
+    invoicePrefix: (row.invoice_prefix as string) || 'INV',
+    invoiceCounter: (row.invoice_counter as number) ?? 0,
+    draftRetentionDays: (row.draft_retention_days as number) ?? 30,
+    subscriptionTier: (row.subscription_tier as string) || 'free',
+    dailyOrderLimit: (row.daily_order_limit as number) ?? undefined,
+    receiptSetting: (row.receipt_setting as string) || 'ask',
+    isActive: (row.is_active as boolean) ?? true,
+    createdAt: new Date(row.created_at as string),
+    updatedAt: new Date(row.updated_at as string),
+  }
+}
+
+// ================================================================
+// Capability Resolution (VISION §5)
+// ================================================================
+
+const TIER_HIERARCHY: Record<string, number> = { free: 0, growth: 1, pro: 2 }
+
+/**
+ * Resolve capabilities for a shop based on subscription tier + overrides.
+ *
+ * Precedence (TIER-SPEC §3.3 — Flexible model):
+ *   1. Per-shop override (shop_features) — ALWAYS wins, can beat tier gate
+ *   2. Tier gate + default_enabled — fallback when no override exists
+ *
+ * A platform admin can enable a Pro feature on a Free shop for trials.
+ * Returns flat string[] of capability keys the shop can access.
+ */
+export function resolveCapabilities(
+  shop: Shop,
+  definitions: FeatureDefinition[],
+  overrides: ShopFeature[]
+): string[] {
+  const shopTierLevel = TIER_HIERARCHY[shop.subscriptionTier] ?? 0
+
+  // Build override map: feature_key → enabled
+  const overrideMap = new Map<string, boolean>()
+  for (const o of overrides) {
+    overrideMap.set(o.featureKey, o.enabled)
+  }
+
+  const caps: string[] = []
+
+  for (const def of definitions) {
+    // Check per-shop override FIRST (overrides always win — TIER-SPEC §3.3)
+    const override = overrideMap.get(def.key)
+
+    if (override !== undefined) {
+      // Override exists: use it regardless of tier gate
+      if (override) {
+        caps.push(def.key)
+      }
+    } else {
+      // No override: apply tier gate + default
+      const defTierLevel = TIER_HIERARCHY[def.subscriptionTier] ?? 0
+      if (shopTierLevel >= defTierLevel && def.defaultEnabled) {
+        caps.push(def.key)
+      }
+    }
+  }
+
+  return caps
+}
+
+/**
+ * Server-side capability resolution via RPC (VISION §5).
+ * Returns flat string[] of capability keys for a shop.
+ * Precedence: shop_features override > feature_definitions tier gate.
+ */
+export async function resolveCapabilitiesRpc(shopId: string): Promise<string[]> {
+  const { data, error } = await supabase.rpc('resolve_capabilities', {
+    p_shop_id: shopId,
+  })
+
+  if (error) {
+    console.error('Failed to resolve capabilities via RPC:', error)
+    throw error
+  }
+
+  return data ?? []
+}
 
 // Products Service
 export const productsService = {
@@ -385,7 +488,7 @@ export const salesService = {
       invoiceNumber: sale.invoice_number,
       customerId: sale.customer_id || undefined,
       customerName: sale.customer_name || undefined,
-      items: sale.items as CartItem[],
+      items: (sale.items as CartItem[]) || [],
       subtotal: sale.subtotal || 0,
       discountAmount: sale.discount_amount || 0,
       taxAmount: sale.tax_amount || 0,
@@ -399,7 +502,7 @@ export const salesService = {
       receiptNumber: sale.receipt_number || undefined,
       notes: sale.notes || undefined,
       appliedDiscounts: sale.applied_discounts as AppliedDiscount[] | undefined,
-      freeGifts: sale.free_gifts as CartItem[] | undefined
+      freeGifts: sale.free_gifts as CartItem[] | undefined,
     }))
 
     return {
@@ -441,7 +544,7 @@ export const salesService = {
       invoiceNumber: data.invoice_number,
       customerId: data.customer_id || undefined,
       customerName: data.customer_name || undefined,
-      items: data.items as CartItem[],
+      items: (data.items as CartItem[]) || [],
       subtotal: data.subtotal || 0,
       discountAmount: data.discount_amount || 0,
       taxAmount: data.tax_amount || 0,
@@ -454,7 +557,7 @@ export const salesService = {
       receiptNumber: data.receipt_number || undefined,
       notes: data.notes || undefined,
       appliedDiscounts: data.applied_discounts as AppliedDiscount[] | undefined,
-      freeGifts: data.free_gifts as CartItem[] | undefined
+      freeGifts: data.free_gifts as CartItem[] | undefined,
     }
   },
 
@@ -466,6 +569,58 @@ export const salesService = {
 
     if (error) throw error
   }
+}
+
+// Checkout Service — atomic checkout via RPC (VISION §11)
+export const checkoutService = {
+  async complete(shopId: string, saleData: Record<string, unknown>, payments: Record<string, unknown>, cashierId: string): Promise<Sale> {
+    const { data: rpcResult, error } = await supabase.rpc('checkout_complete', {
+      p_shop_id: shopId,
+      p_sale_data: saleData,
+      p_payments: payments,
+      p_cashier_id: cashierId,
+    })
+
+    if (error) {
+      if (error.message?.includes('DAILY_LIMIT_REACHED')) {
+        throw new DailyLimitError()
+      }
+      throw error
+    }
+
+    // RPC returns JSONB {sale_id, invoice_number}; extract sale_id for row fetch.
+    const saleId = rpcResult?.sale_id ?? rpcResult
+    const { data: row, error: fetchError } = await supabase
+      .from('sales')
+      .select('*')
+      .eq('id', saleId)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    return {
+      id: row.id,
+      invoiceNumber: row.invoice_number,
+      customerId: row.customer_id || undefined,
+      customerName: row.customer_name || undefined,
+      items: (row.items as CartItem[]) || [],
+      subtotal: row.subtotal || 0,
+      discountAmount: row.discount_amount || 0,
+      taxAmount: row.tax_amount || 0,
+      total: row.total || 0,
+      paymentMethod: row.payment_method as Sale['paymentMethod'],
+      payments: row.payments as Payment[] | undefined,
+      cardDetails: row.card_details as CardDetails | undefined,
+      status: row.status as Sale['status'],
+      cashier: row.cashier || '',
+      cashierId: row.cashier_id || undefined,
+      timestamp: new Date(row.created_at),
+      receiptNumber: row.receipt_number || undefined,
+      notes: row.notes || undefined,
+      appliedDiscounts: row.applied_discounts as AppliedDiscount[] | undefined,
+      freeGifts: row.free_gifts as CartItem[] | undefined,
+    }
+  },
 }
 
 // Discounts Service
@@ -484,7 +639,7 @@ export const discountsService = {
       description: discount.description || '',
       type: discount.type as Discount['type'],
       value: discount.value || 0,
-      conditions: discount.conditions as DiscountCondition[],
+      conditions: (discount.conditions as DiscountCondition[]) || [],
       freeGiftProducts: discount.free_gift_products || undefined,
       minAmount: discount.min_amount || undefined,
       maxDiscount: discount.max_discount || undefined,
@@ -524,7 +679,7 @@ export const discountsService = {
       description: data.description || '',
       type: data.type as Discount['type'],
       value: data.value || 0,
-      conditions: data.conditions as DiscountCondition[],
+      conditions: (data.conditions as DiscountCondition[]) || [],
       freeGiftProducts: data.free_gift_products || undefined,
       minAmount: data.min_amount || undefined,
       maxDiscount: data.max_discount || undefined,
@@ -565,7 +720,7 @@ export const discountsService = {
       description: data.description || '',
       type: data.type as Discount['type'],
       value: data.value || 0,
-      conditions: data.conditions as DiscountCondition[],
+      conditions: (data.conditions as DiscountCondition[]) || [],
       freeGiftProducts: data.free_gift_products || undefined,
       minAmount: data.min_amount || undefined,
       maxDiscount: data.max_discount || undefined,
@@ -605,17 +760,12 @@ export const settingsService = {
       storeEmail: data.store_email || '',
       storeLogo: data.store_logo || undefined,
       taxRate: data.tax_rate || 0,
-      currency: data.currency || 'USD',
-      baseCurrency: data.base_currency || 'USD',
-      interfaceMode: data.interface_mode as AppSettings['interfaceMode'] || 'touch',
+      interfaceMode: (data.interface_mode as AppSettings['interfaceMode']) || 'touch',
       autoBackup: data.auto_backup ?? true,
       receiptPrinter: data.receipt_printer ?? true,
-      theme: data.theme as AppSettings['theme'] || 'light',
+      theme: (data.theme as AppSettings['theme']) || 'light',
       invoicePrefix: data.invoice_prefix || 'INV',
       invoiceCounter: data.invoice_counter || 1000,
-      exchangeRateProvider: data.exchange_rate_provider as AppSettings['exchangeRateProvider'] || 'exchangerate',
-      exchangeRateApiKey: data.exchange_rate_api_key || undefined,
-      exchangeRateUpdateInterval: data.exchange_rate_update_interval || 60
     }
   },
 
@@ -639,17 +789,12 @@ export const settingsService = {
         store_email: settings.storeEmail,
         store_logo: settings.storeLogo,
         tax_rate: settings.taxRate,
-        currency: settings.currency,
-        base_currency: settings.baseCurrency,
         interface_mode: settings.interfaceMode,
         auto_backup: settings.autoBackup,
         receipt_printer: settings.receiptPrinter,
         theme: settings.theme,
         invoice_prefix: settings.invoicePrefix,
         invoice_counter: settings.invoiceCounter,
-        exchange_rate_provider: settings.exchangeRateProvider,
-        exchange_rate_api_key: settings.exchangeRateApiKey,
-        exchange_rate_update_interval: settings.exchangeRateUpdateInterval
       })
       .eq('id', existingData.id)
       .select()
@@ -664,17 +809,12 @@ export const settingsService = {
       storeEmail: data.store_email || '',
       storeLogo: data.store_logo || undefined,
       taxRate: data.tax_rate || 0,
-      currency: data.currency || 'USD',
-      baseCurrency: data.base_currency || 'USD',
-      interfaceMode: data.interface_mode as AppSettings['interfaceMode'] || 'touch',
+      interfaceMode: (data.interface_mode as AppSettings['interfaceMode']) || 'touch',
       autoBackup: data.auto_backup ?? true,
       receiptPrinter: data.receipt_printer ?? true,
-      theme: data.theme as AppSettings['theme'] || 'light',
+      theme: (data.theme as AppSettings['theme']) || 'light',
       invoicePrefix: data.invoice_prefix || 'INV',
       invoiceCounter: data.invoice_counter || 1000,
-      exchangeRateProvider: data.exchange_rate_provider as AppSettings['exchangeRateProvider'] || 'exchangerate',
-      exchangeRateApiKey: data.exchange_rate_api_key || undefined,
-      exchangeRateUpdateInterval: data.exchange_rate_update_interval || 60
     }
   }
 }
@@ -791,7 +931,7 @@ export const salesTabsService = {
     return data.map(tab => ({
       id: tab.id,
       name: tab.name,
-      cart: tab.cart as CartItem[] || [],
+      cart: (tab.cart as CartItem[]) || [],
       selectedCustomer: tab.selected_customer ? {
         id: tab.selected_customer.id,
         name: tab.selected_customer.name,
@@ -826,7 +966,7 @@ export const salesTabsService = {
     return {
       id: data.id,
       name: data.name,
-      cart: data.cart as CartItem[] || [],
+      cart: (data.cart as CartItem[]) || [],
       selectedCustomer: tab.selectedCustomer,
       createdAt: new Date(data.created_at)
     }
@@ -849,7 +989,7 @@ export const salesTabsService = {
     return {
       id: data.id,
       name: data.name,
-      cart: data.cart as CartItem[] || [],
+      cart: (data.cart as CartItem[]) || [],
       selectedCustomer: tab.selectedCustomer || null,
       createdAt: new Date(data.created_at)
     }
@@ -1284,18 +1424,10 @@ export const shopMembershipsService = {
       throw error
     }
 
-    const shop = (data as any).shop
+    const shop = (data as { shop: Record<string, unknown> }).shop
     if (!shop) return null
 
-    return {
-      id: shop.id,
-      name: shop.name || '',
-      address: shop.address || '',
-      phone: shop.phone || '',
-      email: shop.email || '',
-      createdAt: new Date(shop.created_at),
-      updatedAt: new Date(shop.updated_at),
-    }
+    return mapShopRow(shop)
   },
 }
 
@@ -1310,19 +1442,24 @@ export const shopsService = {
 
     if (error) throw error
 
-    return {
-      id: data.id,
-      name: data.name || '',
-      address: data.address || '',
-      phone: data.phone || '',
-      email: data.email || '',
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    }
+    return mapShopRow(data)
   },
 
   async getByUserId(userId: string): Promise<Shop | null> {
     return shopMembershipsService.getShopByUserId(userId)
+  },
+
+  async getShopWithCapabilities(userId: string): Promise<CapabilityResolution | null> {
+    const shop = await shopMembershipsService.getShopByUserId(userId)
+    if (!shop) return null
+
+    const [features, overrides, capabilities] = await Promise.all([
+      featureDefinitionsService.getAll(),
+      shopFeaturesService.getByShopId(shop.id),
+      resolveCapabilitiesRpc(shop.id),
+    ])
+
+    return { capabilities, shop, features, overrides }
   },
 }
 
@@ -1333,15 +1470,15 @@ export const featureDefinitionsService = {
       .from('feature_definitions')
       .select('*')
     if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      key: row.key,
-      name: row.name,
-      description: row.description,
-      category: row.category,
-      defaultEnabled: row.default_enabled,
-      subscriptionTier: row.subscription_tier,
-      createdAt: new Date(row.created_at),
+    return (data || []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      key: row.key as string,
+      name: row.name as string,
+      description: row.description as string,
+      category: row.category as string,
+      defaultEnabled: row.default_enabled as boolean,
+      subscriptionTier: row.subscription_tier as string,
+      createdAt: new Date(row.created_at as string),
     }))
   },
 }
@@ -1354,12 +1491,12 @@ export const shopFeaturesService = {
       .select('*')
       .eq('shop_id', shopId)
     if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      featureKey: row.feature_key,
-      enabled: row.enabled,
-      updatedAt: new Date(row.updated_at),
+    return (data || []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      shopId: row.shop_id as string,
+      featureKey: row.feature_key as string,
+      enabled: row.enabled as boolean,
+      updatedAt: new Date(row.updated_at as string),
     }))
   },
 
@@ -1393,715 +1530,24 @@ export const shopFeaturesService = {
 }
 
 // ================================================================
-// Recipe BOM Services
-// ================================================================
-
-// Raw Materials Service
-export const rawMaterialsService = {
-  async getAll(filters?: { category?: string; active?: boolean }): Promise<RawMaterial[]> {
-    let query = supabase.from('raw_materials').select('*')
-    if (filters?.category) query = query.eq('category', filters.category)
-    if (filters?.active !== undefined) query = query.eq('is_active', filters.active)
-    const { data, error } = await query.order('name')
-    if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      name: row.name,
-      sku: row.sku,
-      category: row.category,
-      currentStock: Number(row.current_stock),
-      minimumStock: Number(row.minimum_stock),
-      baseUnit: row.base_unit,
-      costPerUnit: row.cost_per_unit ? Number(row.cost_per_unit) : undefined,
-      isActive: row.is_active,
-      notes: row.notes,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
-    }))
-  },
-
-  async getById(id: string): Promise<RawMaterial> {
-    const { data, error } = await supabase.from('raw_materials').select('*').eq('id', id).single()
-    if (error) throw error
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      name: data.name,
-      sku: data.sku,
-      category: data.category,
-      currentStock: Number(data.current_stock),
-      minimumStock: Number(data.minimum_stock),
-      baseUnit: data.base_unit,
-      costPerUnit: data.cost_per_unit ? Number(data.cost_per_unit) : undefined,
-      isActive: data.is_active,
-      notes: data.notes,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    }
-  },
-
-  async create(input: Omit<RawMaterial, 'id' | 'createdAt' | 'updatedAt'>): Promise<RawMaterial> {
-    const { data, error } = await supabase.from('raw_materials').insert({
-      shop_id: input.shopId,
-      name: input.name,
-      sku: input.sku,
-      category: input.category,
-      current_stock: input.currentStock,
-      minimum_stock: input.minimumStock,
-      base_unit: input.baseUnit,
-      cost_per_unit: input.costPerUnit,
-      is_active: input.isActive,
-      notes: input.notes,
-    }).select().single()
-    if (error) throw error
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      name: data.name,
-      sku: data.sku,
-      category: data.category,
-      currentStock: Number(data.current_stock),
-      minimumStock: Number(data.minimum_stock),
-      baseUnit: data.base_unit,
-      costPerUnit: data.cost_per_unit ? Number(data.cost_per_unit) : undefined,
-      isActive: data.is_active,
-      notes: data.notes,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    }
-  },
-
-  async update(id: string, input: Partial<RawMaterial>): Promise<RawMaterial> {
-    const updateData: any = {}
-    if (input.name !== undefined) updateData.name = input.name
-    if (input.sku !== undefined) updateData.sku = input.sku
-    if (input.category !== undefined) updateData.category = input.category
-    if (input.currentStock !== undefined) updateData.current_stock = input.currentStock
-    if (input.minimumStock !== undefined) updateData.minimum_stock = input.minimumStock
-    if (input.baseUnit !== undefined) updateData.base_unit = input.baseUnit
-    if (input.costPerUnit !== undefined) updateData.cost_per_unit = input.costPerUnit
-    if (input.isActive !== undefined) updateData.is_active = input.isActive
-    if (input.notes !== undefined) updateData.notes = input.notes
-    updateData.updated_at = new Date().toISOString()
-
-    const { data, error } = await supabase.from('raw_materials').update(updateData).eq('id', id).select().single()
-    if (error) throw error
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      name: data.name,
-      sku: data.sku,
-      category: data.category,
-      currentStock: Number(data.current_stock),
-      minimumStock: Number(data.minimum_stock),
-      baseUnit: data.base_unit,
-      costPerUnit: data.cost_per_unit ? Number(data.cost_per_unit) : undefined,
-      isActive: data.is_active,
-      notes: data.notes,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    }
-  },
-
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase.from('raw_materials').delete().eq('id', id)
-    if (error) throw error
-  },
-
-  async restock(id: string, quantity: number, unit?: string): Promise<RawMaterial> {
-    const material = await this.getById(id)
-    let addQuantity = quantity
-    if (unit && unit !== material.baseUnit) {
-      // Convert to base unit using UoM conversions
-      const { data: conv } = await supabase
-        .from('uom_conversions')
-        .select('factor')
-        .eq('from_unit', unit)
-        .eq('to_unit', material.baseUnit)
-        .single()
-      if (conv) addQuantity = quantity * Number(conv.factor)
-    }
-    return this.update(id, { currentStock: material.currentStock + addQuantity })
-  },
-
-  async getLowStock(): Promise<RawMaterial[]> {
-    const { data, error } = await supabase
-      .from('raw_materials')
-      .select('*')
-      .eq('is_active', true)
-      .filter('current_stock', 'lte', 'minimum_stock')
-    if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      name: row.name,
-      sku: row.sku,
-      category: row.category,
-      currentStock: Number(row.current_stock),
-      minimumStock: Number(row.minimum_stock),
-      baseUnit: row.base_unit,
-      costPerUnit: row.cost_per_unit ? Number(row.cost_per_unit) : undefined,
-      isActive: row.is_active,
-      notes: row.notes,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
-    }))
-  },
-}
-
-// Recipes Service
-export const recipesService = {
-  async getAll(): Promise<Recipe[]> {
-    const { data, error } = await supabase.from('recipes').select('*').order('product_name')
-    if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      productId: row.product_id,
-      productName: row.product_name,
-      servingSize: Number(row.serving_size),
-      servingUnit: row.serving_unit,
-      prepTimeSeconds: row.prep_time_seconds,
-      instructions: row.instructions,
-      isActive: row.is_active,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
-    }))
-  },
-
-  async getByProductId(productId: string): Promise<Recipe | null> {
-    const { data, error } = await supabase
-      .from('recipes')
-      .select('*')
-      .eq('product_id', productId)
-      .eq('is_active', true)
-      .maybeSingle()
-    if (error) throw error
-    if (!data) return null
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      productId: data.product_id,
-      productName: data.product_name,
-      servingSize: Number(data.serving_size),
-      servingUnit: data.serving_unit,
-      prepTimeSeconds: data.prep_time_seconds,
-      instructions: data.instructions,
-      isActive: data.is_active,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    }
-  },
-
-  async create(input: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>): Promise<Recipe> {
-    const { data, error } = await supabase.from('recipes').insert({
-      shop_id: input.shopId,
-      product_id: input.productId,
-      product_name: input.productName,
-      serving_size: input.servingSize,
-      serving_unit: input.servingUnit,
-      prep_time_seconds: input.prepTimeSeconds,
-      instructions: input.instructions,
-      is_active: input.isActive,
-    }).select().single()
-    if (error) throw error
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      productId: data.product_id,
-      productName: data.product_name,
-      servingSize: Number(data.serving_size),
-      servingUnit: data.serving_unit,
-      prepTimeSeconds: data.prep_time_seconds,
-      instructions: data.instructions,
-      isActive: data.is_active,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    }
-  },
-
-  async update(id: string, input: Partial<Recipe>): Promise<Recipe> {
-    const updateData: any = {}
-    if (input.productId !== undefined) updateData.product_id = input.productId
-    if (input.productName !== undefined) updateData.product_name = input.productName
-    if (input.servingSize !== undefined) updateData.serving_size = input.servingSize
-    if (input.servingUnit !== undefined) updateData.serving_unit = input.servingUnit
-    if (input.prepTimeSeconds !== undefined) updateData.prep_time_seconds = input.prepTimeSeconds
-    if (input.instructions !== undefined) updateData.instructions = input.instructions
-    if (input.isActive !== undefined) updateData.is_active = input.isActive
-    updateData.updated_at = new Date().toISOString()
-
-    const { data, error } = await supabase.from('recipes').update(updateData).eq('id', id).select().single()
-    if (error) throw error
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      productId: data.product_id,
-      productName: data.product_name,
-      servingSize: Number(data.serving_size),
-      servingUnit: data.serving_unit,
-      prepTimeSeconds: data.prep_time_seconds,
-      instructions: data.instructions,
-      isActive: data.is_active,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    }
-  },
-
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase.from('recipes').delete().eq('id', id)
-    if (error) throw error
-  },
-
-  async duplicate(recipeId: string, newProductId: string): Promise<Recipe> {
-    const original = await supabase.from('recipes').select('*').eq('id', recipeId).single()
-    if (original.error) throw original.error
-
-    // Fetch target product name so the new recipe shows the correct name
-    const { data: targetProduct } = await supabase
-      .from('products')
-      .select('name')
-      .eq('id', newProductId)
-      .maybeSingle()
-    const newProductName = targetProduct?.name || original.data.product_name
-
-    const { data: newRecipe, error } = await supabase.from('recipes').insert({
-      shop_id: original.data.shop_id,
-      product_id: newProductId,
-      product_name: newProductName,
-      serving_size: original.data.serving_size,
-      serving_unit: original.data.serving_unit,
-      prep_time_seconds: original.data.prep_time_seconds,
-      instructions: original.data.instructions,
-      is_active: original.data.is_active,
-    }).select().single()
-    if (error) throw error
-
-    // Copy recipe lines
-    const { data: lines } = await supabase.from('recipe_lines').select('*').eq('recipe_id', recipeId)
-    if (lines && lines.length > 0) {
-      await supabase.from('recipe_lines').insert(
-        lines.map((line: any) => ({
-          shop_id: line.shop_id,
-          recipe_id: newRecipe.id,
-          raw_material_id: line.raw_material_id,
-          raw_material_name: line.raw_material_name,
-          quantity: line.quantity,
-          recipe_unit: line.recipe_unit,
-          recipe_quantity: line.recipe_quantity,
-          wastage_percent: line.wastage_percent,
-          is_optional: line.is_optional,
-          notes: line.notes,
-        }))
-      )
-    }
-
-    return {
-      id: newRecipe.id,
-      shopId: newRecipe.shop_id,
-      productId: newRecipe.product_id,
-      productName: newRecipe.product_name,
-      servingSize: Number(newRecipe.serving_size),
-      servingUnit: newRecipe.serving_unit,
-      prepTimeSeconds: newRecipe.prep_time_seconds,
-      instructions: newRecipe.instructions,
-      isActive: newRecipe.is_active,
-      createdAt: new Date(newRecipe.created_at),
-      updatedAt: new Date(newRecipe.updated_at),
-    }
-  },
-}
-
-// Recipe Lines Service
-export const recipeLinesService = {
-  async getByRecipeId(recipeId: string): Promise<RecipeLine[]> {
-    const { data, error } = await supabase
-      .from('recipe_lines')
-      .select('*')
-      .eq('recipe_id', recipeId)
-      .order('raw_material_name')
-    if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      recipeId: row.recipe_id,
-      rawMaterialId: row.raw_material_id,
-      rawMaterialName: row.raw_material_name,
-      quantity: Number(row.quantity),
-      recipeUnit: row.recipe_unit,
-      recipeQuantity: row.recipe_quantity ? Number(row.recipe_quantity) : undefined,
-      wastagePercent: Number(row.wastage_percent),
-      isOptional: row.is_optional,
-      notes: row.notes,
-      createdAt: new Date(row.created_at),
-    }))
-  },
-
-  async create(input: Omit<RecipeLine, 'id' | 'createdAt'>): Promise<RecipeLine> {
-    const { data, error } = await supabase.from('recipe_lines').insert({
-      shop_id: input.shopId,
-      recipe_id: input.recipeId,
-      raw_material_id: input.rawMaterialId,
-      raw_material_name: input.rawMaterialName,
-      quantity: input.quantity,
-      recipe_unit: input.recipeUnit,
-      recipe_quantity: input.recipeQuantity,
-      wastage_percent: input.wastagePercent,
-      is_optional: input.isOptional,
-      notes: input.notes,
-    }).select().single()
-    if (error) throw error
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      recipeId: data.recipe_id,
-      rawMaterialId: data.raw_material_id,
-      rawMaterialName: data.raw_material_name,
-      quantity: Number(data.quantity),
-      recipeUnit: data.recipe_unit,
-      recipeQuantity: data.recipe_quantity ? Number(data.recipe_quantity) : undefined,
-      wastagePercent: Number(data.wastage_percent),
-      isOptional: data.is_optional,
-      notes: data.notes,
-      createdAt: new Date(data.created_at),
-    }
-  },
-
-  async update(id: string, input: Partial<RecipeLine>): Promise<RecipeLine> {
-    const updateData: any = {}
-    if (input.rawMaterialId !== undefined) updateData.raw_material_id = input.rawMaterialId
-    if (input.rawMaterialName !== undefined) updateData.raw_material_name = input.rawMaterialName
-    if (input.quantity !== undefined) updateData.quantity = input.quantity
-    if (input.recipeUnit !== undefined) updateData.recipe_unit = input.recipeUnit
-    if (input.recipeQuantity !== undefined) updateData.recipe_quantity = input.recipeQuantity
-    if (input.wastagePercent !== undefined) updateData.wastage_percent = input.wastagePercent
-    if (input.isOptional !== undefined) updateData.is_optional = input.isOptional
-    if (input.notes !== undefined) updateData.notes = input.notes
-
-    const { data, error } = await supabase.from('recipe_lines').update(updateData).eq('id', id).select().single()
-    if (error) throw error
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      recipeId: data.recipe_id,
-      rawMaterialId: data.raw_material_id,
-      rawMaterialName: data.raw_material_name,
-      quantity: Number(data.quantity),
-      recipeUnit: data.recipe_unit,
-      recipeQuantity: data.recipe_quantity ? Number(data.recipe_quantity) : undefined,
-      wastagePercent: Number(data.wastage_percent),
-      isOptional: data.is_optional,
-      notes: data.notes,
-      createdAt: new Date(data.created_at),
-    }
-  },
-
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase.from('recipe_lines').delete().eq('id', id)
-    if (error) throw error
-  },
-
-  async bulkReplace(recipeId: string, lines: Omit<RecipeLine, 'id' | 'createdAt'>[]): Promise<void> {
-    // Atomic: RPC wraps DELETE + INSERT in a single Postgres transaction
-    const { error } = await supabase.rpc('replace_recipe_lines', {
-      p_recipe_id: recipeId,
-      p_lines: lines.map(line => ({
-        shop_id: line.shopId,
-        raw_material_id: line.rawMaterialId,
-        raw_material_name: line.rawMaterialName,
-        quantity: line.quantity,
-        recipe_unit: line.recipeUnit,
-        recipe_quantity: line.recipeQuantity,
-        wastage_percent: line.wastagePercent,
-        is_optional: line.isOptional,
-        notes: line.notes,
-      })),
-    })
-    if (error) throw error
-  },
-}
-
-// Consumption Log Service (read-only — trigger writes, never updated)
-export const consumptionLogService = {
-  async getAll(period?: { from: Date; to: Date }): Promise<ConsumptionLog[]> {
-    let query = supabase.from('consumption_log').select('*')
-    if (period) {
-      query = query.gte('consumed_at', period.from.toISOString()).lte('consumed_at', period.to.toISOString())
-    }
-    const { data, error } = await query.order('consumed_at', { ascending: false })
-    if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      saleId: row.sale_id,
-      saleItemIndex: row.sale_item_index,
-      productId: row.product_id,
-      productName: row.product_name,
-      rawMaterialId: row.raw_material_id,
-      rawMaterialName: row.raw_material_name,
-      quantityConsumed: Number(row.quantity_consumed),
-      quantityBase: Number(row.quantity_base),
-      wastageAmount: Number(row.wastage_amount),
-      unit: row.unit,
-      stockBefore: Number(row.stock_before),
-      stockAfter: Number(row.stock_after),
-      consumedAt: new Date(row.consumed_at),
-    }))
-  },
-
-  async getBySaleId(saleId: string): Promise<ConsumptionLog[]> {
-    const { data, error } = await supabase
-      .from('consumption_log')
-      .select('*')
-      .eq('sale_id', saleId)
-      .order('consumed_at')
-    if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      saleId: row.sale_id,
-      saleItemIndex: row.sale_item_index,
-      productId: row.product_id,
-      productName: row.product_name,
-      rawMaterialId: row.raw_material_id,
-      rawMaterialName: row.raw_material_name,
-      quantityConsumed: Number(row.quantity_consumed),
-      quantityBase: Number(row.quantity_base),
-      wastageAmount: Number(row.wastage_amount),
-      unit: row.unit,
-      stockBefore: Number(row.stock_before),
-      stockAfter: Number(row.stock_after),
-      consumedAt: new Date(row.consumed_at),
-    }))
-  },
-
-  async getByMaterialId(materialId: string, period?: { from: Date; to: Date }): Promise<ConsumptionLog[]> {
-    let query = supabase
-      .from('consumption_log')
-      .select('*')
-      .eq('raw_material_id', materialId)
-    if (period) {
-      query = query.gte('consumed_at', period.from.toISOString()).lte('consumed_at', period.to.toISOString())
-    }
-    const { data, error } = await query.order('consumed_at', { ascending: false })
-    if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      saleId: row.sale_id,
-      saleItemIndex: row.sale_item_index,
-      productId: row.product_id,
-      productName: row.product_name,
-      rawMaterialId: row.raw_material_id,
-      rawMaterialName: row.raw_material_name,
-      quantityConsumed: Number(row.quantity_consumed),
-      quantityBase: Number(row.quantity_base),
-      wastageAmount: Number(row.wastage_amount),
-      unit: row.unit,
-      stockBefore: Number(row.stock_before),
-      stockAfter: Number(row.stock_after),
-      consumedAt: new Date(row.consumed_at),
-    }))
-  },
-
-  async getSummary(period?: { from: Date; to: Date }): Promise<{
-    totalCost: number;
-    byMaterial: Array<{ materialId: string; materialName: string; totalConsumed: number; unit: string }>;
-    byProduct: Array<{ productId: string; productName: string; totalCost: number }>;
-    totalWastage: number;
-  }> {
-    // Join with raw_materials to get cost_per_unit
-    let query = supabase
-      .from('consumption_log')
-      .select('*, raw_materials!inner(cost_per_unit)')
-    if (period) {
-      query = query.gte('consumed_at', period.from.toISOString()).lte('consumed_at', period.to.toISOString())
-    }
-    const { data, error } = await query
-    if (error) throw error
-
-    const logs = data || []
-    const byMaterialMap = new Map<string, { materialId: string; materialName: string; totalConsumed: number; unit: string }>()
-    const byProductMap = new Map<string, { productId: string; productName: string; totalCost: number }>()
-    let totalCost = 0
-    let totalWastage = 0
-
-    for (const row of logs) {
-      const materialId = row.raw_material_id
-      const existing = byMaterialMap.get(materialId)
-      if (existing) {
-        existing.totalConsumed += Number(row.quantity_consumed)
-      } else {
-        byMaterialMap.set(materialId, {
-          materialId,
-          materialName: row.raw_material_name,
-          totalConsumed: Number(row.quantity_consumed),
-          unit: row.unit,
-        })
-      }
-
-      const costPerUnit = Number((row as any).raw_materials?.cost_per_unit || 0)
-      const lineCost = Number(row.quantity_consumed) * costPerUnit
-
-      const productId = row.product_id
-      const productExisting = byProductMap.get(productId)
-      if (productExisting) {
-        productExisting.totalCost += lineCost
-      } else {
-        byProductMap.set(productId, {
-          productId,
-          productName: row.product_name,
-          totalCost: lineCost,
-        })
-      }
-
-      totalCost += lineCost
-      totalWastage += Number(row.wastage_amount)
-    }
-
-    return {
-      totalCost,
-      byMaterial: Array.from(byMaterialMap.values()),
-      byProduct: Array.from(byProductMap.values()),
-      totalWastage,
-    }
-  },
-}
-
-// ================================================================
-// Kitchen KDS Services
-// ================================================================
-
-/** Pack saleId + station into items JSONB, strip lineItems from top-level items */
-function packKitchenItems(items: KitchenOrderItem[], saleId?: string, station?: KitchenStation): KitchenOrderItemsPayload {
-  return { saleId, station, lineItems: items }
-}
-
-/** Unpack JSONB payload back to KitchenOrder fields */
-function unpackKitchenItems(payload: any): { items: KitchenOrderItem[]; saleId?: string; station?: KitchenStation } {
-  if (payload && typeof payload === 'object' && 'lineItems' in payload) {
-    return {
-      items: payload.lineItems as KitchenOrderItem[],
-      saleId: payload.saleId,
-      station: payload.station,
-    }
-  }
-  // Fallback for raw array (backwards compat)
-  return { items: (payload as KitchenOrderItem[]) || [] }
-}
-
-// Kitchen Orders Service
-export const kitchenOrdersService = {
-  async getAll(filters?: { status?: KitchenOrderStatus; station?: KitchenStation }): Promise<KitchenOrder[]> {
-    let query = supabase.from('kitchen_orders').select('*')
-    if (filters?.status) query = query.eq('status', filters.status)
-    const { data, error } = await query.order('created_at', { ascending: false })
-    if (error) throw error
-
-    return (data || []).map((row: any) => {
-      const unpacked = unpackKitchenItems(row.items)
-      return {
-        id: row.id,
-        shopId: row.shop_id,
-        saleId: unpacked.saleId,
-        station: unpacked.station,
-        items: unpacked.items,
-        status: row.status as KitchenOrderStatus,
-        startedAt: row.started_at ? new Date(row.started_at) : undefined,
-        completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
-        pickedUpAt: row.picked_up_at ? new Date(row.picked_up_at) : undefined,
-        createdAt: new Date(row.created_at),
-      }
-    }).filter(o => !filters?.station || o.station === filters.station)
-  },
-
-  async getById(id: string): Promise<KitchenOrder> {
-    const { data, error } = await supabase.from('kitchen_orders').select('*').eq('id', id).single()
-    if (error) throw error
-    const unpacked = unpackKitchenItems(data.items)
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      saleId: unpacked.saleId,
-      station: unpacked.station,
-      items: unpacked.items,
-      status: data.status as KitchenOrderStatus,
-      startedAt: data.started_at ? new Date(data.started_at) : undefined,
-      completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
-      pickedUpAt: data.picked_up_at ? new Date(data.picked_up_at) : undefined,
-      createdAt: new Date(data.created_at),
-    }
-  },
-
-  async create(input: { shopId: string; items: KitchenOrderItem[]; saleId?: string; station?: KitchenStation }): Promise<KitchenOrder> {
-    const packed = packKitchenItems(input.items, input.saleId, input.station)
-    const { data, error } = await supabase.from('kitchen_orders').insert({
-      shop_id: input.shopId,
-      items: packed,
-      status: 'pending',
-    }).select().single()
-    if (error) throw error
-    const unpacked = unpackKitchenItems(data.items)
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      saleId: unpacked.saleId,
-      station: unpacked.station,
-      items: unpacked.items,
-      status: data.status as KitchenOrderStatus,
-      startedAt: data.started_at ? new Date(data.started_at) : undefined,
-      completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
-      pickedUpAt: data.picked_up_at ? new Date(data.picked_up_at) : undefined,
-      createdAt: new Date(data.created_at),
-    }
-  },
-
-  async updateStatus(id: string, status: KitchenOrderStatus): Promise<KitchenOrder> {
-    const updateData: any = { status }
-    const now = new Date().toISOString()
-    if (status === 'in_progress') updateData.started_at = now
-    if (status === 'ready') updateData.completed_at = now
-    if (status === 'picked_up') updateData.picked_up_at = now
-
-    const { data, error } = await supabase.from('kitchen_orders').update(updateData).eq('id', id).select().single()
-    if (error) throw error
-    const unpacked = unpackKitchenItems(data.items)
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      saleId: unpacked.saleId,
-      station: unpacked.station,
-      items: unpacked.items,
-      status: data.status as KitchenOrderStatus,
-      startedAt: data.started_at ? new Date(data.started_at) : undefined,
-      completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
-      pickedUpAt: data.picked_up_at ? new Date(data.picked_up_at) : undefined,
-      createdAt: new Date(data.created_at),
-    }
-  },
-
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase.from('kitchen_orders').delete().eq('id', id)
-    if (error) throw error
-  },
-}
-
 // Print Jobs Service
+// ================================================================
+
+// Print Jobs Service (kept — used by checkoutService for Growth+ tier receipt printing)
 export const printJobsService = {
   async getAll(filters?: { status?: PrintJobStatus }): Promise<PrintJob[]> {
     let query = supabase.from('print_jobs').select('*')
     if (filters?.status) query = query.eq('status', filters.status)
     const { data, error } = await query.order('created_at', { ascending: false })
     if (error) throw error
-    return (data || []).map((row: any) => ({
-      id: row.id,
-      shopId: row.shop_id,
-      orderId: row.order_id,
+    return (data || []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      shopId: row.shop_id as string,
+      orderId: row.order_id as string,
       status: row.status as PrintJobStatus,
-      configData: row.config_data || {},
-      createdAt: new Date(row.created_at),
-      completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
+      configData: (row.config_data as Record<string, string | number | boolean>) || {},
+      createdAt: new Date(row.created_at as string),
+      completedAt: row.completed_at ? new Date(row.completed_at as string) : undefined,
     }))
   },
 
@@ -2119,7 +1565,7 @@ export const printJobsService = {
     }
   },
 
-  async enqueue(input: { shopId: string; orderId: string; configData: Record<string, any> }): Promise<PrintJob> {
+  async enqueue(input: { shopId: string; orderId: string; configData: Record<string, string | number | boolean> }): Promise<PrintJob> {
     const { data, error } = await supabase.from('print_jobs').insert({
       shop_id: input.shopId,
       order_id: input.orderId,
@@ -2139,7 +1585,7 @@ export const printJobsService = {
   },
 
   async updateStatus(id: string, status: PrintJobStatus): Promise<PrintJob> {
-    const updateData: any = { status }
+    const updateData: Record<string, unknown> = { status }
     if (status === 'completed' || status === 'failed') updateData.completed_at = new Date().toISOString()
 
     const { data, error } = await supabase.from('print_jobs').update(updateData).eq('id', id).select().single()
@@ -2158,5 +1604,462 @@ export const printJobsService = {
   async delete(id: string): Promise<void> {
     const { error } = await supabase.from('print_jobs').delete().eq('id', id)
     if (error) throw error
+  },
+}
+
+// ================================================================
+// Cash Shifts Service (VISION §12)
+// ================================================================
+
+export const cashShiftsService = {
+  async getOpenByCashier(cashierId: string): Promise<CashShift | null> {
+    const { data, error } = await supabase
+      .from('cash_shifts')
+      .select('*')
+      .eq('cashier_id', cashierId)
+      .eq('status', 'open')
+      .maybeSingle()
+
+    if (error) throw error
+    if (!data) return null
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      cashierId: data.cashier_id,
+      openingCash: Number(data.opening_cash),
+      closingCash: data.closing_cash != null ? Number(data.closing_cash) : undefined,
+      expectedCash: data.expected_cash != null ? Number(data.expected_cash) : undefined,
+      variance: data.variance != null ? Number(data.variance) : undefined,
+      status: data.status as 'open' | 'closed',
+      openedAt: new Date(data.opened_at),
+      closedAt: data.closed_at ? new Date(data.closed_at) : undefined,
+    }
+  },
+
+  async create(input: { shopId: string; cashierId: string; openingCash: number }): Promise<CashShift> {
+    const { data, error } = await supabase
+      .from('cash_shifts')
+      .insert({
+        shop_id: input.shopId,
+        cashier_id: input.cashierId,
+        opening_cash: input.openingCash,
+        status: 'open',
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      cashierId: data.cashier_id,
+      openingCash: Number(data.opening_cash),
+      status: 'open',
+      openedAt: new Date(data.opened_at),
+    }
+  },
+
+  async close(id: string, closingCash: number, expectedCash?: number): Promise<CashShift> {
+    const variance = expectedCash != null ? closingCash - expectedCash : undefined
+
+    const { data, error } = await supabase
+      .from('cash_shifts')
+      .update({
+        closing_cash: closingCash,
+        expected_cash: expectedCash,
+        variance,
+        status: 'closed',
+        closed_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return {
+      id: data.id,
+      shopId: data.shop_id,
+      cashierId: data.cashier_id,
+      openingCash: Number(data.opening_cash),
+      closingCash: Number(data.closing_cash),
+      expectedCash: data.expected_cash != null ? Number(data.expected_cash) : undefined,
+      variance: data.variance != null ? Number(data.variance) : undefined,
+      status: 'closed',
+      openedAt: new Date(data.opened_at),
+      closedAt: data.closed_at ? new Date(data.closed_at) : undefined,
+    }
+  },
+
+  async getByShopId(shopId: string, limit = 10): Promise<CashShift[]> {
+    const { data, error } = await supabase
+      .from('cash_shifts')
+      .select('*')
+      .eq('shop_id', shopId)
+      .order('opened_at', { ascending: false })
+      .limit(limit)
+
+    if (error) throw error
+
+    return (data || []).map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      shopId: row.shop_id as string,
+      cashierId: row.cashier_id as string,
+      openingCash: Number(row.opening_cash),
+      closingCash: row.closing_cash != null ? Number(row.closing_cash) : undefined,
+      expectedCash: row.expected_cash != null ? Number(row.expected_cash) : undefined,
+      variance: row.variance != null ? Number(row.variance) : undefined,
+      status: row.status as 'open' | 'closed',
+      openedAt: new Date(row.opened_at as string),
+      closedAt: row.closed_at ? new Date(row.closed_at as string) : undefined,
+    }))
+  },
+}
+
+// ================================================================
+// Platform Admin Service
+// All methods use supabase.functions.invoke() — NEVER supabase.from()
+// VISION.md §17.4: Platform admin operations MUST use Edge Functions.
+// ================================================================
+
+export interface PlatformShop {
+  id: string;
+  name: string;
+  address?: string;
+  email?: string;
+  phone?: string;
+  businessType?: string;
+  subscriptionTier: string;
+  isActive: boolean;
+  dailyOrderLimit?: number;
+  ownerId?: string;
+  createdAt: string;
+  updatedAt?: string;
+  membershipActive?: boolean;
+  membershipRole?: string;
+}
+
+export interface PlatformShopDetail {
+  shop: Record<string, unknown>;
+  memberships: Record<string, unknown>[];
+  users: Record<string, unknown>[];
+  stats: { salesCount: number; totalRevenue: number };
+}
+
+export interface PlatformDailyStats {
+  totalShops: number;
+  activeShops: number;
+  pendingApprovals: number;
+  mrr: number;
+}
+
+export const platformAdminService = {
+  async approveShop(shopId: string): Promise<void> {
+    const { error } = await supabase.functions.invoke('platform-admin-approve-shop', {
+      body: { shop_id: shopId },
+    })
+    if (error) throw error
+  },
+
+  async rejectShop(shopId: string, reason: string): Promise<void> {
+    const { error } = await supabase.functions.invoke('platform-admin-reject-shop', {
+      body: { shop_id: shopId, reason },
+    })
+    if (error) throw error
+  },
+
+  async updateSubscription(shopId: string, tier: 'free' | 'growth' | 'pro'): Promise<void> {
+    const { error } = await supabase.functions.invoke('platform-admin-update-subscription', {
+      body: { shop_id: shopId, tier },
+    })
+    if (error) throw error
+  },
+
+  async listShops(filters?: { status?: string; tier?: string }): Promise<PlatformShop[]> {
+    const { data, error } = await supabase.functions.invoke('platform-admin-list-shops', {
+      body: filters ?? {},
+    })
+    if (error) throw error
+    return (data?.shops ?? []) as PlatformShop[]
+  },
+
+  async getShopDetail(shopId: string): Promise<PlatformShopDetail> {
+    const { data, error } = await supabase.functions.invoke('platform-admin-get-shop-detail', {
+      body: { shop_id: shopId },
+    })
+    if (error) throw error
+    return data as PlatformShopDetail
+  },
+
+  async manageFeatures(
+    action: 'list' | 'create' | 'update' | 'delete',
+    payload?: Record<string, unknown>,
+  ): Promise<{ features?: Record<string, unknown>[]; feature?: Record<string, unknown>; message?: string }> {
+    const { data, error } = await supabase.functions.invoke('platform-admin-manage-features', {
+      body: { action, ...(payload ?? {}) },
+    })
+    if (error) throw error
+    return data ?? {}
+  },
+
+  async dailyStats(): Promise<PlatformDailyStats> {
+    const { data, error } = await supabase.functions.invoke('platform-admin-daily-stats')
+    if (error) throw error
+    return data?.stats as PlatformDailyStats
+  },
+
+  async toggleShopActive(shopId: string, isActive: boolean): Promise<void> {
+    const { error } = await supabase.functions.invoke('platform-admin-update-subscription', {
+      body: { shop_id: shopId, is_active: isActive },
+    })
+    if (error) throw error
+  },
+}
+
+// ================================================================
+// Purchase Logs Service (VISION v3.1.0 §10.2 — Simplified Inventory)
+// ================================================================
+
+function mapPurchaseLogRow(row: Record<string, unknown>): PurchaseLog {
+  return {
+    id: row.id as string,
+    shopId: row.shop_id as string,
+    supplier: (row.supplier as string) || '',
+    item: row.item as string,
+    quantity: Number(row.quantity),
+    unit: (row.unit as string) || 'piece',
+    unitCost: Number(row.unit_cost),
+    totalCost: Number(row.total_cost),
+    purchaseDate: new Date(row.purchase_date as string),
+    notes: (row.notes as string) || '',
+    createdBy: (row.created_by as string) || undefined,
+    createdAt: new Date(row.created_at as string),
+    updatedAt: new Date(row.updated_at as string),
+  }
+}
+
+export const purchaseLogsService = {
+  async getAll(shopId: string, fromDate?: Date, toDate?: Date): Promise<PurchaseLog[]> {
+    let q = supabase.from('purchase_logs').select('*').eq('shop_id', shopId).order('purchase_date', { ascending: false })
+    if (fromDate) q = q.gte('purchase_date', fromDate.toISOString().split('T')[0])
+    if (toDate) q = q.lte('purchase_date', toDate.toISOString().split('T')[0])
+    const { data, error } = await q
+    if (error) throw error
+    return (data || []).map(mapPurchaseLogRow)
+  },
+
+  async create(input: Omit<PurchaseLog, 'id' | 'createdAt' | 'updatedAt' | 'totalCost'>): Promise<PurchaseLog> {
+    const { data, error } = await supabase
+      .from('purchase_logs')
+      .insert({
+        shop_id: input.shopId,
+        supplier: input.supplier,
+        item: input.item,
+        quantity: input.quantity,
+        unit: input.unit,
+        unit_cost: input.unitCost,
+        purchase_date: input.purchaseDate.toISOString().split('T')[0],
+        notes: input.notes,
+        created_by: input.createdBy,
+      })
+      .select()
+      .single()
+    if (error) throw error
+    return mapPurchaseLogRow(data)
+  },
+
+  async update(id: string, input: Partial<PurchaseLog>): Promise<PurchaseLog> {
+    const updates: Record<string, unknown> = {}
+    if (input.supplier !== undefined) updates.supplier = input.supplier
+    if (input.item !== undefined) updates.item = input.item
+    if (input.quantity !== undefined) updates.quantity = input.quantity
+    if (input.unit !== undefined) updates.unit = input.unit
+    if (input.unitCost !== undefined) updates.unit_cost = input.unitCost
+    if (input.purchaseDate !== undefined) updates.purchase_date = input.purchaseDate.toISOString().split('T')[0]
+    if (input.notes !== undefined) updates.notes = input.notes
+    updates.updated_at = new Date().toISOString()
+
+    const { data, error } = await supabase
+      .from('purchase_logs')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return mapPurchaseLogRow(data)
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from('purchase_logs').delete().eq('id', id)
+    if (error) throw error
+  },
+
+  async getMonthlyTotal(shopId: string, year: number, month: number): Promise<number> {
+    const from = new Date(year, month - 1, 1).toISOString().split('T')[0]
+    const to = new Date(year, month, 0).toISOString().split('T')[0]
+    const { data, error } = await supabase
+      .from('purchase_logs')
+      .select('total_cost')
+      .eq('shop_id', shopId)
+      .gte('purchase_date', from)
+      .lte('purchase_date', to)
+    if (error) throw error
+    return (data || []).reduce((sum, r) => sum + Number(r.total_cost), 0)
+  },
+}
+
+// ================================================================
+// Stock Items Service (VISION v3.1.0 §10.2 — Simplified Inventory)
+// ================================================================
+
+function mapStockItemRow(row: Record<string, unknown>): StockItem {
+  return {
+    id: row.id as string,
+    shopId: row.shop_id as string,
+    name: row.name as string,
+    quantity: Number(row.quantity),
+    unit: (row.unit as string) || 'piece',
+    lowThreshold: Number(row.low_threshold ?? 0),
+    category: (row.category as string) || '',
+    notes: (row.notes as string) || '',
+    lastAdjustedAt: row.last_adjusted_at ? new Date(row.last_adjusted_at as string) : undefined,
+    createdAt: new Date(row.created_at as string),
+    updatedAt: new Date(row.updated_at as string),
+  }
+}
+
+function mapStockAdjustmentRow(row: Record<string, unknown>, shopId: string): StockAdjustment {
+  return {
+    id: row.id as string,
+    shopId,
+    stockItemId: row.stock_item_id as string,
+    previousQty: Number(row.previous_qty),
+    newQty: Number(row.new_qty),
+    reason: (row.reason as string) || '',
+    adjustedBy: (row.adjusted_by as string) || undefined,
+    adjustedAt: new Date(row.adjusted_at as string),
+  }
+}
+
+export const stockItemsService = {
+  async getAll(shopId: string): Promise<StockItem[]> {
+    const { data, error } = await supabase
+      .from('stock_items')
+      .select('*')
+      .eq('shop_id', shopId)
+      .order('name')
+    if (error) throw error
+    return (data || []).map(mapStockItemRow)
+  },
+
+  async getById(id: string): Promise<StockItem | null> {
+    const { data, error } = await supabase
+      .from('stock_items')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
+    if (error) throw error
+    return data ? mapStockItemRow(data) : null
+  },
+
+  async create(input: Omit<StockItem, 'id' | 'createdAt' | 'updatedAt' | 'lastAdjustedAt'>): Promise<StockItem> {
+    const { data, error } = await supabase
+      .from('stock_items')
+      .insert({
+        shop_id: input.shopId,
+        name: input.name,
+        quantity: input.quantity,
+        unit: input.unit,
+        low_threshold: input.lowThreshold,
+        category: input.category,
+        notes: input.notes,
+      })
+      .select()
+      .single()
+    if (error) throw error
+    return mapStockItemRow(data)
+  },
+
+  async update(id: string, input: Partial<StockItem>): Promise<StockItem> {
+    const updates: Record<string, unknown> = {}
+    if (input.name !== undefined) updates.name = input.name
+    if (input.quantity !== undefined) updates.quantity = input.quantity
+    if (input.unit !== undefined) updates.unit = input.unit
+    if (input.lowThreshold !== undefined) updates.low_threshold = input.lowThreshold
+    if (input.category !== undefined) updates.category = input.category
+    if (input.notes !== undefined) updates.notes = input.notes
+    updates.updated_at = new Date().toISOString()
+
+    const { data, error } = await supabase
+      .from('stock_items')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return mapStockItemRow(data)
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from('stock_items').delete().eq('id', id)
+    if (error) throw error
+  },
+
+  async adjust(
+    id: string,
+    newQty: number,
+    reason: string,
+    adjustedBy?: string
+  ): Promise<{ item: StockItem; adjustment: StockAdjustment }> {
+    const item = await this.getById(id)
+    if (!item) throw new Error('Stock item not found')
+
+    const previousQty = item.quantity
+    const now = new Date().toISOString()
+
+    const { data: adjData, error: adjError } = await supabase
+      .from('stock_adjustments')
+      .insert({
+        shop_id: item.shopId,
+        stock_item_id: id,
+        previous_qty: previousQty,
+        new_qty: newQty,
+        reason,
+        adjusted_by: adjustedBy,
+        adjusted_at: now,
+      })
+      .select()
+      .single()
+    if (adjError) throw adjError
+
+    const { data: itemData, error: itemError } = await supabase
+      .from('stock_items')
+      .update({ quantity: newQty, last_adjusted_at: now, updated_at: now })
+      .eq('id', id)
+      .select()
+      .single()
+    if (itemError) throw itemError
+
+    return {
+      item: mapStockItemRow(itemData),
+      adjustment: mapStockAdjustmentRow(adjData, item.shopId),
+    }
+  },
+
+  async getAdjustments(stockItemId: string): Promise<StockAdjustment[]> {
+    const { data, error } = await supabase
+      .from('stock_adjustments')
+      .select('*')
+      .eq('stock_item_id', stockItemId)
+      .order('adjusted_at', { ascending: false })
+    if (error) throw error
+    return (data || []).map(row => mapStockAdjustmentRow(row, row.shop_id))
+  },
+
+  async getLowStock(shopId: string): Promise<StockItem[]> {
+    const items = await this.getAll(shopId)
+    return items.filter(i => i.quantity <= i.lowThreshold)
   },
 }

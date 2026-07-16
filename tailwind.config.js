@@ -86,6 +86,13 @@ export default {
           900: '#7f1d1d',
           950: '#450a0a',
         },
+        // Surface & interaction tokens
+        surface: {
+          dark: '#2a1a10',
+        },
+        hover: {
+          border: '#e5ddd2',
+        },
       },
       fontFamily: {
         sans: ['DM Sans', 'system-ui', 'sans-serif'],

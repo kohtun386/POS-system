@@ -1,13 +1,14 @@
 import { useState, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppProvider, useApp } from './context/SupabaseAppContext';
-import { CurrencyProvider } from './context/CurrencyContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LoadingSpinner } from './components/ui/LoadingComponents';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { LoginPage } from './components/auth/LoginPage';
+import { PendingApprovalPage } from './components/auth/PendingApprovalPage';
 import { Header } from './components/layout/Header';
-import { useFeatureFlag } from './hooks/useFeatureFlag';
+import { PlatformLayout } from './components/platform/PlatformLayout';
+import { useCapability } from './context/SupabaseAppContext';
 // Lazy-loaded route components for code-splitting
 const POSTerminal = lazy(() => import('./components/pos/POSTerminal').then(m => ({ default: m.POSTerminal })));
 const TransactionsManager = lazy(() => import('./components/transactions/TransactionsManager').then(m => ({ default: m.TransactionsManager })));
@@ -17,16 +18,19 @@ const ReportsManager = lazy(() => import('./components/reports/ReportsManager').
 const Settings = lazy(() => import('./components/settings/Settings').then(m => ({ default: m.Settings })));
 const DiscountManager = lazy(() => import('./components/discounts/DiscountManager').then(m => ({ default: m.DiscountManager })));
 const UserManager = lazy(() => import('./components/users/UserManager').then(m => ({ default: m.UserManager })));
-const KitchenDisplay = lazy(() => import('./components/kitchen/KitchenDisplay').then(m => ({ default: m.KitchenDisplay })));
+const AlertManager = lazy(() => import('./components/alerts/AlertManager').then(m => ({ default: m.AlertManager })));
+const PurchaseLogManager = lazy(() => import('./components/inventory/PurchaseLogManager').then(m => ({ default: m.PurchaseLogManager })));
+const StockOverviewManager = lazy(() => import('./components/inventory/StockOverviewManager').then(m => ({ default: m.StockOverviewManager })));
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, loading, profile, isPendingApproval } = useAuth();
   const { state } = useApp();
   const [currentView, setCurrentView] = useState('pos');
-  const inventoryEnabled = useFeatureFlag('inventory');
-  const customerEnabled = useFeatureFlag('customer_management');
-  const discountEnabled = useFeatureFlag('discounts');
-  const kitchenDisplayEnabled = useFeatureFlag('kitchen_display');
+  const inventoryEnabled = useCapability('inventory');
+  const customerEnabled = useCapability('customer_management');
+  const discountEnabled = useCapability('discounts');
+  const purchaseLogEnabled = useCapability('purchase_log');
+  const stockOverviewEnabled = useCapability('stock_overview');
 
   // Show loading spinner while auth is loading
   if (loading) {
@@ -40,6 +44,18 @@ function AppContent() {
   // Show login page if no user is authenticated
   if (!user || !state.currentUser) {
     return <LoginPage />;
+  }
+
+  // Platform admin sees dedicated layout — no POS, no shop context
+  // Must check BEFORE isPendingApproval so platform admins are never
+  // blocked by the approval gate.
+  if (profile?.role === 'platform_admin') {
+    return <PlatformLayout />;
+  }
+
+  // Show pending approval page if user's shop is not yet approved
+  if (isPendingApproval) {
+    return <PendingApprovalPage />;
   }
 
   const renderCurrentView = () => {
@@ -65,6 +81,18 @@ function AppContent() {
         // Only allow admin and manager to access inventory (feature-gated)
         if ((userRole === 'admin' || userRole === 'manager') && inventoryEnabled) {
           return <InventoryManager />;
+        }
+        setCurrentView('pos');
+        return <POSTerminal />;
+      case 'purchase-log':
+        if ((userRole === 'admin' || userRole === 'manager') && purchaseLogEnabled) {
+          return <PurchaseLogManager />;
+        }
+        setCurrentView('pos');
+        return <POSTerminal />;
+      case 'stock-overview':
+        if ((userRole === 'admin' || userRole === 'manager') && stockOverviewEnabled) {
+          return <StockOverviewManager />;
         }
         setCurrentView('pos');
         return <POSTerminal />;
@@ -103,10 +131,10 @@ function AppContent() {
         }
         setCurrentView('pos');
         return <POSTerminal />;
-      case 'kitchen':
-        // Kitchen display — all roles can access (feature-gated)
-        if (kitchenDisplayEnabled) {
-          return <KitchenDisplay />;
+      case 'alerts':
+        // Only allow admin and manager to access alerts
+        if (userRole === 'admin' || userRole === 'manager') {
+          return <AlertManager />;
         }
         setCurrentView('pos');
         return <POSTerminal />;
@@ -145,11 +173,9 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <AppProvider>
-          <CurrencyProvider>
-            <ErrorBoundary>
-              <AppContent />
-            </ErrorBoundary>
-          </CurrencyProvider>
+          <ErrorBoundary>
+            <AppContent />
+          </ErrorBoundary>
         </AppProvider>
       </AuthProvider>
     </ThemeProvider>

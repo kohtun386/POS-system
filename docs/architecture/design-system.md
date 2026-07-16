@@ -1,8 +1,8 @@
 # Design System — Espresso & Copper
 
 **Source of truth:** `tailwind.config.js` + `src/index.css`
-**Last updated:** 2026-06-30 (aligned with VISION.md v3.0.0)
-**Version:** 2.0.0
+**Last updated:** 2026-07-10 (aligned with VISION.md v3.1.0)
+**Version:** 3.0.0
 **Dark mode:** Tailwind `class` strategy — `.dark` on `<html>`
 **Theme:** Espresso & Copper only (Light/Dark variants)
 
@@ -78,73 +78,30 @@
 | Role | Light | Dark | Tailwind (light) | Tailwind (dark) |
 |------|-------|------|-------------------|-----------------|
 | Body bg | `#faf8f5` | `#1f1309` | `bg-secondary-50` | `dark:bg-primary-950` |
-| Card bg | `#f0ece5` | `#2a1a10` | `bg-secondary-100` | `dark:bg-[#2a1a10]` |
+| Card bg | `#f0ece5` | `#2a1a10` | `bg-secondary-100` | `dark:bg-surface-dark` |
 | Card border | `#ded7cc` | `#54463b` | `border-secondary-200` | `dark:border-secondary-800` |
 | Heading text | `#473b32` | `#f0ece5` | `text-secondary-900` | `dark:text-secondary-100` |
 | Body text | `#7d6b57` | `#c6bbab` | `text-secondary-600` | `dark:text-secondary-300` |
 | Muted text | `#ad9e8a` | — | `text-secondary-400` | — |
-| Input bg | `#faf8f5` | `#2a1a10` | `bg-secondary-50` | `dark:bg-[#2a1a10]` |
+| Input bg | `#faf8f5` | `#2a1a10` | `bg-secondary-50` | `dark:bg-surface-dark` |
 | Table hover | `#f0ece5` | `#3b2613` | `hover:bg-secondary-100` | `dark:hover:bg-primary-900` |
 | Overlay | `#251e18` | same | `bg-secondary-950` | same |
 
-**Note:** Dark card bg `#2a1a10` is not in Tailwind config — used as inline `dark:bg-[#2a1a10]`. Consider adding to config as `surface-dark`.
+### 1.6 Inline Hex Migration — Complete ✅
 
-### 1.6 Inline Hex Migration Plan
+**Status:** Migrated 2026-07-10. All className hex values replaced with Tailwind tokens.
 
-**Current state:** 59+ instances of raw hex values in components
+**Remaining hex (acceptable):**
+- Recharts component props (`stroke=`, `fill=`) — library requires literal hex
+- Recharts CSS-in-JS objects (`contentStyle`, `dot={{ fill: }}`)
+- SweetAlert2 `!important` overrides — raw CSS, can't use Tailwind tokens
+- Framer Motion color props
 
-**Problem:**
-- Design system updates require changing 59+ places
-- Inconsistency: sometimes hex, sometimes token
-- Hard to maintain
+**Token additions:**
+- `surface.dark` (`#2a1a10`) — dark card/surface bg
+- `hover.border` (`#e5ddd2`) — hover border highlight
 
-**Migration strategy:**
-
-**Step 1: Add missing tokens to tailwind.config.js**
-
-```javascript
-colors: {
-  surface: {
-    dark: '#2a1a10', // Dark card bg (6 instances)
-  },
-  hover: {
-    border: '#e5ddd2', // Hover border (3 instances)
-  },
-}
-```
-
-**Step 2: Replace inline hex with tokens (file-by-file)**
-
-Priority order:
-
-| Priority | Inline Hex | Count | Maps To |
-|----------|------------|-------|---------|
-| High | `#f0ece5` | 59 | `secondary-100` |
-| High | `#473b32` | 46 | `secondary-900` |
-| High | `#7d6b57` | 38 | `secondary-600` |
-| Medium | `#c6bbab` | 25 | `secondary-300` |
-| Medium | `#ded7cc` | 22 | `secondary-200` |
-| Medium | `#9a693a` | 20 | `primary-600` |
-| Medium | `#54463b` | 17 | `secondary-800` |
-| Medium | `#ad9e8a` | 15 | `secondary-400` |
-| Medium | `#7a4f2c` | 15 | `primary-700` |
-| Low | `#3b2613` | 14 | `primary-900` |
-| Low | `#faf8f5` | 12 | `secondary-50` |
-| Low | `#cfa16a` | 11 | `primary-400` |
-| Low | `#fcf5eb` | 9 | `primary-50` |
-| Low | `#ddb889` | 7 | `primary-300` |
-| Low | `#2a1a10` | 6 | `surface-dark` |
-| Low | `#e5ddd2` | 3 | `hover-border` |
-
-**Step 3: Chart colors stay inline**
-
-- Recharts needs literal hex strings
-- Keep in `COLORS` array
-- Future: Move to `src/lib/theme.ts`
-
-**Timeline:** Phase 5 (Cleanup) — after core features implemented
-
-**Migration rule:** Replace `text-[#473b32]` → `text-secondary-900`, `bg-[#f0ece5]` → `bg-secondary-100`, etc. Do file-by-file. Chart colors stay inline (Recharts needs literal hex strings).
+**Migration rule:** Always use Tailwind tokens. If token doesn't exist, add to `tailwind.config.js` first.
 
 ---
 
@@ -516,7 +473,7 @@ Custom styles in `src/index.css`. All toasts use themed colors.
 
 ## 10. Multi-Device Design Patterns
 
-VISION.md v3.0.0 defines three device layers. Each has distinct form factors, interaction models, and UI patterns.
+VISION.md v3.1.0 defines three device layers. Each has distinct form factors, interaction models, and UI patterns.
 
 ### 10.1 POS Tablet (Mobile/Tablet-First)
 
@@ -539,6 +496,19 @@ VISION.md v3.0.0 defines three device layers. Each has distinct form factors, in
 | Tables | Standard `.table` with horizontal scroll |
 | Modals | Full-width on small tablets, `max-w-md` on larger |
 
+#### 10.1.1 POS Touch Target Requirements
+
+| Element | Touch Mode | Traditional Mode |
+|---------|------------|------------------|
+| Product "Add" button | `btn-lg touch-friendly` (48px+) | `btn-md` (44px+) |
+| Category filter buttons | `btn-lg touch-friendly` (48px+) | `btn-md` (44px+) |
+| Cart quantity buttons | `.qty-btn` (48px coarse pointer) | `.qty-btn` (44px) |
+| Cart item remove | `min-w-[44px] min-h-[44px]` | `min-w-[44px] min-h-[44px]` |
+| Checkout payment buttons | `min-h-[80px]` | `min-h-[70px]` |
+| Tab close button | `min-w-[44px] min-h-[44px]` touch area | `min-w-[44px] min-h-[44px]` touch area |
+
+**Rule:** All interactive elements must have minimum 44x44px touch area. In touch mode, prefer 48x48px.
+
 ---
 
 ### 10.2 Owner Mobile (Mobile-First, Read-Only)
@@ -559,7 +529,7 @@ VISION.md v3.0.0 defines three device layers. Each has distinct form factors, in
 |---------|-------------|
 | Bottom navigation | 4-5 items max, fixed at bottom |
 | Card layout | Single column, full-width |
-| Stat cards | Large Revenue, COGS, Profit display |
+| Stat cards | Large Revenue, Purchases, Profit display |
 | Swipe gestures | Navigate between views |
 | Pull-to-refresh | Data updates on pull-down |
 
@@ -568,7 +538,7 @@ VISION.md v3.0.0 defines three device layers. Each has distinct form factors, in
 | Component | Class | Purpose |
 |-----------|-------|---------|
 | Owner mobile card | `.owner-mobile-card` | Compact card variant for small screens |
-| Owner mobile stat | `.owner-mobile-stat` | Large stat card (Revenue, COGS, Profit) |
+| Owner mobile stat | `.owner-mobile-stat` | Large stat card (Revenue, Purchases, Profit) |
 | Owner mobile nav | `.owner-mobile-nav` | Bottom navigation bar |
 
 ---
@@ -577,32 +547,86 @@ VISION.md v3.0.0 defines three device layers. Each has distinct form factors, in
 
 **Target:** Ko Htun's desktop for managing all shops
 **Form factor:** 24"+ monitor, mouse + keyboard
+**Architecture:** Edge Function only — `supabase.functions.invoke()` for all ops. Zero `supabase.from()` (VISION.md §17.4).
 
-**Design principles:**
-- Data-dense tables (compact row height: 40px)
-- Keyboard shortcuts for power users
-- Multi-tenant views (shop list, approval queue)
-- Sidebar navigation (280px width)
-- Mouse-driven (40px tap targets OK)
+#### 10.3.1 Responsive Breakpoints & Behavior
 
-**UI patterns:**
+| Breakpoint | Width | Sidebar | Layout |
+|------------|-------|---------|--------|
+| Mobile | < 768px | Hidden (hamburger toggle) | Single column, stacked cards |
+| Tablet | 768–1023px | Hidden (hamburger toggle) | 2-column grid |
+| Desktop | ≥ 1024px | Visible, fixed 256px | Multi-column, full density |
 
-| Pattern | Description |
-|---------|-------------|
-| Sidebar navigation | Left side, 280px width, collapsible |
-| Data tables | Sorting, filtering, pagination |
-| Modal dialogs | Actions (approve, reject, edit) |
-| Keyboard shortcuts | `Ctrl+K` search, `Ctrl+N` new |
-| Status badges | Shop approval status indicators |
+- Sidebar collapses to hamburger icon on mobile/tablet
+- Main content area uses `flex-1 overflow-y-auto`
+- Tables wrapped in `<div className="overflow-x-auto">` at all breakpoints
 
-**Components needed (future):**
+#### 10.3.2 Layout Structure
 
-| Component | Class | Purpose |
-|-----------|-------|---------|
-| Admin sidebar | `.admin-sidebar` | Left sidebar navigation (280px) |
-| Admin table | `.admin-table` | Compact data table (40px rows) |
-| Admin modal | `.admin-modal` | Action modal (approve/reject) |
-| Admin shortcut | `.admin-shortcut` | Keyboard shortcut hint badge |
+```
+┌──────────────────────────────────────────────┐
+│ Header (h-16, sticky top-0)                  │
+│ [☰ hamburger]  Platform Admin    [user menu] │
+├──────────┬───────────────────────────────────┤
+│ Sidebar  │  Main Content                     │
+│ 256px    │  p-6 max-w-7xl mx-auto            │
+│ fixed    │                                   │
+│          │  ┌─────┐ ┌─────┐ ┌─────┐         │
+│ ● Dash   │  │Stat │ │Stat │ │Stat │         │
+│ ○ Shops  │  │Card │ │Card │ │Card │         │
+│ ○ Subs   │  └─────┘ └─────┘ └─────┘         │
+│ ○ Feats  │                                   │
+│          │  ┌─────────────────────────────┐  │
+│          │  │ Data Table / Content         │  │
+│          │  └─────────────────────────────┘  │
+└──────────┴───────────────────────────────────┘
+```
+
+**Sidebar:**
+- Width: 256px (`w-64`), fixed position
+- Background: `bg-secondary-100 dark:bg-[#2a1f15]`
+- Nav items: `.nav-item` pattern with Lucide icons + text labels
+- Active state: `bg-primary-600 text-white`
+
+**Header (mobile):**
+- Height: 48px (`h-12`), sticky top-0
+- Hamburger button (40px tap target) toggles sidebar overlay
+- Overlay backdrop: `bg-secondary-950/40` on mobile when sidebar open
+
+#### 10.3.3 Data-Dense Component Patterns
+
+**Stat Cards:**
+- Use `.stat-card` / `.stat-card-success` / `.stat-card-warning` / `.stat-card-danger`
+- Grid: `grid grid-cols-1 md:grid-cols-3 gap-4`
+- White text on gradient bg, `::before` glass overlay
+
+**Data Tables:**
+- Wrap in `<div className="overflow-x-auto">` to prevent horizontal overflow
+- Row height: 40px (`px-6 py-3`)
+- Header: `bg-secondary-100/80 text-xs font-semibold uppercase`
+- Font: `font-mono text-sm` for keys/codes/IDs
+- Sortable columns: `cursor-pointer hover:text-primary-600`
+
+**Empty States:**
+- Centered `p-8 text-secondary-600` with action button
+
+#### 10.3.4 Accessibility & Interaction
+
+- All nav items have visible text labels (no icon-only)
+- Focus ring: `ring-2 ring-primary-500 ring-offset-2` on interactive elements
+- Tables support keyboard navigation (Tab between rows)
+- Modal dialogs trap focus, Escape to close
+- Status badges use color + text (not color alone)
+
+#### 10.3.5 Mobile Navigation Patterns
+
+| Element | Minimum Size | Implementation |
+|---------|--------------|----------------|
+| Hamburger button | 48x48px | `p-3 min-w-[48px] min-h-[48px]` |
+| Sidebar nav items | 44px height | `px-4 py-3` with `min-h-[44px]` |
+| Overlay backdrop | Full screen | `fixed inset-0 bg-secondary-950/40 z-30` |
+
+**Table handling on mobile:** Use `overflow-x-auto` wrapper. Tables scroll horizontally — no card-view transformation needed.
 
 ---
 
@@ -613,7 +637,7 @@ VISION.md v3.0.0 defines three device layers. Each has distinct form factors, in
 | Form factor | 10-12" tablet | 5-6" phone | 24"+ monitor |
 | Input | Touch only | Touch only | Mouse + keyboard |
 | Min tap target | 48px | 56px | 40px |
-| Navigation | Top header | Bottom nav | Sidebar |
+| Navigation | Top header | Bottom nav | Sidebar (256px, collapsible) |
 | Layout | Single column | Single column | Multi-column |
 | Data density | Medium | Low | High |
 | Primary use | POS terminal | Read-only reports | Shop management |
@@ -623,7 +647,7 @@ VISION.md v3.0.0 defines three device layers. Each has distinct form factors, in
 
 ## 11. Tier-Based UI Patterns
 
-VISION.md v3.0.0 defines three subscription tiers. UI patterns differ by tier to show value and guide upgrades.
+VISION.md v3.1.0 defines three subscription tiers. UI patterns differ by tier to show value and guide upgrades.
 
 ### 11.1 Free Tier — Upgrade Prompts
 
@@ -656,7 +680,6 @@ VISION.md v3.0.0 defines three subscription tiers. UI patterns differ by tier to
 - All menu items unlocked
 - No lock icons
 - Standard component patterns apply
-- Recipe management UI visible
 - Cash drawer UI visible
 
 No special components needed — standard design system applies.
@@ -671,9 +694,8 @@ No special components needed — standard design system applies.
 
 | Feature | Description |
 |---------|-------------|
-| Profit margin charts | Recharts line chart showing margins over time |
-| Waste tracking UI | Card showing waste items and costs |
-| Daily P&L dashboard | 3 numbers: Revenue, COGS, Profit |
+| Simple profit report | Revenue − Purchases dashboard |
+| Owner Insights (P&L) | 3 numbers: Revenue, Purchases, Profit |
 | Advanced report filters | Date range, product category selectors |
 | Export buttons | CSV and PDF export |
 
@@ -681,8 +703,7 @@ No special components needed — standard design system applies.
 
 | Component | Class | Purpose |
 |-----------|-------|---------|
-| Profit chart | `.profit-chart` | Recharts line chart for margins |
-| Waste card | `.waste-card` | Waste tracking display card |
+| Profit chart | `.profit-chart` | Recharts line chart for profit over time |
 | P&L dashboard | `.pnl-dashboard` | 3-number P&L display |
 
 ---
@@ -692,15 +713,15 @@ No special components needed — standard design system applies.
 | Feature | Free | Growth | Pro |
 |---------|------|--------|-----|
 | POS terminal | ✅ | ✅ | ✅ |
-| Product management | ✅ | ✅ | ✅ |
+| Product management | ✅ (50 max) | ✅ (unlimited) | ✅ (unlimited) |
 | Basic reports | ✅ | ✅ | ✅ |
-| Recipe management | 🔒 | ✅ | ✅ |
 | Cash drawer | 🔒 | ✅ | ✅ |
-| Advanced analytics | 🔒 | 🔒 | ✅ |
-| Owner mobile app | 🔒 | 🔒 | ✅ |
-| Waste tracking | 🔒 | 🔒 | ✅ |
-| Daily P&L | 🔒 | 🔒 | ✅ |
-| Export (CSV/PDF) | 🔒 | 🔒 | ✅ |
+| Purchase log | ❌ | ✅ | ✅ |
+| Stock overview | ❌ | ✅ | ✅ |
+| Low stock alerts | ❌ | ✅ | ✅ |
+| Printer integration | 🔒 | ✅ | ✅ |
+| Simple profit report | ❌ | ❌ | ✅ |
+| Owner insights (P&L) | ❌ | ❌ | ✅ |
 
 ---
 

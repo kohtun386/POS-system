@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { User as SupabaseUser, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { User } from '../types'
@@ -11,6 +11,7 @@ interface AuthContextType {
   profile: User | null
   session: Session | null
   loading: boolean
+  isPendingApproval: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, name: string, username: string) => Promise<void>
   signOut: () => Promise<void>
@@ -51,6 +52,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isPendingApproval, setIsPendingApproval] = useState(false)
+  // Track which user's profile has been loaded to avoid redundant fetches
+  const loadedProfileUserId = useRef<string | null>(null)
 
   useEffect(() => {
     // Get initial session
@@ -71,10 +75,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
-        loadProfile(session.user.id)
+        // Skip loadProfile if we already loaded this user's profile (e.g., after signUp)
+        // to avoid redundant loading state transitions
+        if (loadedProfileUserId.current !== session.user.id) {
+          loadedProfileUserId.current = session.user.id
+          loadProfile(session.user.id)
+        }
       } else {
         setProfile(null)
+        setIsPendingApproval(false)
         setLoading(false)
+        loadedProfileUserId.current = null
       }
     })
 
@@ -82,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   async function loadProfile(userId: string) {
+    loadedProfileUserId.current = userId
     try {
       const { data, error } = await supabase
         .from('users')
@@ -103,6 +115,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           lastLogin: data.last_login ? new Date(data.last_login) : undefined,
           avatar: data.avatar || undefined
         })
+
+        setIsPendingApproval(data.active === false)
       }
     } catch (error) {
       console.error('Error loading profile:', error)
@@ -151,6 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             name,
             username,
+            isPending: true,
           }
         }
       })
@@ -183,6 +198,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             lastLogin: profileData.last_login ? new Date(profileData.last_login) : undefined,
             avatar: profileData.avatar || undefined
           })
+
+          // Set pending approval state for inactive users (DB trigger creates with active=false)
+          setIsPendingApproval(profileData.active === false)
+
+          // Mark profile as loaded so onAuthStateChange doesn't re-fetch
+          loadedProfileUserId.current = profileData.id
         }
       }
 
@@ -227,6 +248,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     profile,
     session,
     loading,
+    isPendingApproval,
     signIn,
     signUp,
     signOut,

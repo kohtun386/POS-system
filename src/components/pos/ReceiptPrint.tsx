@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import { Sale } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp, useCapability } from '../../context/SupabaseAppContext';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 
@@ -65,11 +66,11 @@ function ReceiptContent({ sale }: { sale: Sale }) {
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 14, fontWeight: 500 }}>{item.product.name}</span>
               <span style={{ fontSize: 14, fontWeight: 600 }}>
-                {state.settings.currency} {item.subtotal.toFixed(2)}
+                {DEFAULT_CURRENCY} {item.subtotal.toFixed(2)}
               </span>
             </div>
             <div style={{ fontSize: 12, color: '#6b7280', marginLeft: 8 }}>
-              {state.settings.currency}{' '}
+              {DEFAULT_CURRENCY}{' '}
               {item.product.isWeightBased
                 ? (item.product.pricePerUnit || 0).toFixed(2)
                 : item.product.price.toFixed(2)}{' '}
@@ -77,7 +78,7 @@ function ReceiptContent({ sale }: { sale: Sale }) {
               {item.weight ? `${item.weight}${item.product.unit}` : item.quantity}
               {item.discount > 0 && (
                 <span style={{ color: '#16a34a', marginLeft: 8 }}>
-                  (Discount: -{state.settings.currency} {item.discount.toFixed(2)})
+                  (Discount: -{DEFAULT_CURRENCY} {item.discount.toFixed(2)})
                 </span>
               )}
             </div>
@@ -100,12 +101,12 @@ function ReceiptContent({ sale }: { sale: Sale }) {
       <div style={{ borderTop: '1px solid #d1d5db', paddingTop: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 4 }}>
           <span>Subtotal:</span>
-          <span>{state.settings.currency} {sale.subtotal.toFixed(2)}</span>
+          <span>{DEFAULT_CURRENCY} {sale.subtotal.toFixed(2)}</span>
         </div>
         {sale.discountAmount > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#16a34a', marginBottom: 4 }}>
             <span>Total Discount:</span>
-            <span>-{state.settings.currency} {sale.discountAmount.toFixed(2)}</span>
+            <span>-{DEFAULT_CURRENCY} {sale.discountAmount.toFixed(2)}</span>
           </div>
         )}
         {sale.appliedDiscounts && sale.appliedDiscounts.length > 0 && (
@@ -117,11 +118,11 @@ function ReceiptContent({ sale }: { sale: Sale }) {
         )}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 4 }}>
           <span>Tax ({state.settings.taxRate}%):</span>
-          <span>{state.settings.currency} {sale.taxAmount.toFixed(2)}</span>
+          <span>{DEFAULT_CURRENCY} {sale.taxAmount.toFixed(2)}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 'bold', borderTop: '1px solid #d1d5db', paddingTop: 8 }}>
           <span>Total:</span>
-          <span>{state.settings.currency} {sale.total.toFixed(2)}</span>
+          <span>{DEFAULT_CURRENCY} {sale.total.toFixed(2)}</span>
         </div>
 
         {sale.payments && sale.payments.length > 0 ? (
@@ -138,7 +139,7 @@ function ReceiptContent({ sale }: { sale: Sale }) {
                       </span>
                     )}
                   </div>
-                  <div>{state.settings.currency} {p.amount.toFixed(2)}</div>
+                  <div>{DEFAULT_CURRENCY} {p.amount.toFixed(2)}</div>
                 </div>
               ))}
             </div>
@@ -162,6 +163,8 @@ function ReceiptContent({ sale }: { sale: Sale }) {
 }
 
 export function ReceiptPrint({ sale, onClose }: ReceiptPrintProps) {
+  const canPrint = useCapability('printer_integration');
+
   const handlePrint = () => {
     window.print();
   };
@@ -189,9 +192,11 @@ export function ReceiptPrint({ sale, onClose }: ReceiptPrintProps) {
             <button onClick={onClose} className="btn btn-secondary btn-md">
               Close
             </button>
-            <button onClick={handlePrint} className="btn btn-primary btn-md">
-              Print Receipt
-            </button>
+            {canPrint && (
+              <button onClick={handlePrint} className="btn btn-primary btn-md">
+                Print Receipt
+              </button>
+            )}
           </div>
         </div>
       </div>

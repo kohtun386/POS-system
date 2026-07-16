@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, useRef } from 'react';
 import {
   Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, DiscountCondition, Shop,
-  FeatureFlags, RawMaterial, Recipe
+  CashShift
 } from '../types';
 import { useAuth } from './AuthContext';
 import {
@@ -15,8 +15,8 @@ import {
   shopMembershipsService,
   featureDefinitionsService,
   shopFeaturesService,
-  rawMaterialsService,
-  recipesService
+  cashShiftsService,
+  resolveCapabilitiesRpc
 } from '../lib/services';
 
 interface AppState {
@@ -33,9 +33,8 @@ interface AppState {
   activeSalesTab: string;
   activeShopId: string;  // Current shop for multi-tenant scoping
   shop: Shop | null;
-  featureFlags: FeatureFlags;
-  rawMaterials: RawMaterial[];
-  recipes: Recipe[];
+  capabilities: string[];
+  cashShifts: CashShift[];
   loading: boolean;
   error: string | null;
 }
@@ -75,16 +74,10 @@ type AppAction =
   | { type: 'SET_SALES_TABS'; payload: SalesTab[] }
   | { type: 'SET_ACTIVE_SHOP'; payload: string }
   | { type: 'SET_SHOP'; payload: Shop | null }
-  | { type: 'SET_FEATURE_FLAGS'; payload: FeatureFlags }
-  | { type: 'TOGGLE_FEATURE_FLAG'; payload: { key: string; enabled: boolean } }
-  | { type: 'SET_RAW_MATERIALS'; payload: RawMaterial[] }
-  | { type: 'ADD_RAW_MATERIAL'; payload: RawMaterial }
-  | { type: 'UPDATE_RAW_MATERIAL'; payload: RawMaterial }
-  | { type: 'DELETE_RAW_MATERIAL'; payload: string }
-  | { type: 'SET_RECIPES'; payload: Recipe[] }
-  | { type: 'ADD_RECIPE'; payload: Recipe }
-  | { type: 'UPDATE_RECIPE'; payload: Recipe }
-  | { type: 'DELETE_RECIPE'; payload: string };
+  | { type: 'SET_CAPABILITIES'; payload: string[] }
+  | { type: 'SET_CASH_SHIFTS'; payload: CashShift[] }
+  | { type: 'ADD_CASH_SHIFT'; payload: CashShift }
+  | { type: 'UPDATE_CASH_SHIFT'; payload: CashShift };
 
 const initialState: AppState = {
   products: [],
@@ -101,7 +94,6 @@ const initialState: AppState = {
     storePhone: '+94 11 234 5678',
     storeEmail: 'info@sekalabs.lk',
     taxRate: 0,
-    currency: 'LKR',
     interfaceMode: 'touch',
     autoBackup: true,
     receiptPrinter: true,
@@ -113,9 +105,8 @@ const initialState: AppState = {
   activeSalesTab: '',
   activeShopId: '',
   shop: null,
-  featureFlags: {},
-  rawMaterials: [],
-  recipes: [],
+  capabilities: ['pos'],  // Minimal default so POS always works
+  cashShifts: [],
   loading: false,
   error: null,
 };
@@ -252,40 +243,16 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, activeShopId: action.payload };
     case 'SET_SHOP':
       return { ...state, shop: action.payload };
-    case 'SET_FEATURE_FLAGS':
-      return { ...state, featureFlags: action.payload };
-    case 'TOGGLE_FEATURE_FLAG':
+    case 'SET_CAPABILITIES':
+      return { ...state, capabilities: action.payload };
+    case 'SET_CASH_SHIFTS':
+      return { ...state, cashShifts: action.payload };
+    case 'ADD_CASH_SHIFT':
+      return { ...state, cashShifts: [action.payload, ...state.cashShifts] };
+    case 'UPDATE_CASH_SHIFT':
       return {
         ...state,
-        featureFlags: { ...state.featureFlags, [action.payload.key]: action.payload.enabled }
-      };
-    case 'SET_RAW_MATERIALS':
-      return { ...state, rawMaterials: action.payload };
-    case 'ADD_RAW_MATERIAL':
-      return { ...state, rawMaterials: [...state.rawMaterials, action.payload] };
-    case 'UPDATE_RAW_MATERIAL':
-      return {
-        ...state,
-        rawMaterials: state.rawMaterials.map(rm => rm.id === action.payload.id ? action.payload : rm),
-      };
-    case 'DELETE_RAW_MATERIAL':
-      return {
-        ...state,
-        rawMaterials: state.rawMaterials.filter(rm => rm.id !== action.payload),
-      };
-    case 'SET_RECIPES':
-      return { ...state, recipes: action.payload };
-    case 'ADD_RECIPE':
-      return { ...state, recipes: [...state.recipes, action.payload] };
-    case 'UPDATE_RECIPE':
-      return {
-        ...state,
-        recipes: state.recipes.map(r => r.id === action.payload.id ? action.payload : r),
-      };
-    case 'DELETE_RECIPE':
-      return {
-        ...state,
-        recipes: state.recipes.filter(r => r.id !== action.payload),
+        cashShifts: state.cashShifts.map(cs => cs.id === action.payload.id ? action.payload : cs),
       };
     default:
       return state;
@@ -381,6 +348,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   async function loadData() {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
+      // VISION.md §17.4: Platform admins use Edge Functions, not direct DB access.
+      // Skip ALL shop-specific data loading for platform_admin role.
+      // Platform dashboard uses platformAdminService (Edge Functions) exclusively.
+      if (profile?.role === 'platform_admin') {
+        dispatch({ type: 'SET_ERROR', payload: null });
+        return;
+      }
+
       // Load most data in parallel — shop-dependent queries follow sequentially
       const [
         products,
@@ -391,9 +366,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         users,
         salesTabs,
         shop,
-        featureDefinitions,
-        rawMaterials,
-        recipes
       ] = await Promise.all([
         productsService.getAll(),
         customersService.getAll(),
@@ -405,14 +377,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // Load user's active shop via service layer
         user ? shopMembershipsService.getShopByUserId(user.id) : Promise.resolve(null),
         featureDefinitionsService.getAll(),
-        rawMaterialsService.getAll(),
-        recipesService.getAll(),
       ]);
 
-      // Load shop feature overrides AFTER shop is known (depends on shop.id)
-      const shopFeatures = shop
-        ? await shopFeaturesService.getByShopId(shop.id)
-        : [];
+      // Load shop feature overrides + cash shifts AFTER shop is known (depends on shop.id)
+      const [, latestCashShifts] = await Promise.all([
+        shop ? shopFeaturesService.getByShopId(shop.id) : Promise.resolve([]),
+        shop ? cashShiftsService.getByShopId(shop.id, 1) : Promise.resolve([]),
+      ]);
 
       dispatch({ type: 'SET_PRODUCTS', payload: products });
       dispatch({ type: 'SET_CUSTOMERS', payload: customers });
@@ -421,8 +392,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_SETTINGS', payload: settings });
       dispatch({ type: 'SET_USERS', payload: users });
       dispatch({ type: 'SET_SALES_TABS', payload: salesTabs });
-      dispatch({ type: 'SET_RAW_MATERIALS', payload: rawMaterials });
-      dispatch({ type: 'SET_RECIPES', payload: recipes });
 
       // Set active shop
       if (shop) {
@@ -430,13 +399,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: 'SET_ACTIVE_SHOP', payload: shop.id });
       }
 
-      // Resolve feature flags
-      const resolvedFeatureFlags: FeatureFlags = {};
-      for (const def of featureDefinitions) {
-        const override = shopFeatures.find(o => o.featureKey === def.key);
-        resolvedFeatureFlags[def.key] = override ? override.enabled : def.defaultEnabled;
+      // Resolve capabilities (VISION §5) — server-side via RPC
+      if (shop) {
+        const caps = await resolveCapabilitiesRpc(shop.id);
+        dispatch({ type: 'SET_CAPABILITIES', payload: caps });
       }
-      dispatch({ type: 'SET_FEATURE_FLAGS', payload: resolvedFeatureFlags });
+
+      // Set cash shifts
+      dispatch({ type: 'SET_CASH_SHIFTS', payload: latestCashShifts });
 
       // Create initial sales tab if none exist
       if (salesTabs.length === 0 && user) {
@@ -458,6 +428,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Expose dispatch globally for E2E tests to set capabilities without page reload
+  if (typeof window !== 'undefined') {
+    (window as any).__appDispatch = dispatch;
+  }
+
   return (
     <AppContext.Provider value={{ state, dispatch }}>
       {children}
@@ -471,6 +446,15 @@ export function useApp() {
     throw new Error('useApp must be used within an AppProvider');
   }
   return context;
+}
+
+/**
+ * Check if the current shop has a specific capability.
+ * Replaces the old `useFeatureFlag()` hook pattern.
+ */
+export function useCapability(name: string): boolean {
+  const { state } = useApp();
+  return state.capabilities.includes(name);
 }
 
 // Utility function to check if discounts apply
@@ -560,21 +544,13 @@ export function generateNextInvoiceNumber(settings: AppSettings): { invoiceNumbe
   return { invoiceNumber, newCounter };
 }
 
-// Generate invoice number and automatically update counter in state
+// DEPRECATED: Invoice numbers are now generated server-side by checkout_complete RPC.
+// This hook is kept for test compatibility only — do NOT use in production code.
 export function useInvoiceGeneration() {
-  const { state, dispatch } = useApp();
+  const { state } = useApp();
 
   return async () => {
-    const { invoiceNumber, newCounter } = generateNextInvoiceNumber(state.settings);
-
-    // Update settings in Supabase
-    try {
-      await settingsService.update({ invoiceCounter: newCounter });
-      dispatch({ type: 'INCREMENT_INVOICE_COUNTER', payload: newCounter });
-    } catch (error) {
-      console.error('Error updating invoice counter:', error);
-    }
-
+    const { invoiceNumber } = generateNextInvoiceNumber(state.settings);
     return invoiceNumber;
   };
 }

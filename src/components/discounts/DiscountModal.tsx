@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Discount, DiscountCondition } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { swalConfig } from '../../lib/sweetAlert';
 
 interface DiscountModalProps {
@@ -311,7 +312,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
               {formData.type !== 'free_gift' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {formData.type === 'percentage' ? 'Percentage (%)' : `Amount (${state.settings.currency})`} *
+                    {formData.type === 'percentage' ? 'Percentage (%)' : `Amount (${DEFAULT_CURRENCY})`} *
                   </label>
                   <input
                     type="number"
@@ -329,7 +330,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Minimum Amount ({state.settings.currency})
+                  Minimum Amount ({DEFAULT_CURRENCY})
                 </label>
                 <input
                   type="number"
@@ -346,7 +347,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
               {formData.type === 'percentage' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Maximum Discount ({state.settings.currency})
+                    Maximum Discount ({DEFAULT_CURRENCY})
                   </label>
                   <input
                     type="number"
@@ -378,7 +379,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
                     />
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-medium text-gray-900 truncate block">{product.name}</span>
-                      <span className="text-xs text-gray-500">{state.settings.currency} {product.price.toFixed(2)}</span>
+                      <span className="text-xs text-gray-500">{DEFAULT_CURRENCY} {product.price.toFixed(2)}</span>
                     </div>
                   </label>
                 ))}

@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
 import { Search, Download, Eye, RefreshCw, CreditCard, Banknote, Smartphone, Receipt, FileText, X, ShoppingCart } from 'lucide-react';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp, useCapability } from '../../context/SupabaseAppContext';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { format } from 'date-fns';
 import { Sale } from '../../types';
 import { CheckoutModal } from '../pos/CheckoutModal';
 import { salesService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
+import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 // Helper function to determine if a sale is a draft
 const isDraftSale = (sale: Sale) => {
@@ -134,7 +136,7 @@ export function TransactionsManager() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm font-medium">Total Revenue</p>
-              <p className="text-xl md:text-2xl font-bold">{state.settings.currency} {totalRevenue.toFixed(2)}</p>
+              <p className="text-xl md:text-2xl font-bold">{DEFAULT_CURRENCY} {totalRevenue.toFixed(2)}</p>
             </div>
             <div className="bg-white/20 p-3 rounded-xl">
               <CreditCard className="h-6 w-6" />
@@ -158,7 +160,7 @@ export function TransactionsManager() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-100 text-sm font-medium">Average Sale</p>
-              <p className="text-xl md:text-2xl font-bold">{state.settings.currency} {averageTransaction.toFixed(2)}</p>
+              <p className="text-xl md:text-2xl font-bold">{DEFAULT_CURRENCY} {averageTransaction.toFixed(2)}</p>
             </div>
             <div className="bg-white/20 p-3 rounded-xl">
               <RefreshCw className="h-6 w-6" />
@@ -288,7 +290,7 @@ export function TransactionsManager() {
                   </td>
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-semibold text-gray-900">
-                      {state.settings.currency} {transaction.total.toFixed(2)}
+                      {DEFAULT_CURRENCY} {transaction.total.toFixed(2)}
                     </div>
                   </td>
                               <td className="px-4 md:px-6 py-4 whitespace-nowrap">
@@ -296,7 +298,7 @@ export function TransactionsManager() {
                                   {getPaymentIcon(transaction.paymentMethod)}
                                   {transaction.payments && transaction.payments.length > 0 ? (
                                     <span className="text-sm text-gray-900">
-                                      {transaction.payments.map(p => `${p.method} ${state.settings.currency} ${p.amount.toFixed(2)}`).join(' | ')}
+                                      {transaction.payments.map(p => `${p.method} ${DEFAULT_CURRENCY} ${p.amount.toFixed(2)}`).join(' | ')}
                                     </span>
                                   ) : (
                                     <span className="text-sm text-gray-900 capitalize">{transaction.paymentMethod}</span>
@@ -345,6 +347,7 @@ interface TransactionDetailModalProps {
 function TransactionDetailModal({ transaction, onClose }: TransactionDetailModalProps) {
   const { state, dispatch } = useApp();
   const [showCheckout, setShowCheckout] = useState(false);
+  const canPrint = useCapability('printer_integration');
 
   const handleCompleteDraft = () => {
     // Load the draft sale into the cart for completion
@@ -367,7 +370,7 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
     setShowCheckout(true);
   };
 
-  const handleCheckoutComplete = async (_completedSale: Sale) => {
+  const handleCheckoutComplete = async () => {
     try {
       // Delete the draft sale from Supabase
       await salesService.delete(transaction.id);
@@ -459,7 +462,7 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
                   <div>
                     <p className="font-medium text-gray-900">{item.product.name}</p>
                     <p className="text-sm text-gray-600">
-                      {state.settings.currency} {
+                      {DEFAULT_CURRENCY} {
                         item.product.isWeightBased 
                           ? (item.product.pricePerUnit || 0).toFixed(2)
                           : item.product.price.toFixed(2)
@@ -469,7 +472,7 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
                     </p>
                   </div>
                   <p className="font-semibold text-gray-900">
-                    {state.settings.currency} {item.subtotal.toFixed(2)}
+                    {DEFAULT_CURRENCY} {item.subtotal.toFixed(2)}
                   </p>
                 </div>
               ))}
@@ -480,21 +483,21 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
           <div className="space-y-2 pt-4 border-t border-gray-200">
             <div className="flex justify-between">
               <span className="text-gray-600">Subtotal:</span>
-              <span className="font-medium">{state.settings.currency} {transaction.subtotal.toFixed(2)}</span>
+              <span className="font-medium">{DEFAULT_CURRENCY} {transaction.subtotal.toFixed(2)}</span>
             </div>
             {transaction.discountAmount > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Discount:</span>
-                <span className="font-medium">-{state.settings.currency} {transaction.discountAmount.toFixed(2)}</span>
+                <span className="font-medium">-{DEFAULT_CURRENCY} {transaction.discountAmount.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span className="text-gray-600">Tax:</span>
-              <span className="font-medium">{state.settings.currency} {transaction.taxAmount.toFixed(2)}</span>
+              <span className="font-medium">{DEFAULT_CURRENCY} {transaction.taxAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
               <span>Total:</span>
-              <span>{state.settings.currency} {transaction.total.toFixed(2)}</span>
+              <span>{DEFAULT_CURRENCY} {transaction.total.toFixed(2)}</span>
             </div>
           </div>
 
@@ -523,6 +526,21 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
                 </button>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Print Receipt Section */}
+        <div className="px-6 pb-4">
+          {!canPrint ? (
+            <UpgradePrompt feature="Receipt printing" tier="growth" onClose={() => {}} />
+          ) : (
+            <button
+              onClick={() => window.print()}
+              className="btn btn-primary btn-md w-full"
+            >
+              <Receipt className="h-4 w-4" />
+              <span>Print Receipt</span>
+            </button>
           )}
         </div>
 

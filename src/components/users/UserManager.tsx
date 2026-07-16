@@ -1,17 +1,31 @@
 import React, { useState } from 'react';
 import { Plus, Search, Edit, Trash2, UserCheck, Crown, Shield, User } from 'lucide-react';
 import { User as UserType } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp, useCapability } from '../../context/SupabaseAppContext';
 import { usersService } from '../../lib/services';
 import { UserModal } from './UserModal';
 import { swalConfig } from '../../lib/sweetAlert';
+import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 export function UserManager() {
   const { state, dispatch } = useApp();
+  const staffAccountsEnabled = useCapability('staff_accounts');
   const [searchTerm, setSearchTerm] = useState('');
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(false);
+
+  if (!staffAccountsEnabled) {
+    return (
+      <div className="p-6 text-center">
+        <User className="h-12 w-12 mx-auto text-secondary-400 mb-4" />
+        <h2 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100">Staff Accounts Disabled</h2>
+        <div className="mt-2 max-w-md mx-auto">
+          <UpgradePrompt feature="Staff accounts" tier="growth" onClose={() => {}} />
+        </div>
+      </div>
+    );
+  }
 
   const filteredUsers = state.users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

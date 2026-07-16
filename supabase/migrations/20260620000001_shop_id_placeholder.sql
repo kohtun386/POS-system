@@ -119,15 +119,6 @@ ALTER TABLE sales ADD COLUMN IF NOT EXISTS shop_id UUID;
 -- sales_tabs
 ALTER TABLE sales_tabs ADD COLUMN IF NOT EXISTS shop_id UUID;
 
--- currency_config
-ALTER TABLE currency_config ADD COLUMN IF NOT EXISTS shop_id UUID;
-
--- exchange_rates
-ALTER TABLE exchange_rates ADD COLUMN IF NOT EXISTS shop_id UUID;
-
--- exchange_rate_history
-ALTER TABLE exchange_rate_history ADD COLUMN IF NOT EXISTS shop_id UUID;
-
 -- ================================================================
 -- 6. BACKFILL ALL ROWS WITH DEFAULT SHOP
 -- ================================================================
@@ -142,10 +133,6 @@ UPDATE discounts SET shop_id = '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid WHER
 UPDATE users SET shop_id = '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid WHERE shop_id IS NULL;
 UPDATE sales SET shop_id = '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid WHERE shop_id IS NULL;
 UPDATE sales_tabs SET shop_id = '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid WHERE shop_id IS NULL;
-UPDATE currency_config SET shop_id = '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid WHERE shop_id IS NULL;
-UPDATE exchange_rates SET shop_id = '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid WHERE shop_id IS NULL;
-UPDATE exchange_rate_history SET shop_id = '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid WHERE shop_id IS NULL;
-
 -- ================================================================
 -- 7. SET NOT NULL + DEFAULT + FK CONSTRAINTS
 --    Phase 2: Lock columns after backfill
@@ -201,21 +188,6 @@ ALTER TABLE sales_tabs ALTER COLUMN shop_id SET DEFAULT '4f3dab19-144e-4a29-95a5
 ALTER TABLE sales_tabs ALTER COLUMN shop_id SET NOT NULL;
 ALTER TABLE sales_tabs ADD CONSTRAINT fk_sales_tabs_shop FOREIGN KEY (shop_id) REFERENCES shops(id);
 
--- currency_config
-ALTER TABLE currency_config ALTER COLUMN shop_id SET DEFAULT '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid;
-ALTER TABLE currency_config ALTER COLUMN shop_id SET NOT NULL;
-ALTER TABLE currency_config ADD CONSTRAINT fk_currency_config_shop FOREIGN KEY (shop_id) REFERENCES shops(id);
-
--- exchange_rates
-ALTER TABLE exchange_rates ALTER COLUMN shop_id SET DEFAULT '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid;
-ALTER TABLE exchange_rates ALTER COLUMN shop_id SET NOT NULL;
-ALTER TABLE exchange_rates ADD CONSTRAINT fk_exchange_rates_shop FOREIGN KEY (shop_id) REFERENCES shops(id);
-
--- exchange_rate_history
-ALTER TABLE exchange_rate_history ALTER COLUMN shop_id SET DEFAULT '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid;
-ALTER TABLE exchange_rate_history ALTER COLUMN shop_id SET NOT NULL;
-ALTER TABLE exchange_rate_history ADD CONSTRAINT fk_exchange_rate_history_shop FOREIGN KEY (shop_id) REFERENCES shops(id);
-
 -- ================================================================
 -- 8. INDEXES ON ALL shop_id FK COLUMNS
 -- ================================================================
@@ -230,9 +202,6 @@ CREATE INDEX IF NOT EXISTS idx_discounts_shop_id ON discounts(shop_id);
 CREATE INDEX IF NOT EXISTS idx_users_shop_id ON users(shop_id);
 CREATE INDEX IF NOT EXISTS idx_sales_shop_id ON sales(shop_id);
 CREATE INDEX IF NOT EXISTS idx_sales_tabs_shop_id ON sales_tabs(shop_id);
-CREATE INDEX IF NOT EXISTS idx_currency_config_shop_id ON currency_config(shop_id);
-CREATE INDEX IF NOT EXISTS idx_exchange_rates_shop_id ON exchange_rates(shop_id);
-CREATE INDEX IF NOT EXISTS idx_exchange_rate_history_shop_id ON exchange_rate_history(shop_id);
 
 -- Composite indexes for common query patterns
 CREATE INDEX IF NOT EXISTS idx_sales_shop_created_at ON sales(shop_id, created_at);

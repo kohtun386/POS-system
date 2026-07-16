@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Percent, Gift } from 'lucide-react';
 import { Discount } from '../../types';
 import { useApp } from '../../context/SupabaseAppContext';
+import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { DiscountModal } from './DiscountModal';
 import { format } from 'date-fns';
 import { swalConfig } from '../../lib/sweetAlert';
@@ -208,7 +209,7 @@ export function DiscountManager() {
                   </td>
                   <td className="table-cell font-semibold">
                     {discount.type === 'percentage' && `${discount.value}%`}
-                    {discount.type === 'fixed' && `${state.settings.currency} ${discount.value}`}
+                    {discount.type === 'fixed' && `${DEFAULT_CURRENCY} ${discount.value}`}
                     {discount.type === 'free_gift' && 'Free Gift'}
                   </td>
                   <td className="table-cell">

@@ -124,8 +124,11 @@ export interface Sale {
   cardDetails?: CardDetails;
   status: 'pending' | 'completed' | 'refunded' | 'credit' | 'draft';
   cashier: string;
+  cashierId?: string;
+  cashierRole?: 'platform_admin' | 'admin' | 'manager' | 'cashier';
   timestamp: Date;
   receiptNumber: string;
+  receiptPrinted?: boolean;
   notes?: string;
   appliedDiscounts?: AppliedDiscount[];
   freeGifts?: CartItem[];
@@ -151,7 +154,7 @@ export interface User {
   username: string;
   name: string;
   email: string;
-  role: 'admin' | 'manager' | 'cashier';
+  role: 'platform_admin' | 'admin' | 'manager' | 'cashier';
   permissions: string[];
   active: boolean;
   lastLogin?: Date;
@@ -164,6 +167,17 @@ export interface Shop {
   address: string;
   phone: string;
   email: string;
+  logo?: string;
+  ownerId?: string;
+  businessType: 'coffee_shop';
+  taxRate: number;
+  invoicePrefix: string;
+  invoiceCounter: number;
+  draftRetentionDays: number;
+  subscriptionTier: 'free' | 'growth' | 'pro';
+  dailyOrderLimit?: number;
+  receiptSetting: 'always' | 'ask' | 'never';
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -175,78 +189,18 @@ export interface AppSettings {
   storeEmail: string;
   storeLogo?: string;
   taxRate: number;
-  currency: string;
-  baseCurrency: string;
   interfaceMode: 'touch' | 'traditional';
   autoBackup: boolean;
   receiptPrinter: boolean;
   theme: 'light' | 'dark' | 'auto';
   invoicePrefix: string;
   invoiceCounter: number;
-  exchangeRateProvider?: 'fixer' | 'currencylayer' | 'exchangerate' | 'manual';
-  exchangeRateApiKey?: string;
-  exchangeRateUpdateInterval?: number;
 }
 
 
 export interface LoginCredentials {
   username: string;
   password: string;
-}
-
-// Currency-related interfaces
-export interface CurrencyConfig {
-  id: string;
-  code: string;
-  name: string;
-  symbol: string;
-  symbolPosition: 'before' | 'after';
-  decimalPlaces: number;
-  isActive: boolean;
-  isBaseCurrency: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ExchangeRate {
-  id: string;
-  baseCurrency: string;
-  targetCurrency: string;
-  rate: number;
-  source: 'api' | 'manual' | 'fallback';
-  isManualOverride: boolean;
-  effectiveFrom: Date;
-  effectiveTo?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ExchangeRateHistory {
-  id: string;
-  baseCurrency: string;
-  targetCurrency: string;
-  rate: number;
-  previousRate?: number;
-  changePercentage?: number;
-  source: 'api' | 'manual' | 'fallback';
-  isManualOverride: boolean;
-  recordedAt: Date;
-}
-
-export interface CurrencyConversion {
-  originalAmount: number;
-  convertedAmount: number;
-  fromCurrency: string;
-  toCurrency: string;
-  exchangeRate: number;
-  timestamp: Date;
-}
-
-// Enhanced Sale interface with currency support
-export interface SaleWithCurrency extends Sale {
-  transactionCurrency: string;
-  baseCurrencyAmount?: number;
-  exchangeRateUsed?: number;
 }
 
 // Inventory Alert System Types
@@ -351,6 +305,34 @@ export interface AlertContext {
   configuration: AlertConfiguration;
 }
 
+// ================================================================
+// Cash Shift Types (VISION §12)
+// ================================================================
+
+export interface CashShift {
+  id: string;
+  shopId: string;
+  cashierId: string;
+  openingCash: number;
+  closingCash?: number;
+  expectedCash?: number;
+  variance?: number;
+  status: 'open' | 'closed';
+  openedAt: Date;
+  closedAt?: Date;
+}
+
+// ================================================================
+// Capability Resolution Types (VISION §5)
+// ================================================================
+
+export interface CapabilityResolution {
+  capabilities: string[];
+  shop: Shop;
+  features: FeatureDefinition[];
+  overrides: ShopFeature[];
+}
+
 // Feature Flags types
 export interface FeatureDefinition {
   id: string;
@@ -359,7 +341,7 @@ export interface FeatureDefinition {
   description?: string;
   category: string;
   defaultEnabled: boolean;
-  subscriptionTier: 'free' | 'pro' | 'enterprise';
+  subscriptionTier: 'free' | 'growth' | 'pro';
   createdAt: Date;
 }
 
@@ -371,134 +353,74 @@ export interface ShopFeature {
   updatedAt: Date;
 }
 
-export type FeatureFlags = Record<string, boolean>;
-
 // ================================================================
-// Recipe BOM Types
+// Purchase Log Types (VISION v3.1.0 §10.2 — Simplified Inventory)
 // ================================================================
 
-export interface RawMaterial {
+export interface PurchaseLog {
+  id: string;
+  shopId: string;
+  supplier: string;
+  item: string;
+  quantity: number;
+  unit: string;
+  unitCost: number;
+  totalCost: number;
+  purchaseDate: Date;
+  notes: string;
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ================================================================
+// Stock Item Types (VISION v3.1.0 §10.2 — Simplified Inventory)
+// ================================================================
+
+export interface StockItem {
   id: string;
   shopId: string;
   name: string;
-  sku?: string;
-  category: 'ingredient' | 'packaging' | 'consumable';
-  currentStock: number;
-  minimumStock: number;
-  baseUnit: string; // 'ml', 'g', 'l', 'kg', 'unit', 'oz'
-  costPerUnit?: number;
-  isActive: boolean;
-  notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface Recipe {
-  id: string;
-  shopId: string;
-  productId: string;
-  productName: string;
-  servingSize: number;
-  servingUnit: string;
-  prepTimeSeconds?: number;
-  instructions?: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface RecipeLine {
-  id: string;
-  shopId: string;
-  recipeId: string;
-  rawMaterialId: string;
-  rawMaterialName: string;
-  quantity: number; // in base_unit
-  recipeUnit?: string; // display unit for recipe authoring
-  recipeQuantity?: number; // display quantity
-  wastagePercent: number;
-  isOptional: boolean;
-  notes?: string;
-  createdAt: Date;
-}
-
-export interface ConsumptionLog {
-  id: string;
-  shopId: string;
-  saleId: string;
-  saleItemIndex?: number;
-  productId: string;
-  productName: string;
-  rawMaterialId: string;
-  rawMaterialName: string;
-  quantityConsumed: number;
-  quantityBase: number;
-  wastageAmount: number;
-  unit: string;
-  stockBefore: number;
-  stockAfter: number;
-  consumedAt: Date;
-}
-
-export interface UomConversion {
-  id: string;
-  fromUnit: string;
-  toUnit: string;
-  factor: number;
-}
-
-export interface StockCheckResult {
-  sufficient: boolean;
-  insufficientItems: Array<{
-    productName: string;
-    rawMaterialName: string;
-    needed: number;
-    available: number;
-    unit: string;
-  }>;
-}
-
-// ================================================================
-// Kitchen KDS Types
-// ================================================================
-
-export type KitchenStation = 'bar' | 'espresso' | 'food' | 'pastry';
-export type KitchenOrderStatus = 'pending' | 'in_progress' | 'ready' | 'picked_up' | 'cancelled';
-export type PrintJobStatus = 'pending' | 'printing' | 'completed' | 'failed';
-
-export interface KitchenOrderItem {
-  productName: string;
   quantity: number;
-  productId?: string;
-  notes?: string;
+  unit: string;
+  lowThreshold: number;
+  category: string;
+  notes: string;
+  lastAdjustedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-/** Stored as JSONB in kitchen_orders.items — includes station + saleId metadata */
-export interface KitchenOrderItemsPayload {
-  saleId?: string;
-  station?: KitchenStation;
-  lineItems: KitchenOrderItem[];
-}
-
-export interface KitchenOrder {
+export interface StockAdjustment {
   id: string;
   shopId: string;
-  saleId?: string;
-  station?: KitchenStation;
-  items: KitchenOrderItem[];
-  status: KitchenOrderStatus;
-  startedAt?: Date;
-  completedAt?: Date;
-  pickedUpAt?: Date;
-  createdAt: Date;
+  stockItemId: string;
+  previousQty: number;
+  newQty: number;
+  reason: string;
+  adjustedBy?: string;
+  adjustedAt: Date;
 }
+
+// ================================================================
+// Print Job Types (kept — used by printJobsService for Growth+ receipt printing)
+// ================================================================
+
+export type PrintJobStatus = 'pending' | 'printing' | 'completed' | 'failed';
 
 export interface PrintJob {
   id: string;
   shopId: string;
-  orderId: string;
+  saleId: string;
+  printerType: 'receipt' | 'kitchen';
   status: PrintJobStatus;
   configData: Record<string, string | number | boolean>;
+  connectionType: 'bluetooth' | 'network';
+  printerAddress: string;
+  payload: Record<string, unknown>;
+  isReprint: boolean;
+  retryCount: number;
+  errorMessage?: string;
   createdAt: Date;
   completedAt?: Date;
 }
