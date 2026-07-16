@@ -25,6 +25,29 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   handleRetry = () => {
+    // ChunkLoadError: the browser tried to fetch a dynamically imported module
+    // that no longer exists (typically after a new deployment). React.lazy caches
+    // the rejected import() promise, so resetting state alone won't retry —
+    // we must reload the page to get the fresh entry point and chunk manifest.
+    // Limit to 1 reload to prevent infinite loops on broken builds.
+    const isChunkError =
+      this.state.error?.name === 'ChunkLoadError' ||
+      this.state.error?.message?.includes('Failed to fetch dynamically imported module') ||
+      this.state.error?.message?.includes('Loading chunk') ||
+      this.state.error?.message?.includes('Importing a module script failed');
+
+    if (isChunkError) {
+      const reloadKey = '__chunkReloadCount';
+      const reloadCount = Number(sessionStorage.getItem(reloadKey) || '0');
+      if (reloadCount < 1) {
+        sessionStorage.setItem(reloadKey, String(reloadCount + 1));
+        window.location.reload();
+        return;
+      }
+      // Max retries reached — clear counter and show error UI
+      sessionStorage.removeItem(reloadKey);
+    }
+
     this.setState({ hasError: false, error: null });
   };
 

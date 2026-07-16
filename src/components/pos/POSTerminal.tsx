@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { ProductGrid } from './ProductGrid';
 import { Cart } from './Cart';
 import { CheckoutModal } from './CheckoutModal';
@@ -8,8 +8,7 @@ import { useApp } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
 import { salesService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
-
-const ReportsManager = lazy(() => import('../reports/ReportsManager').then(m => ({ default: m.ReportsManager })));
+import { ReportsManager } from '../../lazyComponents';
 
 export function POSTerminal() {
   const { state, dispatch } = useApp();

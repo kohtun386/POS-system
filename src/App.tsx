@@ -9,12 +9,12 @@ import { PendingApprovalPage } from './components/auth/PendingApprovalPage';
 import { Header } from './components/layout/Header';
 import { PlatformLayout } from './components/platform/PlatformLayout';
 import { useCapability } from './context/SupabaseAppContext';
+import { ReportsManager } from './lazyComponents';
 // Lazy-loaded route components for code-splitting
 const POSTerminal = lazy(() => import('./components/pos/POSTerminal').then(m => ({ default: m.POSTerminal })));
 const TransactionsManager = lazy(() => import('./components/transactions/TransactionsManager').then(m => ({ default: m.TransactionsManager })));
 const InventoryManager = lazy(() => import('./components/inventory/InventoryManager').then(m => ({ default: m.InventoryManager })));
 const CustomerManager = lazy(() => import('./components/customers/CustomerManager').then(m => ({ default: m.CustomerManager })));
-const ReportsManager = lazy(() => import('./components/reports/ReportsManager').then(m => ({ default: m.ReportsManager })));
 const Settings = lazy(() => import('./components/settings/Settings').then(m => ({ default: m.Settings })));
 const DiscountManager = lazy(() => import('./components/discounts/DiscountManager').then(m => ({ default: m.DiscountManager })));
 const UserManager = lazy(() => import('./components/users/UserManager').then(m => ({ default: m.UserManager })));
