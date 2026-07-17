@@ -45,6 +45,8 @@ Supabase project: `ejvvwnupiqytximrbmfw`. Migrations in `supabase/migrations/`.
 
 **RLS:** All tables have Row Level Security enabled. Policies use `shop_id = ANY(current_shop_ids())` scoping. Sales tabs are user-scoped.
 
+> ⚠️ **RLS Recursion Warning:** NEVER call `current_shop_ids()` in a policy ON `shop_memberships` — it queries that table, causing infinite recursion (PostgreSQL error `42P17`). Use direct aliased subqueries instead. See `supabase/MIGRATION_TEMPLATE.md` for safe patterns.
+
 ### Role-Based Access
 
 Access is enforced in `App.tsx` (`renderCurrentView`) and `Header.tsx` (nav items). Cashiers redirected to POS if they try to navigate elsewhere. Platform admin sees separate component tree.
@@ -77,6 +79,13 @@ const canUseCashDrawer = useCapability('cash_drawer');
 ### Checkout Pattern
 
 Checkout uses `checkoutService.complete()` — single atomic RPC call. Handles sale creation, inventory deduction, stock deduction, print jobs, and customer stats in one transaction. Never use sequential JS calls.
+
+### Database Rules
+
+- When creating RLS policies, **NEVER** create circular dependencies (e.g., policy on `shop_memberships` calling `current_shop_ids()`)
+- Test each policy immediately after creation: push migration → test API endpoint → check for 500 errors
+- If 500 errors occur, check for RLS recursion first
+- Refer to `supabase/MIGRATION_TEMPLATE.md` for safe policy patterns
 
 ## Code Style
 
