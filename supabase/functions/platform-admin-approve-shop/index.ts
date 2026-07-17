@@ -1,7 +1,7 @@
 // ================================================================
 // platform-admin-approve-shop
-// Activates a pending shop: sets shop.is_active, membership.is_active,
-// and user.active to true. Only callable by platform_admin.
+// Activates a pending shop: sets shop.is_active, shop.subscription_tier = 'free',
+// membership.is_active, and user.active to true. Only callable by platform_admin.
 //
 // VISION.md §17.3 — Edge Function Inventory
 // ================================================================
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
 
     const { error: shopUpdateErr } = await adminClient
       .from("shops")
-      .update({ is_active: true, updated_at: new Date().toISOString() })
+      .update({ is_active: true, subscription_tier: 'free', updated_at: new Date().toISOString() })
       .eq("id", shop_id);
     if (shopUpdateErr) errors.push(`shop: ${shopUpdateErr.message}`);
 
