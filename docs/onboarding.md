@@ -37,11 +37,11 @@ When a new user is created in `auth.users`, the `handle_new_auth_user()` trigger
 
 | Table | Key Columns | Default Values |
 |-------|-------------|----------------|
-| `public.users` | `id, username, name, email, role, permissions, active` | `role = 'cashier'`, `permissions = ['pos_access']`, **`active = false`** |
+| `public.users` | `id, username, name, email, role, permissions, active` | `role = 'admin'` (shop owner), `permissions = ['pos_access']`, **`active = false`** |
 | `public.shops` | `name, email, owner_id, is_active, subscription_tier` | **`is_active = false`**, `subscription_tier = 'free'` (schema default) |
 | `public.shop_memberships` | `user_id, shop_id, role, is_active` | `role = 'admin'` (shop owner), **`is_active = false`** |
 
-**Important:** The shop owner is automatically assigned the `admin` role in their shop's membership, but they cannot access anything until all three boolean flags are set to `true` by the Platform Admin.
+**Important:** The shop owner is automatically assigned the `admin` role in both `users.role` and `shop_memberships.role`. The `shop_memberships.role` is the canonical role source per VISION.md §4.2. However, they cannot access anything until all three boolean flags are set to `true` by the Platform Admin.
 
 ### Step 3: Pending Approval
 
