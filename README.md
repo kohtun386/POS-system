@@ -182,17 +182,16 @@ npm run dev
 # → http://localhost:5173
 ```
 
-### Create Admin / Approve User
+### User Onboarding & Approval Flow
 
-1. Supabase Dashboard → Authentication → Users → Invite user by email, or let the user sign up via the app
-2. DB trigger `handle_new_auth_user()` creates a pending profile/shop/membership skeleton for self-registration
-3. Instant access after signup is deprecated; access requires `users.active`, `shop_memberships.is_active`, and `shops.is_active`
-4. In Supabase SQL Editor, assign role and activate the user/shop records:
+CoffeeShop POS uses a **manual approval model** — all new shop registrations require Platform Admin review before access is granted. There is no instant access.
 
-```sql
-UPDATE users SET role = 'admin', active = true WHERE email = 'your@email.com';
--- Also activate the related shop_memberships row and shop row for self-registration.
-```
+**Quick Summary:**
+1. User signs up via the app → account created with `active = false`
+2. Platform Admin reviews in "Pending Shops" dashboard
+3. Admin approves → user gains full POS access on Free tier
+
+For a complete walkthrough of the user onboarding and approval flow, including the database trigger, Edge Function activation, and troubleshooting steps, see [docs/onboarding.md](docs/onboarding.md).
 
 ### Scripts
 
