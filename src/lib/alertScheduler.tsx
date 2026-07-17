@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { alertService } from './alertService';
 
 // Alert Scheduler Hook
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAlertScheduler(intervalMinutes: number = 60) {
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 

@@ -18,7 +18,6 @@ export function PurchaseLogManager() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PurchaseLog | null>(null);
-  const [showUpgrade, setShowUpgrade] = useState(false);
 
   // Date range filter — default to current month
   const now = new Date();
@@ -90,7 +89,7 @@ export function PurchaseLogManager() {
           <ShoppingCart className="h-16 w-16 text-secondary-300" />
           <h2 className="text-2xl font-bold text-secondary-900">Purchase Log</h2>
           <p className="text-secondary-500 max-w-md">This feature is available on Growth tier and above.</p>
-          <UpgradePrompt feature="Purchase Log" tier="growth" onClose={() => setShowUpgrade(false)} />
+          <UpgradePrompt feature="Purchase Log" tier="growth" onClose={() => {}} />
         </div>
       </div>
     );

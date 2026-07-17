@@ -95,25 +95,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function loadProfile(userId: string) {
     loadedProfileUserId.current = userId
     try {
-      // Query users with their active shop membership
-      // VISION.md §4.2: shop_memberships.role is the canonical role source
+      // Step 1: Load user profile from users table
       const { data, error } = await supabase
         .from('users')
-        .select(`
-          *,
-          shop_memberships!inner(shop_id, role, is_active)
-        `)
+        .select('*')
         .eq('id', userId)
         .single()
 
       if (error) throw error
 
       if (data) {
+        // Step 2: Load shop membership to get canonical role
+        // VISION.md §4.2: shop_memberships.role is the canonical role source
+        const { data: membership } = await supabase
+          .from('shop_memberships')
+          .select('shop_id, role, is_active')
+          .eq('user_id', userId)
+          .eq('is_active', true)
+          .limit(1)
+          .single()
+
         // Determine the effective role:
         // - If user has an active shop membership, use that role (canonical)
         // - Otherwise fall back to users.role (for platform_admin who have no membership)
-        const membership = data.shop_memberships?.[0]
-        const effectiveRole = (membership?.is_active && membership?.role)
+        const effectiveRole = (membership?.role)
           ? membership.role
           : data.role
 
@@ -188,14 +193,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Profile row auto-created by DB trigger handle_new_auth_user().
       // Fetch the trigger-created profile instead of inserting.
       if (data.user) {
-        // Query users with their active shop membership
-        // VISION.md §4.2: shop_memberships.role is the canonical role source
+        // Step 1: Load user profile from users table
         const { data: profileData, error: profileError } = await supabase
           .from('users')
-          .select(`
-            *,
-            shop_memberships!inner(shop_id, role, is_active)
-          `)
+          .select('*')
           .eq('id', data.user.id)
           .single()
 
@@ -206,11 +207,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Set the profile data immediately
         if (profileData) {
+          // Step 2: Load shop membership to get canonical role
+          // VISION.md §4.2: shop_memberships.role is the canonical role source
+          const { data: membership } = await supabase
+            .from('shop_memberships')
+            .select('shop_id, role, is_active')
+            .eq('user_id', profileData.id)
+            .eq('is_active', true)
+            .limit(1)
+            .single()
+
           // Determine the effective role:
           // - If user has an active shop membership, use that role (canonical)
           // - Otherwise fall back to users.role (for platform_admin who have no membership)
-          const membership = profileData.shop_memberships?.[0]
-          const effectiveRole = (membership?.is_active && membership?.role)
+          const effectiveRole = (membership?.role)
             ? membership.role
             : profileData.role
 
@@ -285,6 +295,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext)
   if (context === undefined) {

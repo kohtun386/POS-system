@@ -22,6 +22,7 @@ export function ShopDetail() {
 
   useEffect(() => {
     if (shopId) loadShop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopId]);
 
   async function loadShop() {

@@ -336,6 +336,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_ACTIVE_SHOP', payload: '' });
       setInitialized(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile, initialized]);
 
   // Set current user from auth profile
@@ -430,7 +431,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Expose dispatch globally for E2E tests to set capabilities without page reload
   if (typeof window !== 'undefined') {
-    (window as any).__appDispatch = dispatch;
+    window.__appDispatch = dispatch;
   }
 
   return (
@@ -440,6 +441,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useApp() {
   const context = useContext(AppContext);
   if (!context) {
@@ -452,12 +454,14 @@ export function useApp() {
  * Check if the current shop has a specific capability.
  * Replaces the old `useFeatureFlag()` hook pattern.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCapability(name: string): boolean {
   const { state } = useApp();
   return state.capabilities.includes(name);
 }
 
 // Utility function to check if discounts apply
+// eslint-disable-next-line react-refresh/only-export-components
 export function checkDiscountEligibility(
   discount: Discount,
   cart: CartItem[],
@@ -534,12 +538,14 @@ function checkCondition(
 }
 
 // Generate invoice number utility
+// eslint-disable-next-line react-refresh/only-export-components
 export function getNextInvoiceNumber(settings: AppSettings): string {
   const nextCounter = settings.invoiceCounter + 1;
   return `${settings.invoicePrefix}-${nextCounter.toString().padStart(6, '0')}`;
 }
 
 // Generate next invoice number and return data for updating settings
+// eslint-disable-next-line react-refresh/only-export-components
 export function generateNextInvoiceNumber(settings: AppSettings): { invoiceNumber: string; newCounter: number } {
   const newCounter = settings.invoiceCounter + 1;
   const invoiceNumber = `${settings.invoicePrefix}-${newCounter.toString().padStart(6, '0')}`;
@@ -548,6 +554,7 @@ export function generateNextInvoiceNumber(settings: AppSettings): { invoiceNumbe
 
 // DEPRECATED: Invoice numbers are now generated server-side by checkout_complete RPC.
 // This hook is kept for test compatibility only — do NOT use in production code.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useInvoiceGeneration() {
   const { state } = useApp();
 
@@ -558,15 +565,18 @@ export function useInvoiceGeneration() {
 }
 
 // Utility functions for invoice counter management
+// eslint-disable-next-line react-refresh/only-export-components
 export function resetInvoiceCounter(dispatch: React.Dispatch<AppAction>, newCounter: number = 0) {
   dispatch({ type: 'INCREMENT_INVOICE_COUNTER', payload: newCounter });
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function setInvoicePrefix(dispatch: React.Dispatch<AppAction>, prefix: string) {
   dispatch({ type: 'SET_SETTINGS', payload: { invoicePrefix: prefix } });
 }
 
 // Hook for invoice statistics
+// eslint-disable-next-line react-refresh/only-export-components
 export function useInvoiceStats() {
   const { state } = useApp();
 
@@ -588,6 +598,7 @@ export function useInvoiceStats() {
 // Multi-tenant utility: get active shop ID
 // Currently returns the user's first active shop from shop_memberships.
 // When multi-shop UI is built, this will return the user-selected shop.
+// eslint-disable-next-line react-refresh/only-export-components
 export function getActiveShopId(state: AppState): string {
   return state.activeShopId;
 }
@@ -595,6 +606,7 @@ export function getActiveShopId(state: AppState): string {
 // Multi-tenant utility: for future service layer injection
 // Services can call this to get the current shop_id for explicit queries.
 // For now, RLS + DEFAULT handles scoping — this is for future use.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useActiveShopId(): string {
   const { state } = useApp();
   return state.activeShopId;

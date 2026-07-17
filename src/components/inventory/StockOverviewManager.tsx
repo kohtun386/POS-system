@@ -3,7 +3,6 @@ import { Plus, Search, Edit, Trash2, Package, AlertTriangle, ArrowUpDown } from 
 import { StockItem } from '../../types';
 import { stockItemsService } from '../../lib/services';
 import { useApp, useCapability } from '../../context/SupabaseAppContext';
-import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { swalConfig } from '../../lib/sweetAlert';
 import { UpgradePrompt } from '../ui/UpgradePrompt';
 
@@ -223,7 +222,6 @@ export function StockOverviewManager() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState<StockItem | null>(null);
   const [adjustItem, setAdjustItem] = useState<StockItem | null>(null);
-  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const loadItems = useCallback(async () => {
     if (!currentShop) return;
@@ -254,7 +252,7 @@ export function StockOverviewManager() {
           <Package className="h-16 w-16 text-secondary-300" />
           <h2 className="text-2xl font-bold text-secondary-900">Stock Overview</h2>
           <p className="text-secondary-500 max-w-md">This feature is available on Growth tier and above.</p>
-          <UpgradePrompt feature="Stock Overview" tier="growth" onClose={() => setShowUpgrade(false)} />
+          <UpgradePrompt feature="Stock Overview" tier="growth" onClose={() => {}} />
         </div>
       </div>
     );
