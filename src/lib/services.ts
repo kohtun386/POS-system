@@ -1801,7 +1801,20 @@ export const platformAdminService = {
       body: filters ?? {},
     })
     if (error) throw error
-    return (data?.shops ?? []) as PlatformShop[]
+    return (data?.shops ?? []).map((s: Record<string, unknown>) => ({
+      id: s.id as string,
+      name: s.name as string,
+      address: s.address as string | undefined,
+      email: s.email as string | undefined,
+      phone: s.phone as string | undefined,
+      subscriptionTier: s.subscription_tier as string,
+      isActive: s.is_active as boolean,
+      ownerId: s.owner_id as string | undefined,
+      createdAt: s.created_at as string,
+      updatedAt: s.updated_at as string | undefined,
+      membershipActive: s.membership_active as boolean | undefined,
+      membershipRole: s.membership_role as string | undefined,
+    })) as PlatformShop[]
   },
 
   async getShopDetail(shopId: string): Promise<PlatformShopDetail> {

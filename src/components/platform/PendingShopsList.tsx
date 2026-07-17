@@ -37,7 +37,11 @@ export function PendingShopsList() {
   }
 
   async function handleApprove(shopId: string) {
-    const result = await swalConfig.confirm('Approve this shop and activate the user?');
+    const result = await swalConfig.confirm(
+      'Approve this shop?',
+      'This will activate the shop and allow the owner to access the POS system.',
+      'Yes, approve it!'
+    );
     if (!result.isConfirmed) return;
     try {
       await platformAdminService.approveShop(shopId);
