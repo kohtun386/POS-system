@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, User, Mail, Eye, EyeOff, ShoppingCart } from 'lucide-react';
+import { Lock, User, Mail, Eye, EyeOff, ShoppingCart, Store } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { swalConfig } from '../../lib/sweetAlert';
 
@@ -11,7 +11,8 @@ export function LoginPage() {
     email: '',
     password: '',
     name: '',
-    username: ''
+    username: '',
+    shopName: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,12 +20,12 @@ export function LoginPage() {
 
     try {
       if (isSignUp) {
-        if (!credentials.name.trim() || !credentials.username.trim()) {
+        if (!credentials.name.trim() || !credentials.username.trim() || !credentials.shopName.trim()) {
           // Show validation error toast with our styled config
-          swalConfig.warning('Missing Information: Name and username are required');
+          swalConfig.warning('Missing Information: Name, username, and shop name are required');
           return;
         }
-        await signUp(credentials.email, credentials.password, credentials.name, credentials.username);
+        await signUp(credentials.email, credentials.password, credentials.name, credentials.username, credentials.shopName);
       } else {
         await signIn(credentials.email, credentials.password);
       }
@@ -35,7 +36,7 @@ export function LoginPage() {
   };
 
   const resetForm = () => {
-    setCredentials({ email: '', password: '', name: '', username: '' });
+    setCredentials({ email: '', password: '', name: '', username: '', shopName: '' });
   };
 
   const toggleMode = () => {
@@ -91,6 +92,23 @@ export function LoginPage() {
                       onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
                       className="input pl-10 h-11"
                       placeholder="Choose a username"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
+                    Shop Name
+                  </label>
+                  <div className="relative">
+                    <Store className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400 h-4 w-4" />
+                    <input
+                      type="text"
+                      value={credentials.shopName}
+                      onChange={(e) => setCredentials(prev => ({ ...prev, shopName: e.target.value }))}
+                      className="input pl-10 h-11"
+                      placeholder="Enter your shop name"
                       required
                     />
                   </div>

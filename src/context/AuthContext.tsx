@@ -13,7 +13,7 @@ interface AuthContextType {
   loading: boolean
   isPendingApproval: boolean
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, name: string, username: string) => Promise<void>
+  signUp: (email: string, password: string, name: string, username: string, shopName: string) => Promise<void>
   signOut: () => Promise<void>
   updateProfile: (updates: Partial<User>) => Promise<void>
 }
@@ -155,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function signUp(email: string, password: string, name: string, username: string) {
+  async function signUp(email: string, password: string, name: string, username: string, shopName: string) {
     setLoading(true)
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -165,6 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             name,
             username,
+            shop_name: shopName,
             isPending: true,
           }
         }

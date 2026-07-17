@@ -6,8 +6,6 @@ interface PendingShop {
   shopId: string;
   shopName: string;
   userId: string;
-  userName: string;
-  email: string;
   createdAt: string;
 }
 
@@ -28,9 +26,7 @@ export function PendingShopsList() {
         .map((s: PlatformShop) => ({
           shopId: s.id,
           shopName: s.name || 'Unknown',
-          userId: (s as Record<string, unknown>).owner_id as string || '',
-          userName: '',
-          email: '',
+          userId: s.ownerId || '',
           createdAt: s.createdAt || '',
         }));
       setPending(items);
