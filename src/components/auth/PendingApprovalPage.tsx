@@ -1,22 +1,8 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import { swalConfig } from '../../lib/sweetAlert';
 
 export function PendingApprovalPage() {
   const { signOut, profile } = useAuth();
-  const [checking, setChecking] = useState(false);
-
-  async function handleRefresh() {
-    setChecking(true);
-    try {
-      // Reload the page to re-check profile status
-      window.location.reload();
-    } catch {
-      swalConfig.error('Failed to check status. Please try again.');
-      setChecking(false);
-    }
-  }
 
   return (
     <div className="min-h-screen bg-secondary-50 dark:bg-primary-950 flex items-center justify-center p-4 relative overflow-hidden">
@@ -79,11 +65,10 @@ export function PendingApprovalPage() {
           {/* Actions */}
           <div className="space-y-3">
             <button
-              onClick={handleRefresh}
-              disabled={checking}
+              onClick={() => window.location.reload()}
               className="btn btn-secondary w-full h-11 font-semibold"
             >
-              {checking ? 'Checking...' : 'Refresh Status'}
+              Refresh Status
             </button>
             <button
               onClick={() => signOut()}
