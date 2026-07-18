@@ -81,3 +81,5 @@ test-results/
 # Claude Code skills (AI tooling config)
 .claude/skills/
 supabase/snippets/
+schema-drift-report.json
+multi-tenancy-audit-report.json
