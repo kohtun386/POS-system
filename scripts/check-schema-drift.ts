@@ -72,12 +72,6 @@ interface TierSpecEntry {
   defaultEnabled: boolean
 }
 
-interface DbColumn {
-  table_name: string
-  column_name: string
-  data_type: string
-}
-
 interface FeatureDefRow {
   key: string
   subscription_tier: string
@@ -192,48 +186,6 @@ async function fetchFeatureDefinitions(client: ReturnType<typeof createClient>):
 
   if (error) throw new Error(`feature_definitions query failed: ${error.message}`)
   return (data || []) as FeatureDefRow[]
-}
-
-async function fetchDbSchema(client: ReturnType<typeof createClient>): Promise<DbColumn[]> {
-  const { data, error } = await client
-    .rpc('get_schema_info')
-    .select('*')
-
-  // Fallback: query information_schema directly via raw SQL if RPC not available
-  if (error) {
-    // Use a simple approach: query each known table's columns
-    const knownTables = [
-      'app_settings', 'categories', 'products', 'product_batches',
-      'customers', 'suppliers', 'discounts', 'users', 'sales',
-      'sales_tabs', 'shops', 'shop_memberships', 'shop_features',
-      'feature_definitions', 'print_jobs', 'cash_shifts',
-      'alert_recipients', 'alert_templates', 'alert_configurations',
-      'alert_history', 'notification_service_config',
-      'purchase_logs', 'stock_items', 'stock_adjustments', 'audit_logs',
-      'currency_config', 'exchange_rates', 'exchange_rate_history',
-    ]
-
-    const columns: DbColumn[] = []
-
-    for (const table of knownTables) {
-      const { data: cols } = await client
-        .from(table as any)
-        .select('*')
-        .limit(0)
-
-      // If query succeeds, table exists — get column info from first row structure
-      if (cols !== null) {
-        // We can't easily get column metadata via PostgREST
-        // Instead, we'll count columns by checking the table's select behavior
-        // This is a known limitation — we'll use the database.types.ts as fallback
-      }
-    }
-
-    // Return empty — we'll use database.types.ts as primary schema source
-    return []
-  }
-
-  return (data || []) as DbColumn[]
 }
 
 // ---------------------------------------------------------------------------
