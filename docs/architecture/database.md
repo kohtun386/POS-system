@@ -31,27 +31,29 @@
 ### 1.1 Core Business Tables
 
 #### `app_settings`
-Global/preferences-style configuration. This table no longer owns store identity, tax, currency, or invoice numbering in the target dynamic shop configuration architecture.
+Shop-level preferences and configuration. One row per shop.
 
 | Column | Type | Default | Notes |
 |--------|------|---------|-------|
 | `id` | uuid PK | `gen_random_uuid()` | |
 | `shop_id` | uuid FK | default shop | Compatibility tenant link and cleanup key |
+| `store_name` | text | `'sekaLabs 2025 POS'` | Display name for receipts |
+| `store_address` | text | | Physical address for receipts |
+| `store_phone` | text | | Contact phone for receipts |
+| `store_email` | text | | Contact email |
+| `store_logo` | text | | Logo URL or base64 |
+| `tax_rate` | numeric | `0.0000` | Tax percentage (0-100) |
+| `currency` | text | `'USD'` | Currency code (locked to MMK per VISION.md §19) |
 | `interface_mode` | text | `'touch'` | CHECK: `'touch'` \| `'traditional'` |
 | `auto_backup` | boolean | `true` | Backup preference |
 | `receipt_printer` | boolean | `false` | Printer preference |
 | `theme` | text | `'light'` | CHECK: `'light'` \| `'dark'` \| `'auto'` |
-| `exchange_rate_provider` | text | `'exchangerate'` | Global rate provider |
-| `exchange_rate_api_key` | text | | Temporarily stored in DB; security risk documented below |
-| `exchange_rate_update_interval` | integer | `60` | Minutes |
+| `invoice_prefix` | text | `'INV'` | Invoice number prefix |
+| `invoice_counter` | integer | `1000` | Current invoice counter |
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
-**Canonical ownership:** Store name, address, phone, email, logo, tax rate, display currency, base currency, invoice prefix, invoice counter, business type, and draft retention belong to `shops`.
-
-**Exchange-rate API key note:** `exchange_rate_api_key` remains in `app_settings` for the current architecture. This is a known security compromise. Future work should move provider keys to Edge Function secrets or server-side deployment environment variables and document rotation.
-
-**Service:** `settingsService.get()` and `settingsService.update()` should handle only the global/preference fields above. Shop-owned fields must use `shopsService`.
+**Service:** `settingsService.get()` and `settingsService.update()` handle all fields in this table.
 
 ---
 
@@ -934,6 +936,37 @@ Cash drawer shift tracking. Growth+ only (VISION.md v3.1.0 §12).
 | `idx_cash_shifts_cashier` | cash_shifts | `cashier_id` | B-tree | |
 | `idx_sales_cashier_id` | sales | `cashier_id` | B-tree | Shift tracking |
 | `idx_sales_shop_created_status` | sales | `shop_id, created_at, status` | Composite | Daily limit check in `checkout_complete` |
+
+---
+
+### 7.9 `audit_logs`
+
+Platform admin action audit trail. All writes go through Edge Functions using `service_role` key (bypasses RLS). No client-side access.
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `actor_id` | uuid FK NOT NULL | | → `users(id)`. Platform admin who performed action |
+| `action` | text NOT NULL | | Action name (e.g., `approve_shop`, `reject_shop`) |
+| `target_type` | text NOT NULL | | Entity type (shop, user, feature, subscription) |
+| `target_id` | uuid | | UUID of target entity (nullable for global actions) |
+| `shop_id` | uuid FK | | → `shops(id)`. Shop context (nullable for cross-tenant actions) |
+| `details` | jsonb NOT NULL | `'{}'` | Old/new values, reason, metadata |
+| `ip_address` | text | | Caller IP from X-Forwarded-For header |
+| `created_at` | timestamptz NOT NULL | `now()` | |
+
+**Indexes:**
+| Index | Column(s) | Type | Notes |
+|-------|-----------|------|-------|
+| `idx_audit_logs_actor_id` | `actor_id` | B-tree | |
+| `idx_audit_logs_action` | `action` | B-tree | |
+| `idx_audit_logs_target` | `target_type, target_id` | Composite | |
+| `idx_audit_logs_shop_id` | `shop_id` | Partial | `WHERE shop_id IS NOT NULL` |
+| `idx_audit_logs_created_at` | `created_at` | B-tree | DESC |
+
+**RLS:** Enabled, but no policies (implicit deny for all authenticated/anonymous roles). Only `service_role` can access via Edge Functions.
+
+**Usage:** Platform admin operations (VISION.md §17) log actions here for audit trail.
 
 ---
 

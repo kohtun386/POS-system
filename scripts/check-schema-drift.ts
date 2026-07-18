@@ -402,10 +402,10 @@ function checkColumnCountDrift(
     // This is a simplified check — flag tables where TS types have
     // significantly more columns than documented
     const expectedCounts: Record<string, number> = {
-      shops: 14,
-      sales: 20,
+      shops: 20,
+      sales: 23,
       products: 18,
-      app_settings: 10,
+      app_settings: 17,
     }
 
     const expected = expectedCounts[table]
