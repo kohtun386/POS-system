@@ -71,7 +71,7 @@ export interface Discount {
   id: string;
   name: string;
   description: string;
-  type: 'percentage' | 'fixed' | 'bogo' | 'free_gift';
+  type: 'percentage' | 'fixed' | 'free_gift';
   value: number;
   conditions: DiscountCondition[];
   freeGiftProducts?: string[]; // Product IDs for free gifts
@@ -138,7 +138,7 @@ export interface AppliedDiscount {
   discountId: string;
   discountName: string;
   discountAmount: number;
-  type: 'percentage' | 'fixed' | 'bogo' | 'free_gift';
+  type: 'percentage' | 'fixed' | 'free_gift';
 }
 
 export interface SalesTab {
@@ -411,16 +411,9 @@ export type PrintJobStatus = 'pending' | 'printing' | 'completed' | 'failed';
 export interface PrintJob {
   id: string;
   shopId: string;
-  saleId: string;
-  printerType: 'receipt' | 'kitchen';
+  orderId: string;
   status: PrintJobStatus;
   configData: Record<string, string | number | boolean>;
-  connectionType: 'bluetooth' | 'network';
-  printerAddress: string;
-  payload: Record<string, unknown>;
-  isReprint: boolean;
-  retryCount: number;
-  errorMessage?: string;
   createdAt: Date;
   completedAt?: Date;
 }

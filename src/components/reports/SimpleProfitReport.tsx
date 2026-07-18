@@ -23,7 +23,7 @@ export function SimpleProfitReport() {
       const from = new Date(selectedYear, selectedMonth, 1);
       const to = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
 
-      const { data: salesData } = await salesService.getAll();
+      const { data: salesData } = await salesService.getAll({ shopId: currentShop.id });
       const monthSales = (salesData || []).filter(s => {
         const d = new Date(s.timestamp);
         return d >= from && d <= to && s.status === 'completed';

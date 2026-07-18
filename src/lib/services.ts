@@ -151,12 +151,19 @@ export async function resolveCapabilitiesRpc(shopId: string): Promise<string[]> 
 
 // Products Service
 export const productsService = {
-  async getAll(): Promise<Product[]> {
-    const { data, error } = await supabase
+  async getAll(shopId?: string): Promise<Product[]> {
+    let query = supabase
       .from('products')
       .select('*')
       .eq('active', true)
       .order('name')
+
+    // Defense-in-depth: filter by shop_id when provided (RLS is primary layer)
+    if (shopId) {
+      query = query.eq('shop_id', shopId)
+    }
+
+    const { data, error } = await query
 
     if (error) throw error
 
@@ -354,11 +361,18 @@ export const productsService = {
 
 // Customers Service
 export const customersService = {
-  async getAll(): Promise<Customer[]> {
-    const { data, error } = await supabase
+  async getAll(shopId?: string): Promise<Customer[]> {
+    let query = supabase
       .from('customers')
       .select('*')
       .order('name')
+
+    // Defense-in-depth: filter by shop_id when provided (RLS is primary layer)
+    if (shopId) {
+      query = query.eq('shop_id', shopId)
+    }
+
+    const { data, error } = await query
 
     if (error) throw error
 
@@ -462,12 +476,19 @@ export const customersService = {
 // Sales Service
 export const salesService = {
   async getAll(
-    { limit = 50, cursor = 0 }: { limit?: number; cursor?: number } = {}
+    { limit = 50, cursor = 0, shopId }: { limit?: number; cursor?: number; shopId?: string } = {}
   ): Promise<{ data: Sale[]; count: number; hasMore: boolean }> {
-    // Fetch total count (lightweight — only scans index)
-    const { count, error: countError } = await supabase
+    // Defense-in-depth: filter by shop_id when provided (RLS is primary layer)
+    let countQuery = supabase
       .from('sales')
       .select('*', { count: 'exact', head: true })
+
+    if (shopId) {
+      countQuery = countQuery.eq('shop_id', shopId)
+    }
+
+    // Fetch total count (lightweight — only scans index)
+    const { count, error: countError } = await countQuery
 
     if (countError) throw countError
 
@@ -475,11 +496,16 @@ export const salesService = {
     const to = cursor + limit - 1
 
     // Fetch paginated rows
-    const { data, error } = await supabase
+    let dataQuery = supabase
       .from('sales')
       .select('*')
       .order('created_at', { ascending: false })
-      .range(from, to)
+
+    if (shopId) {
+      dataQuery = dataQuery.eq('shop_id', shopId)
+    }
+
+    const { data, error } = await dataQuery.range(from, to)
 
     if (error) throw error
 
@@ -625,11 +651,18 @@ export const checkoutService = {
 
 // Discounts Service
 export const discountsService = {
-  async getAll(): Promise<Discount[]> {
-    const { data, error } = await supabase
+  async getAll(shopId?: string): Promise<Discount[]> {
+    let query = supabase
       .from('discounts')
       .select('*')
       .order('name')
+
+    // Defense-in-depth: filter by shop_id when provided (RLS is primary layer)
+    if (shopId) {
+      query = query.eq('shop_id', shopId)
+    }
+
+    const { data, error } = await query
 
     if (error) throw error
 
@@ -744,12 +777,18 @@ export const discountsService = {
 
 // Settings Service
 export const settingsService = {
-  async get(): Promise<AppSettings> {
-    const { data, error } = await supabase
+  async get(shopId?: string): Promise<AppSettings> {
+    let query = supabase
       .from('app_settings')
       .select('*')
       .limit(1)
-      .single()
+
+    // Defense-in-depth: filter by shop_id when provided (RLS is primary layer)
+    if (shopId) {
+      query = query.eq('shop_id', shopId)
+    }
+
+    const { data, error } = await query.single()
 
     if (error) throw error
 
@@ -769,13 +808,19 @@ export const settingsService = {
     }
   },
 
-  async update(settings: Partial<AppSettings>): Promise<AppSettings> {
+  async update(settings: Partial<AppSettings>, shopId?: string): Promise<AppSettings> {
     // First, get the existing settings record to get its ID
-    const { data: existingData, error: fetchError } = await supabase
+    let fetchQuery = supabase
       .from('app_settings')
       .select('id')
       .limit(1)
-      .single()
+
+    // Defense-in-depth: filter by shop_id when provided (RLS is primary layer)
+    if (shopId) {
+      fetchQuery = fetchQuery.eq('shop_id', shopId)
+    }
+
+    const { data: existingData, error: fetchError } = await fetchQuery.single()
 
     if (fetchError) throw fetchError
 

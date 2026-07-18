@@ -357,7 +357,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Load most data in parallel — shop-dependent queries follow sequentially
+      // Load shop FIRST — needed for defense-in-depth shop_id filtering
+      const shop = user ? await shopMembershipsService.getShopByUserId(user.id) : null;
+      const shopId = shop?.id;
+
+      // Set active shop immediately
+      if (shop) {
+        dispatch({ type: 'SET_SHOP', payload: shop });
+        dispatch({ type: 'SET_ACTIVE_SHOP', payload: shop.id });
+      }
+
+      // Load data in parallel with shop_id for defense-in-depth filtering
       const [
         products,
         customers,
@@ -366,21 +376,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         settings,
         users,
         salesTabs,
-        shop,
       ] = await Promise.all([
-        productsService.getAll(),
-        customersService.getAll(),
-        salesService.getAll().then(r => r.data),
-        discountsService.getAll(),
-        settingsService.get(),
+        productsService.getAll(shopId),
+        customersService.getAll(shopId),
+        salesService.getAll({ shopId }).then(r => r.data),
+        discountsService.getAll(shopId),
+        settingsService.get(shopId),
         usersService.getAll(),
         user ? salesTabsService.getByUserId(user.id) : Promise.resolve([]),
-        // Load user's active shop via service layer
-        user ? shopMembershipsService.getShopByUserId(user.id) : Promise.resolve(null),
         featureDefinitionsService.getAll(),
       ]);
 
-      // Load shop feature overrides + cash shifts AFTER shop is known (depends on shop.id)
+      // Load shop feature overrides + cash shifts (already have shop.id)
       const [, latestCashShifts] = await Promise.all([
         shop ? shopFeaturesService.getByShopId(shop.id) : Promise.resolve([]),
         shop ? cashShiftsService.getByShopId(shop.id, 1) : Promise.resolve([]),
@@ -393,12 +400,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_SETTINGS', payload: settings });
       dispatch({ type: 'SET_USERS', payload: users });
       dispatch({ type: 'SET_SALES_TABS', payload: salesTabs });
-
-      // Set active shop
-      if (shop) {
-        dispatch({ type: 'SET_SHOP', payload: shop });
-        dispatch({ type: 'SET_ACTIVE_SHOP', payload: shop.id });
-      }
 
       // Resolve capabilities (VISION §5) — server-side via RPC
       if (shop) {
