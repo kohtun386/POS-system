@@ -43,7 +43,7 @@ Shop-level preferences and configuration. One row per shop.
 | `store_email` | text | | Contact email |
 | `store_logo` | text | | Logo URL or base64 |
 | `tax_rate` | numeric | `0.0000` | Tax percentage (0-100) |
-| `currency` | text | `'USD'` | Currency code (locked to MMK per VISION.md §19) |
+| `currency` | text | `'USD'` | **RESERVED** — Not used in v1 (MMK-only per VISION.md §19). Kept for future multi-currency support. |
 | `interface_mode` | text | `'touch'` | CHECK: `'touch'` \| `'traditional'` |
 | `auto_backup` | boolean | `true` | Backup preference |
 | `receipt_printer` | boolean | `false` | Printer preference |
