@@ -788,9 +788,26 @@ export const settingsService = {
       query = query.eq('shop_id', shopId)
     }
 
-    const { data, error } = await query.single()
+    const { data, error } = await query.maybeSingle()
 
     if (error) throw error
+
+    if (!data) {
+      return {
+        storeName: 'CoffeeShop POS',
+        storeAddress: '',
+        storePhone: '',
+        storeEmail: '',
+        storeLogo: undefined,
+        taxRate: 0,
+        interfaceMode: 'touch',
+        autoBackup: true,
+        receiptPrinter: true,
+        theme: 'light',
+        invoicePrefix: 'INV',
+        invoiceCounter: 1000,
+      }
+    }
 
     return {
       storeName: data.store_name || 'CoffeeShop POS',
@@ -820,9 +837,10 @@ export const settingsService = {
       fetchQuery = fetchQuery.eq('shop_id', shopId)
     }
 
-    const { data: existingData, error: fetchError } = await fetchQuery.single()
+    const { data: existingData, error: fetchError } = await fetchQuery.maybeSingle()
 
     if (fetchError) throw fetchError
+    if (!existingData) throw new Error('Settings not found for this shop. The auto-create trigger may not have fired.')
 
     // Update the existing record by ID
     const { data, error } = await supabase

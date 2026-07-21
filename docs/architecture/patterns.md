@@ -92,6 +92,23 @@ min_stock: product.minStock,
 is_weight_based: product.isWeightBased,
 ```
 
+### Read-or-Default Pattern (1:1 Configuration Tables)
+
+For tables that have a 1:1 relationship with a parent entity (e.g., `app_settings` per `shops`), use `.maybeSingle()` with a hardcoded default fallback:
+
+```ts
+const { data, error } = await query.maybeSingle()
+if (error) throw error
+if (!data) {
+  return { /* hardcoded defaults matching DB column defaults */ }
+}
+return { /* mapped data from DB row */ }
+```
+
+**Why:** Prevents `Promise.all()` cascade failures in the initial data load (`src/context/SupabaseAppContext.tsx`). If one query throws (e.g., 406 from `.single()` with no rows), all parallel fetches are lost. The fallback keeps the app functional even when the DB row doesn't exist (e.g., before the auto-create trigger fires).
+
+**Used by:** `settingsService.get()`, `cashShiftsService.getOpenByCashier()`, `stockItemsService.getById()`.
+
 ### Services Inventory
 
 | Service | Table | Notes |

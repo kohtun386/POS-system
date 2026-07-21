@@ -31,7 +31,7 @@
 ### 1.1 Core Business Tables
 
 #### `app_settings`
-Shop-level preferences and configuration. One row per shop.
+Shop-level preferences and configuration. One row per shop. Auto-created by `trg_create_default_app_settings` trigger on `shops` INSERT.
 
 | Column | Type | Default | Notes |
 |--------|------|---------|-------|
@@ -502,6 +502,7 @@ currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only
 | `update_updated_at_column()` | SECURITY DEFINER | Sets `updated_at = now()` on UPDATE | Yes — all tables with `updated_at` |
 | `generate_invoice_number()` | INVOKER, `search_path=''` | Reads `app_settings.invoice_prefix`/`invoice_counter`, increments counter, returns formatted invoice number | No — called by `checkout_complete()` RPC (trigger path dropped in m38) |
 | `handle_new_auth_user()` | SECURITY DEFINER, `search_path=''` | Creates `public.users` + `shops` + `shop_memberships` rows on `auth.users` insert | Yes — AFTER INSERT on `auth.users` |
+| `handle_new_shop_app_settings()` | SECURITY DEFINER, `search_path=''` | Auto-creates `app_settings` row for newly inserted shops. Inserts with defaults: `interface_mode='touch'`, `theme='light'`, `auto_backup=true`, `invoice_prefix=COALESCE(shop.invoice_prefix,'INV')`, `invoice_counter=COALESCE(shop.invoice_counter,1000)`. Ensures 1:1 data integrity between shops and app_settings. | Yes — AFTER INSERT on `shops` |
 | `get_current_exchange_rate(text, text)` | INVOKER, `search_path=''` | **DEPRECATED (v3.1.0).** Returns current rate between two currencies. MMK-only — no multi-currency. | No — called from app |
 | `convert_currency_amount(decimal, text, text)` | INVOKER, `search_path=''` | **DEPRECATED (v3.1.0).** Converts amount using current rate. MMK-only — no multi-currency. | No — called from app |
 | `update_exchange_rate(text, text, decimal, text, boolean)` | INVOKER, `search_path=''` | **DEPRECATED (v3.1.0).** Ends current rate, inserts new, records history. MMK-only — no multi-currency. | No — called from app |
