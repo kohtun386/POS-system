@@ -417,7 +417,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           cart: [],
           selectedCustomer: null,
         };
-        const newTab = await salesTabsService.create(user.id, initialTab);
+        const newTab = await salesTabsService.create(user.id, initialTab, shop?.id);
         dispatch({ type: 'ADD_SALES_TAB', payload: newTab });
       }
 

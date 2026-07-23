@@ -1012,15 +1012,19 @@ export const salesTabsService = {
     }))
   },
 
-  async create(userId: string, tab: Omit<SalesTab, 'id' | 'createdAt'>): Promise<SalesTab> {
+  async create(userId: string, tab: Omit<SalesTab, 'id' | 'createdAt'>, shopId?: string): Promise<SalesTab> {
+    const insertData: Record<string, unknown> = {
+      user_id: userId,
+      name: tab.name,
+      cart: tab.cart,
+      selected_customer_id: tab.selectedCustomer?.id,
+    };
+    if (shopId) {
+      insertData.shop_id = shopId;
+    }
     const { data, error } = await supabase
       .from('sales_tabs')
-      .insert({
-        user_id: userId,
-        name: tab.name,
-        cart: tab.cart,
-        selected_customer_id: tab.selectedCustomer?.id
-      })
+      .insert(insertData)
       .select()
       .single()
 
