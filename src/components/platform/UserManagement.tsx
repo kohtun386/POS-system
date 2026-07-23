@@ -1,3 +1,6 @@
+// @deprecated Per VISION.md §4.4, platform_admin cannot manage staff.
+// This component is no longer routed to from PlatformLayout.
+// Kept for reference only — do not re-enable without VISION.md amendment.
 import { useEffect, useState, useCallback } from 'react';
 import { Users, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { platformAdminService, PlatformUser, PlatformUserMembership } from '../../lib/services';

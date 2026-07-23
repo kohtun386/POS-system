@@ -17,6 +17,13 @@ Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
+  // @deprecated Per VISION.md §4.4, platform_admin cannot manage staff.
+  // This function is disabled. All staff management must happen shop-side by shop admins.
+  return new Response(
+    JSON.stringify({ error: "Platform Admin cannot manage staff per VISION.md §4.4. This function is deprecated." }),
+    { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+  );
+
   try {
     const { membership_id, user_id, shop_id, role } = await req.json();
 

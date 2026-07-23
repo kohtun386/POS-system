@@ -659,6 +659,9 @@ Platform Admin UI (React)
 | `platform-admin-manage-features` | Update feature_definitions rows |
 | `platform-admin-daily-stats` | Platform-wide metrics (MRR, active shops) |
 | `staff-create` | Create staff user in specific shop (bypasses self-registration trigger shop+membership creation) |
+| `platform-admin-list-users` | List users across shops — ⚠️ DEPRECATED (VISION.md §4.4) |
+| `platform-admin-toggle-user-active` | Activate/deactivate user membership — ⚠️ DEPRECATED (VISION.md §4.4) |
+| `platform-admin-update-user-role` | Change user role — ⚠️ DEPRECATED (VISION.md §4.4) |
 
 ### 17.4 Client-Side Constraint
 
