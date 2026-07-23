@@ -72,52 +72,38 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
           payload: state.users.map(u => u.id === user.id ? updatedUser : u)
         });
       } else {
-        // Create new user
+        // Create new staff user via staff-create Edge Function
+        // This bypasses the self-registration trigger's shop+membership creation
+        // by setting staff_creation=true in user_metadata.
         if (!formData.password || formData.password.length < 6) {
           swalConfig.error('Password must be at least 6 characters long');
           return;
         }
 
-        // Save current admin session before signUp (signUp replaces the session)
-        const { data: { session: adminSession } } = await supabase.auth.getSession();
-
-        // Create auth user via signUp (sends confirmation email)
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            data: {
-              name: formData.name,
-              username: formData.username,
-            }
-          }
-        });
-
-        if (authError) throw authError;
-        if (!authData.user) throw new Error('Failed to create auth user');
-
-        const newUserId = authData.user.id;
-
-        // Restore admin session immediately (signUp replaces current session)
-        if (adminSession) {
-          await supabase.auth.setSession(adminSession);
+        if (!state.shop?.id) {
+          swalConfig.error('No active shop selected');
+          return;
         }
 
-        // Trigger handle_new_auth_user() on auth.users INSERT already created
-        // a default profile row with role='cashier'. UPDATE to set admin-chosen role.
-        // (Admin UPDATE policy allows any authenticated admin to UPDATE any user.)
+        const { data: response, error: fnError } = await supabase.functions.invoke('staff-create', {
+          body: {
+            shop_id: state.shop.id,
+            email: formData.email,
+            password: formData.password,
+            name: formData.name,
+            username: formData.username,
+            role: formData.role,
+          },
+        });
+
+        if (fnError) throw fnError;
+        if (!response?.user_id) throw new Error('Failed to create staff user');
+
+        // Fetch the newly created user profile from DB
         const { data: profileData, error: profileError } = await supabase
           .from('users')
-          .update({
-            username: formData.username,
-            name: formData.name,
-            role: formData.role,
-            permissions: [],
-            active: formData.active,
-            avatar: formData.avatar || null
-          })
-          .eq('id', newUserId)
-          .select()
+          .select('*')
+          .eq('id', response.user_id)
           .single();
 
         if (profileError) throw profileError;

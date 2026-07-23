@@ -658,6 +658,7 @@ Platform Admin UI (React)
 | `platform-admin-get-shop-detail` | Full shop + owner + membership info |
 | `platform-admin-manage-features` | Update feature_definitions rows |
 | `platform-admin-daily-stats` | Platform-wide metrics (MRR, active shops) |
+| `staff-create` | Create staff user in specific shop (bypasses self-registration trigger shop+membership creation) |
 
 ### 17.4 Client-Side Constraint
 
