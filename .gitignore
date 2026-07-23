@@ -72,3 +72,6 @@ test-results/
 supabase/snippets/
 schema-drift-report.json
 multi-tenancy-audit-report.json
+.claude/
+REMAINING_WORK.md
+production-readiness-report.json
