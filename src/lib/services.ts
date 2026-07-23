@@ -146,7 +146,7 @@ export async function resolveCapabilitiesRpc(shopId: string): Promise<string[]> 
     throw error
   }
 
-  return data ?? []
+  return (data ?? []).map((row: { capability: string }) => row.capability)
 }
 
 // Products Service
