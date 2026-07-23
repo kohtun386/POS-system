@@ -25,9 +25,9 @@ describe('PendingApprovalPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('shows contact info for Ko Htun', () => {
+  it('shows email notification message', () => {
     render(<PendingApprovalPage />)
-    expect(screen.getByText(/Contact Ko Htun via Viber or WhatsApp/)).toBeInTheDocument()
+    expect(screen.getByText(/No need to refresh/)).toBeInTheDocument()
   })
 
   it('renders sign out button', () => {

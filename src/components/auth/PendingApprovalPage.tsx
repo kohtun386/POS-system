@@ -50,26 +50,20 @@ export function PendingApprovalPage() {
             </p>
             <ul className="text-xs text-secondary-600 dark:text-secondary-300 space-y-1">
               <li>• Platform admin reviews your registration</li>
-              <li>• You'll be notified once approved</li>
+              <li>• You'll receive an email once approved</li>
               <li>• Then you can start using the POS system</li>
             </ul>
           </div>
 
-          {/* Contact info */}
+          {/* Email notification info */}
           <div className="mb-6 p-3 bg-secondary-50 dark:bg-secondary-900 rounded-lg">
             <p className="text-xs text-secondary-600 dark:text-secondary-300">
-              Questions? Contact Ko Htun via Viber or WhatsApp.
+              You'll receive an email when your shop is approved. No need to refresh.
             </p>
           </div>
 
           {/* Actions */}
           <div className="space-y-3">
-            <button
-              onClick={() => window.location.reload()}
-              className="btn btn-secondary w-full h-11 font-semibold"
-            >
-              Refresh Status
-            </button>
             <button
               onClick={() => signOut()}
               className="btn btn-primary w-full h-11 font-semibold shadow-md hover:shadow-copper"
