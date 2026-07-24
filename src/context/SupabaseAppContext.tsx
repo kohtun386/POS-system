@@ -13,7 +13,6 @@ import {
   usersService,
   salesTabsService,
   shopMembershipsService,
-  featureDefinitionsService,
   shopFeaturesService,
   cashShiftsService,
   resolveCapabilitiesRpc
@@ -368,30 +367,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Load data in parallel with shop_id for defense-in-depth filtering
-      const [
-        products,
-        customers,
-        sales,
-        discounts,
-        settings,
-        users,
-        salesTabs,
-      ] = await Promise.all([
-        productsService.getAll(shopId),
-        customersService.getAll(shopId),
-        salesService.getAll({ shopId }).then(r => r.data),
-        discountsService.getAll(shopId),
-        settingsService.get(shopId),
-        usersService.getAll(),
-        user ? salesTabsService.getByUserId(user.id) : Promise.resolve([]),
-        featureDefinitionsService.getAll(),
-      ]);
+      let products: Product[] = [];
+      let customers: Customer[] = [];
+      let sales: Sale[] = [];
+      let discounts: Discount[] = [];
+      let settings: AppSettings = initialState.settings;
+      let users: User[] = [];
+      let salesTabs: SalesTab[] = [];
 
-      // Load shop feature overrides + cash shifts (already have shop.id)
-      const [, latestCashShifts] = await Promise.all([
-        shop ? shopFeaturesService.getByShopId(shop.id) : Promise.resolve([]),
-        shop ? cashShiftsService.getByShopId(shop.id, 1) : Promise.resolve([]),
-      ]);
+      try {
+        [
+          products,
+          customers,
+          sales,
+          discounts,
+          settings,
+          users,
+          salesTabs,
+        ] = await Promise.all([
+          productsService.getAll(shopId),
+          customersService.getAll(shopId),
+          salesService.getAll({ shopId }).then(r => r.data),
+          discountsService.getAll(shopId),
+          settingsService.get(shopId),
+          usersService.getAll(),
+          user ? salesTabsService.getByUserId(user.id) : Promise.resolve([]),
+        ]);
+        console.log('✓ Data loaded — products:', products.length, 'customers:', customers.length, 'sales:', sales.length);
+      } catch (dataError) {
+        console.warn('Some data failed to load (partial state may be empty):', dataError);
+        // Non-fatal — capabilities and cash shifts still attempt below.
+        // Individual services can still be loaded on retry via component-level refetches.
+      }
 
       dispatch({ type: 'SET_PRODUCTS', payload: products });
       dispatch({ type: 'SET_CUSTOMERS', payload: customers });
@@ -401,24 +408,43 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_USERS', payload: users });
       dispatch({ type: 'SET_SALES_TABS', payload: salesTabs });
 
-      // Resolve capabilities (VISION §5) — server-side via RPC
-      if (shop) {
-        const caps = await resolveCapabilitiesRpc(shop.id);
-        dispatch({ type: 'SET_CAPABILITIES', payload: caps });
+      // Resolve capabilities (VISION §5) — server-side via RPC.
+      // Isolated in its own try/catch so capabilities always attempt to resolve,
+      // even if the main data load above failed.
+      try {
+        if (shop) {
+          const caps = await resolveCapabilitiesRpc(shop.id);
+          dispatch({ type: 'SET_CAPABILITIES', payload: caps });
+          console.log('✓ Capabilities resolved:', caps.length);
+        }
+      } catch (capsError) {
+        console.warn('Failed to resolve capabilities:', capsError);
       }
 
-      // Set cash shifts
-      dispatch({ type: 'SET_CASH_SHIFTS', payload: latestCashShifts });
+      // Cash shifts + shop features (non-critical, isolated from core data)
+      try {
+        const [, latestCashShifts] = await Promise.all([
+          shop ? shopFeaturesService.getByShopId(shop.id) : Promise.resolve([]),
+          shop ? cashShiftsService.getByShopId(shop.id, 1) : Promise.resolve([]),
+        ]);
+        dispatch({ type: 'SET_CASH_SHIFTS', payload: latestCashShifts });
+      } catch (shiftError) {
+        console.warn('Failed to load cash shifts/shop features:', shiftError);
+      }
 
       // Create initial sales tab if none exist
       if (salesTabs.length === 0 && user) {
-        const initialTab: Omit<SalesTab, 'id' | 'createdAt'> = {
-          name: 'Sale 1',
-          cart: [],
-          selectedCustomer: null,
-        };
-        const newTab = await salesTabsService.create(user.id, initialTab, shop?.id);
-        dispatch({ type: 'ADD_SALES_TAB', payload: newTab });
+        try {
+          const initialTab: Omit<SalesTab, 'id' | 'createdAt'> = {
+            name: 'Sale 1',
+            cart: [],
+            selectedCustomer: null,
+          };
+          const newTab = await salesTabsService.create(user.id, initialTab, shop?.id);
+          dispatch({ type: 'ADD_SALES_TAB', payload: newTab });
+        } catch (tabError) {
+          console.warn('Failed to create initial sales tab:', tabError);
+        }
       }
 
       dispatch({ type: 'SET_ERROR', payload: null });

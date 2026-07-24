@@ -13,7 +13,7 @@ interface AuthContextType {
   loading: boolean
   isPendingApproval: boolean
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, name: string, username: string, shopName: string) => Promise<void>
+  signUp: (email: string, password: string, name: string, username: string, shopName: string) => Promise<{emailConfirmationSent: boolean}>
   signOut: () => Promise<void>
   updateProfile: (updates: Partial<User>) => Promise<void>
 }
@@ -173,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function signUp(email: string, password: string, name: string, username: string, shopName: string) {
+  async function signUp(email: string, password: string, name: string, username: string, shopName: string): Promise<{emailConfirmationSent: boolean}> {
     setLoading(true)
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -189,6 +189,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       })
       if (error) throw error
+
+      // Detect email confirmation needed: user created but no session (no auto-sign-in)
+      const needsConfirmation = !!data.user && !data.session
+
+      if (needsConfirmation) {
+        setLoading(false)
+        swalConfig.success('Verification email sent! Please check your inbox and click the link to verify your account.')
+        // Track the user ID so onAuthStateChange doesn't attempt to load profile
+        loadedProfileUserId.current = data.user.id
+        return { emailConfirmationSent: true }
+      }
 
       // Profile row auto-created by DB trigger handle_new_auth_user().
       // Fetch the trigger-created profile instead of inserting.
@@ -248,6 +259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Show success toast with our styled config
       swalConfig.success('Account Created! Your account has been created successfully.');
+      return { emailConfirmationSent: false }
     } catch (error: unknown) {
       setLoading(false)
       const message = error instanceof Error ? error.message : 'Unknown error';

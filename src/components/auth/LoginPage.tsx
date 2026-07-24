@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, User, Mail, Eye, EyeOff, ShoppingCart, Store } from 'lucide-react';
+import { Lock, User, Mail, Eye, EyeOff, ShoppingCart, Store, MailCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { swalConfig } from '../../lib/sweetAlert';
 
@@ -7,6 +7,7 @@ export function LoginPage() {
   const { signIn, signUp, loading } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
   const [credentials, setCredentials] = useState({
     email: '',
     password: '',
@@ -25,7 +26,10 @@ export function LoginPage() {
           swalConfig.warning('Missing Information: Name, username, and shop name are required');
           return;
         }
-        await signUp(credentials.email, credentials.password, credentials.name, credentials.username, credentials.shopName);
+        const result = await signUp(credentials.email, credentials.password, credentials.name, credentials.username, credentials.shopName);
+        if (result.emailConfirmationSent) {
+          setEmailConfirmationSent(true);
+        }
       } else {
         await signIn(credentials.email, credentials.password);
       }
@@ -41,8 +45,53 @@ export function LoginPage() {
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
+    setEmailConfirmationSent(false);
     resetForm();
   };
+
+  const handleBackToSignIn = () => {
+    setEmailConfirmationSent(false);
+    setIsSignUp(false);
+    resetForm();
+  };
+
+  // Show verification-sent UI when email confirmation is pending
+  if (emailConfirmationSent) {
+    return (
+      <div className="min-h-screen bg-secondary-50 dark:bg-primary-950 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-coffee-pattern pointer-events-none" />
+        <div className="w-full max-w-md animate-fade-in relative z-10">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-accent-500 to-accent-600 rounded-2xl mb-4 shadow-copper">
+              <MailCheck className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-secondary-900 dark:text-secondary-100 mb-2">Check your email</h1>
+            <p className="text-secondary-600 dark:text-secondary-300">
+              We sent a verification link to <strong className="text-primary-600 dark:text-primary-400">{credentials.email}</strong>
+            </p>
+          </div>
+
+          <div className="card p-8 border-0 text-center space-y-6">
+            <div className="space-y-3">
+              <p className="text-secondary-700 dark:text-secondary-200 leading-relaxed">
+                Click the link in the email to verify your account. Once verified, you can sign in.
+              </p>
+              <p className="text-sm text-secondary-500 dark:text-secondary-400">
+                Didn't receive the email? Check your spam folder or try signing up again.
+              </p>
+            </div>
+
+            <button
+              onClick={handleBackToSignIn}
+              className="btn btn-primary w-full h-11 font-semibold shadow-md hover:shadow-copper"
+            >
+              Back to Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-secondary-50 dark:bg-primary-950 flex items-center justify-center p-4 relative overflow-hidden">
