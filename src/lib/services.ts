@@ -88,7 +88,7 @@ const TIER_HIERARCHY: Record<string, number> = { free: 0, growth: 1, pro: 2 }
 /**
  * Resolve capabilities for a shop based on subscription tier + overrides.
  *
- * Precedence (TIER-SPEC §3.3 — Flexible model):
+ * Precedence (tier-spec.md §3.3 — Flexible model):
  *   1. Per-shop override (shop_features) — ALWAYS wins, can beat tier gate
  *   2. Tier gate + default_enabled — fallback when no override exists
  *
@@ -111,7 +111,7 @@ export function resolveCapabilities(
   const caps: string[] = []
 
   for (const def of definitions) {
-    // Check per-shop override FIRST (overrides always win — TIER-SPEC §3.3)
+    // Check per-shop override FIRST (overrides always win — tier-spec.md §3.3)
     const override = overrideMap.get(def.key)
 
     if (override !== undefined) {

@@ -18,10 +18,10 @@ Features like receipt printing, cash drawer management, and owner insights are c
 | Architecture | **Capability-based, server-side resolution** | Server resolves all feature logic. Client receives flat `capabilities: string[]`. No tier/type conditionals in component code. (VISION §5.1) |
 | Granularity | Capability strings, not boolean flags | Simpler client contract. Components check `capabilities.includes('key')`. |
 | Resolution | At login time | Server reads shop's subscription tier, business type, and per-shop overrides. Returns flat capability list. (VISION §5.2) |
-| Two gates | Subscription tier + business type defaults | Both are server-side. Default resolution checks tier level first, but per-shop overrides can bypass tier gates. (TIER-SPEC §3.3) |
+| Two gates | Subscription tier + business type defaults | Both are server-side. Default resolution checks tier level first, but per-shop overrides can bypass tier gates. (tier-spec.md §3.3) |
 | Storage | Dedicated tables (`feature_definitions`, `shop_features`) | Queryable across shops, referential integrity, admin UI is straightforward |
 | Override | Per-shop `shop_features` table | Only rows that deviate from default are stored |
-| Override precedence | **Flexible** | Platform admins can override tier gates — e.g., enable a Pro feature on a Free shop for trials. `shop_features` always wins over `feature_definitions` defaults. (TIER-SPEC §3.3) |
+| Override precedence | **Flexible** | Platform admins can override tier gates — e.g., enable a Pro feature on a Free shop for trials. `shop_features` always wins over `feature_definitions` defaults. (tier-spec.md §3.3) |
 | Platform admin | Edge Function only | `feature_definitions` writable by `platform_admin` via `service_role` key. No RLS bypass. (VISION §4.3) |
 
 ## 3. Schema
@@ -189,7 +189,7 @@ For each feature_definitions row:
   │
   ├─ Check per-shop override (shop_features)
   │   → If override exists: use override value (ENABLED or DISABLED)
-  │   → Overrides ALWAYS win — can enable Growth/Pro features on Free shops (TIER-SPEC §3.3)
+  │   → Overrides ALWAYS win — can enable Growth/Pro features on Free shops (tier-spec.md §3.3)
   │
   ├─ If no override: check tier gate
   │   → Feature's subscription_tier level ≤ shop's tier level? → use default_enabled
@@ -204,7 +204,7 @@ Result: flat string[] → ['pos', 'inventory', 'discounts', ...]
 Returned to client, stored in AppState.capabilities
 ```
 
-**Override Precedence (TIER-SPEC §3.3):**
+**Override Precedence (tier-spec.md §3.3):**
 ```
 shop_features override > feature_definitions.default_enabled + tier gate
 ```
@@ -216,7 +216,7 @@ Platform admins can override tier gates — e.g., enable a Pro feature on a Free
 -- Supabase Edge Function or RPC: resolve_capabilities(p_shop_id UUID)
 -- Returns: text[] of capability keys
 -- Precedence: shop_features override > feature_definitions tier gate + default_enabled
--- (TIER-SPEC §3.3 — Flexible model: overrides CAN beat tier gates)
+-- (tier-spec.md §3.3 — Flexible model: overrides CAN beat tier gates)
 
 CREATE OR REPLACE FUNCTION resolve_capabilities(p_shop_id UUID)
 RETURNS TEXT[]
@@ -497,7 +497,7 @@ All Growth capabilities PLUS:
 
 ### 9.5 Platform Admin Override
 
-Platform admins can override tier gates via `shop_features` — e.g., enable `owner_insights` (Pro) on a Free shop for trials. Overrides always win over tier defaults (TIER-SPEC §3.3).
+Platform admins can override tier gates via `shop_features` — e.g., enable `owner_insights` (Pro) on a Free shop for trials. Overrides always win over tier defaults (tier-spec.md §3.3).
 
 ## 10. Migration
 
@@ -533,7 +533,7 @@ ALTER TABLE shop_features ENABLE ROW LEVEL SECURITY;
 
 ## Related Documents
 
-- **[tier-spec.md](tier-spec.md)** — **Canonical source of truth** for tier definitions, capability mapping, and override rules
+- **[docs/specs/tier-spec.md](tier-spec.md)** — **Canonical source of truth** for tier definitions, capability mapping, and override rules
 - [VISION.md](../vision/VISION.md) — Section 5: Feature Flag Architecture (business vision)
 - [Multi-Tenancy](multi-tenancy.md) — shop_id foundation, subscription tiers, role model
 - [Dynamic Shop Configuration](dynamic-configuration.md) — shops table, subscription_tier column

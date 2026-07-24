@@ -243,7 +243,7 @@ function main() {
         results.push({
           feature,
           status: '⚠️  EMBEDDED (no check)',
-          details: `Embedded in ${feature.embeddedIn}. No useCapability('${feature.key}') found. TIER-SPEC says embedded features don't need standalone gating.`,
+          details: `Embedded in ${feature.embeddedIn}. No useCapability('${feature.key}') found. tier-spec.md says embedded features don't need standalone gating.`,
         });
       }
       continue;

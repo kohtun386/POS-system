@@ -131,7 +131,7 @@ describe('resolveCapabilities', () => {
     expect(caps).not.toContain('pos')
   })
 
-  it('override CAN enable feature above shop tier (flexible model — TIER-SPEC §3.3)', () => {
+  it('override CAN enable feature above shop tier (flexible model — tier-spec.md §3.3)', () => {
     const shop = makeShop({ subscriptionTier: 'free' })
     const defs = [
       makeDef({ key: 'owner_insights', subscriptionTier: 'pro', defaultEnabled: false }),
