@@ -1,8 +1,30 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 export function PendingApprovalPage() {
-  const { signOut, profile } = useAuth();
+  const { signOut, user } = useAuth();
+  const [shopName, setShopName] = useState<string | null>(null);
+  const [loadingShop, setLoadingShop] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    // Fetch the shop name for the pending shop (user is the owner)
+    supabase
+      .from('shops')
+      .select('name')
+      .eq('owner_id', user.id)
+      .eq('is_active', false)
+      .limit(1)
+      .single()
+      .then(({ data, error }) => {
+        if (!error && data) {
+          setShopName(data.name);
+        }
+        setLoadingShop(false);
+      });
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-secondary-50 dark:bg-primary-950 flex items-center justify-center p-4 relative overflow-hidden">
@@ -39,7 +61,7 @@ export function PendingApprovalPage() {
               Shop Name
             </p>
             <p className="text-sm text-secondary-700 dark:text-secondary-300">
-              {profile?.name || 'Your Coffee Shop'}
+              {loadingShop ? 'Loading...' : (shopName || 'Your Coffee Shop')}
             </p>
           </div>
 
