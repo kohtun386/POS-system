@@ -131,7 +131,7 @@ describe('resolveCapabilities', () => {
     expect(caps).not.toContain('pos')
   })
 
-  it('override CAN enable feature above shop tier (flexible model — tier-spec.md §3.3)', () => {
+  it('override CANNOT enable feature above shop tier (VISION.md §5.3 — absolute tier gate)', () => {
     const shop = makeShop({ subscriptionTier: 'free' })
     const defs = [
       makeDef({ key: 'owner_insights', subscriptionTier: 'pro', defaultEnabled: false }),
@@ -140,8 +140,9 @@ describe('resolveCapabilities', () => {
 
     const caps = resolveCapabilities(shop, defs, overrides)
 
-    // Overrides always win — platform admins can trial Pro features on Free shops
-    expect(caps).toContain('owner_insights')
+    // VISION.md §5.3: Subscription Tier is Gate 1 — ABSOLUTE.
+    // Overrides CANNOT grant features above the shop's tier level.
+    expect(caps).not.toContain('owner_insights')
   })
 
   it('returns empty array when no definitions exist', () => {

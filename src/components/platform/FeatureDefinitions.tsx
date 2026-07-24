@@ -85,6 +85,11 @@ export function FeatureDefinitions() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
+      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg p-3 mb-4 text-sm text-amber-800 dark:text-amber-200">
+        <strong>⚠️ Global Feature Catalog</strong>
+        <br />
+        This catalog defines GLOBAL defaults. To grant features to a specific shop, change their Subscription Tier in the Subscription Manager. Per-shop overrides cannot enable features above a shop&#39;s tier level (VISION.md §5.3).
+      </div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-fraunces font-bold text-secondary-900 dark:text-secondary-100">
           Feature Definitions

@@ -11,7 +11,7 @@ const navItems = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'pending', label: 'Pending Shops', icon: Clock },
   { key: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
-  { key: 'features', label: 'Features', icon: Settings },
+  { key: 'features', label: 'Feature Catalog', icon: Settings },
 ] as const;
 
 export function PlatformLayout() {

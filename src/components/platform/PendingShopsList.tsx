@@ -64,6 +64,23 @@ export function PendingShopsList() {
     }
   }
 
+  async function handleDelete(shopId: string, createdAt: string) {
+    const ageDays = (Date.now() - new Date(createdAt).getTime()) / 86400000;
+    if (ageDays < 7) {
+      swalConfig.error('Shop must be pending for at least 7 days before deletion.');
+      return;
+    }
+    const result = await swalConfig.deleteConfirm('this shop');
+    if (!result.isConfirmed) return;
+    try {
+      await platformAdminService.deleteShop(shopId);
+      swalConfig.success('Shop deleted');
+      loadPending();
+    } catch {
+      swalConfig.error('Failed to delete shop');
+    }
+  }
+
   if (loading) {
     return <div className="text-center py-8">Loading pending shops…</div>;
   }
@@ -99,6 +116,12 @@ export function PendingShopsList() {
                   onClick={() => handleReject(shop.shopId)}
                 >
                   Reject
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => handleDelete(shop.shopId, shop.createdAt)}
+                >
+                  Delete
                 </button>
               </div>
             </div>

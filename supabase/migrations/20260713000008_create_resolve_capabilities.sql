@@ -31,24 +31,35 @@ BEGIN
     ELSE 0
   END;
 
-  -- 2. Resolve capabilities: override wins, else tier gate + default_enabled
+  -- VISION.md §5.3: Subscription Tier is Gate 1 — ABSOLUTE.
+  -- Per-shop overrides (shop_features) can enable/disable features
+  -- WITHIN the shop's tier scope, but CANNOT grant features above
+  -- the shop's tier level.
+  --
+  -- Resolution order:
+  --   1. Tier gate: feature's min_tier must be <= shop's tier level
+  --   2. Override (shop_features): if exists, use it (within tier scope)
+  --   3. Default: fall back to default_enabled when no override
   RETURN QUERY
-  SELECT fd.key AS capability
-  FROM public.feature_definitions fd
-  LEFT JOIN public.shop_features sf
-    ON sf.feature_key = fd.key
-    AND sf.shop_id = p_shop_id
-  WHERE
-    -- If override exists: include only if enabled=true
-    (sf.enabled = true)
-    OR
-    -- If no override: include if tier gate passes AND default_enabled
-    (sf.id IS NULL AND v_tier_level >= CASE fd.subscription_tier
+  WITH tier_gated AS (
+    SELECT fd.key, fd.default_enabled
+    FROM public.feature_definitions fd
+    WHERE v_tier_level >= CASE fd.subscription_tier
       WHEN 'free' THEN 0
       WHEN 'growth' THEN 1
       WHEN 'pro' THEN 2
       ELSE 0
-    END AND fd.default_enabled = true);
+    END
+  )
+  SELECT tg.key AS capability
+  FROM tier_gated tg
+  WHERE
+    -- Override exists and is enabled
+    (tg.key IN (SELECT sf.feature_key FROM public.shop_features sf WHERE sf.shop_id = p_shop_id AND sf.enabled = true))
+    OR
+    -- No override: use default_enabled
+    (tg.key NOT IN (SELECT sf.feature_key FROM public.shop_features sf WHERE sf.shop_id = p_shop_id)
+     AND tg.default_enabled = true);
 END;
 $$;
 

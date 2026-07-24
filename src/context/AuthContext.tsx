@@ -105,6 +105,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error
 
       if (data) {
+        // VISION.md §4.3: platform_admin has NO shop_memberships row.
+        // Skip membership query entirely — they operate cross-tenant via Edge Functions.
+        if (data.role === 'platform_admin') {
+          setProfile({
+            id: data.id,
+            username: data.username,
+            name: data.name,
+            email: data.email,
+            role: 'platform_admin' as User['role'],
+            permissions: data.permissions || [],
+            active: data.active ?? true,
+            lastLogin: data.last_login ? new Date(data.last_login) : undefined,
+            avatar: data.avatar || undefined,
+          })
+          setIsPendingApproval(false)
+          return
+        }
+
         // Step 2: Load shop membership to get canonical role
         // VISION.md §4.2: shop_memberships.role is the canonical role source
         const { data: membership } = await supabase

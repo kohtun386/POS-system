@@ -88,12 +88,14 @@ const TIER_HIERARCHY: Record<string, number> = { free: 0, growth: 1, pro: 2 }
 /**
  * Resolve capabilities for a shop based on subscription tier + overrides.
  *
- * Precedence (tier-spec.md §3.3 — Flexible model):
- *   1. Per-shop override (shop_features) — ALWAYS wins, can beat tier gate
- *   2. Tier gate + default_enabled — fallback when no override exists
+ * VISION.md §5.3 — Subscription Tier is Gate 1 (ABSOLUTE).
+ * Per-shop overrides (shop_features) can ONLY REMOVE features.
+ * They CANNOT grant features above the shop's tier level.
  *
- * A platform admin can enable a Pro feature on a Free shop for trials.
- * Returns flat string[] of capability keys the shop can access.
+ * Resolution order:
+ *   1. Tier gate: feature's min_tier must be <= shop's tier level
+ *   2. Default: feature must have default_enabled = true
+ *   3. Override (shop_features): can only DISABLE, never enable beyond tier+default
  */
 export function resolveCapabilities(
   shop: Shop,
@@ -102,7 +104,7 @@ export function resolveCapabilities(
 ): string[] {
   const shopTierLevel = TIER_HIERARCHY[shop.subscriptionTier] ?? 0
 
-  // Build override map: feature_key → enabled
+  // Build override map: feature_key → enabled (can only remove, never add)
   const overrideMap = new Map<string, boolean>()
   for (const o of overrides) {
     overrideMap.set(o.featureKey, o.enabled)
@@ -111,20 +113,19 @@ export function resolveCapabilities(
   const caps: string[] = []
 
   for (const def of definitions) {
-    // Check per-shop override FIRST (overrides always win — tier-spec.md §3.3)
-    const override = overrideMap.get(def.key)
+    // Gate 1: Tier gate — ABSOLUTE per VISION.md §5.3.
+    // Overrides CANNOT grant features above the shop's tier level.
+    const defTierLevel = TIER_HIERARCHY[def.subscriptionTier] ?? 0
+    if (shopTierLevel < defTierLevel) continue
 
+    // Gate 2: Check override (per-shop customization within tier scope)
+    const override = overrideMap.get(def.key)
     if (override !== undefined) {
-      // Override exists: use it regardless of tier gate
-      if (override) {
-        caps.push(def.key)
-      }
-    } else {
-      // No override: apply tier gate + default
-      const defTierLevel = TIER_HIERARCHY[def.subscriptionTier] ?? 0
-      if (shopTierLevel >= defTierLevel && def.defaultEnabled) {
-        caps.push(def.key)
-      }
+      // Override can enable or disable, but only WITHIN the shop's tier scope
+      if (override) caps.push(def.key)
+    } else if (def.defaultEnabled) {
+      // No override: use default_enabled
+      caps.push(def.key)
     }
   }
 
@@ -134,7 +135,7 @@ export function resolveCapabilities(
 /**
  * Server-side capability resolution via RPC (VISION §5).
  * Returns flat string[] of capability keys for a shop.
- * Precedence: shop_features override > feature_definitions tier gate.
+ * VISION.md §5.3: Tier gate is ABSOLUTE. Overrides can only REMOVE features.
  */
 export async function resolveCapabilitiesRpc(shopId: string): Promise<string[]> {
   const { data, error } = await supabase.rpc('resolve_capabilities', {
@@ -1912,6 +1913,13 @@ export const platformAdminService = {
   async toggleShopActive(shopId: string, isActive: boolean): Promise<void> {
     const { error } = await supabase.functions.invoke('platform-admin-update-subscription', {
       body: { shop_id: shopId, is_active: isActive },
+    })
+    if (error) throw error
+  },
+
+  async deleteShop(shopId: string): Promise<void> {
+    const { error } = await supabase.functions.invoke('platform-admin-delete-shop', {
+      body: { shop_id: shopId },
     })
     if (error) throw error
   },
