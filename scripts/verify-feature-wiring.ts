@@ -9,7 +9,7 @@
  *   ✅ Fully wired   — DB + code + UI gating
  *   ⚠️  Partially wired — DB + code reference, but no UI gating or wrong gating
  *   ❌ Not wired     — DB only, no code reference
- *   🔴 Dead keys     — DB only, marked as dead in TIER-SPEC.md
+ *   🔴 Dead keys     — DB only, marked as dead in tier-spec.md
  *   🚫 Orphaned      — Component exists but not routed from App.tsx
  */
 
@@ -20,7 +20,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// ─── Canonical feature list from TIER-SPEC.md §2 ───────────────────────────
+// ─── Canonical feature list from tier-spec.md §2 ───────────────────────────
 interface FeatureSpec {
   key: string;
   minTier: string;
@@ -44,12 +44,12 @@ const FEATURES: FeatureSpec[] = [
   { key: 'printer_integration', minTier: 'growth', dbDefaultEnabled: true, status: 'active', description: 'Thermal printer support' },
   { key: 'staff_accounts', minTier: 'growth', dbDefaultEnabled: true, status: 'active', description: 'Multiple staff logins' },
   { key: 'cash_drawer', minTier: 'growth', dbDefaultEnabled: true, status: 'active', description: 'Shift start/end management' },
-  { key: 'recipe_bom', minTier: 'growth', dbDefaultEnabled: false, status: 'active', description: 'Recipe/BOM costing' },
-  { key: 'raw_materials', minTier: 'growth', dbDefaultEnabled: false, status: 'active', description: 'Raw material tracking' },
+  { key: 'recipe_bom', minTier: 'growth', dbDefaultEnabled: false, status: 'dead', description: 'Recipe/BOM costing (DEAD — removed per VISION §10.3 scope reframe)' },
+  { key: 'raw_materials', minTier: 'growth', dbDefaultEnabled: false, status: 'dead', description: 'Raw material tracking (DEAD — removed per VISION §10.3 scope reframe)' },
   { key: 'advanced_reports', minTier: 'pro', dbDefaultEnabled: false, status: 'active', description: 'Consolidated Pro reports gate' },
   { key: 'owner_insights', minTier: 'pro', dbDefaultEnabled: false, status: 'active', description: 'P&L dashboard' },
-  { key: 'profit_analytics', minTier: 'pro', dbDefaultEnabled: false, status: 'active', description: 'Profit margin analytics' },
-  { key: 'waste_tracking', minTier: 'pro', dbDefaultEnabled: false, status: 'active', description: 'Waste tracking' },
+  // profit_analytics removed — not in VISION.md §5.5 or tier-spec.md
+  { key: 'waste_tracking', minTier: 'pro', dbDefaultEnabled: false, status: 'dead', description: 'Waste tracking (DEAD — removed per VISION §10.3/§19 scope reframe)' },
   { key: 'kitchen_display', minTier: 'pro', dbDefaultEnabled: false, status: 'dead', description: 'Kitchen display (DEAD — Myanmar uses printers)' },
   { key: 'online_ordering', minTier: 'pro', dbDefaultEnabled: false, status: 'dead', description: 'Online ordering (DEAD — not in v1)' },
   { key: 'supplier_management', minTier: 'pro', dbDefaultEnabled: false, status: 'dead', description: 'Supplier management (DEAD — no component)' },
@@ -195,7 +195,7 @@ function findOrphanedComponents(): { component: string; file: string; feature: s
 function main() {
   console.log('╔══════════════════════════════════════════════════════════════╗');
   console.log('║       Feature Flag Wiring Verification Report               ║');
-  console.log('║       Source of truth: docs/TIER-SPEC.md                   ║');
+  console.log('║       Source of truth: docs/tier-spec.md                   ║');
   console.log('╚══════════════════════════════════════════════════════════════╝');
   console.log();
 
@@ -215,7 +215,7 @@ function main() {
       results.push({
         feature,
         status: '🔴 DEAD',
-        details: `DB row exists but marked dead in TIER-SPEC.md. ${feature.description}`,
+        details: `DB row exists but marked dead in tier-spec.md. ${feature.description}`,
       });
       continue;
     }

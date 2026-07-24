@@ -2,7 +2,7 @@
 /**
  * validate-tiers.ts — CI validation script
  *
- * Parses docs/TIER-SPEC.md to extract expected tier assignments,
+ * Parses docs/specs/tier-spec.md to extract expected tier assignments,
  * queries local Supabase feature_definitions, and fails on mismatch.
  *
  * Usage:
@@ -45,7 +45,7 @@ loadEnv(envPath)
 loadEnv(envDevPath) // .env.development overrides .env (Vite convention)
 
 // ---------------------------------------------------------------------------
-// 1. Parse TIER-SPEC.md — extract feature_key → minTier from the table
+// 1. Parse tier-spec.md — extract feature_key → minTier from the table
 // ---------------------------------------------------------------------------
 
 interface ExpectedTier {
@@ -136,7 +136,7 @@ function compare(
 
   for (const dk of deadKeys) {
     warnings.push(
-      `ℹ️  Dead key in DB (not in TIER-SPEC): "${dk.key}" — tier=${dk.subscription_tier}`
+      `ℹ️  Dead key in DB (not in tier-spec): "${dk.key}" — tier=${dk.subscription_tier}`
     )
   }
 
@@ -180,9 +180,9 @@ function compare(
 // ---------------------------------------------------------------------------
 
 async function main() {
-  const specPath = resolve(__dirname, '../docs/TIER-SPEC.md')
+  const specPath = resolve(__dirname, '../docs/specs/tier-spec.md')
 
-  console.log('📋 Parsing TIER-SPEC.md...')
+  console.log('📋 Parsing tier-spec.md...')
   const spec = parseTierSpec(specPath)
   console.log(`   Found ${spec.length} feature entries in spec\n`)
 
@@ -201,7 +201,7 @@ async function main() {
 
   // Print mismatches
   if (mismatches.length === 0) {
-    console.log('✅ All feature tier assignments match TIER-SPEC.md')
+    console.log('✅ All feature tier assignments match tier-spec.md')
     process.exit(0)
   }
 
@@ -227,7 +227,7 @@ async function main() {
   }
 
   console.log('\n💡 Fix by running a Supabase migration to update feature_definitions.subscription_tier')
-  console.log('   See docs/TIER-SPEC.md §2.1 for the canonical tier assignments.\n')
+  console.log('   See docs/specs/tier-spec.md §2.1 for the canonical tier assignments.\n')
 
   process.exit(1)
 }

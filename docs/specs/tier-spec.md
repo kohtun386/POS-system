@@ -127,7 +127,7 @@ These limits are NOT capability keys — they're enforced in the business logic 
 
 When modifying feature gating, capability keys, or tier assignments:
 
-1. **Read Before Write** — Always read `TIER-SPEC.md` before changing any tier assignment
+1. **Read Before Write** — Always read `docs/specs/tier-spec.md` before changing any tier assignment
 2. **Capability-Only Logic** — Gate features via `useCapability('key')`, never check `shop.subscriptionTier` directly
 3. **Migration First** — DB tier changes require a migration; never update `feature_definitions` without a migration file
 4. **New Features Require Tier Assignment** — Every new feature key must specify a `minTier` in this document before implementation
