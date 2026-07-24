@@ -9,7 +9,8 @@
  *   npx tsx scripts/validate-tiers.ts
  *
  * Requires:
- *   VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in environment
+ *   SUPABASE_URL or VITE_SUPABASE_URL in environment
+ *   SUPABASE_SERVICE_ROLE_KEY (recommended), or VITE_SUPABASE_ANON_KEY
  *   (reads from .env via dotenv if present)
  */
 
@@ -83,18 +84,20 @@ interface ActualTier {
 }
 
 async function fetchFeatureDefinitions(): Promise<ActualTier[]> {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+  // Prefer service_role key for read-only validation (bypasses RLS)
+  // Falls back to anon key — but RLS may block some queries
   const supabaseKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.VITE_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY // CI: service role is fine for read-only validation
+    process.env.SUPABASE_KEY
 
   if (!supabaseUrl || !supabaseKey) {
     throw new Error(
       'Missing Supabase credentials in environment.\n' +
-      '  Tried URL: VITE_SUPABASE_URL, SUPABASE_URL\n' +
-      '  Tried Key: VITE_SUPABASE_ANON_KEY, SUPABASE_ANON_KEY, SUPABASE_KEY, SUPABASE_SERVICE_ROLE_KEY\n' +
+      '  Tried URL: SUPABASE_URL, VITE_SUPABASE_URL\n' +
+      '  Tried Key: SUPABASE_SERVICE_ROLE_KEY, VITE_SUPABASE_ANON_KEY, SUPABASE_ANON_KEY, SUPABASE_KEY\n' +
       '  Set them in .env, .env.development, or export manually.'
     )
   }
