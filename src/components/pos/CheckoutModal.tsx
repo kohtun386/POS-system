@@ -370,8 +370,9 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         if (err instanceof DailyLimitError) {
           setUpgradePrompt({ feature: 'Daily sales', tier: 'growth' });
           setIsProcessing(false);
-          return;
+          return; // Do not re‑throw – keep component mounted for upgrade prompt
         }
+        // Re‑throw other errors to be handled by outer catch
         throw err;
       }
       dispatch({ type: 'ADD_SALE', payload: savedSale });
