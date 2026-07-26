@@ -30,6 +30,8 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
   // Effect for scroll detection and click outside for mobile menu/more menu
   useEffect(() => {
     const handleScroll = () => {
@@ -313,150 +315,150 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
               )}
             </nav>
           </div>
-
-          {/* Right Side Controls */}
-          <div className="flex items-center space-x-2 lg:space-x-4">
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-2xl bg-secondary-100/50 hover:bg-hover-border/50 transition-all duration-300 text-sm font-medium"
-              title={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
-              aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-            >
-              {isDark ? (
-                <Sun className="h-4 w-4 text-accent-500" />
-              ) : (
-                <Moon className="h-4 w-4 text-secondary-600" />
-              )}
-              <span className="hidden lg:block text-secondary-900 dark:text-secondary-100">
-                {isDark ? 'Light' : 'Dark'}
-              </span>
-            </button>
-
-            {/* Interface Mode Toggle - Hidden on mobile */}
-            <button
-              onClick={toggleInterfaceMode}
-              className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-2xl bg-secondary-100/50 hover:bg-hover-border/50 transition-all duration-300 text-sm font-medium"
-              title={`Switch to ${state.settings.interfaceMode === 'touch' ? 'Traditional' : 'Touch'} Mode`}
-              aria-label={`Switch to ${state.settings.interfaceMode === 'touch' ? 'traditional' : 'touch'} mode`}
-            >
-              {state.settings.interfaceMode === 'touch' ? (
-                <Monitor className="h-4 w-4 text-secondary-600" />
-              ) : (
-                <Smartphone className="h-4 w-4 text-secondary-600" />
-              )}
-              <span className="hidden lg:block text-secondary-900 dark:text-secondary-100">
-                {state.settings.interfaceMode === 'touch' ? 'Touch' : 'Traditional'}
-              </span>
-            </button>
-
-            {/* Cart Indicator */}
-            {currentView === 'pos' && cartItemCount > 0 && (
-              <div className="flex items-center space-x-2 px-3 py-2 rounded-2xl bg-primary-50 text-primary-700 shadow-soft animate-pulse-gentle">
-                <ShoppingCart className="h-4 w-4" />
-                <span className="font-semibold text-sm">{cartItemCount}</span>
-              </div>
-            )}
-
-            {/* Notifications */}
-            <button className="btn-ghost p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl transition-all duration-300 relative" aria-label="Notifications">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-3 w-3 bg-accent-600 rounded-full animate-pulse"></span>
-            </button>
-
-            {/* User Menu */}
-            <div className="flex items-center space-x-3">
-              <div className="hidden lg:block text-right">
-                <p className="text-sm font-semibold text-secondary-900 dark:text-secondary-100 truncate max-w-32">
-                  {state.currentUser?.name}
-                </p>
-                <p className="text-xs text-secondary-600 dark:text-secondary-300 capitalize">
-                  {state.currentUser?.role}
-                </p>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <div className="h-8 w-8 lg:h-9 lg:w-9 bg-gradient-to-br from-primary-600 to-accent-500 rounded-2xl flex items-center justify-center shadow-medium">
-                  <User className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
-                </div>
-
-                <div className="hidden md:flex items-center space-x-1">
-                  <button
-                    onClick={() => onViewChange('settings')}
-                    className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300"
-                    aria-label="Settings"
-                  >
-                    <Settings className="h-4 w-4" />
-                  </button>
-
-                  <button
-                    onClick={handleLogout}
-                    className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-danger-600 hover:bg-[#fee2e2] transition-all duration-300"
-                    aria-label="Sign out"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="lg:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300"
-              aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
-            >
-              {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
-        {showMobileMenu && (
-          <div className="lg:hidden border-t border-secondary-200/50 py-4 animate-slide-down">
-            <nav className="space-y-2">
-              {navigationItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    onViewChange(item.id);
-                    setShowMobileMenu(false);
-                  }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 ${
-                    currentView === item.id
-                      ? 'bg-primary-50 text-primary-700 shadow-soft'
-                      : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50'
-                  }`}
-                >
-                  <item.icon className={`h-5 w-5 ${currentView === item.id ? 'text-primary-600' : item.color}`} />
-                  <span>{item.label}</span>
-                </button>
-              ))}
+        {/* Right Side Controls */}
+        <div className="flex items-center space-x-2 lg:space-x-4">
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-2xl bg-secondary-100/50 hover:bg-hover-border/50 transition-all duration-300 text-sm font-medium"
+            title={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
+            aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+          >
+            {isDark ? (
+              <Sun className="h-4 w-4 text-accent-500" />
+            ) : (
+              <Moon className="h-4 w-4 text-secondary-600" />
+            )}
+            <span className="hidden lg:block text-secondary-900 dark:text-secondary-100">
+              {isDark ? 'Light' : 'Dark'}
+            </span>
+          </button>
 
-              <div className="border-t border-secondary-200/50 pt-4 mt-4 space-y-2">
+          {/* Interface Mode Toggle - Hidden on mobile */}
+          <button
+            onClick={toggleInterfaceMode}
+            className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-2xl bg-secondary-100/50 hover:bg-hover-border/50 transition-all duration-300 text-sm font-medium"
+            title={`Switch to ${state.settings.interfaceMode === 'touch' ? 'Traditional' : 'Touch'} Mode`}
+            aria-label={`Switch to ${state.settings.interfaceMode === 'touch' ? 'traditional' : 'touch'} mode`}
+          >
+            {state.settings.interfaceMode === 'touch' ? (
+              <Monitor className="h-4 w-4 text-secondary-600" />
+            ) : (
+              <Smartphone className="h-4 w-4 text-secondary-600" />
+            )}
+            <span className="hidden lg:block text-secondary-900 dark:text-secondary-100">
+              {state.settings.interfaceMode === 'touch' ? 'Touch' : 'Traditional'}
+            </span>
+          </button>
+
+          {/* Cart Indicator */}
+          {currentView === 'pos' && cartItemCount > 0 && (
+            <div className="flex items-center space-x-2 px-3 py-2 rounded-2xl bg-primary-50 text-primary-700 shadow-soft animate-pulse-gentle">
+              <ShoppingCart className="h-4 w-4" />
+              <span className="font-semibold text-sm">{cartItemCount}</span>
+            </div>
+          )}
+
+          {/* Notifications */}
+          <button className="btn-ghost p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl transition-all duration-300 relative" aria-label="Notifications">
+            <Bell className="h-5 w-5" />
+            <span className="absolute -top-1 -right-1 h-3 w-3 bg-accent-600 rounded-full animate-pulse"></span>
+          </button>
+
+          {/* User Menu */}
+          <div className="flex items-center space-x-3">
+            <div className="hidden lg:block text-right">
+              <p className="text-sm font-semibold text-secondary-900 dark:text-secondary-100 truncate max-w-32">
+                {state.currentUser?.name}
+              </p>
+              <p className="text-xs text-secondary-600 dark:text-secondary-300 capitalize">
+                {state.currentUser?.role}
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <div className="h-8 w-8 lg:h-9 lg:w-9 bg-gradient-to-br from-primary-600 to-accent-500 rounded-2xl flex items-center justify-center shadow-medium">
+                <User className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
+              </div>
+
+              <div className="hidden md:flex items-center space-x-1">
                 <button
-                  onClick={() => {
-                    onViewChange('settings');
-                    setShowMobileMenu(false);
-                  }}
-                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300"
+                  onClick={() => onViewChange('settings')}
+                  className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300"
+                  aria-label="Settings"
                 >
-                  <Settings className="h-5 w-5 text-secondary-600" />
-                  <span>Settings</span>
+                  <Settings className="h-4 w-4" />
                 </button>
 
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-danger-600 hover:bg-[#fee2e2] transition-all duration-300"
+                  className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-danger-600 hover:bg-[#fee2e2] transition-all duration-300"
+                  aria-label="Sign out"
                 >
-                  <LogOut className="h-5 w-5" />
-                  <span>Logout</span>
+                  <LogOut className="h-4 w-4" />
                 </button>
               </div>
-            </nav>
+            </div>
           </div>
-        )}
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="lg:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300"
+            aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
+          >
+            {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Navigation Menu */}
+      {showMobileMenu && (
+        <div className="lg:hidden border-t border-secondary-200/50 py-4 animate-slide-down">
+          <nav className="space-y-2">
+            {navigationItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  onViewChange(item.id);
+                  setShowMobileMenu(false);
+                }}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 ${
+                  currentView === item.id
+                    ? 'bg-primary-50 text-primary-700 shadow-soft'
+                    : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50'
+                }`}
+              >
+                <item.icon className={`h-5 w-5 ${currentView === item.id ? 'text-primary-600' : item.color}`} />
+                <span>{item.label}</span>
+              </button>
+            ))}
+
+            <div className="border-t border-secondary-200/50 pt-4 mt-4 space-y-2">
+              <button
+                onClick={() => {
+                  onViewChange('settings');
+                  setShowMobileMenu(false);
+                }}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300"
+              >
+                <Settings className="h-5 w-5 text-secondary-600" />
+                <span>Settings</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-danger-600 hover:bg-[#fee2e2] transition-all duration-300"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
