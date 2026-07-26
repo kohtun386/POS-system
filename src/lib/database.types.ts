@@ -1249,7 +1249,7 @@ export type Database = {
         Returns: Json
       }
       current_shop_ids: { Args: never; Returns: string[] }
-      generate_invoice_number: { Args: never; Returns: string }
+      generate_invoice_number: { Args: { p_shop_id: string }; Returns: string }
       get_alert_recipients: {
         Args: { alert_type_param: string }
         Returns: {
