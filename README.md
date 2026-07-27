@@ -15,9 +15,13 @@ A multi-tenant SaaS point-of-sale platform built for coffee shops and tea shops 
 
 ## Screenshots
 
-| POS Terminal | Checkout | Reports |
+| POS Terminal | Inventory | Customers |
 |:---:|:---:|:---:|
-| ![POS Terminal](docs/screenshots/pos-terminal.png) | ![Checkout](docs/screenshots/checkout.png) | ![Reports](docs/screenshots/reports.png) |
+| ![POS Terminal](docs/screenshots/pos-desktop-1280x800.png) | ![Inventory](docs/screenshots/inventory-desktop-1280x800.png) | ![Customers](docs/screenshots/customers-desktop-1280x800.png) |
+
+| Reports (Desktop) | Reports (Mobile) | Alerts |
+|:---:|:---:|:---:|
+| ![Reports Desktop](docs/screenshots/reports-desktop-1280x800.png) | ![Reports Mobile](docs/screenshots/reports-mobile-390x844.png) | ![Alerts](docs/screenshots/alerts-desktop-1280x800.png) |
 
 ---
 
