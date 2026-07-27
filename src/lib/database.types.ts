@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       alert_configurations: {
@@ -452,7 +427,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
-          shop_id?: string
+          shop_id: string
           updated_at?: string
         }
         Update: {
@@ -501,7 +476,7 @@ export type Database = {
           name: string
           phone?: string | null
           price_tier?: string | null
-          shop_id?: string
+          shop_id: string
           total_purchases?: number | null
           updated_at?: string
         }
@@ -559,7 +534,7 @@ export type Database = {
           max_discount?: number | null
           min_amount?: number | null
           name: string
-          shop_id?: string
+          shop_id: string
           type: string
           updated_at?: string
           valid_days?: number[] | null
@@ -811,7 +786,7 @@ export type Database = {
           name: string
           price: number
           price_per_unit?: number | null
-          shop_id?: string
+          shop_id: string
           sku: string
           stock?: number | null
           taxable?: boolean | null
@@ -851,11 +826,68 @@ export type Database = {
           },
         ]
       }
+      purchase_logs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          item: string
+          notes: string | null
+          purchase_date: string
+          quantity: number
+          shop_id: string
+          supplier: string
+          total_cost: number
+          unit: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item: string
+          notes?: string | null
+          purchase_date?: string
+          quantity: number
+          shop_id: string
+          supplier?: string
+          total_cost?: number
+          unit?: string
+          unit_cost: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item?: string
+          notes?: string | null
+          purchase_date?: string
+          quantity?: number
+          shop_id?: string
+          supplier?: string
+          total_cost?: number
+          unit?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_logs_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
           applied_discounts: Json | null
           card_details: Json | null
           cashier: string | null
+          cashier_id: string | null
           cashier_role: string | null
           created_at: string
           customer_id: string | null
@@ -880,6 +912,7 @@ export type Database = {
           applied_discounts?: Json | null
           card_details?: Json | null
           cashier?: string | null
+          cashier_id?: string | null
           cashier_role?: string | null
           created_at?: string
           customer_id?: string | null
@@ -893,7 +926,7 @@ export type Database = {
           payment_method?: string | null
           payments?: Json | null
           receipt_number?: string | null
-          shop_id?: string
+          shop_id: string
           status?: string | null
           subtotal?: number
           tax_amount?: number | null
@@ -904,6 +937,7 @@ export type Database = {
           applied_discounts?: Json | null
           card_details?: Json | null
           cashier?: string | null
+          cashier_id?: string | null
           cashier_role?: string | null
           created_at?: string
           customer_id?: string | null
@@ -930,6 +964,13 @@ export type Database = {
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_cashier_id_fkey"
+            columns: ["cashier_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -1083,44 +1124,169 @@ export type Database = {
       shops: {
         Row: {
           address: string | null
+          base_currency: string
+          business_type: string
           created_at: string
+          currency: string
           daily_order_limit: number | null
+          draft_retention_days: number
           email: string | null
           id: string
+          invoice_counter: number
+          invoice_prefix: string
           is_active: boolean | null
+          logo: string | null
           name: string
           owner_id: string | null
           phone: string | null
+          receipt_setting: string
           subscription_tier: string | null
+          tax_rate: number
           updated_at: string
         }
         Insert: {
           address?: string | null
+          base_currency?: string
+          business_type?: string
           created_at?: string
+          currency?: string
           daily_order_limit?: number | null
+          draft_retention_days?: number
           email?: string | null
           id?: string
+          invoice_counter?: number
+          invoice_prefix?: string
           is_active?: boolean | null
+          logo?: string | null
           name: string
           owner_id?: string | null
           phone?: string | null
+          receipt_setting?: string
           subscription_tier?: string | null
+          tax_rate?: number
           updated_at?: string
         }
         Update: {
           address?: string | null
+          base_currency?: string
+          business_type?: string
           created_at?: string
+          currency?: string
           daily_order_limit?: number | null
+          draft_retention_days?: number
           email?: string | null
           id?: string
+          invoice_counter?: number
+          invoice_prefix?: string
           is_active?: boolean | null
+          logo?: string | null
           name?: string
           owner_id?: string | null
           phone?: string | null
+          receipt_setting?: string
           subscription_tier?: string | null
+          tax_rate?: number
           updated_at?: string
         }
         Relationships: []
+      }
+      stock_adjustments: {
+        Row: {
+          adjusted_at: string
+          adjusted_by: string | null
+          id: string
+          new_qty: number
+          previous_qty: number
+          reason: string
+          shop_id: string
+          stock_item_id: string
+        }
+        Insert: {
+          adjusted_at?: string
+          adjusted_by?: string | null
+          id?: string
+          new_qty: number
+          previous_qty: number
+          reason?: string
+          shop_id: string
+          stock_item_id: string
+        }
+        Update: {
+          adjusted_at?: string
+          adjusted_by?: string | null
+          id?: string
+          new_qty?: number
+          previous_qty?: number
+          reason?: string
+          shop_id?: string
+          stock_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_adjustments_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_stock_item_id_fkey"
+            columns: ["stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          last_adjusted_at: string | null
+          low_threshold: number
+          name: string
+          notes: string | null
+          quantity: number
+          shop_id: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          last_adjusted_at?: string | null
+          low_threshold?: number
+          name: string
+          notes?: string | null
+          quantity?: number
+          shop_id: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          last_adjusted_at?: string | null
+          low_threshold?: number
+          name?: string
+          notes?: string | null
+          quantity?: number
+          shop_id?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_items_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppliers: {
         Row: {
@@ -1194,7 +1360,7 @@ export type Database = {
           name: string
           permissions?: string[] | null
           role?: string
-          shop_id?: string
+          shop_id: string
           updated_at?: string
           username: string
         }
@@ -1248,8 +1414,9 @@ export type Database = {
         }
         Returns: Json
       }
+      count_shop_memberships: { Args: { p_shop_id: string }; Returns: number }
       current_shop_ids: { Args: never; Returns: string[] }
-      generate_invoice_number: { Args: { p_shop_id: string }; Returns: string }
+      generate_invoice_number: { Args: never; Returns: string }
       get_alert_recipients: {
         Args: { alert_type_param: string }
         Returns: {
@@ -1260,6 +1427,12 @@ export type Database = {
           role: string
         }[]
       }
+      is_shop_admin: { Args: { p_shop_id: string }; Returns: boolean }
+      is_shop_admin_or_manager: {
+        Args: { p_shop_id: string }
+        Returns: boolean
+      }
+      reserve_invoice_number: { Args: { p_shop_id: string }; Returns: string }
       resolve_capabilities: {
         Args: { p_shop_id: string }
         Returns: {
@@ -1273,6 +1446,10 @@ export type Database = {
           recipient_id_param: string
         }
         Returns: boolean
+      }
+      update_customer_stats: {
+        Args: { p_customer_id: string; p_sale_total: number }
+        Returns: undefined
       }
     }
     Enums: {
@@ -1402,9 +1579,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

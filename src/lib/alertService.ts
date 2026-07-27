@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { alertHistoryService } from './services';
 import {
     AlertRecipient,
     AlertTemplate,
@@ -324,7 +325,7 @@ export class AlertService {
                 createdAt: new Date(),
             };
 
-            await supabase.from('alert_history').insert(alertHistory);
+            await alertHistoryService.create(alertHistory);
         } catch (error) {
             console.error('Error recording alert history:', error);
         }

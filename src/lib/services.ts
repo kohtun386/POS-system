@@ -1383,6 +1383,33 @@ export const alertHistoryService = {
       deliveredAt: history.delivered_at ? new Date(history.delivered_at) : undefined,
       createdAt: new Date(history.created_at)
     }))
+  },
+
+  async create(data: Omit<AlertHistory, 'id'>): Promise<void> {
+    const { error } = await supabase
+      .from('alert_history')
+      .insert({
+        alert_type: data.alertType,
+        product_id: data.productId,
+        product_name: data.productName,
+        product_sku: data.productSku,
+        current_stock: data.currentStock,
+        min_stock: data.minStock,
+        threshold_value: data.thresholdValue,
+        recipient_id: data.recipientId,
+        recipient_name: data.recipientName,
+        recipient_email: data.recipientEmail,
+        recipient_phone: data.recipientPhone,
+        channel: data.channel,
+        status: data.status,
+        template_id: data.templateId,
+        message_content: data.messageContent,
+        error_message: data.errorMessage,
+        sent_at: data.sentAt?.toISOString(),
+        delivered_at: data.deliveredAt?.toISOString()
+      })
+
+    if (error) throw error
   }
 }
 
