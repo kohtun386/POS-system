@@ -1,6 +1,6 @@
 # CoffeeShop POS
 
-**Last updated:** 2026-07-16
+**Last updated:** 2026-07-27
 
 A multi-tenant SaaS point-of-sale platform built for coffee shops and tea shops in Myanmar. Supports 9 payment methods including KBZpay, WavePay, AYAPay, CBPay, and MPU. Installable as a PWA on iPad and Android. Platform admin manages all shops via dedicated Edge Functions with service_role key.
 
@@ -119,6 +119,8 @@ A multi-tenant SaaS point-of-sale platform built for coffee shops and tea shops 
 - `.skeleton` — loading skeleton with shimmer animation
 - `.skip-link` — accessibility skip-to-content link
 
+> **Note:** Chart configs (Recharts) and receipt print templates use inline hex values — these are runtime rendering values, not design tokens.
+
 **Animations:** Framer Motion for cart transitions, micro-interactions, and page transitions. CSS animations for loading states and decorative effects.
 
 **Accessibility:** Keyboard focus-visible rings (WCAG AA), `prefers-reduced-motion` support, `forced-colors` high contrast mode, skip-to-content link, touch-friendly targets (min 44px).
@@ -135,7 +137,7 @@ A multi-tenant SaaS point-of-sale platform built for coffee shops and tea shops 
 |-------|-----------|
 | Frontend | React 18.3, TypeScript 5.5 (strict) |
 | Styling | Tailwind CSS 3.4 — Espresso & Copper design system |
-| State | React Context + useReducer (30 actions) |
+| State | React Context + useReducer (44 actions) |
 | Backend | Supabase (PostgreSQL, Auth, REST API) |
 | Build | Vite 5.4 with code-splitting |
 | PWA | vite-plugin-pwa (Workbox) |
@@ -201,8 +203,12 @@ For a complete walkthrough of the user onboarding and approval flow, including t
 | `npm run build` | Production build to `dist/` |
 | `npm run preview` | Preview production build locally |
 | `npm run lint` | ESLint across all source files |
-| `npx vitest` | Run unit/component tests (Vitest + React Testing Library) |
-| `npx playwright test` | Run end-to-end tests (Playwright) |
+| `npm run test` | Run unit/component tests once (Vitest + React Testing Library) |
+| `npm run test:watch` | Run unit/component tests in watch mode |
+| `npm run test:e2e` | Run end-to-end tests (Playwright) |
+| `npm run test:e2e:ui` | Run end-to-end tests with Playwright UI mode |
+| `npm run test:e2e:debug` | Run end-to-end tests with Playwright debugger |
+| `npm run check:schema` | Validate database schema drift against TypeScript types |
 
 ---
 
@@ -225,7 +231,7 @@ src/
 │   ├── ui/                # Reusable: Button, Card, Input, ErrorBoundary, LoadingComponents, UpgradePrompt
 │   └── users/             # User manager and modal
 ├── context/
-│   ├── SupabaseAppContext.tsx   # Active state management (useReducer, 30 actions)
+│   ├── SupabaseAppContext.tsx   # Active state management (useReducer, 44 actions)
 │   ├── AuthContext.tsx          # Supabase auth wrapper
 │   └── ThemeContext.tsx         # Light/dark/system theme
 ├── lib/
@@ -251,7 +257,7 @@ supabase/
 │   ├── platform-admin-manage-features/
 │   ├── platform-admin-reject-shop/
 │   └── platform-admin-update-subscription/
-└── migrations/                  # 34 SQL migration files
+└── migrations/                  # 55 SQL migration files
 ```
 
 ---
@@ -305,7 +311,7 @@ supabase/
 
 ### Migrations
 
-34 migration files in `supabase/migrations/`. Run `supabase db push` to apply.
+55 migration files in `supabase/migrations/`. Run `supabase db push` to apply.
 
 ### Key Database Features
 
@@ -407,6 +413,20 @@ test: add Vitest with React Testing Library
 - Include screenshots for UI changes
 - Run `npm run lint` before submitting
 - Update relevant docs if schema or behavior changes
+
+---
+
+## Changelog
+
+### 2026-07-27
+- docs: README migration count corrected (34→55), reducer actions corrected (30→44)
+- docs: npm scripts table updated to match actual `package.json` (`npm run test` instead of `npx vitest`)
+- docs: added missing `test:watch`, `test:e2e:*`, `check:schema` scripts
+- docs: added design system note about inline hex values in charts/receipts
+- docs: last updated date bumped from 2026-07-16
+
+### 2026-07-16
+- Initial README v3.1.0 release
 
 ---
 

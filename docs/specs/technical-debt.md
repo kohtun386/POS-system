@@ -3,7 +3,7 @@
 Originally captured 2026-06-16 during POS Helper lint + theme consistency audit.
 Commit: `8556dc3` (159 → 140 lint problems).
 
-Last updated: 2026-07-13 (aligned with VISION.md v3.1.0).
+Last updated: 2026-07-27 (added TypeScript Strictness item).
 
 ---
 
@@ -192,7 +192,27 @@ Add to `docs/architecture/database.md`:
 
 ---
 
-## 5. Resolved Items (v3.1.0)
+## 5. TypeScript Strictness — 31 `any` Errors (Re-accumulated)
+
+**Date identified:** 2026-07-27
+**Lint count:** 31 `@typescript-eslint/no-explicit-any` errors across the codebase.
+**Status:** 🔴 OPEN — re-accumulated since v3.1.0 cleanup.
+
+### Root Cause
+
+Likely Supabase JSONB columns (`items`, `conditions`) and Recharts data structures lacking strict interfaces. The 2026-07-13 resolution (0 errors) was not sustained — new code or migrations introduced unchecked `any` types.
+
+### Impact
+
+Reduces type safety in strict mode; potential for runtime type errors if data shape changes unexpectedly. Blocks CI lint gate.
+
+### Resolution Plan
+
+Replace `any` with `unknown` + type guards, or define strict interfaces for Supabase JSONB types. (Target: Phase 5 Cleanup)
+
+---
+
+## 6. Resolved Items (v3.1.0)
 
 ### CurrencyContext — ✅ RESOLVED (2026-07-10)
 
