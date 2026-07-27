@@ -26,7 +26,6 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const [payments, setPayments] = useState<Payment[]>([]);
   const [pendingPayment, setPendingPayment] = useState<{ method: Payment['method']; amount: string }>({ method: 'cash', amount: '' });
   const [splitPaymentEnabled, setSplitPaymentEnabled] = useState(false);
-  const [showMorePayments, setShowMorePayments] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
@@ -145,7 +144,6 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
       setPayments([]);
       setPendingPayment({ method: 'cash', amount: '' });
       setSplitPaymentEnabled(false);
-      setShowMorePayments(false);
       setCardDetails({
         bankName: '',
         cardType: 'unknown',
@@ -399,17 +397,17 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
   const isTouchMode = state.settings.interfaceMode === 'touch';
 
-  // Shared payment-method button class builder — avoids 8× style duplication
+  // Shared payment-method button class builder — compact row layout, 48px min height
   const paymentBtnClasses = (methodId: string, isDisabled = false) => {
     const isActive = splitPaymentEnabled
       ? pendingPayment.method === methodId
       : paymentMethod === methodId;
     return [
-      'flex flex-col items-center space-y-2 p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer',
+      'flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all duration-200 cursor-pointer',
       isActive
         ? 'border-primary-600 bg-primary-50 text-primary-700 dark:border-primary-400 dark:bg-primary-900/50 dark:text-primary-300'
         : 'border-secondary-200 dark:border-secondary-800 hover:border-secondary-300 dark:hover:border-secondary-700 text-secondary-600 dark:text-secondary-300',
-      isTouchMode ? 'min-h-[80px]' : 'min-h-[70px]',
+      isTouchMode ? 'min-h-[48px]' : 'min-h-[44px]',
       isDisabled ? 'opacity-50 cursor-not-allowed' : '',
     ].join(' ');
   };
@@ -433,10 +431,10 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
               </button>
             </div>
 
-            <div className="modal-body space-y-6">
+            <div className="modal-body space-y-4">
               {/* Discount Alert */}
               {showDiscountAlert && appliedDiscounts.length > 0 && (
-                <div className="bg-[#f0fdf4] dark:bg-success-900/20 border border-[#bbf7d0] dark:border-success-800/50 rounded-xl p-4 animate-slide-up">
+                <div className="bg-[#f0fdf4] dark:bg-success-900/20 border border-[#bbf7d0] dark:border-success-800/50 rounded-xl p-3 animate-slide-up">
                   <div className="flex items-start space-x-3">
                     <Gift className="h-5 w-5 text-success-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
@@ -470,11 +468,11 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
               {/* Order Summary */}
               <div>
-                <h3 className={`font-semibold font-fraunces text-secondary-900 dark:text-secondary-100 mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                <h3 className="font-semibold font-fraunces text-secondary-900 dark:text-secondary-100 mb-2">
                   Order Summary
                 </h3>
 
-                <div className="space-y-2 mb-4 max-h-40 md:max-h-48 overflow-y-auto">
+                <div className="space-y-1 mb-3 max-h-28 md:max-h-36 overflow-y-auto">
                   {state.cart.map((item, index) => (
                     <div key={index} className="flex justify-between text-sm text-secondary-600 dark:text-secondary-300">
                       <span className="truncate flex-1 mr-2">
@@ -493,7 +491,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                   ))}
                 </div>
 
-                <div className="space-y-2 pt-4 border-t border-secondary-200 dark:border-secondary-800">
+                <div className="space-y-1 pt-3 border-t border-secondary-200 dark:border-secondary-800">
                   <div className="flex justify-between text-secondary-600 dark:text-secondary-300">
                     <span>Subtotal:</span>
                     <span className="font-medium text-secondary-900 dark:text-secondary-100">{DEFAULT_CURRENCY} {subtotal.toFixed(2)}</span>
@@ -508,7 +506,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     <span>Tax ({state.settings.taxRate}%):</span>
                     <span className="font-medium text-secondary-900 dark:text-secondary-100">{DEFAULT_CURRENCY} {taxAmount.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-lg font-bold text-secondary-900 dark:text-secondary-100 pt-2 border-t border-secondary-200 dark:border-secondary-800">
+                  <div className="flex justify-between text-base font-bold text-secondary-900 dark:text-secondary-100 pt-1.5 border-t border-secondary-200 dark:border-secondary-800">
                     <span>Total:</span>
                     <span className="text-primary-600 dark:text-primary-400">{DEFAULT_CURRENCY} {total.toFixed(2)}</span>
                   </div>
@@ -517,16 +515,21 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
               {/* Payment Method */}
               <div>
-                <h3 className={`font-semibold font-fraunces text-secondary-900 dark:text-secondary-100 mb-4 ${isTouchMode ? 'text-lg' : 'text-base'}`}>
+                <h3 className="font-semibold font-fraunces text-secondary-900 dark:text-secondary-100 mb-2">
                   Payment Method
                 </h3>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="flex flex-wrap gap-2">
                   {[
                     { id: 'cash', label: 'Cash', icon: Banknote },
                     { id: 'kbzpay', label: 'KBZpay', icon: Smartphone },
                     { id: 'wavepay', label: 'WavePay', icon: Smartphone },
                     { id: 'ayapay', label: 'AYA Pay', icon: Smartphone },
+                    { id: 'card', label: 'Card', icon: CreditCard },
+                    { id: 'cbpay', label: 'CB Pay', icon: Smartphone },
+                    { id: 'mpu', label: 'MPU', icon: CreditCard },
+                    { id: 'digital', label: 'Digital', icon: Smartphone },
+                    ...(creditEnabled ? [{ id: 'credit' as const, label: 'Credit', icon: Receipt }] : []),
                   ].map(({ id, label, icon: Icon }) => (
                     <button
                       key={id}
@@ -537,77 +540,21 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                           setPaymentMethod(id);
                         }
                       }}
-                      className={paymentBtnClasses(id)}
+                      disabled={!splitPaymentEnabled && id === 'credit' && !canPayWithCredit}
+                      className={paymentBtnClasses(id, !splitPaymentEnabled && id === 'credit' && !canPayWithCredit)}
                     >
-                      <Icon className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
-                      <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
+                      <Icon className={`${isTouchMode ? 'h-5 w-5' : 'h-4 w-4'} flex-shrink-0`} />
+                      <span className={`font-medium truncate ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
                         {label}
                       </span>
                     </button>
                   ))}
                 </div>
 
-                {!splitPaymentEnabled && (
-                  <button
-                    type="button"
-                    onClick={() => setShowMorePayments(!showMorePayments)}
-                    className="mt-3 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium flex items-center space-x-1 transition-colors"
-                  >
-                    <span className={`transform transition-transform duration-300 ${showMorePayments ? 'rotate-90' : ''}`}>›</span>
-                    <span>{showMorePayments ? 'Less payment options' : 'More payment options'}</span>
-                  </button>
-                )}
-
-                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showMorePayments ? 'max-h-[500px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {[
-                      { id: 'card', label: 'Card', icon: CreditCard },
-                      { id: 'cbpay', label: 'CB Pay', icon: Smartphone },
-                      { id: 'mpu', label: 'MPU', icon: CreditCard },
-                      { id: 'digital', label: 'Digital', icon: Smartphone },
-                    ].map(({ id, label, icon: Icon }) => (
-                      <button
-                        key={id}
-                        onClick={() => {
-                          if (splitPaymentEnabled) {
-                            setPendingPayment(prev => ({ ...prev, method: id as Payment['method'] }));
-                          } else {
-                            setPaymentMethod(id);
-                          }
-                        }}
-                        className={paymentBtnClasses(id)}
-                      >
-                        <Icon className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
-                        <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
-                          {label}
-                        </span>
-                      </button>
-                    ))}
-                    {creditEnabled && (
-                      <button
-                        onClick={() => {
-                          if (splitPaymentEnabled) {
-                            setPendingPayment(prev => ({ ...prev, method: 'credit' as Payment['method'] }));
-                          } else {
-                            setPaymentMethod('credit');
-                          }
-                        }}
-                        disabled={!splitPaymentEnabled && !canPayWithCredit}
-                        className={`${paymentBtnClasses('credit', !splitPaymentEnabled && !canPayWithCredit)} col-span-2 sm:col-span-3`}
-                      >
-                        <Receipt className={`${isTouchMode ? 'h-6 w-6' : 'h-5 w-5'}`} />
-                        <span className={`font-medium ${isTouchMode ? 'text-sm' : 'text-xs'}`}>
-                          Credit
-                        </span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
                 {/* Amount Received - always visible */}
                 {!splitPaymentEnabled && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-secondary-900 dark:text-secondary-100 mb-2">
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-secondary-900 dark:text-secondary-100 mb-1.5">
                       Amount Received *
                     </label>
                     <input
@@ -616,7 +563,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                       min="0"
                       value={amountPaid}
                       onChange={(e) => setAmountPaid(e.target.value)}
-                      className={`input ${isTouchMode ? 'h-12 text-lg' : 'h-11'}`}
+                      className={`input ${isTouchMode ? 'h-11 text-lg' : 'h-10'}`}
                       placeholder={`Minimum: ${DEFAULT_CURRENCY} ${total.toFixed(2)}`}
                       disabled={isProcessing}
                     />
@@ -627,11 +574,11 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -6 }}
                           transition={{ duration: 0.2 }}
-                          className="mt-2 bg-[#f0fdf4] dark:bg-success-900/20 border border-[#bbf7d0] dark:border-success-800/50 rounded-xl p-3"
+                          className="mt-1.5 bg-[#f0fdf4] dark:bg-success-900/20 border border-[#bbf7d0] dark:border-success-800/50 rounded-xl p-2"
                         >
                           <div className="flex justify-between items-center">
-                            <span className="font-semibold text-success-800 dark:text-[#86efac] text-sm">Change Due:</span>
-                            <span className="text-base font-bold text-success-800 dark:text-[#86efac]">
+                            <span className="font-semibold text-success-800 dark:text-[#86efac] text-xs">Change Due:</span>
+                            <span className="text-sm font-bold text-success-800 dark:text-[#86efac]">
                               {DEFAULT_CURRENCY} {change.toFixed(2)}
                             </span>
                           </div>
@@ -642,7 +589,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                 )}
 
                 {/* Split Payment Toggle */}
-                <div className="mt-4">
+                <div className="mt-3">
                   <button
                     type="button"
                     onClick={() => setSplitPaymentEnabled(!splitPaymentEnabled)}
