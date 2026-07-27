@@ -127,7 +127,7 @@ export function AlertManager() {
                     <button
                         onClick={runAlertCheck}
                         disabled={loading}
-                        className="btn btn-primary"
+                        className="btn btn-primary btn-md touch-friendly"
                     >
                         <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                         <span>Run Alert Check</span>
@@ -293,7 +293,7 @@ function OverviewTab({
                 <button
                     onClick={onRunCheck}
                     disabled={loading}
-                    className="btn btn-primary"
+                    className="btn btn-primary btn-md"
                 >
                     <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                     <span>Run Manual Check</span>
@@ -381,7 +381,7 @@ function RecipientsTab({
                         setEditingRecipient(null);
                         setShowModal(true);
                     }}
-                    className="btn btn-primary"
+                    className="btn btn-primary btn-md"
                 >
                     <Plus className="h-4 w-4" />
                     <span>Add Recipient</span>
@@ -495,7 +495,7 @@ function TemplatesTab({
                         setEditingTemplate(null);
                         setShowModal(true);
                     }}
-                    className="btn btn-primary"
+                    className="btn btn-primary btn-md"
                 >
                     <Plus className="h-4 w-4" />
                     <span>Add Template</span>
@@ -739,7 +739,7 @@ function ServicesTab({
                         setEditingService(null);
                         setShowModal(true);
                     }}
-                    className="btn btn-primary"
+                    className="btn btn-primary btn-md"
                 >
                     <Plus className="h-4 w-4" />
                     <span>Add Service</span>

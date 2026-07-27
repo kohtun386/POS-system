@@ -192,14 +192,14 @@ export function ConfigurationCard({ config, onToggle, onUpdate }: ConfigurationC
                 <div className="flex justify-end space-x-3 mt-4 pt-4 border-t">
                     <button
                         onClick={handleCancel}
-                        className="btn btn-secondary"
+                        className="btn btn-secondary btn-md"
                     >
                         <X className="h-4 w-4 mr-2" />
                         Cancel
                     </button>
                     <button
                         onClick={handleSave}
-                        className="btn btn-primary"
+                        className="btn btn-primary btn-md"
                     >
                         <Save className="h-4 w-4 mr-2" />
                         Save Changes

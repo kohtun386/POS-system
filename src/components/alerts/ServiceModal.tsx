@@ -262,7 +262,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                                 </p>
                                 <button
                                     type="button"
-                                    className="btn btn-secondary"
+                                    className="btn btn-secondary btn-md"
                                     onClick={() => {
                                         swalConfig.info('Test functionality will be implemented in the next phase');
                                     }}
@@ -278,14 +278,14 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="btn btn-secondary"
+                            className="btn btn-secondary btn-md"
                             disabled={loading}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="btn btn-primary"
+                            className="btn btn-primary btn-md"
                             disabled={loading}
                         >
                             <Save className="h-4 w-4 mr-2" />

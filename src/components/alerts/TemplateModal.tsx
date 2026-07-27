@@ -334,14 +334,14 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
                         <button
                             type="button"
                             onClick={onClose}
-                            className="btn btn-secondary"
+                            className="btn btn-secondary btn-md"
                             disabled={loading}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="btn btn-primary"
+                            className="btn btn-primary btn-md"
                             disabled={loading}
                         >
                             <Save className="h-4 w-4 mr-2" />

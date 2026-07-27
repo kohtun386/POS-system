@@ -118,7 +118,7 @@ export function CustomerManager() {
 
           <button
             onClick={handleAddCustomer}
-            className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-indigo-600 text-white rounded-xl hover:from-primary-700 hover:to-indigo-700 transition-all font-semibold shadow-lg hover:shadow-xl whitespace-nowrap"
+            className="btn btn-primary btn-md touch-friendly"
           >
             <Plus className="h-5 w-5" />
             <span>Add Customer</span>

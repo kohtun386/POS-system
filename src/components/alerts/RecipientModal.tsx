@@ -251,14 +251,14 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
                         <button
                             type="button"
                             onClick={onClose}
-                            className="btn btn-secondary"
+                            className="btn btn-secondary btn-md"
                             disabled={loading}
                         >
-                            Cancel
+                            <span className="flex items-center gap-2"><X className="h-4 w-4" /> Cancel</span>
                         </button>
                         <button
                             type="submit"
-                            className="btn btn-primary"
+                            className="btn btn-primary btn-md"
                             disabled={loading}
                         >
                             <Save className="h-4 w-4 mr-2" />

@@ -94,7 +94,7 @@ export function FeatureDefinitions() {
         <h1 className="text-2xl font-fraunces font-bold text-secondary-900 dark:text-secondary-100">
           Feature Definitions
         </h1>
-        <button className="btn btn-primary" onClick={handleCreate}>
+        <button className="btn btn-primary btn-md" onClick={handleCreate}>
           Add Feature
         </button>
       </div>

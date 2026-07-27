@@ -68,19 +68,19 @@ export function PlatformDashboard() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <button
-            className="btn btn-primary"
+            className="btn btn-primary btn-md"
             onClick={() => {/* will route to pending shops */}}
           >
             Review Pending Shops
           </button>
           <button
-            className="btn btn-secondary"
+            className="btn btn-secondary btn-md"
             onClick={() => {/* will route to feature management */}}
           >
             Manage Features
           </button>
           <button
-            className="btn btn-secondary"
+            className="btn btn-secondary btn-md"
             onClick={() => {/* will route to shop list */}}
           >
             View All Shops

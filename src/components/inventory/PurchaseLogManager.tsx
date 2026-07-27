@@ -103,7 +103,7 @@ export function PurchaseLogManager() {
           <h1 className="text-2xl lg:text-3xl font-bold text-secondary-900">Purchase Log</h1>
           <p className="text-secondary-600 mt-1">Record supplier purchases and stock intake</p>
         </div>
-        <button onClick={() => { setEditingEntry(null); setShowModal(true); }} className="btn btn-primary">
+        <button onClick={() => { setEditingEntry(null); setShowModal(true); }} className="btn btn-primary btn-md touch-friendly">
           <Plus className="h-5 w-5" />
           <span>Record Purchase</span>
         </button>

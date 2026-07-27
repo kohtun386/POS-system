@@ -615,7 +615,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                           value={pendingPayment.amount}
                           onChange={(e) => setPendingPayment(prev => ({ ...prev, amount: e.target.value }))}
                         />
-                        <button type="button" className="btn btn-primary" onClick={addPendingPayment}>Add</button>
+                        <button type="button" className="btn btn-primary btn-md" onClick={addPendingPayment}>Add</button>
                       </div>
 
                       <div className="space-y-2">

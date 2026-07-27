@@ -90,7 +90,7 @@ export function WhatsAppReportConfig() {
 
           <div className="flex justify-end pt-4">
             <button
-              className="btn btn-primary"
+              className="btn btn-primary btn-md"
               onClick={handleSave}
               disabled={saving}
             >

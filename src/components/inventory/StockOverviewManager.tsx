@@ -134,8 +134,8 @@ function StockItemModal({ isOpen, onClose, item, onSaved }: StockItemModalProps)
               className="textarea" rows={2} placeholder="Optional notes..." />
           </div>
           <div className="flex justify-end space-x-3 pt-4 border-t border-secondary-200">
-            <button type="button" onClick={onClose} className="btn btn-secondary">Cancel</button>
-            <button type="submit" className="btn btn-primary">{item ? 'Update' : 'Add'} Stock Item</button>
+            <button type="button" onClick={onClose} className="btn btn-secondary btn-md">Cancel</button>
+            <button type="submit" className="btn btn-primary btn-md">{item ? 'Update' : 'Add'} Stock Item</button>
           </div>
         </form>
       </div>
@@ -200,8 +200,8 @@ function AdjustModal({ isOpen, onClose, item, onSaved }: { isOpen: boolean; onCl
                 className="input" placeholder="e.g. Weekly count, Damaged, Used" />
             </div>
             <div className="flex justify-end space-x-3 pt-4 border-t border-secondary-200">
-              <button onClick={onClose} className="btn btn-secondary">Cancel</button>
-              <button onClick={handleAdjust} className="btn btn-primary">Confirm Adjustment</button>
+              <button onClick={onClose} className="btn btn-secondary btn-md">Cancel</button>
+              <button onClick={handleAdjust} className="btn btn-primary btn-md">Confirm Adjustment</button>
             </div>
           </div>
         </div>
@@ -266,7 +266,7 @@ export function StockOverviewManager() {
           <h1 className="text-2xl lg:text-3xl font-bold text-secondary-900">Stock Overview</h1>
           <p className="text-secondary-600 mt-1">Supply-level stock tracking and manual adjustments</p>
         </div>
-        <button onClick={() => { setEditingItem(null); setShowAddModal(true); }} className="btn btn-primary">
+        <button onClick={() => { setEditingItem(null); setShowAddModal(true); }} className="btn btn-primary btn-md touch-friendly">
           <Plus className="h-5 w-5" />
           <span>Add Stock Item</span>
         </button>

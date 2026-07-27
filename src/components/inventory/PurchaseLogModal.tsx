@@ -204,10 +204,10 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
           )}
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-secondary-200">
-            <button type="button" onClick={onClose} className="btn btn-secondary">
+            <button type="button" onClick={onClose} className="btn btn-secondary btn-md">
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn btn-primary btn-md">
               {editingEntry ? 'Update' : 'Record'} Purchase
             </button>
           </div>

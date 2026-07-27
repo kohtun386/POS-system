@@ -122,7 +122,7 @@ export function TransactionsManager() {
         <div className="flex items-center space-x-3">
           <button
             onClick={exportTransactions}
-            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-indigo-600 text-white rounded-xl hover:from-primary-700 hover:to-indigo-700 transition-all font-medium shadow-lg hover:shadow-xl"
+            className="btn btn-primary btn-md touch-friendly"
           >
             <Download className="h-4 w-4" />
             <span>Export</span>
