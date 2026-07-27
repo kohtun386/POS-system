@@ -42,7 +42,7 @@ export function SalesTabManager() {
         selectedCustomer: null,
       };
 
-      const newTab = await salesTabsService.create(user.id, newTabData);
+      const newTab = await salesTabsService.create(user.id, newTabData, state.activeShopId);
       dispatch({ type: 'ADD_SALES_TAB', payload: newTab });
     } catch (error) {
       console.error('Error creating new tab:', error);
@@ -153,33 +153,33 @@ export function SalesTabManager() {
             </div>
           );
         })}
-      </div>
 
-      {/* Add New Sale Button */}
-      <div className="p-1 border-t border-secondary-200 dark:border-secondary-800 relative">
-        <button
-          onClick={() => {
-            if (!canManageTabs) {
-              setShowUpgrade(true);
-              return;
-            }
-            createNewTab();
-          }}
-          disabled={!canManageTabs}
-          className={`w-12 min-h-[48px] rounded-xl transition-all duration-300 flex items-center justify-center mx-auto shadow-soft ${
-            canManageTabs
-              ? 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white'
-              : 'bg-secondary-300 dark:bg-secondary-700 text-secondary-500 dark:text-secondary-400 cursor-not-allowed'
-          }`}
-          title={canManageTabs ? 'Add New Sale' : 'Multi-tab sales disabled'}
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-        {showUpgrade && (
-          <div className="absolute left-14 bottom-0 z-50 w-64">
-            <UpgradePrompt feature="Multi-tab sales" tier="free" onClose={() => setShowUpgrade(false)} />
-          </div>
-        )}
+        {/* Add New Sale Button — inline after last tab */}
+        <div className="relative flex flex-col items-center">
+          <button
+            onClick={() => {
+              if (!canManageTabs) {
+                setShowUpgrade(true);
+                return;
+              }
+              createNewTab();
+            }}
+            disabled={!canManageTabs}
+            className={`w-12 min-h-[48px] rounded-xl transition-all duration-300 flex items-center justify-center shadow-soft ${
+              canManageTabs
+                ? 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white'
+                : 'bg-secondary-300 dark:bg-secondary-700 text-secondary-500 dark:text-secondary-400 cursor-not-allowed'
+            }`}
+            title={canManageTabs ? 'Add New Sale' : 'Multi-tab sales disabled'}
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+          {showUpgrade && (
+            <div className="absolute left-14 top-0 z-50 w-64">
+              <UpgradePrompt feature="Multi-tab sales" tier="free" onClose={() => setShowUpgrade(false)} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
