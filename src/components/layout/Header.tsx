@@ -244,11 +244,6 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
               </div>
             )}
 
-            <button className="btn-ghost p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl transition-all duration-300 relative" aria-label="Notifications">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-3 w-3 bg-accent-600 rounded-full animate-pulse"></span>
-            </button>
-
             <div className="flex items-center space-x-3">
               <div className="hidden lg:block text-right">
                 <p className="text-sm font-semibold text-secondary-900 dark:text-secondary-100 truncate max-w-32">{state.currentUser?.name}</p>

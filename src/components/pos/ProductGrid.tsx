@@ -144,13 +144,9 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
         </div>
 
         {/* Product Grid */}
-        <div className="flex-1 p-4 lg:p-6 overflow-auto">
+        <div className="flex-1 p-4 lg:p-6 overflow-hidden">
           {filteredProducts.length === 0 && state.products.length === 0 && searchTerm === '' && selectedCategory === 'All' ? (
-            <div className={`grid gap-4 lg:gap-6 ${
-              isTouchMode
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
-            }`}>
+            <div className="grid gap-4 lg:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className={`card ${isTouchMode ? 'p-4' : 'p-3'}`}>
                   <div className="flex flex-col h-full">
@@ -177,11 +173,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
               <p className="text-secondary-400 text-sm mt-1">Try adjusting your search or filters</p>
             </div>
           ) : (
-            <div className={`grid gap-4 lg:gap-6 ${
-              isTouchMode
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
-            }`}>
+            <div className="grid gap-4 lg:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -193,7 +185,8 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
                 />
               ))}
             </div>
-          )}
+          )
+          }
         </div>
       </div>
 

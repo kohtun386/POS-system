@@ -18,12 +18,25 @@ export function POSTerminal() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [isPortrait, setIsPortrait] = useState(() => window.innerHeight > window.innerWidth);
+  const isTouchMode = state.settings.interfaceMode === 'touch';
+
+  // ponytail: large phones in landscape (width >= 768px) will trigger two-column. Acceptable for counter-mounted tablet target.
+  const usesTwoColumn = !isMobile && !isPortrait;
 
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)');
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
+    const mqWidth = window.matchMedia('(max-width: 767px)');
+    const mqPortrait = window.matchMedia('(orientation: portrait)');
+
+    const handleWidth = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    const handleOrientation = (e: MediaQueryListEvent) => setIsPortrait(e.matches);
+
+    mqWidth.addEventListener('change', handleWidth);
+    mqPortrait.addEventListener('change', handleOrientation);
+    return () => {
+      mqWidth.removeEventListener('change', handleWidth);
+      mqPortrait.removeEventListener('change', handleOrientation);
+    };
   }, []);
 
   const addToCart = (product: Product, weight?: number) => {
@@ -163,19 +176,21 @@ export function POSTerminal() {
     <div className="flex h-full bg-secondary-50 dark:bg-primary-950">
       <SalesTabManager />
       <div className="flex flex-col md:flex-row flex-1 min-h-0">
-        {/* ProductGrid gets bottom padding on mobile for floating cart bar */}
-        <div className="flex-1 min-h-0 pb-20 md:pb-0">
+        {/* ProductGrid */}
+        <div className={`flex-1 min-h-0 ${!usesTwoColumn ? 'pb-20' : 'pb-0'}`}>
           <ProductGrid onAddToCart={addToCart} />
         </div>
 
-        {/* Cart — side panel on desktop, hidden on mobile */}
-        <div className="hidden md:flex md:flex-shrink-0 md:flex-col min-h-0">
-          <Cart onCheckout={handleCheckout} onSaveDraft={saveDraft} />
-        </div>
+        {/* Cart — side panel on landscape tablet / desktop */}
+        {usesTwoColumn && (
+          <div className={`flex-shrink-0 flex flex-col min-h-0 border-l border-secondary-200 dark:border-secondary-800 ${isTouchMode ? 'w-96' : 'w-80'}`}>
+            <Cart onCheckout={handleCheckout} onSaveDraft={saveDraft} />
+          </div>
+        )}
       </div>
 
-      {/* Mobile Cart — floating bar + full-screen overlay (cashiers only) */}
-      {isMobile && state.currentUser?.role === 'cashier' && (
+      {/* Mobile/Portrait Cart — floating bar + full-screen overlay (cashiers only) */}
+      {!usesTwoColumn && state.currentUser?.role === 'cashier' && (
         <>
           <MobileCartBar cart={state.cart} onTap={() => setShowMobileCart(true)} />
 

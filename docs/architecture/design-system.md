@@ -548,7 +548,8 @@ VISION.md v3.1.0 defines three device layers. Each has distinct form factors, in
 | Pattern | Implementation |
 |---------|---------------|
 | Navigation | Top header bar with icon buttons |
-| Layout | Single-column, full-width cards |
+| Layout (landscape) | Two-column split: Products on left, Cart on right. Cart width `w-96` in touch mode, `w-80` in traditional mode. Activates when `width ≥ 768px` AND viewport is landscape. |
+| Layout (portrait) | Single-column, full-width cards stacked vertically. Cart accessed via floating bottom cart bar (cashier only). Triggered when `width < 768px` OR viewport is portrait. |
 | Buttons | `.btn-lg` minimum in touch mode |
 | Tables | Standard `.table` with horizontal scroll |
 | Modals | Full-width on small tablets, `max-w-md` on larger |
@@ -565,6 +566,28 @@ VISION.md v3.1.0 defines three device layers. Each has distinct form factors, in
 | Tab close button | `min-w-[44px] min-h-[44px]` touch area | `min-w-[44px] min-h-[44px]` touch area |
 
 **Rule:** All interactive elements must have minimum 44x44px touch area. In touch mode, prefer 48x48px.
+
+### 10.1.2 Layout Modes
+
+The POS adapts to both form factor and orientation to keep the §10.1
+"one-handed operation friendly" principle in every state.
+
+| Viewport | Mode | Layout |
+|----------|------|--------|
+| `width < 768px` | Mobile | Single-column. Floating bottom cart bar (cashier). |
+| `width ≥ 768px` AND portrait | Tablet-portrait | Single-column. Floating bottom cart bar (cashier). Suppresses side-panel cart. |
+| `width ≥ 768px` AND landscape | Tablet-landscape | Two-column: Products left, Cart right. No floating cart bar. |
+
+**Detection:** Use `matchMedia('(max-width: 767px)')` for mobile and
+`matchMedia('(orientation: portrait)')` for portrait. Do **not** rely on
+window resize listeners — matchMedia fires only on breakpoint transitions,
+avoiding render churn during rotation gestures.
+
+**Cart width inside two-column mode:**
+- Touch mode (`isTouchMode === true`): `w-96` (24rem / 384px)
+- Traditional mode: `w-80` (20rem / 320px)
+
+Both widths satisfy §10.1.1 48px tap-target requirement.
 
 ---
 

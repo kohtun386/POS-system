@@ -84,9 +84,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
   const total = subtotal - totalDiscount + taxAmount;
 
   return (
-    <div className={`bg-secondary-50 dark:bg-primary-950 border-l border-secondary-200 dark:border-secondary-800 flex flex-col flex-1 min-h-0 ${
-      isTouchMode ? 'w-full md:w-64 lg:w-96' : 'w-full md:w-64 lg:w-80'
-    }`}>
+    <div className="bg-secondary-50 dark:bg-primary-950 border-l border-secondary-200 dark:border-secondary-800 flex flex-col flex-1 min-h-0">
       {/* Cart Header */}
       <div className="p-4 lg:p-6 border-b-2 border-primary-600/20 flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
