@@ -86,15 +86,16 @@ function StockItemModal({ isOpen, onClose, item, onSaved }: StockItemModalProps)
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
+        <div className="modal-header">
           <h2 className="text-xl font-bold text-secondary-900">{item ? 'Edit Stock Item' : 'Add Stock Item'}</h2>
           <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600 p-2 rounded-xl hover:bg-secondary-100 transition-colors">
             <span className="sr-only">Close</span>
             <span aria-hidden="true" className="text-xl">&times;</span>
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="modal-body space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-secondary-700 mb-1">Item Name *</label>
               <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -133,7 +134,9 @@ function StockItemModal({ isOpen, onClose, item, onSaved }: StockItemModalProps)
             <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               className="textarea" rows={2} placeholder="Optional notes..." />
           </div>
-          <div className="flex justify-end space-x-3 pt-4 border-t border-secondary-200">
+          </div>
+
+          <div className="modal-footer">
             <button type="button" onClick={onClose} className="btn btn-secondary btn-md">Cancel</button>
             <button type="submit" className="btn btn-primary btn-md">{item ? 'Update' : 'Add'} Stock Item</button>
           </div>
@@ -180,30 +183,34 @@ function AdjustModal({ isOpen, onClose, item, onSaved }: { isOpen: boolean; onCl
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal max-w-md" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-secondary-900 mb-1">Adjust Stock: {item.name}</h2>
-          <p className="text-sm text-secondary-500 mb-4">Current count: {item.quantity} {item.unit}</p>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">New Quantity *</label>
-              <input type="number" step="any" min="0" value={newQty}
-                onChange={(e) => setNewQty(e.target.value)} className="input text-lg" autoFocus />
-            </div>
-            {newQty && (
-              <div className={`text-sm font-medium ${diff > 0 ? 'text-success-600' : diff < 0 ? 'text-danger-600' : 'text-secondary-500'}`}>
-                {diff > 0 ? `+${diff}` : diff} {item.unit} from previous count
-              </div>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">Reason *</label>
-              <input type="text" value={reason} onChange={(e) => setReason(e.target.value)}
-                className="input" placeholder="e.g. Weekly count, Damaged, Used" />
-            </div>
-            <div className="flex justify-end space-x-3 pt-4 border-t border-secondary-200">
-              <button onClick={onClose} className="btn btn-secondary btn-md">Cancel</button>
-              <button onClick={handleAdjust} className="btn btn-primary btn-md">Confirm Adjustment</button>
-            </div>
+        <div className="modal-header">
+          <h2 className="text-xl font-bold text-secondary-900">Adjust Stock: {item.name}</h2>
+          <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600 p-2 rounded-xl hover:bg-secondary-100 transition-colors">
+            <span className="sr-only">Close</span>
+            <span aria-hidden="true" className="text-xl">&times;</span>
+          </button>
+        </div>
+        <div className="modal-body space-y-4">
+          <p className="text-sm text-secondary-500">Current count: {item.quantity} {item.unit}</p>
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 mb-1">New Quantity *</label>
+            <input type="number" step="any" min="0" value={newQty}
+              onChange={(e) => setNewQty(e.target.value)} className="input text-lg" autoFocus />
           </div>
+          {newQty && (
+            <div className={`text-sm font-medium ${diff > 0 ? 'text-success-600' : diff < 0 ? 'text-danger-600' : 'text-secondary-500'}`}>
+              {diff > 0 ? `+${diff}` : diff} {item.unit} from previous count
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 mb-1">Reason *</label>
+            <input type="text" value={reason} onChange={(e) => setReason(e.target.value)}
+              className="input" placeholder="e.g. Weekly count, Damaged, Used" />
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button onClick={onClose} className="btn btn-secondary btn-md">Cancel</button>
+          <button onClick={handleAdjust} className="btn btn-primary btn-md">Confirm Adjustment</button>
         </div>
       </div>
     </div>

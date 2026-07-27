@@ -272,7 +272,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
 
   return (
     <div className="modal-overlay">
-      <div className="modal max-w-4xl">
+      <div className="modal max-w-xl">
         <div className="modal-header">
           <h2 className="text-xl font-bold text-secondary-900 font-fraunces">
             {product ? 'Edit Product' : 'Add New Product'}

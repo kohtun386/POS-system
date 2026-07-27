@@ -120,10 +120,9 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90dvh] overflow-y-auto">
-                {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b">
+        <div className="modal-overlay">
+            <div className="modal max-w-lg">
+                <div className="modal-header">
                     <h2 className="text-xl font-semibold font-fraunces">
                         {service ? 'Edit Service' : 'Add New Service'}
                     </h2>
@@ -136,9 +135,10 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    {/* Service Selection */}
-                    <div className="space-y-4">
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+                    <div className="modal-body space-y-6">
+                        {/* Service Selection */}
+                        <div className="space-y-4">
                         <h3 className="text-lg font-medium">Service Configuration</h3>
 
                         <div>
@@ -273,8 +273,10 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                         </div>
                     )}
 
+                </div>
+
                     {/* Actions */}
-                    <div className="flex justify-end space-x-3 pt-6 border-t">
+                    <div className="modal-footer">
                         <button
                             type="button"
                             onClick={onClose}

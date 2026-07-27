@@ -97,8 +97,8 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
+      <div className="modal max-w-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
           <h2 className="text-xl font-bold text-secondary-900">
             {editingEntry ? 'Edit Purchase' : 'Record Purchase'}
           </h2>
@@ -107,103 +107,105 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">Item *</label>
-              <input
-                type="text"
-                value={formData.item}
-                onChange={(e) => setFormData({ ...formData, item: e.target.value })}
-                className="input"
-                placeholder="e.g. Coffee beans, Milk"
-                required
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="modal-body">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">Item *</label>
+                <input
+                  type="text"
+                  value={formData.item}
+                  onChange={(e) => setFormData({ ...formData, item: e.target.value })}
+                  className="input"
+                  placeholder="e.g. Coffee beans, Milk"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">Supplier</label>
+                <input
+                  type="text"
+                  value={formData.supplier}
+                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                  className="input"
+                  placeholder="e.g. ABC Suppliers"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">Quantity *</label>
+                <input
+                  type="number"
+                  step="any"
+                  min="0.01"
+                  value={formData.quantity}
+                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                  className="input"
+                  placeholder="0"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">Unit</label>
+                <select
+                  value={formData.unit}
+                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                  className="select"
+                >
+                  <option value="piece">Piece</option>
+                  <option value="kg">Kilogram</option>
+                  <option value="g">Gram</option>
+                  <option value="l">Litre</option>
+                  <option value="ml">Millilitre</option>
+                  <option value="box">Box</option>
+                  <option value="pack">Pack</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">Unit Cost (MMK) *</label>
+                <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  value={formData.unitCost}
+                  onChange={(e) => setFormData({ ...formData, unitCost: e.target.value })}
+                  className="input"
+                  placeholder="0"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">Purchase Date</label>
+                <input
+                  type="date"
+                  value={formData.purchaseDate}
+                  onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
+                  className="input"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-secondary-700 mb-1">Notes</label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="textarea"
+                rows={2}
+                placeholder="Optional notes..."
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">Supplier</label>
-              <input
-                type="text"
-                value={formData.supplier}
-                onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                className="input"
-                placeholder="e.g. ABC Suppliers"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">Quantity *</label>
-              <input
-                type="number"
-                step="any"
-                min="0.01"
-                value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                className="input"
-                placeholder="0"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">Unit</label>
-              <select
-                value={formData.unit}
-                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                className="select"
-              >
-                <option value="piece">Piece</option>
-                <option value="kg">Kilogram</option>
-                <option value="g">Gram</option>
-                <option value="l">Litre</option>
-                <option value="ml">Millilitre</option>
-                <option value="box">Box</option>
-                <option value="pack">Pack</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">Unit Cost (MMK) *</label>
-              <input
-                type="number"
-                step="any"
-                min="0"
-                value={formData.unitCost}
-                onChange={(e) => setFormData({ ...formData, unitCost: e.target.value })}
-                className="input"
-                placeholder="0"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">Purchase Date</label>
-              <input
-                type="date"
-                value={formData.purchaseDate}
-                onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
-                className="input"
-              />
-            </div>
+
+            {formData.quantity && formData.unitCost && (
+              <div className="bg-secondary-50 rounded-xl p-4 mt-4">
+                <p className="text-sm text-secondary-500">Total Cost</p>
+                <p className="text-2xl font-bold text-secondary-900">
+                  MMK {(parseFloat(formData.quantity || '0') * parseFloat(formData.unitCost || '0')).toLocaleString()}
+                </p>
+              </div>
+            )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-secondary-700 mb-1">Notes</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="textarea"
-              rows={2}
-              placeholder="Optional notes..."
-            />
-          </div>
-
-          {formData.quantity && formData.unitCost && (
-            <div className="bg-secondary-50 rounded-xl p-4">
-              <p className="text-sm text-secondary-500">Total Cost</p>
-              <p className="text-2xl font-bold text-secondary-900">
-                MMK {(parseFloat(formData.quantity || '0') * parseFloat(formData.unitCost || '0')).toLocaleString()}
-              </p>
-            </div>
-          )}
-
-          <div className="flex justify-end space-x-3 pt-4 border-t border-secondary-200">
+          <div className="modal-footer">
             <button type="button" onClick={onClose} className="btn btn-secondary btn-md">
               Cancel
             </button>

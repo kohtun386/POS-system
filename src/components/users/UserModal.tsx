@@ -148,9 +148,9 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90dvh] overflow-y-auto">
-        <div className="px-6 py-4 border-b border-secondary-100 flex items-center justify-between">
+    <div className="modal-overlay">
+      <div className="modal max-w-xl">
+        <div className="modal-header">
           <h2 className="text-xl font-bold text-secondary-900 flex items-center space-x-2 font-fraunces">
             <User className="h-6 w-6 text-primary-600" />
             <span>{user ? 'Edit User' : 'Add New User'}</span>
@@ -163,152 +163,154 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-2">
-                Full Name *
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="input pl-10"
-                  placeholder="Enter full name"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-2">
-                Username *
-              </label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                className="input"
-                placeholder="Enter username"
-                disabled={!!user} // Disable editing username for existing users
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-2">
-                Email *
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="input pl-10"
-                  placeholder="Enter email address"
-                  disabled={!!user} // Disable editing email for existing users
-                />
-              </div>
-            </div>
-
-            {/* Password Field - Only show for new users */}
-            {!user && (
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="modal-body space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-secondary-700 mb-2">
-                  Password *
+                  Full Name *
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
                   <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
+                    type="text"
+                    name="name"
+                    value={formData.name}
                     onChange={handleChange}
-                    required={!user}
-                    minLength={6}
+                    required
                     className="input pl-10"
-                    placeholder="Enter password (min 6 characters)"
+                    placeholder="Enter full name"
                   />
                 </div>
               </div>
-            )}
+
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  Username *
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  required
+                  className="input"
+                  placeholder="Enter username"
+                  disabled={!!user} // Disable editing username for existing users
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  Email *
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="input pl-10"
+                    placeholder="Enter email address"
+                    disabled={!!user} // Disable editing email for existing users
+                  />
+                </div>
+              </div>
+
+              {/* Password Field - Only show for new users */}
+              {!user && (
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    Password *
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required={!user}
+                      minLength={6}
+                      className="input pl-10"
+                      placeholder="Enter password (min 6 characters)"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  Role *
+                </label>
+                <div className="relative">
+                  <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="select pl-10"
+                    disabled={user?.id === state.currentUser?.id} // Prevent self-role change
+                  >
+                    <option value="cashier">Cashier</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Administrator</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Role Permissions Display */}
+            <div className="bg-secondary-50 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-secondary-900 mb-3 flex items-center space-x-2 font-fraunces">
+                {formData.role === 'admin' && <Crown className="h-4 w-4 text-amber-500" />}
+                {formData.role === 'manager' && <Shield className="h-4 w-4 text-primary-500" />}
+                {formData.role === 'cashier' && <User className="h-4 w-4 text-secondary-500" />}
+                <span className="capitalize">{formData.role} Permissions</span>
+              </h3>
+              <ul className="text-xs text-secondary-600 space-y-1">
+                {rolePermissions[formData.role].map((permission, index) => (
+                  <li key={index} className="flex items-center space-x-2">
+                    <div className="w-1 h-1 bg-secondary-400 rounded-full"></div>
+                    <span>{permission}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-secondary-700 mb-2">
-                Role *
+                Avatar URL (Optional)
               </label>
-              <div className="relative">
-                <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="select pl-10"
-                  disabled={user?.id === state.currentUser?.id} // Prevent self-role change
-                >
-                  <option value="cashier">Cashier</option>
-                  <option value="manager">Manager</option>
-                  <option value="admin">Administrator</option>
-                </select>
-              </div>
+              <input
+                type="url"
+                name="avatar"
+                value={formData.avatar}
+                onChange={handleChange}
+                className="input"
+                placeholder="https://example.com/avatar.jpg"
+              />
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="active"
+                name="active"
+                checked={formData.active}
+                onChange={handleChange}
+                className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+                disabled={user?.id === state.currentUser?.id} // Prevent self-deactivation
+              />
+              <label htmlFor="active" className="text-sm font-medium text-secondary-700">
+                Active User
+              </label>
             </div>
           </div>
 
-          {/* Role Permissions Display */}
-          <div className="bg-secondary-50 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-secondary-900 mb-3 flex items-center space-x-2 font-fraunces">
-              {formData.role === 'admin' && <Crown className="h-4 w-4 text-amber-500" />}
-              {formData.role === 'manager' && <Shield className="h-4 w-4 text-primary-500" />}
-              {formData.role === 'cashier' && <User className="h-4 w-4 text-secondary-500" />}
-              <span className="capitalize">{formData.role} Permissions</span>
-            </h3>
-            <ul className="text-xs text-secondary-600 space-y-1">
-              {rolePermissions[formData.role].map((permission, index) => (
-                <li key={index} className="flex items-center space-x-2">
-                  <div className="w-1 h-1 bg-secondary-400 rounded-full"></div>
-                  <span>{permission}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-secondary-700 mb-2">
-              Avatar URL (Optional)
-            </label>
-            <input
-              type="url"
-              name="avatar"
-              value={formData.avatar}
-              onChange={handleChange}
-              className="input"
-              placeholder="https://example.com/avatar.jpg"
-            />
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              id="active"
-              name="active"
-              checked={formData.active}
-              onChange={handleChange}
-              className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
-              disabled={user?.id === state.currentUser?.id} // Prevent self-deactivation
-            />
-            <label htmlFor="active" className="text-sm font-medium text-secondary-700">
-              Active User
-            </label>
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-6 border-t border-secondary-100">
+          <div className="modal-footer">
             <button
               type="button"
               onClick={onClose}

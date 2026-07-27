@@ -37,10 +37,10 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90dvh] overflow-hidden">
+    <div className="modal-overlay">
+      <div className="modal max-w-xl overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary-600 to-indigo-600 text-white p-8">
+        <div className="bg-gradient-to-r from-primary-600 to-indigo-600 text-white px-8 py-6 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="h-16 w-16 bg-white/20 rounded-2xl flex items-center justify-center">
@@ -82,7 +82,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
         </div>
 
         {/* Content */}
-        <div className="p-8 overflow-y-auto max-h-[calc(90dvh-200px)]">
+        <div className="modal-body">
           {activeTab === 'details' && (
             <div className="space-y-8">
               {/* Customer Stats */}

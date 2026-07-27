@@ -240,7 +240,7 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
 
   return (
     <div className="modal-overlay">
-      <div className="modal max-w-4xl">
+      <div className="modal max-w-xl">
         <div className="modal-header">
           <h2 className="text-xl font-bold text-secondary-900 font-fraunces">
             {discount ? 'Edit Discount' : 'Add New Discount'}
