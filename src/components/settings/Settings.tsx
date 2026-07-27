@@ -169,7 +169,7 @@ export function Settings() {
                       type="text"
                       value="MMK (Myanmar Kyat)"
                       disabled
-                      className="w-full px-4 py-3 border border-secondary-300 rounded-xl bg-secondary-100 cursor-not-allowed"
+                      className="w-full px-4 py-3 border border-secondary-300 dark:border-secondary-800 rounded-xl bg-secondary-100 dark:bg-surface-dark cursor-not-allowed"
                     />
                     <p className="text-xs text-secondary-500 mt-1">
                       Myanmar market — MMK only
@@ -205,7 +205,7 @@ export function Settings() {
           {/* Financial Settings */}
           <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-[#dcfce7] p-2 rounded-xl">
+              <div className="bg-success-100 p-2 rounded-xl">
                 <DollarSign className="h-6 w-6 text-success-600" />
               </div>
               <h2 className="text-xl font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">Financial Settings</h2>
@@ -232,7 +232,7 @@ export function Settings() {
           {/* Invoice Settings */}
           <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-[#fef3c7] p-2 rounded-xl">
+              <div className="bg-warning-100 p-2 rounded-xl">
                 <FileText className="h-6 w-6 text-warning-600" />
               </div>
               <h2 className="text-xl font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">Invoice Settings</h2>
@@ -280,8 +280,8 @@ export function Settings() {
           {/* System Preferences */}
           <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-[#ede9fe] p-2 rounded-xl">
-                <Globe className="h-6 w-6 text-[#7c3aed]" />
+              <div className="bg-accent-50 p-2 rounded-xl">
+                <Globe className="h-6 w-6 text-accent-600" />
               </div>
               <h2 className="text-xl font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">System Preferences</h2>
             </div>
@@ -309,8 +309,8 @@ export function Settings() {
           {/* Hardware Settings */}
           <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-[#fed7aa] p-2 rounded-xl">
-                <Printer className="h-6 w-6 text-[#ea580c]" />
+              <div className="bg-accent-100 p-2 rounded-xl">
+                <Printer className="h-6 w-6 text-accent-600" />
               </div>
               <h2 className="text-xl font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">Hardware Settings</h2>
             </div>
@@ -319,14 +319,14 @@ export function Settings() {
               {!canPrint && (
                 <UpgradePrompt feature="Receipt printing" tier="growth" onClose={() => {}} />
               )}
-              <label className={`flex items-center p-4 border border-secondary-200 rounded-xl transition-colors ${!canEditSettings || !canPrint ? 'bg-secondary-50 cursor-not-allowed' : 'hover:bg-secondary-50 cursor-pointer'}`}>
+              <label className={`flex items-center p-4 border border-secondary-200 dark:border-secondary-800 rounded-xl transition-colors ${!canEditSettings || !canPrint ? 'bg-secondary-50 dark:bg-primary-950 cursor-not-allowed' : 'hover:bg-secondary-50 dark:hover:bg-primary-900 cursor-pointer'}`}>
                 <input
                   type="checkbox"
                   name="receiptPrinter"
                   checked={formData.receiptPrinter && canPrint}
                   onChange={handleChange}
                   disabled={!canEditSettings || !canPrint}
-                  className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500 h-5 w-5"
+                  className="rounded border-secondary-300 dark:border-secondary-800 text-primary-600 focus:ring-primary-500 h-5 w-5"
                 />
                 <div className="ml-4">
                   <span className="text-sm font-semibold text-secondary-900 dark:text-secondary-100">Enable Receipt Printer</span>
@@ -354,8 +354,8 @@ export function Settings() {
           {/* Current User Info */}
           <div className="card p-6 space-y-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-[#fce7f3] p-2 rounded-xl">
-                <Users className="h-6 w-6 text-[#db2777]" />
+              <div className="bg-accent-50 p-2 rounded-xl">
+                <Users className="h-6 w-6 text-accent-600" />
               </div>
               <h2 className="text-xl font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">Current User</h2>
             </div>
@@ -372,7 +372,7 @@ export function Settings() {
                     <p className="text-sm text-secondary-600 dark:text-secondary-300">Email: {state.currentUser?.email}</p>
                   </div>
                 </div>
-                <span className="inline-flex px-4 py-2 text-sm font-semibold rounded-full bg-[#dcfce7] text-success-800">
+                <span className="inline-flex px-4 py-2 text-sm font-semibold rounded-full bg-success-100 text-success-800">
                   Active
                 </span>
               </div>
@@ -383,7 +383,7 @@ export function Settings() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl text-sm font-semibold text-danger-600 hover:bg-[#fee2e2] dark:hover:bg-danger-900/20 transition-all duration-300 touch-friendly"
+                className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl text-sm font-semibold text-danger-600 hover:bg-danger-100 dark:hover:bg-danger-900/20 transition-all duration-300 touch-friendly"
               >
                 <LogOut className="h-5 w-5" />
                 <span>Sign Out</span>
