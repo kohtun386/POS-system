@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Store, DollarSign, Printer, Users, Globe, FileText, Lock } from 'lucide-react';
+import { Save, Store, DollarSign, Printer, Users, Globe, FileText, Lock, LogOut } from 'lucide-react';
 import { useApp, useInvoiceStats, useCapability } from '../../context/SupabaseAppContext';
 import { useAuth } from '../../context/AuthContext';
 import { LogoUpload } from './LogoUpload';
@@ -8,7 +8,7 @@ import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 export function Settings() {
   const { state, dispatch } = useApp();
-  const { profile } = useAuth();
+  const { profile, signOut } = useAuth();
   const getInvoiceStats = useInvoiceStats();
   const invoiceStats = getInvoiceStats();
   const [formData, setFormData] = useState({
@@ -69,6 +69,23 @@ export function Settings() {
     } catch (error) {
       console.error('Error saving settings:', error);
       swalConfig.error('Failed to save settings. Please try again.');
+    }
+  };
+
+  const handleLogout = async () => {
+    const result = await swalConfig.confirm(
+      'Sign Out Confirmation',
+      'Are you sure you want to sign out? You will be logged out of the system.',
+      'Sign Out'
+    );
+
+    if (result.isConfirmed) {
+      try {
+        await signOut();
+      } catch (error) {
+        console.error('Error signing out:', error);
+        swalConfig.error('Failed to sign out. Please try again.');
+      }
     }
   };
 
@@ -359,6 +376,18 @@ export function Settings() {
                   Active
                 </span>
               </div>
+            </div>
+
+            {/* Sign Out */}
+            <div className="pt-4">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl text-sm font-semibold text-danger-600 hover:bg-[#fee2e2] dark:hover:bg-danger-900/20 transition-all duration-300 touch-friendly"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Sign Out</span>
+              </button>
             </div>
           </div>
 

@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
-  User, Settings, LogOut, ShoppingCart, Monitor, Smartphone, Bell, Menu, X, Percent,
+  User, Settings, ShoppingCart, Monitor, Smartphone, Bell, Menu, X, Percent,
   Receipt, Package, Users, BarChart3, Sun, Moon, ClipboardList, Layers,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useApp, useCapability } from '../../context/SupabaseAppContext';
-import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { swalConfig } from '../../lib/sweetAlert';
-
 interface HeaderProps {
   currentView: string;
   onViewChange: (view: string) => void;
@@ -16,7 +13,6 @@ interface HeaderProps {
 
 export function Header({ currentView, onViewChange }: HeaderProps) {
   const { state, dispatch } = useApp();
-  const { signOut } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   
   const inventoryEnabled = useCapability('inventory');
@@ -80,23 +76,6 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
   const toggleInterfaceMode = () => {
     const newMode = state.settings.interfaceMode === 'touch' ? 'traditional' : 'touch';
     dispatch({ type: 'SET_SETTINGS', payload: { interfaceMode: newMode } });
-  };
-
-  const handleLogout = async () => {
-    const result = await swalConfig.confirm(
-      'Sign Out Confirmation',
-      'Are you sure you want to sign out? You will be logged out of the system.',
-      'Sign Out'
-    );
-
-    if (result.isConfirmed) {
-      try {
-        await signOut();
-      } catch (error) {
-        console.error('Error signing out:', error);
-        swalConfig.error('Failed to sign out. Please try again.');
-      }
-    }
   };
 
   const cartItemCount = state.cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -259,9 +238,6 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                   <button onClick={() => onViewChange('settings')} className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300" aria-label="Settings">
                     <Settings className="h-4 w-4" />
                   </button>
-                  <button onClick={handleLogout} className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-danger-600 hover:bg-[#fee2e2] transition-all duration-300" aria-label="Sign out">
-                    <LogOut className="h-4 w-4" />
-                  </button>
                 </div>
               </div>
             </div>
@@ -301,10 +277,6 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                 <button onClick={() => { onViewChange('settings'); setShowMobileMenu(false); }} className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300">
                   <Settings className="h-5 w-5 text-secondary-600" />
                   <span>Settings</span>
-                </button>
-                <button onClick={handleLogout} className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-danger-600 hover:bg-[#fee2e2] transition-all duration-300">
-                  <LogOut className="h-5 w-5" />
-                  <span>Logout</span>
                 </button>
               </div>
             </nav>
