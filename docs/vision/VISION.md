@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Version** | 3.1.0 |
-| **Date** | 2026-07-13 |
+| **Version** | 3.1.1 |
+| **Date** | 2026-07-28 |
 | **Status** | LOCKED |
 | **Author** | Ko Htun |
 | **Scope** | Business vision for Myanmar coffee/tea shop POS platform |
@@ -658,10 +658,7 @@ Platform Admin UI (React)
 | `platform-admin-get-shop-detail` | Full shop + owner + membership info |
 | `platform-admin-manage-features` | Update feature_definitions rows |
 | `platform-admin-daily-stats` | Platform-wide metrics (MRR, active shops) |
-| `staff-create` | Create staff user in specific shop (bypasses self-registration trigger shop+membership creation) |
-| `platform-admin-list-users` | List users across shops — ⚠️ DEPRECATED (VISION.md §4.4) |
-| `platform-admin-toggle-user-active` | Activate/deactivate user membership — ⚠️ DEPRECATED (VISION.md §4.4) |
-| `platform-admin-update-user-role` | Change user role — ⚠️ DEPRECATED (VISION.md §4.4) |
+| `platform-admin-delete-shop` | Permanently delete inactive shops after approval or rejection |
 
 ### 17.4 Client-Side Constraint
 
@@ -763,6 +760,7 @@ src/components/platform/
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 3.1.1 | 2026-07-28 | Cleaned up deprecated platform admin Edge Function inventory (list_users, toggle_user_active, update_user_role) to align with Role Matrix (§4.4) and live production state. Added platform-admin-delete-shop to inventory. Removed staff-create from platform admin scope (confirmed shop-level operation). |
 | 3.1.0 | 2026-07-10 | Scope reframe: removed BOM, COGS, consumption log, UOM conversion, waste tracking, KDS from v1. Simplified inventory model (Purchase Log + Stock Overview + Low Stock Alerts + Simple Profit Report). `multi_currency` moved to DEAD. Cross-document SSOT audit completed — VISION.md confirmed as business scope authority. |
 | 3.0.0 | 2026-06-29 | Initial LOCKED version. 3-tier subscription model. 4-role RBAC. Capability-based feature gating. |
 
