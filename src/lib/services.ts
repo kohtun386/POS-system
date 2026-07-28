@@ -1960,11 +1960,8 @@ export const platformAdminService = {
     page?: number
     page_size?: number
   }): Promise<{ users: PlatformUser[]; total: number; page: number; pageSize: number }> {
-    const { data, error } = await supabase.functions.invoke('platform-admin-list-users', {
-      body: filters ?? {},
-    })
-    if (error) throw error
-    return data as { users: PlatformUser[]; total: number; page: number; pageSize: number }
+    // @deprecated Per VISION.md §4.4 — platform_admin does not manage per-shop staff.
+    throw new Error("Platform Admin cannot manage staff per VISION.md §4.4. Deprecated.")
   },
 
   async updateUserRole(
@@ -1973,11 +1970,8 @@ export const platformAdminService = {
     shopId: string,
     role: 'admin' | 'manager' | 'cashier',
   ): Promise<{ previousRole: string; newRole: string }> {
-    const { data, error } = await supabase.functions.invoke('platform-admin-update-user-role', {
-      body: { membership_id: membershipId, user_id: userId, shop_id: shopId, role },
-    })
-    if (error) throw error
-    return data as { previousRole: string; newRole: string }
+    // @deprecated Per VISION.md §4.4 — platform_admin does not manage per-shop staff.
+    throw new Error("Platform Admin cannot manage staff per VISION.md §4.4. Deprecated.")
   },
 
   async toggleUserActive(
@@ -1986,10 +1980,8 @@ export const platformAdminService = {
     shopId: string,
     isActive: boolean,
   ): Promise<void> {
-    const { error } = await supabase.functions.invoke('platform-admin-toggle-user-active', {
-      body: { membership_id: membershipId, user_id: userId, shop_id: shopId, is_active: isActive },
-    })
-    if (error) throw error
+    // @deprecated Per VISION.md §4.4 — platform_admin does not manage per-shop staff.
+    throw new Error("Platform Admin cannot manage staff per VISION.md §4.4. Deprecated.")
   },
 }
 
