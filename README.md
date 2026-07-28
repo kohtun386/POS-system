@@ -159,7 +159,7 @@ A multi-tenant SaaS point-of-sale platform built for coffee shops and tea shops 
 
 ### Prerequisites
 
-- Node.js ≥ 18.x
+- Node.js ≥ 20.x (CI runs on Node 22; local environment: v22.23.1)
 - npm ≥ 9.x
 - Supabase project ([supabase.com](https://supabase.com))
 
