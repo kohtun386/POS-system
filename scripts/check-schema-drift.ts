@@ -419,6 +419,7 @@ function generateReport(results: CheckResult[], timestamp: string) {
 
 async function main() {
   const timestamp = new Date().toISOString()
+  const isDocOnly = process.argv.includes('--doc-only')
 
   console.log('📋 Schema Drift Report')
   console.log('═══════════════════════\n')
@@ -442,12 +443,18 @@ async function main() {
   console.log(`   Found ${Object.keys(tsSchema).length} TS table definitions\n`)
 
   // --- Query DB ---
-  console.log('🗄️  Connecting to Supabase...')
-  const client = createSupabaseClient()
+  let featureDefs: FeatureDefRow[] = []
 
-  console.log('   Querying feature_definitions...')
-  const featureDefs = await fetchFeatureDefinitions(client)
-  console.log(`   Found ${featureDefs.length} feature definitions\n`)
+  if (!isDocOnly) {
+    console.log('🗄️  Connecting to Supabase...')
+    const client = createSupabaseClient()
+
+    console.log('   Querying feature_definitions...')
+    featureDefs = await fetchFeatureDefinitions(client)
+    console.log(`   Found ${featureDefs.length} feature definitions\n`)
+  } else {
+    console.log('🔍 Doc-only mode — skipping DB queries\n')
+  }
 
   // Get table list from TS types (since we can't query information_schema directly)
   const dbTables = Object.keys(tsSchema)

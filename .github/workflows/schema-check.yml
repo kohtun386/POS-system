@@ -6,19 +6,19 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
 
       - run: npm ci
 
-      - run: npm run check:schema
+      - run: npm run check:schema -- --doc-only
 
       - name: Upload drift report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: schema-drift-report
           path: schema-drift-report.json

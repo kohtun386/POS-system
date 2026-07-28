@@ -1016,3 +1016,23 @@ All user-defined functions use `SET search_path = ''` to prevent search path inj
 | MMK only — no multi-currency | No active currency conversion tables (§19) |
 | Simplified inventory (Growth+) | Purchase log, stock overview, low stock alerts (§10) |
 | Simple profit report (Pro) | Revenue − Purchases (§10.2, §13) |
+
+## 10. CI Validation
+
+### 10.1 Schema Drift Check
+
+A CI workflow (`.github/workflows/schema-check.yml`) runs on every push/PR to detect inconsistencies between `docs/specs/tier-spec.md`, `docs/architecture/database.md`, and `src/lib/database.types.ts`.
+
+**Two modes:**
+
+| Mode | When | DB connection | Secrets needed? |
+|------|------|---------------|-----------------|
+| **Doc-only** | CI (push/PR) | No | None |
+| **Live-DB** | Local (`npx tsx scripts/check-schema-drift.ts`) | Yes | `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (or service_role key) |
+
+- **CI (doc-only):** Runs documentation-consistency checks only — compares tier-spec.md ↔ database.md ↔ database.types.ts (TypeScript type coverage, P1). DB-dependent checks are SKIPPED in doc-only mode (`missing_tables` P0, `undocumented_tables` P2, `column_count_drift` P2, `default_enabled_mismatch` P1, `dead_keys_in_db` P2) — these require a live Supabase connection and run in local mode only. No secrets required.
+- **Local (live-DB):** Adds live queries against `feature_definitions` to verify `default_enabled` mismatches and dead-key cleanup. Pair with `@db-guardian` before running on production. Blocking on P0 drift, warning on P1/P2.
+
+**Exit codes:** `0` = clean or P1/P2 drift (advisory), `1` = P0 drift (blocking).
+
+**Report artifact:** `schema-drift-report.json` is uploaded on every CI run (even on failure) for debugging.
