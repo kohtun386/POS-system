@@ -51,8 +51,8 @@ SupaBase/
 
 # Planning and harness artifacts
 .planning/
-.harness/guardian-*.json
-.harness/guardian-log.md
+#.harness/guardian-*.json
+#.harness/guardian-log.md
 
 # Playwright test artifacts
 .playwright-mcp/
@@ -68,10 +68,10 @@ test-results/
 !docs/screenshots/*.png
 
 # Claude Code skills (AI tooling config)
-.claude/skills/
+#.claude/skills/
 supabase/snippets/
 schema-drift-report.json
 multi-tenancy-audit-report.json
-.claude/
+#.claude/
 REMAINING_WORK.md
 production-readiness-report.json
