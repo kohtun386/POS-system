@@ -3,14 +3,14 @@
 Originally captured 2026-06-16 during POS Helper lint + theme consistency audit.
 Commit: `8556dc3` (159 → 140 lint problems).
 
-Last updated: 2026-07-27 (added TypeScript Strictness item).
+Last updated: 2026-07-28 (audit: any count 31→0, hex 401→114, approve-shop §6).
 
 ---
 
 ## 1. `any` Types Eroding Type Safety
 
 **Lint count:** 0 `@typescript-eslint/no-explicit-any` errors across 17 files.
-**Status:** ✅ RESOLVED (2026-07-13) — all `any` errors eliminated via typed intermediate interfaces.
+**Status:** ✅ RESOLVED (2026-07-13, sustained through 2026-07-28) — all `any` errors eliminated via typed intermediate interfaces.
 
 ### Root Cause (historical)
 
@@ -22,13 +22,13 @@ Last updated: 2026-07-27 (added TypeScript Strictness item).
 
 ## 2. React Refresh Warnings in Context Files
 
-**Lint count:** 15 warnings across 6 files.
+**Lint count:** 0 warnings across 6 files (rule now allows mixed exports via `allowConstantExport: true` in eslint.config.js).
 
 ### Affected Files
 
 | File | Warning |
 |---|---|
-| `src/context/AppContext.tsx` | Exports `AppProvider` + `useApp` hook + `checkDiscountEligibility` utility |
+| ~~`src/context/AppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` hook + `checkDiscountEligibility` utility~~ (deleted v3.1.0) |
 | `src/context/AuthContext.tsx` | Exports `AuthProvider` + `useAuth` hook |
 | `src/context/SupabaseAppContext.tsx` | Exports `AppProvider` + `useApp` + `useInvoiceGeneration` + `checkDiscountEligibility` |
 | `src/context/ThemeContext.tsx` | Exports `ThemeProvider` + `useTheme` hook |
@@ -63,156 +63,130 @@ React Fast Refresh expects a file to export **only** React components OR **only*
 
 ## 3. Color Palette Drift — Inline Hex Without Tailwind Config
 
-**Status:** 🟡 IN PROGRESS — ~401 inline hex instances remaining in 40+ files.
+**Status:** 🟡 PARTIALLY RESOLVED — className hex migrated; 114 residual inline hex instances in 10 files remain (mostly Recharts chart colors per `design-system.md §7`, SweetAlert config per `design-system.md §9`, and a few className stragglers not yet tokenized).
 
-**Affected files:** ~40 components using non-standard hex values outside the approved Espresso & Copper palette.
+**Verification date:** 2026-07-28
 
-### Background
+Per `design-system.md §1.6`: "Inline Hex Migration — Complete ✅ (2026-07-10), all className hex replaced; remaining hex are acceptable runtime values (Recharts/SweetAlert/Framer Motion)." Per `docs/GOVERNANCE.md`, design-system.md (architecture doc) outranks this spec.
 
-The approved Espresso & Copper palette defines 6 tier-1 colors:
+### Residual className hex (not yet tokenized)
 
-| Token | Hex |
+Found via `grep -roE '(text|bg|border|from|to|via|ring)-\[#[a-fA-F0-9]{6}\]' src/`:
+
+| File | Hex patterns |
 |---|---|
-| Primary (espresso) | `#9a693a`, `#7a4f2c` |
-| Secondary (warm stone) | `#f0ece5`, `#ded7cc` |
-| Accent (copper) | `#f57323`, `#e55c13` |
+| `src/App.tsx` | `bg-[#faf8f5]`, `bg-[#1f1309]` (dark mode toggle) |
+| `src/components/pos/Cart.tsx` | `text-[#86efac]`, `text-[#4ade80]`, `bg-[#f0fdf4]`, `border-[#bbf7d0]` |
+| `src/components/pos/CheckoutModal.tsx` | `text-[#86efac]`, `text-[#4ade80]`, `text-[#fca5a5]`, `bg-[#f0fdf4]`, `bg-[#1a0f08]`, `bg-[#fef2f2]`, `bg-[#450a0a]`, `border-[#bbf7d0]`, `border-[#fecaca]` |
+| `src/components/pos/ProductGrid.tsx` | `bg-[#fef7ee]`, `bg-[#fef2f2]`, `bg-[#fecaca]`, `bg-[#fed7aa]`, `border-[#fcd3a0]`, `border-[#fecaca]` |
+| `src/components/reports/OwnerInsights.tsx` | `text-[#a8978a]`, `text-[#8a7d70]`, `text-[#059669]` |
+| `src/components/reports/ProfitMarginAnalytics.tsx` | `text-[#059669]`, `bg-[#3d2d1f]` |
+| `src/components/reports/WhatsAppReportConfig.tsx` | `text-[#a8978a]`, `text-[#8a7d70]`, `bg-[#3d2d1f]`, `border-[#3d2d1f]` |
+| `src/components/platform/PendingShopsList.tsx` | `text-[#a8978a]`, `text-[#8a7d70]` |
+| `src/components/reports/ReportsManager.tsx` | `from-[#7c3aed]`, `to-[#6d28d9]` |
+| `src/lib/sweetAlert.ts` | `bg-[#9a693a]`, `bg-[#7a4f2c]` |
 
-Everything else is inlined as arbitrary-value `text-[#xyz]` / `bg-[#xyz]`:
+### Acceptable runtime hex (per design-system.md §7, §9)
 
-| Inlined Shade | Semantic Role | Files |
-|---|---|---|
-| `#473b32` | Darkest brown (heading text) | Cart, CheckoutModal, ProductGrid, Header |
-| `#7d6b57` | Muted brown (subtitle/icons) | Header, ProductGrid, POSTerminal |
-| `#ad9e8a` | Warm tan (placeholders/empty states) | ProductGrid |
-| `#faf8f5` | Off-white bg (POS panels) | POSTerminal, ProductGrid |
-| `#1f1309` | Dark bg (POS panels, dark mode) | POSTerminal, ProductGrid |
-| `#fcf5eb` | Light amber (info cards) | ProductGrid |
-| `#3b2613` | Dark amber (info cards, dark mode) | ProductGrid |
-| `#fcd3a0` | Amber border (low stock) | ProductGrid |
-| `#fef7ee` | Pale amber bg (low stock) | ProductGrid |
-| `#fecaca` | Red border (out of stock) | ProductGrid |
-| `#fef2f2` | Pale red bg (out of stock) | ProductGrid |
-| `#251e18` | Overlay dark | ProductGrid |
-| `#dc2626` / `#b91c1c` | Destructive red | Header, SalesTabManager, CheckoutModal |
-| `#22c55e`, `#cfa16a` | Nav icon colors | Header |
-| `#c6bbab` | Light text (dark mode) | ProductGrid, Header |
-| `#fee2e2` | Red hover bg | Header |
-| `#473b32` → `#dc2626` | Charts + grid | ReportsManager |
-| `#8884d8` | Purple (pie chart) | ReportsManager |
+- **Recharts/ReportsManager.tsx** (~43 hex values) — chart colors, grid lines, pie fills. Move `COLORS` to `src/lib/theme.ts` for cleanliness, but not technically drift.
+- **Recharts/OwnerInsights.tsx** — profit chart colors.
+- **Framer Motion** — animation color values (no className impact).
+- **SweetAlert** — config colors in `src/lib/sweetAlert.ts`.
 
-### Root Cause
+### Background (archived)
 
-The Tailwind config never defined a full color scale. Components needed semantic shades (darker brown for text, lighter amber for info cards, red for destructive) so developers inlined them. This is correct instinct — the palette was incomplete.
+The Tailwind config never defined a full color scale during initial development. Components needed semantic shades so developers inlined them. The primary/secondary/accent/destructive/surface tokens are now defined in `tailwind.config.js` and the bulk className migration is complete.
 
 ### Recommended Next Steps
 
-1. **Define full Tailwind color scales in `tailwind.config.js`:**
-   ```js
-   colors: {
-     'primary': {
-       50: '#faf8f5',  100: '#fcf5eb', 200: '#fcd3a0',
-       300: '#ad9e8a', 400: '#7d6b57',  500: '#9a693a',
-       600: '#7a4f2c', 700: '#473b32',  800: '#3b2613',
-       900: '#1f1309', 950: '#251e18',
-     },
-     'accent': {
-       50: '#fef7ee', 400: '#f57323', 500: '#e55c13',
-     },
-     'destructive': {
-       50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca',
-       500: '#dc2626', 600: '#b91c1c',
-     },
-     'surface': { DEFAULT: '#faf8f5', dark: '#1f1309' },
-   }
-   ```
+1. **Tokenize residual className hex** — replace the ~20 straggler hex values in className strings with the existing `primary-*`, `danger-*`, `success-*` Tailwind tokens. File list in the table above. (~30 min.)
 
-2. **Replace inline hex with Tailwind tokens.** Use `sed`-based bulk replacement:
-   ```
-   text-[#473b32] → text-primary-700
-   bg-[#faf8f5]  → bg-surface or bg-primary-50
-   text-[#dc2626] → text-destructive-500
-   …
-   ```
-   Do this file-by-file to avoid false matches.
+2. **Formalize chart colors** in ReportsManager.tsx — move `COLORS` array to `src/lib/theme.ts` as a named export. (~15 min.)
 
-3. **Formalize chart colors** in ReportsManager.tsx — move `COLORS` array to `src/lib/theme.ts` as a named export.
+3. **Update ESLint** to add a `no-restricted-syntax` rule that blocks `text-[#...]` / `bg-[#...]` patterns in className strings post-migration, to prevent backsliding. (~15 min.)
 
-4. **Update ESLint** to add `tailwindcss/no-custom-classname` or a custom `no-restricted-syntax` rule that blocks hex patterns in className strings post-migration.
-
-**Effort:** Medium (~1-2 hours). Bulk find-replace followed by visual regression check.
+**Effort:** Low (~1 hour total). Visual regression check recommended.
 
 ---
 
 ## 4. Migration Return Type Change Requires DROP FUNCTION
 
-**Migration:** `20260704000005_fix_checkout_return_invoice_number.sql`
-**Severity:** High — blocks `supabase db reset`
-**Date identified:** 2026-07-05
-**Status:** ✅ Resolved (2026-07-05) — `DROP FUNCTION IF EXISTS` added to migration
+**Status:** ✅ NO LONGER APPLICABLE (2026-07-28) — the migration described (`20260704000005`) was never created. The `checkout_complete` function has always been `RETURNS JSONB` from its initial creation (`20260713000009_create_checkout_complete.sql`). No return-type change was needed.
 
-### Problem
+### Historical Context
 
-PostgreSQL does not allow changing a function's return type with `CREATE OR REPLACE`. The migration attempts to change `checkout_complete` from `RETURNS UUID` to `RETURNS JSONB`, but uses only `CREATE OR REPLACE FUNCTION`, which fails with:
+This entry was written preemptively during planning for the `checkout_complete` RPC. The concern was real (PostgreSQL disallows `CREATE OR REPLACE` for return-type changes) but the migration was authored correctly from the start — the function was always JSONB.
 
-```
-ERROR: cannot change return type of existing function (SQLSTATE 42P13)
-```
+### Prevention (still valid)
 
-This blocks `supabase db reset` and prevents fresh database setup.
-
-### Root Cause
-
-PostgreSQL requires `DROP FUNCTION` before changing return types. The `CREATE OR REPLACE` keyword only allows changing the function body, not its signature.
-
-### Fix Required
-
-Add `DROP FUNCTION IF EXISTS` before the `CREATE OR REPLACE`:
-
-```sql
--- Drop existing function first (PostgreSQL requires DROP to change return type)
-DROP FUNCTION IF EXISTS checkout_complete(UUID, JSONB, JSONB, UUID);
-
-CREATE OR REPLACE FUNCTION checkout_complete(
-  p_shop_id UUID,
-  p_sale_data JSONB,
-  p_payments JSONB,
-  p_cashier_id UUID
-)
-RETURNS JSONB
-...
-```
-
-### Prevention
-
-Add to `docs/architecture/database.md`:
+See `docs/architecture/database.md`:
 
 > **Rule:** When changing a function's return type, always `DROP FUNCTION` first. `CREATE OR REPLACE` only updates the function body, not its signature.
 
-**Effort:** Low (1 line fix + doc update)
+---
+
+## 5. TypeScript Strictness — `any` Errors (Resolved)
+
+**Date identified:** 2026-07-27
+**Date resolved:** 2026-07-28
+**Lint count:** 0 `@typescript-eslint/no-explicit-any` errors across the codebase (0 `: any`, 0 `as any`).
+**Status:** ✅ RESOLVED — eliminated by typed interface cleanup coincident with v3.1.0 merges.
+
+### Root Cause (historical)
+
+Likely Supabase JSONB columns (`items`, `conditions`) and Recharts data structures lacking strict interfaces. At the time of registry (2026-07-27), 31 errors were counted — these have since been resolved by subsequent typed interface work.
+
+### Prevention
+
+Keep `tseslint.configs.recommended` in `eslint.config.js` (includes `no-explicit-any`), and do not add `/* eslint-disable @typescript-eslint/no-explicit-any */` without a typed alternative. CI will catch regressions.
 
 ---
 
-## 5. TypeScript Strictness — 31 `any` Errors (Re-accumulated)
+## 6. approve-shop Edge Function — Sequential Writes Without Transaction
 
-**Date identified:** 2026-07-27
-**Lint count:** 31 `@typescript-eslint/no-explicit-any` errors across the codebase.
-**Status:** 🔴 OPEN — re-accumulated since v3.1.0 cleanup.
+**File:** `supabase/functions/platform-admin-approve-shop/index.ts`
+**Severity:** LOW — manual approval ops only (1-2/day, single-shop blast radius, platform admin can recover). Per VISION.md §3.4, billing/approval is a "Manual High-Touch" workflow.
+**Status:** 🔴 OPEN (Phase 5 target)
+
+### Problem
+
+The `platform-admin-approve-shop` edge function performs three sequential
+`adminClient.from(...).update()` calls — one each on `shops`, `shop_memberships`,
+and `users` — without wrapping them in a database transaction. If any write
+fails after a prior write succeeded (e.g., the `users.update` fails after
+`shops.update` and `shop_memberships.update` succeeded), the shop is left in a
+partially-approved state:
+
+- Shop is active with `subscription_tier = 'free'`
+- Membership is active
+- But the owner `users.active` is still `false`
+
+The function returns a 500 with `details: ["user: ..."]` but cannot roll back
+the completed writes because each was its own atomic call.
 
 ### Root Cause
 
-Likely Supabase JSONB columns (`items`, `conditions`) and Recharts data structures lacking strict interfaces. The 2026-07-13 resolution (0 errors) was not sustained — new code or migrations introduced unchecked `any` types.
+Edge Functions using `createAdminClient()` (service_role) cannot use Postgres
+transactions across multiple `.from().update()` calls — each is a separate HTTP
+round-trip to PostgREST. There is no client-side transaction primitive.
 
-### Impact
+### Fix Required
 
-Reduces type safety in strict mode; potential for runtime type errors if data shape changes unexpectedly. Blocks CI lint gate.
+1. **Option A (recommended):** Consolidate all three writes into a single
+   Postgres function (RPC) that runs inside a `BEGIN ... COMMIT` transaction.
+   The edge function calls `supabase.rpc('approve_shop', { p_shop_id })`
+   instead of three separate `.update()` calls.
 
-### Resolution Plan
+2. **Option B (simpler but incomplete):** Re-order writes so the least-critical
+   mutation runs first, and add a compensation step that reverses prior writes
+   on failure. Fragile — still has windows where partial state is observable.
 
-Replace `any` with `unknown` + type guards, or define strict interfaces for Supabase JSONB types. (Target: Phase 5 Cleanup)
+**Effort:** Low (~1 hour). Create migration for `approve_shop(p_shop_id UUID)`
+RPC, rewire edge function to call it.
 
 ---
 
-## 6. Resolved Items (v3.1.0)
+## 7. Resolved Items (v3.1.0)
 
 ### CurrencyContext — ✅ RESOLVED (2026-07-10)
 
