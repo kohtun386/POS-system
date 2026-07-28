@@ -1,5 +1,14 @@
 # CLAUDE.md — CoffeeShop POS
 
+## 📋 Mandatory Rules (imported)
+
+@.claude/rules/git-workflow.md
+@.claude/rules/migration-safety.md
+
+> Design system: see `.claude/skills/design-system/SKILL.md`
+> Tier gating: see `docs/specs/tier-spec.md`
+> Governance: see `docs/GOVERNANCE.md` (precedence chain)
+
 ## Build & Run
 
 Supabase credentials are in `.env` — project ref is `ejvvwnupiqytximrbmfw`.
@@ -18,7 +27,7 @@ Dev server runs on `http://localhost:5173`.
 
 ### State Management
 
-- **`src/context/SupabaseAppContext.tsx`** — the **active** app state. useReducer-based with `dispatch` + `state` pattern (48 reducer actions). All product, customer, sale, user, discount, cart, settings, capabilities, and salesTab state lives here. Loads from Supabase on auth via parallel `Promise.all`. Capabilities are resolved server-side from subscription tier + per-shop overrides.
+- **`src/context/SupabaseAppContext.tsx`** — the **active** app state. useReducer-based with `dispatch` + `state` pattern (44 reducer actions). All product, customer, sale, user, discount, cart, settings, capabilities, and salesTab state lives here. Loads from Supabase on auth via parallel `Promise.all`. Capabilities are resolved server-side from subscription tier + per-shop overrides.
 
 - **`src/context/AuthContext.tsx`** — Supabase auth wrapper. Provides `user`, `profile`, `session`, `isPendingApproval`, `signIn`, `signUp`, `signOut`, `updateProfile`. User profile loaded from `public.users` table. Inactive users (`profile.active === false`) see PendingApprovalPage.
 
@@ -28,10 +37,10 @@ Dev server runs on `http://localhost:5173`.
 
 All DB access goes through service objects, not raw `supabase.from()`. Each service maps **camelCase** (frontend) ↔ **snake_case** (PostgreSQL).
 
-- `checkoutService.complete()` — single atomic RPC call for all checkout operations. Replaces sequential JS calls.
+- `checkoutService` — complete a sale via `checkoutService.complete()`. See §Checkout Pattern.
 - `cashShiftsService` — CRUD for shift management (open/close/query).
 - `settingsService.get()` returns a single row (app_settings). `settingsService.update()` updates by finding the existing record's ID first.
-- `platformAdminService` — all platform admin operations via Edge Functions. Uses `supabase.functions.invoke()`, NEVER `supabase.from()`. See VISION.md §17.4.
+- `platformAdminService` — CRUD via Edge Functions. See §Platform Admin Pattern.
 
 ### Database
 
@@ -45,7 +54,7 @@ Supabase project: `ejvvwnupiqytximrbmfw`. Migrations in `supabase/migrations/`.
 
 **RLS:** All tables have Row Level Security enabled. Policies use `shop_id = ANY(current_shop_ids())` scoping. Sales tabs are user-scoped.
 
-> ⚠️ **RLS Recursion Warning:** NEVER call `current_shop_ids()` in a policy ON `shop_memberships` — it queries that table, causing infinite recursion (PostgreSQL error `42P17`). Use direct aliased subqueries instead. See `supabase/MIGRATION_TEMPLATE.md` for safe patterns.
+> ⚠️ **RLS Recursion:** NEVER call `current_shop_ids()` in a policy ON `shop_memberships` (infinite recursion → 500). Full checklist: `.claude/rules/migration-safety.md`.
 
 ### Role-Based Access
 
@@ -79,13 +88,6 @@ const canUseCashDrawer = useCapability('cash_drawer');
 ### Checkout Pattern
 
 Checkout uses `checkoutService.complete()` — single atomic RPC call. Handles sale creation, inventory deduction, stock deduction, print jobs, and customer stats in one transaction. Never use sequential JS calls.
-
-### Database Rules
-
-- When creating RLS policies, **NEVER** create circular dependencies (e.g., policy on `shop_memberships` calling `current_shop_ids()`)
-- Test each policy immediately after creation: push migration → test API endpoint → check for 500 errors
-- If 500 errors occur, check for RLS recursion first
-- Refer to `supabase/MIGRATION_TEMPLATE.md` for safe policy patterns
 
 ## Code Style
 
@@ -124,7 +126,7 @@ See `.claude/skills/design-system/SKILL.md` for colors, typography, CSS classes,
 ## v1 Scope Boundaries (Non-Negotiable)
 
 ### Currency
-**MMK only.** The app operates exclusively in Myanmar Kyat. No multi-currency, no exchange rates, no currency conversion.
+**MMK only.** The app operates exclusively in Myanmar Kyat. No multi-currency, no exchange rates, no currency conversion. `multi_currency` is DEAD (VISION.md v3.1.0 §19).
 
 ### OUT OF SCOPE — Do NOT Build
 
@@ -154,7 +156,6 @@ If a request implies any of the following → **STOP and ask before proceeding:*
 
 **When in doubt about feature scope, check VISION.md §19 (What We Are NOT Building).**
 
-Document precedence: VISION.md (scope) > tier-spec.md (implementation) > CLAUDE.md (agent rules). See `docs/GOVERNANCE.md` for conflict resolution.
 
 ### Valid Capability Keys (18 total — VISION.md v3.1.0 §5.5)
 
@@ -181,10 +182,6 @@ Document precedence: VISION.md (scope) > tier-spec.md (implementation) > CLAUDE.
 | `simple_profit_report` | pro |
 | `advanced_reports` | pro |
 
-### MMK-Only Currency Rule
-
-Myanmar market only — MMK currency. No multi-currency, no exchange rates, no currency conversion. `multi_currency` is DEAD (VISION.md v3.1.0 §19).
-
 ### Platform Admin Pattern
 
 Platform admin operations MUST use `supabase.functions.invoke()` only. Never use `supabase.from()` for platform admin operations. All operations route through Edge Functions with `service_role` key, bypassing RLS entirely (VISION.md v3.1.0 §4.3, §17).
@@ -202,11 +199,4 @@ Platform admin operations MUST use `supabase.functions.invoke()` only. Never use
 - **Alerts access** — the AlertManager component exists but is NOT wired into the nav yet. It's accessible if needed but not in the main navigation flow.
 - **SalesTabs** — are user-scoped in the DB (RLS). Each user only sees their own tabs. The initial tab is auto-created on first data load if none exist.
 
-## 🛡️ DB Safety Hook (Mandatory)
-BEFORE running ANY `supabase db *`, `docker exec psql`, or migration-related commands:
-1. MUST invoke `@db-guardian` to validate schema safety
-2. MUST wait for "Safe to proceed" or "Proceed with caution" verdict
-3. ONLY then execute the DB command
-4. Log guardian verdict in `.harness/guardian-log.md`
-
-⚠️ Violating this rule = Auto-reject command & retry with guardian check
+> DB safety: see `.claude/rules/migration-safety.md` (§db-guardian)
