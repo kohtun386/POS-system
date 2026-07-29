@@ -3,7 +3,7 @@
 **Supabase project:** `ejvvwnupiqytximrbmfw`
 **Last schema migration:** `20260620000001_shop_id_placeholder.sql`
 **Generated:** 2026-06-20
-**Reconciled:** 2026-07-13 (aligned with VISION.md v3.1.0)
+**Reconciled:** 2026-07-30 (aligned with VISION.md v3.1.0)
 
 > **Multi-tenancy:** The `shop_id` foundation exists with a single default shop and no shop-switching UI yet. Dynamic shop configuration is the next milestone: `shops` owns business identity and POS behavior, while `app_settings` is trimmed to global/preferences-style settings. See `docs/specs/multi-tenancy.md` and `docs/specs/dynamic-configuration.md`.
 
@@ -11,7 +11,7 @@
 
 ## 1. Tables
 
-> ⚠️ **DEPRECATED TABLES (v3.1.0)** — The following tables exist in the database but are **NOT used in v1.0**. No UI or business logic references them. Preserved for backward compatibility only. **Out of scope per VISION.md v3.1.0 §19.**
+> ⚠️ **DEPRECATED TABLES (v3.1.0)** — The following tables **have been removed from the database** and are documented here for historical reference only. NOT used in v1.0. Out of scope per VISION.md v3.1.0 §19.
 > - `recipes`, `recipe_lines` — Recipe BOM (out of scope, see Purchase Log)
 > - `raw_materials` — Raw material tracking (out of scope)
 > - `consumption_log` — Consumption tracking (out of scope)
@@ -19,7 +19,7 @@
 > - `kitchen_orders` — Kitchen display (out of scope, use thermal printer)
 > - `currency_config`, `exchange_rates`, `exchange_rate_history` — Multi-currency (out of scope, MMK only per §19)
 >
-> **Table Count (v3.1.0):** 27 total — 21 active tables + 6 deprecated tables listed above.
+> **Table Count (v3.1.0):** 25 active tables (all present in the live database) + 9 deprecated tables (removed from the database; documented above for historical reference per VISION.md §19).
 >
 > **Note:** For precise counts, run:
 > ```bash
@@ -968,6 +968,77 @@ Platform admin action audit trail. All writes go through Edge Functions using `s
 **RLS:** Enabled, but no policies (implicit deny for all authenticated/anonymous roles). Only `service_role` can access via Edge Functions.
 
 **Usage:** Platform admin operations (VISION.md §17) log actions here for audit trail.
+
+---
+
+### 7.10 Simplified Inventory Tables (Growth+)
+
+Added per VISION.md v3.1.0 §10 (Simplified Inventory Model). Growth+ only —
+capability keys `purchase_log` and `stock_overview` (VISION.md §5.5). Manual
+entry model: no recipe BOM, no auto-deduction, no per-drink COGS.
+
+#### `purchase_logs`
+
+Owner-recorded supply purchases (date, supplier, item, quantity, cost).
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)`. Tenant isolation per §18.2 |
+| `item` | text NOT NULL | | Item description |
+| `supplier` | text | | Supplier name (optional) |
+| `quantity` | numeric NOT NULL | | CHECK: >= 0 |
+| `unit` | text | | e.g. kg, L, piece |
+| `unit_cost` | numeric NOT NULL | | CHECK: >= 0 |
+| `total_cost` | numeric | | GENERATED column (quantity × unit_cost) |
+| `purchase_date` | date | | |
+| `notes` | text | | |
+| `created_by` | uuid | | → `users(id)` |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+| `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
+
+**Service:** `purchaseLogsService` (services.ts:2010). Capability: `purchase_log` (Growth+, VISION §5.5, §10.2).
+
+---
+
+#### `stock_items`
+
+Current supply levels (manual entry, not auto-calculated) with low-stock thresholds.
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)`. Tenant isolation per §18.2 |
+| `name` | text NOT NULL | | Supply item name |
+| `category` | text | | Optional grouping |
+| `quantity` | numeric | `0` | CHECK: >= 0. Current level |
+| `unit` | text | | e.g. kg, L |
+| `low_threshold` | numeric | | Triggers low_stock alert when quantity < this |
+| `notes` | text | | |
+| `last_adjusted_at` | timestamptz | | Updated on manual adjustment |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+| `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
+
+**Service:** `stockItemsService` (services.ts:2113). Capability: `stock_overview` (Growth+, VISION §5.5, §10.2).
+
+---
+
+#### `stock_adjustments`
+
+Manual stock adjustment history (owner updates after physical count).
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)`. Tenant isolation per §18.2 |
+| `stock_item_id` | uuid FK NOT NULL | | → `stock_items(id)` |
+| `previous_qty` | numeric NOT NULL | | Level before adjustment |
+| `new_qty` | numeric NOT NULL | | Level after adjustment |
+| `reason` | text | | Adjustment reason |
+| `adjusted_by` | uuid | | → `users(id)` |
+| `adjusted_at` | timestamptz | `now()` | |
+
+**Service:** `stockAdjustmentsService` (services.ts:2188). Capability: `stock_overview` (Growth+, VISION §5.5, §10.2).
 
 ---
 

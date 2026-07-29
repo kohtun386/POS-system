@@ -270,7 +270,7 @@ supabase/
 
 **Supabase project ref:** `ejvvwnupiqytximrbmfw`
 
-### Active Tables (21) + 1 Pending
+### Active Tables (25)
 
 | Table | Purpose |
 |-------|---------|
@@ -295,7 +295,10 @@ supabase/
 | `notification_service_config` | Email/SMS provider configuration |
 | `audit_logs` | Platform admin action audit trail (service_role only) |
 | `cash_shifts` | Cash drawer shift tracking |
-| `print_jobs` | **(PENDING)** Receipt/kitchen printer job queue — Growth+ only |
+| `print_jobs` | Receipt/kitchen printer job queue — Growth+ only |
+| `purchase_logs` | Purchase recording — supplier, item, quantity, cost (Growth+) |
+| `stock_items` | Current supply levels with low-stock thresholds (Growth+) |
+| `stock_adjustments` | Manual stock adjustment history (Growth+) |
 
 ### Deprecated Tables (9)
 
@@ -319,7 +322,7 @@ supabase/
 
 ### Key Database Features
 
-- **Row Level Security** on all 21 active tables — role-aware policies (admin/manager/cashier)
+- **Row Level Security** on all active tables — role-aware policies (admin/manager/cashier)
 - **Triggers/functions:** atomic per-shop invoice number generation, customer stats update, pending user/profile/shop creation
 - **21 functions** with `SET search_path = ''` (injection hardening)
 - **88 indexes** for performance (B-tree, GIN full-text, partial, composite)
@@ -385,7 +388,7 @@ Documentation-Driven Development (DDD) workflow. Docs are source of truth.
 
 | Measure | Status |
 |---------|--------|
-| RLS on all 21 active tables | ✅ Enabled |
+| RLS on all active tables | ✅ Enabled |
 | Role-aware policies (not blanket authenticated) | ✅ Since migration `20260618000001` |
 | shop_id RLS scoping via `current_shop_ids()` | ✅ Since migration `20260620000002` |
 | Card data purge (cardNumber stripped) | ✅ Since migration `20260618000001` |
