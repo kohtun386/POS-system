@@ -23,7 +23,8 @@ CREATE TABLE public.shop_invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     shop_id UUID NOT NULL REFERENCES shops(id),
     email TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'cashier',
+    role TEXT NOT NULL DEFAULT 'cashier'
+        CHECK (role IN ('admin', 'manager', 'cashier')),
     token TEXT NOT NULL UNIQUE,
     expires_at TIMESTAMPTZ NOT NULL,
     accepted_at TIMESTAMPTZ,
