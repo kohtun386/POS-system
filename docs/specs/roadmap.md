@@ -251,5 +251,5 @@ Historical note: this section originally described the pre-2026-06-20 state when
 11. React Refresh warnings            ← POST-BETA (1 hour, dev experience)
 12. Color palette formalization       ← POST-BETA (1-2 hours, visual polish)
 13. any type cleanup                  ← POST-BETA (3-4 hours, type safety)
-14. Monthly maintenance checklist     ← See docs/ops/maintenance-checklist.md
+14. Monthly maintenance checklist     ← See docs/operations/maintenance-checklist.md
 ```

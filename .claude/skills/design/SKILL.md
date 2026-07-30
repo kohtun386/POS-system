@@ -33,7 +33,7 @@ Unified design skill: brand, tokens, UI, logo, CIP, slides, banners, social phot
 | Logo creation, AI generation | Logo (built-in) | `references/logo-design.md` |
 | CIP mockups, deliverables | CIP (built-in) | `references/cip-design.md` |
 | Presentations, pitch decks | Slides (built-in) | `references/slides.md` |
-| Banners, covers, headers | Banner (built-in) | `references/banner-sizes-and-styles.md` |
+| Banners, covers, headers | Banner (built-in) | (inline §Banner) |
 | Social media images/photos | Social Photos (built-in) | `references/social-photos-design.md` |
 | SVG icons, icon sets | Icon (built-in) | `references/icon-design.md` |
 
@@ -117,23 +117,9 @@ python3 ~/.claude/skills/design/scripts/cip/render-html.py --brand "TopGroup" --
 
 Strategic HTML presentations with Chart.js, design tokens, copywriting formulas.
 
-Load `references/slides-create.md` for the creation workflow.
-
-### Slides: Knowledge Base
-
-| Topic | File |
-|-------|------|
-| Creation Guide | `references/slides-create.md` |
-| Layout Patterns | `references/slides-layout-patterns.md` |
-| HTML Template | `references/slides-html-template.md` |
-| Copywriting | `references/slides-copywriting-formulas.md` |
-| Strategies | `references/slides-strategies.md` |
-
 ## Banner Design (Built-in)
 
 22 art direction styles across social, ads, web, print. Uses `frontend-design`, `ai-artist`, `ai-multimodal`, `chrome-devtools` skills.
-
-Load `references/banner-sizes-and-styles.md` for complete sizes and styles reference.
 
 ### Banner: Workflow
 
@@ -246,7 +232,7 @@ Load `references/social-photos-design.md` for sizes, templates, best practices.
 
 1. **Logo** → `scripts/logo/generate.py` → Generate logo variants
 2. **CIP** → `scripts/cip/generate.py --logo ...` → Create deliverable mockups
-3. **Presentation** → Load `references/slides-create.md` → Build pitch deck
+3. **Presentation** → Use Slides (built-in) → Build pitch deck
 
 ### New Design System
 
@@ -267,12 +253,6 @@ Load `references/social-photos-design.md` for sizes, templates, best practices.
 | CIP Deliverables | `references/cip-deliverable-guide.md` |
 | CIP Styles | `references/cip-style-guide.md` |
 | CIP Prompts | `references/cip-prompt-engineering.md` |
-| Slides Create | `references/slides-create.md` |
-| Slides Layouts | `references/slides-layout-patterns.md` |
-| Slides Template | `references/slides-html-template.md` |
-| Slides Copy | `references/slides-copywriting-formulas.md` |
-| Slides Strategy | `references/slides-strategies.md` |
-| Banner Sizes & Styles | `references/banner-sizes-and-styles.md` |
 | Social Photos Guide | `references/social-photos-design.md` |
 | Icon Design Guide | `references/icon-design.md` |
 

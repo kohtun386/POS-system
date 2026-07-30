@@ -334,7 +334,7 @@ supabase functions deploy <name>    # Deploy Edge Function
 
 ### 7.3 Maintenance Schedule
 
-See `docs/ops/maintenance-checklist.md` for monthly routine:
+See `docs/operations/maintenance-checklist.md` for monthly routine:
 - Week 1: Auth audit
 - Week 2: RLS & database audit
 - Week 3: Backup & recovery verification

@@ -75,3 +75,6 @@ multi-tenancy-audit-report.json
 #.claude/
 REMAINING_WORK.md
 production-readiness-report.json
+
+# Out of scope / local environment
+docs/.obsidian/

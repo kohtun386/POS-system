@@ -45,8 +45,7 @@ Collect via AskUserQuestion:
    Navigate to pinterest.com → search "[purpose] banner design [style]"
    Screenshot 3-5 reference pins for art direction inspiration
    ```
-3. Select 2-3 complementary art direction styles from references:
-   `references/banner-sizes-and-styles.md`
+3. Select 2-3 complementary art direction styles from the Art Direction Styles table below.
 
 ### Step 3: Design & Generate Options
 
@@ -159,9 +158,7 @@ Iterate based on user feedback until approved.
 | Google Ads | Leaderboard | 728 × 90 | 8:1 |
 | Website | Hero | 1920 × 600-1080 | ~3:1 |
 
-Full reference: `references/banner-sizes-and-styles.md`
-
-## Art Direction Styles (Top 10)
+## Art Direction Styles
 
 | Style | Best For | Key Elements |
 |-------|----------|--------------|
@@ -175,8 +172,6 @@ Full reference: `references/banner-sizes-and-styles.md`
 | Neon/Cyberpunk | Gaming, events | Dark bg, glowing neon accents |
 | Editorial | Media, luxury | Grid layouts, pull quotes |
 | 3D/Sculptural | Product, tech | Rendered objects, depth, shadows |
-
-Full 22 styles: `references/banner-sizes-and-styles.md`
 
 ## Design Rules
 

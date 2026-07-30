@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Version** | 3.1.1 |
-| **Date** | 2026-07-28 |
+| **Version** | 3.1.2 |
+| **Date** | 2026-07-30 |
 | **Status** | LOCKED |
 | **Author** | Ko Htun |
 | **Scope** | Business vision for Myanmar coffee/tea shop POS platform |
@@ -11,7 +11,7 @@
 > This document defines WHAT we are building and WHY.
 > Technical implementation details belong in architecture docs and feature specs.
 > To amend this document, a new version must be authored with explicit rationale.
-> For document conflict resolution, see `docs/GOVERNANCE.md`.
+> For document conflict resolution, see `docs/README.md` (Governance section).
 
 ---
 
@@ -680,6 +680,9 @@ src/components/platform/
 
 ## 18. Technical Constraints
 
+### 18.4 Agent Workflow Note
+AI Agent Workflow: The project utilizes a gated agent system (`db-guardian`, `pr-reviewer`, `git-pilot`) augmented by architectural agents (`architecture-architect`, `onboarding-pipeline`, `state-refactor`) to enforce phased execution and prevent scope creep.
+
 ### 18.1 Stack
 
 | Layer | Technology |
@@ -760,7 +763,7 @@ src/components/platform/
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 3.1.1 | 2026-07-28 | Cleaned up deprecated platform admin Edge Function inventory (list_users, toggle_user_active, update_user_role) to align with Role Matrix (§4.4) and live production state. Added platform-admin-delete-shop to inventory. Removed staff-create from platform admin scope (confirmed shop-level operation). |
+| 3.1.2 | 2026-07-30 | Evolved AI Agent workflow discipline: Formalized `architecture-architect`, `onboarding-pipeline`, and `state-refactor` agents to prevent scope creep and guide phased execution. Updated Document Dependencies path for `CLAUDE.md`. |
 | 3.1.0 | 2026-07-10 | Scope reframe: removed BOM, COGS, consumption log, UOM conversion, waste tracking, KDS from v1. Simplified inventory model (Purchase Log + Stock Overview + Low Stock Alerts + Simple Profit Report). `multi_currency` moved to DEAD. Cross-document SSOT audit completed — VISION.md confirmed as business scope authority. |
 | 3.0.0 | 2026-06-29 | Initial LOCKED version. 3-tier subscription model. 4-role RBAC. Capability-based feature gating. |
 
@@ -783,4 +786,4 @@ The following documents MUST be updated to align with this VISION.md:
 | `docs/specs/owner-insights.md` | Document P&L dashboard, WhatsApp daily report, variance alerts. |
 | `docs/specs/roadmap.md` | Update with 3-tier model, Free tier limits, offline strategy phases, v2 features. |
 | `docs/specs/inventory-alerts.md` | Align with Growth+ tier gating. |
-| `CLAUDE.md` | Update OUT OF SCOPE list, MMK-only assumption, BOM/COGS/KDS guard. |
+| `.claude/CLAUDE.md` | Update OUT OF SCOPE list, MMK-only assumption, BOM/COGS/KDS guard. |
