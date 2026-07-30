@@ -1,30 +1,36 @@
 // ================================================================
-// staff-create
-// Creates a staff user in a specific shop. Called by shop admins
-// via UserModal.tsx. Bypasses the self-registration trigger's
-// shop+membership creation via raw_user_meta_data.staff_creation flag.
+// staff-invite
+// Generates a crypto-secure invitation token and persists it to
+// shop_invitations. The returned invite link is shared with the
+// invited staff member (frontend handles dispatch).
 //
-// VISION.md §17.3 — Edge Function Inventory
+// Only callable by active shop admins. Staff accounts require
+// Growth+ tier (staff_accounts capability).
+//
+// VISION.md §6 (Onboarding Pipeline — Stage 1: INVITE)
+// VISION.md §4.4 (Role Matrix: Manage Staff = admin-only)
 // ================================================================
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/auth.ts";
+import { extractIp, recordAudit } from "../_shared/audit.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const VALID_ROLES = ["admin", "manager", "cashier"];
+const DEFAULT_EXPIRY_DAYS = 7;
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
   try {
-    const { shop_id, email, password, name, username, role } = await req.json();
+    const { shop_id, email, role, expires_in_days } = await req.json();
 
     // ── Validate inputs ──────────────────────────────────────────
-    if (!shop_id || !email || !password || !name || !username || !role) {
+    if (!shop_id || !email || !role) {
       return new Response(
-        JSON.stringify({ error: "shop_id, email, password, name, username, and role are required" }),
+        JSON.stringify({ error: "shop_id, email, and role are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -36,9 +42,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (password.length < 6) {
+    // Basic email format check
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return new Response(
-        JSON.stringify({ error: "Password must be at least 6 characters long" }),
+        JSON.stringify({ error: "Invalid email format" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -67,6 +74,7 @@ Deno.serve(async (req) => {
     }
 
     // ── 2. Verify caller is admin in the target shop ──────────────
+    // VISION.md §4.4: Manage Staff = admin-only (Finding A from architecture review)
     const { data: callerMembership, error: memError } = await userClient
       .from("shop_memberships")
       .select("role, is_active")
@@ -83,13 +91,13 @@ Deno.serve(async (req) => {
 
     if (callerMembership.role !== "admin" || !callerMembership.is_active) {
       return new Response(
-        JSON.stringify({ error: "Only active shop admins can create staff" }),
+        JSON.stringify({ error: "Only active shop admins can invite staff" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // ── 3. Tier gate: verify shop has staff_accounts capability ───
-    // Per VISION.md §5.5, staff_accounts requires Growth+ tier
+    // ── 3. Tier gate: verify shop has staff_accounts capability ──
+    // staff_accounts requires Growth+ tier (VISION.md §5.5)
     const adminClient = createAdminClient();
 
     const { data: shop, error: shopError } = await adminClient
@@ -115,82 +123,83 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── 4. Create auth user with staff_creation metadata ──────────
-    // The handle_new_auth_user() trigger reads staff_creation=true
-    // and target_role from metadata, then skips shop+membership creation.
-    const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        name,
-        username,
-        staff_creation: true,
-        target_role: role,
-      },
-    });
+    // ── 4. Check for existing pending invitation for this email ──
+    const { data: existingInvite } = await adminClient
+      .from("shop_invitations")
+      .select("id, expires_at")
+      .eq("shop_id", shop_id)
+      .eq("email", email)
+      .is("accepted_at", null)
+      .maybeSingle();
 
-    if (createError || !newUser.user) {
-      // Check for duplicate email
-      if (createError?.message?.includes("already registered")) {
-        return new Response(
-          JSON.stringify({ error: "A user with this email already exists" }),
-          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      return new Response(
-        JSON.stringify({ error: `Failed to create user: ${createError?.message ?? "Unknown error"}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    // ── 5. Atomic provisioning via RPC ───────────────────────────
-    // Replaces sequential membership insert + audit trail with a
-    // single DB transaction (provision_user RPC).
-    // Technical debt fix: docs/specs/technical-debt.md §6
-    const { data: provisionResult, error: rpcError } = await adminClient.rpc(
-      "provision_user",
-      {
-        p_user_id: newUser.user.id,
-        p_shop_id: shop_id,
-        p_invited_by: caller.id,
-        p_token: null,
-        p_role: role,
-      },
-    );
-
-    if (rpcError) {
-      console.error("Provision RPC failed for staff user:", rpcError.message);
+    if (existingInvite) {
       return new Response(
         JSON.stringify({
-          error: "User profile created but provisioning failed. Please try again or contact support.",
-          code: "PROVISION_FAILED",
-          user_id: newUser.user.id,
-        }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    if (!provisionResult.success) {
-      console.error("Provision RPC returned error:", provisionResult.error);
-      return new Response(
-        JSON.stringify({
-          error: `Provisioning failed: ${provisionResult.error}`,
-          user_id: newUser.user.id,
+          error: "A pending invitation already exists for this email",
+          existing_invitation_id: existingInvite.id,
         }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // ── 6. Return the new user details ──────────────────────────
-    return new Response(
-      JSON.stringify({
-        user_id: newUser.user.id,
+    // ── 5. Generate crypto-secure token ──────────────────────────
+    // Combine UUID v4 (uniqueness) with random bytes (entropy)
+    const buf = new Uint8Array(32);
+    crypto.getRandomValues(buf);
+    const hex = Array.from(buf, (b) => b.toString(16).padStart(2, "0")).join("");
+    const token = `${crypto.randomUUID().replace(/-/g, "")}${hex}`;
+    // ponytail: string concat over structured tokens — sufficient entropy for invite flow
+
+    // ── 6. Insert invitation ─────────────────────────────────────
+    const expiryDays = typeof expires_in_days === "number" ? expires_in_days : DEFAULT_EXPIRY_DAYS;
+    const expiresAt = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: invitation, error: insertError } = await adminClient
+      .from("shop_invitations")
+      .insert({
+        shop_id,
         email,
         role,
-        message: "Staff user created successfully",
+        token,
+        expires_at: expiresAt,
+        invited_by: caller.id,
+      })
+      .select("id")
+      .single();
+
+    if (insertError) {
+      return new Response(
+        JSON.stringify({ error: `Failed to create invitation: ${insertError.message}` }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // ── 7. Audit trail ───────────────────────────────────────────
+    await recordAudit(adminClient, {
+      actorId: caller.id,
+      action: "create_invitation",
+      targetType: "shop_invitation",
+      targetId: invitation.id,
+      shopId: shop_id,
+      details: { email, role, shop_name: shop.name, expires_at: expiresAt },
+      ipAddress: extractIp(req),
+    });
+
+    // ── 8. Return invite URL ────────────────────────────────────
+    const appUrl = Deno.env.get("PUBLIC_APP_URL") ?? "https://pos-system-gilt-mu.vercel.app";
+    const inviteUrl = `${appUrl}/invite/${token}`;
+
+    return new Response(
+      JSON.stringify({
+        invitation_id: invitation.id,
+        token,
+        invite_url: inviteUrl,
+        email,
+        role,
+        expires_at: expiresAt,
+        message: "Invitation created successfully",
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
     if (err instanceof Response) return err;
