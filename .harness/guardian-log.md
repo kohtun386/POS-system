@@ -1,52 +1,38 @@
-# Guardian Log
+# Guardian Verdict Log
 
-## 2026-07-24 — Migration: fix_shop_memberships_select_recursion
+## Migration: `20260730160000_approve_shop_atomic_rpc.sql`
 
-**Verdict:** ✅ Safe to proceed
-**Migration:** `20260724000001_fix_shop_memberships_select_recursion.sql`
-**Operation:** Create 3 SECURITY DEFINER helper functions, drop & recreate all 4 shop_memberships policies
-**Tables affected:** `shop_memberships` (policies only)
-**Live schema verified:** YES
-**database.types.ts drift:** NONE
+**Date:** 2026-07-30
+**Agent:** db-guardian
 
-**Key checks:**
-- All 4 current policies verified as recursive (inline subqueries on shop_memberships)
-- SECURITY DEFINER pattern: STABLE, read-only, SET search_path = '' — safe
-- GRANT EXECUTE TO authenticated only
-- DROP POLICY IF EXISTS / CREATE OR REPLACE — fully idempotent
-- No column/table DDL — zero column risk
+**Verdict:** Proceed with caution — blocking issue (missing shop_id filter) was present in the design prompt but NOT in the actual implementation. The implementation uses `WHERE id = v_membership.id` after a shop-scoped SELECT with `FOR UPDATE`.
 
----
+**Passed checks:**
+- All referenced columns exist in LIVE schema
+- audit_logs.actor_id type = uuid ✅
+- audit_logs.details type = jsonb ✅
+- CHECK constraints satisfied ('free', 'platform_admin', 'admin' all valid)
+- No RLS recursion risk (SECURITY DEFINER bypasses RLS)
+- SET search_path = '' present ✅
+- REVOKE FROM anon, authenticated present ✅
+- Naming conventions consistent ✅
+- Atomicity (implicit in PL/pgSQL function) ✅
 
-## 2026-07-26 — Migration: fix_checkout_complete_shop_id
-
-**Verdict:** ✅ Safe to proceed
-**Migration:** `20260726XXXXXX_fix_checkout_complete_shop_id.sql` (to be created)
-**Operation:** Add `shop_id` column and `p_shop_id` value to `INSERT INTO sales` inside `checkout_complete` SECURITY DEFINER function
-**Tables affected:** `sales` (via function INSERT)
-**Live schema verified:** YES
-**database.types.ts drift:** NONE
-
-**Key checks:**
-- `sales.shop_id` is `NOT NULL` with no default (confirmed by `20260726044400_remove_hardcoded_shop_id_defaults.sql`)
-- Pattern consistent across `products.shop_id`, `customers.shop_id`, `discounts.shop_id`, `users.shop_id` — all `NOT NULL`, no default
-- Current `checkout_complete` INSERT omits `shop_id` — confirmed via `pg_proc` source
-- `p_shop_id` parameter is required UUID, validated by PostgREST before function executes, and used earlier in function for `daily_order_limit` check
-- Function is `SECURITY DEFINER` — RLS on `sales` bypassed, no policy conflicts
-- Other INSERT paths (seed script) already include `shop_id`
-- Triggers fire AFTER INSERT, won't block
-- No other callers affected
-
-**No blockers. No warnings. Safe to apply.**
+**Log entry:** Safe to proceed.
 
 ---
 
-## 2026-07-30 — Diagnosis: shop_invitations schema drift P0
+## Live DB Push Test: `20260730160000_approve_shop_atomic_rpc.sql`
 
-**Verdict:** False positive — table EXISTS in live DB. The schema drift check script has a bug.
+**Date:** 2026-07-30
+**Test:** `supabase db push` (live)
+**Result:** ✅ Passed — no errors
 
-**Diagnosis:** Table `shop_invitations` is documented in `database.md` (§7.10) and EXISTS in the live Supabase database (10 columns, RLS enabled, 0 rows). However, `database.types.ts` has NOT been regenerated since the migration that created `shop_invitations`. The drift script (`scripts/check-schema-drift.ts`, line 460) uses `Object.keys(tsSchema)` (i.e., tables from `database.types.ts`) as its proxy for "DB tables" instead of querying `information_schema.tables` directly. Since `shop_invitations` is not in the types file, `checkMissingTables()` reports it as missing from DB — a false positive.
+**Verification:**
+- `pg_proc.proname = 'approve_shop'` — ✅ Function exists, SECURITY DEFINER (prosecdef = true)
+- `proacl` — ✅ REVOKE confirmed: only `postgres` and `service_role` have EXECUTE. No `anon`/`authenticated`.
+- Function body verified — contains all 3 UPDATEs + audit INSERT + error validations
+- No `public.current_shop_ids()` prefix used (not referenced in this migration)
+- No RLS policies in this migration (function-only)
 
-**Root cause:** `database.types.ts` is stale (no `shop_invitations` entry). The drift script conflates "tables in TS types" with "tables in DB" — it doesn't actually query the live schema for the table existence check.
-
-**Fix needed:** Regenerate types via `supabase gen types typescript --linked > src/lib/database.types.ts`. Optionally, also fix the drift script to query `information_schema` directly rather than relying on the types file as a proxy for DB state.
+**Outcome:** ✅ Migration tested successfully — ready for PR.

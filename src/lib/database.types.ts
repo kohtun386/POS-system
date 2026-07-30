@@ -1472,6 +1472,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_shop: {
+        Args: { p_approver_id: string; p_shop_id: string }
+        Returns: Json
+      }
       check_inventory_alerts: {
         Args: never
         Returns: {
