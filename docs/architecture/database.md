@@ -11,7 +11,7 @@
 
 ## 1. Tables
 
-> ⚠️ **DEPRECATED TABLES (v3.1.0)** — The following tables **have been removed from the database** and are documented here for historical reference only. NOT used in v1.0. Out of scope per VISION.md v3.1.0 §19.
+> ⚠️ **DEPRECATED TABLES (v3.1.0)** — The following tables **are not present in the database** and are documented here for historical reference only. NOT used in v1.0. Out of scope per VISION.md v3.1.0 §19.
 > - `recipes`, `recipe_lines` — Recipe BOM (out of scope, see Purchase Log)
 > - `raw_materials` — Raw material tracking (out of scope)
 > - `consumption_log` — Consumption tracking (out of scope)
@@ -19,7 +19,7 @@
 > - `kitchen_orders` — Kitchen display (out of scope, use thermal printer)
 > - `currency_config`, `exchange_rates`, `exchange_rate_history` — Multi-currency (out of scope, MMK only per §19)
 >
-> **Table Count (v3.1.0):** 25 active tables (all present in the live database) + 9 deprecated tables (removed from the database; documented above for historical reference per VISION.md §19).
+> **Table Count (v3.1.0):** 25 active tables (all present in the live database) + 9 deprecated tables (not present in the database; documented above for historical reference per VISION.md §19).
 >
 > **Note:** For precise counts, run:
 > ```bash
@@ -993,7 +993,7 @@ Owner-recorded supply purchases (date, supplier, item, quantity, cost).
 | `total_cost` | numeric | | GENERATED column (quantity × unit_cost) |
 | `purchase_date` | date | | |
 | `notes` | text | | |
-| `created_by` | uuid | | → `users(id)` |
+| `created_by` | uuid | | → `auth.users(id)` |
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
@@ -1035,10 +1035,10 @@ Manual stock adjustment history (owner updates after physical count).
 | `previous_qty` | numeric NOT NULL | | Level before adjustment |
 | `new_qty` | numeric NOT NULL | | Level after adjustment |
 | `reason` | text | | Adjustment reason |
-| `adjusted_by` | uuid | | → `users(id)` |
+| `adjusted_by` | uuid | | → `auth.users(id)` |
 | `adjusted_at` | timestamptz | `now()` | |
 
-**Service:** `stockAdjustmentsService` (services.ts:2188). Capability: `stock_overview` (Growth+, VISION §5.5, §10.2).
+**Service:** `stockItemsService` (includes `adjustStock` method). Capability: `stock_overview` (Growth+, VISION §5.5, §10.2).
 
 ---
 

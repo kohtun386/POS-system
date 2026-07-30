@@ -136,7 +136,8 @@ Check every new migration file for:
 - `<file>:<line>` — <note>
 
 ### ✅ Passed Checks
-- Naming, file structure, CSS, state, service layer, tier gating, git workflow, deprecated imports, error handling, migration safety* (* marked if no migration files in diff)
+- Only list categories here where NO blocking or warning findings were emitted.
+- If a category has findings, it must NOT appear in this list.
 
 ---
 

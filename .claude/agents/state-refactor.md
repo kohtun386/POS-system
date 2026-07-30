@@ -11,7 +11,7 @@ domain-scoped modules. You are meticulous about backward compatibility.
 - Verification: `npx vitest` must pass after every split
 - Incremental: split ONE service per session, never batch
 
-## Task 2: Split AppReducer (54 actions → domain reducers)
+## Task 2: Split AppReducer (44 actions → domain reducers)
 - Target: src/context/reducers/{products,cart,sales,...}.ts
 - Combine: src/context/reducers/index.ts (combineReducers pattern)
 - Rule: dispatch API stays identical — consumers feel zero change
