@@ -38,3 +38,15 @@
 - No other callers affected
 
 **No blockers. No warnings. Safe to apply.**
+
+---
+
+## 2026-07-30 — Diagnosis: shop_invitations schema drift P0
+
+**Verdict:** False positive — table EXISTS in live DB. The schema drift check script has a bug.
+
+**Diagnosis:** Table `shop_invitations` is documented in `database.md` (§7.10) and EXISTS in the live Supabase database (10 columns, RLS enabled, 0 rows). However, `database.types.ts` has NOT been regenerated since the migration that created `shop_invitations`. The drift script (`scripts/check-schema-drift.ts`, line 460) uses `Object.keys(tsSchema)` (i.e., tables from `database.types.ts`) as its proxy for "DB tables" instead of querying `information_schema.tables` directly. Since `shop_invitations` is not in the types file, `checkMissingTables()` reports it as missing from DB — a false positive.
+
+**Root cause:** `database.types.ts` is stale (no `shop_invitations` entry). The drift script conflates "tables in TS types" with "tables in DB" — it doesn't actually query the live schema for the table existence check.
+
+**Fix needed:** Regenerate types via `supabase gen types typescript --linked > src/lib/database.types.ts`. Optionally, also fix the drift script to query `information_schema` directly rather than relying on the types file as a proxy for DB state.
