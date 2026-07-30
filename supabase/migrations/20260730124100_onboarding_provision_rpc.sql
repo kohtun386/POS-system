@@ -56,10 +56,25 @@ CREATE TRIGGER set_updated_at
 
 ALTER TABLE public.shop_invitations ENABLE ROW LEVEL SECURITY;
 
--- Shop members can view invitations for their shop (SELECT)
-CREATE POLICY "shop_member_select" ON public.shop_invitations
+-- Invited user can see their own invitation (including token for acceptance)
+-- No shop_id guard: the invited user is not yet a shop member when viewing
+-- their invitation. Email binding against auth.users is sufficient.
+CREATE POLICY "invited_user_select_own" ON public.shop_invitations
+    FOR SELECT USING (
+        email = auth.email()  -- Only the invited user sees their own token
+    );
+
+-- Admins/managers can see all invitations for their shop (management dashboard)
+CREATE POLICY "admin_manager_select_all" ON public.shop_invitations
     FOR SELECT USING (
         shop_id = ANY(public.current_shop_ids())
+        AND EXISTS (
+            SELECT 1 FROM public.shop_memberships
+            WHERE user_id = auth.uid()
+              AND shop_id = shop_invitations.shop_id
+              AND role IN ('admin', 'manager')
+              AND is_active = true
+        )
     );
 
 -- Shop admins/managers can create invitations (INSERT)
@@ -131,7 +146,9 @@ CREATE INDEX idx_shop_invitations_pending ON public.shop_invitations(shop_id, em
 --
 -- Security: v_final_role is read from the invitation when a token is
 -- present, preventing privilege escalation. The invitation's role is
--- the source of truth.
+-- the source of truth. Additionally, invitation email is bound to
+-- p_user_id's email — a stolen token cannot be redeemed with a
+-- different account (prevents token theft privilege escalation).
 -- ================================================================
 
 CREATE OR REPLACE FUNCTION public.provision_user(
@@ -147,6 +164,7 @@ AS $$
 DECLARE
     v_invitation RECORD;
     v_final_role TEXT;
+    v_user_email TEXT;
 BEGIN
     -- ================================================================
     -- 1. Validate invitation token (if provided)
@@ -176,6 +194,19 @@ BEGIN
             RETURN jsonb_build_object(
                 'success', false,
                 'error', 'TOKEN_SHOP_MISMATCH'
+            );
+        END IF;
+
+        -- EMAIL BINDING: verify p_user_id's email matches the invitation email
+        -- Prevents token theft — a stolen token cannot be used with a different account
+        SELECT email INTO v_user_email FROM public.users WHERE id = p_user_id;
+
+        IF v_user_email IS DISTINCT FROM v_invitation.email THEN
+            RETURN jsonb_build_object(
+                'success', false,
+                'error', 'EMAIL_MISMATCH',
+                'expected', v_invitation.email,
+                'provided_user_id', p_user_id
             );
         END IF;
 

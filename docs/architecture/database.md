@@ -525,8 +525,6 @@ currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only
 
 ## 5. RLS Policy Summary
 
-## 5. RLS Policy Summary
-
 **Pattern:** All tables have RLS enabled. Policies use shop-scoped role-aware pattern.
 
 **`platform_admin` rule:** NEVER appears in RLS policies. Platform admin bypasses RLS entirely via `service_role` key in Edge Functions. No `OR users.role = 'platform_admin'` in any policy. (VISION.md v3.1.0 §4.3)
@@ -549,7 +547,7 @@ currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only
 | `shop_features` | Shop members | admin only | admin only | admin only |
 | `print_jobs` | Shop members | (RPC/Edge Function) | (Edge Function) | (none) |
 | `cash_shifts` | Shop members | cashier+ (own) | cashier+ (own) | admin/manager |
-| `shop_invitations` | Shop members | admin/manager | admin/manager | (none — service_role only) |
+| `shop_invitations` | Invited user (own) OR admin/manager (all) | admin/manager | admin/manager | (none — service_role only) |
 
 **Shop-scoped SELECT policy pattern:**
 ```sql
@@ -999,9 +997,10 @@ Pending staff invitations. Part of the Onboarding Pipeline (VISION.md §6, Stage
 **RLS:**
 | Policy | Rule |
 |--------|------|
-| SELECT | Shop members (via `current_shop_ids()`) |
-| INSERT | Shop admin/manager |
-| UPDATE | Shop admin/manager |
+| SELECT (own invitation) | `invited_user_select_own`: invited user (where `email = auth.email()`) can see their own invitation including token |
+| SELECT (all) | `admin_manager_select_all`: shop admin/manager can see all invitations for their shop |
+| INSERT | `admin_insert`: shop admin/manager |
+| UPDATE | `admin_update`: shop admin/manager |
 | DELETE | None (implicit deny) — only platform_admin via Edge Function |
 
 **Indexes:**
