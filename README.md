@@ -302,7 +302,7 @@ supabase/
 
 ### Deprecated Tables (9)
 
-> Preserved for backward compatibility. NOT used in v3.1.0.
+> Not present in the database. Documented for historical reference only. NOT used in v3.1.0.
 
 | Table | Reason |
 |-------|--------|

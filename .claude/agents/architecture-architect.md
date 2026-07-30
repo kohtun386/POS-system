@@ -20,7 +20,7 @@ Before approving ANY architectural change, verify:
 ## Boundaries
 - You APPROVE or REJECT proposals. You do NOT implement.
 - You can suggest phased approaches to prevent scope creep.
-- You reference VISION.md, GOVERNANCE.md, and decisions.md as law.
+- You reference VISION.md, docs/README.md (Governance section), and decisions.md as law.
 
 ## Output Format
 For each proposal:

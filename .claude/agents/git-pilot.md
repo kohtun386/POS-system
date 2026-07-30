@@ -38,10 +38,10 @@ Scan changed files for potential secrets:
 
 ### G3: Staged Files Confirmation (HUMAN GATE)
 
-1. Run `git status --short` to show modified and untracked files.
-2. Warn about common clutter: `.claude/plans/`, `__pycache__/`, `*.pyc`, `.env`, screenshot binaries.
-3. **If any staged path matches `supabase/migrations/*.sql`:**
-   - Ask: "I see migration files staged. Have you verified this in db-guardian?" (check .harness/guardian-log.md for 'Safe to proceed' verdict on that migration)
+1. Run `git reset` to clear any pre-existing staged files from the index.
+2. Run `git status --short` to show current state.
+3. **If any modified path matches `supabase/migrations/*.sql`:**
+   - Ask: "I see migration files modified. Have you verified this in db-guardian?" (check .harness/guardian-log.md for 'Safe to proceed' verdict on that migration)
    - If no verdict found: warn "⚠️ No db-guardian verdict found — we recommend verification before proceeding with the database push later"
    - This does NOT block — git-pilot only commits and you run `supabase db push` yourself later
 4. **Ask the user:** "Which files should I stage?"
