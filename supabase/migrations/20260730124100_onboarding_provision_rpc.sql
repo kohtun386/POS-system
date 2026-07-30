@@ -21,7 +21,7 @@
 
 CREATE TABLE public.shop_invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    shop_id UUID NOT NULL REFERENCES shops(id),
+    shop_id UUID NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'cashier'
         CHECK (role IN ('admin', 'manager', 'cashier')),
@@ -57,18 +57,22 @@ CREATE TRIGGER set_updated_at
 ALTER TABLE public.shop_invitations ENABLE ROW LEVEL SECURITY;
 
 -- Invited user can see their own invitation (including token for acceptance)
--- No shop_id guard: the invited user is not yet a shop member when viewing
--- their invitation. Email binding against auth.users is sufficient.
+-- Uses auth.uid() joined with public.users.email for reliable email matching
 CREATE POLICY "invited_user_select_own" ON public.shop_invitations
     FOR SELECT USING (
-        email = auth.email()  -- Only the invited user sees their own token
+        EXISTS (
+            SELECT 1 FROM public.users
+            WHERE id = auth.uid()
+              AND email = shop_invitations.email
+        )
     );
 
 -- Admins/managers can see all invitations for their shop (management dashboard)
+-- Uses EXISTS subquery instead of ANY(current_shop_ids()) because
+-- current_shop_ids() returns SETOF, not array, and ANY() doesn't accept SETOF.
 CREATE POLICY "admin_manager_select_all" ON public.shop_invitations
     FOR SELECT USING (
-        shop_id = ANY(public.current_shop_ids())
-        AND EXISTS (
+        EXISTS (
             SELECT 1 FROM public.shop_memberships
             WHERE user_id = auth.uid()
               AND shop_id = shop_invitations.shop_id
@@ -80,8 +84,7 @@ CREATE POLICY "admin_manager_select_all" ON public.shop_invitations
 -- Shop admins/managers can create invitations (INSERT)
 CREATE POLICY "admin_insert" ON public.shop_invitations
     FOR INSERT WITH CHECK (
-        shop_id = ANY(public.current_shop_ids())
-        AND EXISTS (
+        EXISTS (
             SELECT 1 FROM public.shop_memberships
             WHERE user_id = auth.uid()
               AND shop_id = shop_invitations.shop_id
@@ -93,8 +96,7 @@ CREATE POLICY "admin_insert" ON public.shop_invitations
 -- Shop admins/managers can update (revoke/cancel) invitations (UPDATE)
 CREATE POLICY "admin_update" ON public.shop_invitations
     FOR UPDATE USING (
-        shop_id = ANY(public.current_shop_ids())
-        AND EXISTS (
+        EXISTS (
             SELECT 1 FROM public.shop_memberships
             WHERE user_id = auth.uid()
               AND shop_id = shop_invitations.shop_id
