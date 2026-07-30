@@ -146,23 +146,16 @@ Keep `tseslint.configs.recommended` in `eslint.config.js` (includes `no-explicit
 
 **File:** `supabase/functions/platform-admin-approve-shop/index.ts`
 **Severity:** LOW — manual approval ops only (1-2/day, single-shop blast radius, platform admin can recover). Per VISION.md §3.4, billing/approval is a "Manual High-Touch" workflow.
-**Status:** 🔴 OPEN (Phase 5 target)
+**Status:** ✅ RESOLVED (2026-07-30) — replaced 3 sequential UPDATE calls with `approve_shop()` atomic RPC.
 
-### Problem
+### Problem (Historical)
 
-The `platform-admin-approve-shop` edge function performs three sequential
+The `platform-admin-approve-shop` edge function performed three sequential
 `adminClient.from(...).update()` calls — one each on `shops`, `shop_memberships`,
 and `users` — without wrapping them in a database transaction. If any write
-fails after a prior write succeeded (e.g., the `users.update` fails after
-`shops.update` and `shop_memberships.update` succeeded), the shop is left in a
-partially-approved state:
-
-- Shop is active with `subscription_tier = 'free'`
-- Membership is active
-- But the owner `users.active` is still `false`
-
-The function returns a 500 with `details: ["user: ..."]` but cannot roll back
-the completed writes because each was its own atomic call.
+failed after a prior write succeeded (e.g., the `users.update` fails after
+`shops.update` and `shop_memberships.update` succeeded), the shop was left in a
+partially-approved state.
 
 ### Root Cause
 
@@ -170,19 +163,28 @@ Edge Functions using `createAdminClient()` (service_role) cannot use Postgres
 transactions across multiple `.from().update()` calls — each is a separate HTTP
 round-trip to PostgREST. There is no client-side transaction primitive.
 
-### Fix Required
+### Resolution
 
-1. **Option A (recommended):** Consolidate all three writes into a single
-   Postgres function (RPC) that runs inside a `BEGIN ... COMMIT` transaction.
-   The edge function calls `supabase.rpc('approve_shop', { p_shop_id })`
-   instead of three separate `.update()` calls.
+**Option A implemented** (2026-07-30):
 
-2. **Option B (simpler but incomplete):** Re-order writes so the least-critical
-   mutation runs first, and add a compensation step that reverses prior writes
-   on failure. Fragile — still has windows where partial state is observable.
+1. Created `public.approve_shop(p_shop_id UUID, p_approver_id UUID)` RPC in
+   `supabase/migrations/20260730160000_approve_shop_atomic_rpc.sql`
+2. Refactored Edge Function to call `adminClient.rpc('approve_shop', ...)`
+   instead of three sequential `.update()` calls
+3. The RPC runs SECURITY DEFINER with `SET search_path = ''`, executes all
+   three UPDATEs inside a single DB transaction, and inserts an audit log entry
+4. Revoked from `anon`/`authenticated` — only callable via service_role
 
-**Effort:** Low (~1 hour). Create migration for `approve_shop(p_shop_id UUID)`
-RPC, rewire edge function to call it.
+**RPC logic:**
+- Validates shop exists and is inactive (`SHOP_NOT_FOUND`, `SHOP_ALREADY_ACTIVE`)
+- Validates approver is platform_admin (`UNAUTHORIZED`)
+- Validates admin membership exists (`NO_ADMIN_MEMBERSHIP`)
+- Atomic updates: `shops.is_active = true`, `shop_memberships.is_active = true`, `users.active = true`
+- Insert into `audit_logs`
+
+**Pattern followed:** `provision_user()` RPC from `20260730124100_onboarding_provision_rpc.sql`.
+
+**Related:** `migration 20260730160000`, `docs/architecture/database.md §4`.
 
 ---
 

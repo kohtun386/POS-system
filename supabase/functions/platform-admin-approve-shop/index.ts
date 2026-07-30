@@ -1,7 +1,7 @@
 // ================================================================
 // platform-admin-approve-shop
-// Activates a pending shop: sets shop.is_active, shop.subscription_tier = 'free',
-// membership.is_active, and user.active to true. Only callable by platform_admin.
+// Activates a pending shop via atomic approve_shop() RPC.
+// Only callable by platform_admin.
 //
 // VISION.md §17.3 — Edge Function Inventory
 //
@@ -12,7 +12,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsHeaders, handleCors } from "../_shared/cors.ts";
 import { verifyPlatformAdmin, createAdminClient } from "../_shared/auth.ts";
-import { extractIp, recordAudit } from "../_shared/audit.ts";
+
 
 const RESEND_API_URL = "https://api.resend.com/emails";
 
@@ -90,100 +90,56 @@ Deno.serve(async (req) => {
     // 1. Verify caller is platform_admin
     const caller = await verifyPlatformAdmin(req);
 
-    // 2. Perform mutations with service_role (bypasses RLS)
+    // 2. Atomic approval via RPC (single DB transaction)
     const adminClient = createAdminClient();
 
-    const { data: shop, error: shopError } = await adminClient
-      .from("shops")
-      .select("id, name, is_active, owner_id")
-      .eq("id", shop_id)
-      .single();
+    const { data: result, error: rpcError } = await adminClient.rpc(
+      "approve_shop",
+      { p_shop_id: shop_id, p_approver_id: caller.userId },
+    );
 
-    if (shopError || !shop) {
+    if (rpcError) {
       return new Response(
-        JSON.stringify({ error: "Shop not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    if (shop.is_active) {
-      return new Response(
-        JSON.stringify({ error: "Shop is already active" }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const { data: membership, error: membershipError } = await adminClient
-      .from("shop_memberships")
-      .select("id, user_id, is_active")
-      .eq("shop_id", shop_id)
-      .eq("role", "admin")
-      .single();
-
-    if (membershipError || !membership) {
-      return new Response(
-        JSON.stringify({ error: "No pending membership found for this shop" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const errors: string[] = [];
-
-    const { error: shopUpdateErr } = await adminClient
-      .from("shops")
-      .update({ is_active: true, subscription_tier: 'free', updated_at: new Date().toISOString() })
-      .eq("id", shop_id);
-    if (shopUpdateErr) errors.push(`shop: ${shopUpdateErr.message}`);
-
-    const { error: memberUpdateErr } = await adminClient
-      .from("shop_memberships")
-      .update({ is_active: true, updated_at: new Date().toISOString() })
-      .eq("id", membership.id);
-    if (memberUpdateErr) errors.push(`membership: ${memberUpdateErr.message}`);
-
-    const { error: userUpdateErr } = await adminClient
-      .from("users")
-      .update({ active: true, updated_at: new Date().toISOString() })
-      .eq("id", membership.user_id);
-    if (userUpdateErr) errors.push(`user: ${userUpdateErr.message}`);
-
-    if (errors.length > 0) {
-      return new Response(
-        JSON.stringify({ error: "Partial failure", details: errors }),
+        JSON.stringify({ error: rpcError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // 3. Record audit log
-    await recordAudit(adminClient, {
-      actorId: caller.userId,
-      action: "approve_shop",
-      targetType: "shop",
-      targetId: shop_id,
-      shopId: shop_id,
-      details: { shop_name: shop.name, owner_id: membership.user_id },
-      ipAddress: extractIp(req),
-    });
+    if (!result.success) {
+      const status = result.error === "SHOP_NOT_FOUND" ? 404
+        : result.error === "SHOP_ALREADY_ACTIVE" ? 409
+        : result.error === "UNAUTHORIZED" ? 403
+        : result.error === "NO_ADMIN_MEMBERSHIP" ? 404
+        : 500;
+      return new Response(
+        JSON.stringify({ error: result.error }),
+        { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
-    // 4. Send approval email (best-effort — does not block approval)
-    if (membership.user_id) {
+    // 3. Send approval email (best-effort — does not block approval)
+    if (result.owner_id) {
       const { data: ownerUser } = await adminClient
         .from("users")
         .select("email")
-        .eq("id", membership.user_id)
+        .eq("id", result.owner_id)
         .single();
 
       if (ownerUser?.email) {
         // Fire-and-forget: Supabase Edge Runtime keeps the event loop alive
         // after returning the response, so unawaited promises complete.
-        sendApprovalEmail(ownerUser.email, shop.name);
+        sendApprovalEmail(ownerUser.email, result.shop_name);
       } else {
-        console.warn("Approval email skipped: no email found for user", membership.user_id);
+        console.warn("Approval email skipped: no email found for user", result.owner_id);
       }
     }
 
     return new Response(
-      JSON.stringify({ message: "Shop approved successfully", shop_id, shop_name: shop.name }),
+      JSON.stringify({
+        message: "Shop approved successfully",
+        shop_id: result.shop_id,
+        shop_name: result.shop_name,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
