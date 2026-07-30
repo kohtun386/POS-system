@@ -19,7 +19,7 @@
 > - `kitchen_orders` — Kitchen display (out of scope, use thermal printer)
 > - `currency_config`, `exchange_rates`, `exchange_rate_history` — Multi-currency (out of scope, MMK only per §19)
 >
-> **Table Count (v3.1.0):** 25 active tables (all present in the live database) + 9 deprecated tables (not present in the database; documented above for historical reference per VISION.md §19).
+> **Table Count (v3.1.0):** 26 active tables (all present in the live database) + 9 deprecated tables (not present in the database; documented above for historical reference per VISION.md §19).
 >
 > **Note:** For precise counts, run:
 > ```bash
@@ -365,7 +365,8 @@ customers
 users
   ├── sales_tabs.user_id (CASCADE)
   ├── sales.cashier_id
-  └── cash_shifts.cashier_id
+  ├── cash_shifts.cashier_id
+  └── shop_invitations.invited_by
 
 shops
   ├── shop_memberships.shop_id (CASCADE)
@@ -377,6 +378,7 @@ shops
   ├── alert_configurations.shop_id
   ├── alert_history.shop_id
   ├── notification_service_config.shop_id
+  ├── shop_invitations.shop_id
   └── (all 13 original tables via shop_id)
 
 sales
@@ -517,6 +519,7 @@ currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only
 | `get_alert_recipients(uuid)` | INVOKER, `search_path=''` | Alert system: returns active alert recipients for a given shop. Filters by `shop_id` and `is_active = true`. Returns recipient contact info and alert type preferences. | No — called by Edge Function |
 | `should_send_alert(uuid, text)` | INVOKER, `search_path=''` | Alert system: throttling check. Returns `true` if no alert of the given type was sent to the shop within the configured cooldown window (`alert_configurations.cooldown_minutes`, default 24h). Prevents duplicate alert floods. | No — called by Edge Function |
 | `update_customer_stats(uuid, decimal)` | SECURITY DEFINER, `search_path=''` | Updates customer purchase totals. Increments `customers.total_purchases` by the sale total and sets `customers.last_purchase` to `now()`. Called inside `checkout_complete()` RPC. | No — called by `checkout_complete()` RPC |
+| `provision_user(uuid, uuid, uuid, text, text)` | SECURITY DEFINER, `search_path=''` | Atomic user provisioning. Upserts `shop_memberships`, marks invitation accepted (if token flow), and inserts to `audit_logs` — all in one transaction. Role is read from invitation when token is present (prevents privilege escalation). Called by Edge Functions after `auth.admin.createUser()`. Revoked from `anon`/`authenticated`. VISION.md §6. Related: `docs/specs/technical-debt.md §6` (replaces sequential writes pattern). | No — called via `supabase.rpc()` by Edge Functions |
 
 ---
 
@@ -544,6 +547,7 @@ currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only
 | `shop_features` | Shop members | admin only | admin only | admin only |
 | `print_jobs` | Shop members | (RPC/Edge Function) | (Edge Function) | (none) |
 | `cash_shifts` | Shop members | cashier+ (own) | cashier+ (own) | admin/manager |
+| `shop_invitations` | Invited user (own) OR admin/manager (all) | admin/manager | admin/manager | (none — service_role only) |
 
 **Shop-scoped SELECT policy pattern:**
 ```sql
@@ -971,7 +975,48 @@ Platform admin action audit trail. All writes go through Edge Functions using `s
 
 ---
 
-### 7.10 Simplified Inventory Tables (Growth+)
+### 7.10 `shop_invitations`
+
+Pending staff invitations. Part of the Onboarding Pipeline (VISION.md §6, Stage 1: INVITE).
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| `id` | uuid PK | `gen_random_uuid()` | |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)`. Tenant isolation per §18.2 |
+| `email` | text NOT NULL | | Email of the invited user |
+| `role` | text NOT NULL | `'cashier'` | Role on acceptance. CHECK: `'admin'` \| `'manager'` \| `'cashier'` |
+| `token` | text NOT NULL UNIQUE | | Cryptographically random token, shared via invite link |
+| `expires_at` | timestamptz NOT NULL | | Invitation expiry timestamp |
+| `accepted_at` | timestamptz | | NULL = pending. Set on acceptance |
+| `invited_by` | uuid FK NOT NULL | | → `users(id)`. Admin who created the invitation |
+| `created_at` | timestamptz | `now()` | NOT NULL |
+| `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
+
+**Design decision — Invitation as source of truth for role:** When `provision_user()` is called with a token, the role is read from `shop_invitations.role`, not from the `p_role` parameter. This prevents privilege escalation — a caller cannot request a higher role than what the invitation authorizes.
+
+**RLS:**
+| Policy | Rule |
+|--------|------|
+| SELECT (own invitation) | `invited_user_select_own`: invited user (where `email = auth.email()`) can see their own invitation including token |
+| SELECT (all) | `admin_manager_select_all`: shop admin/manager can see all invitations for their shop |
+| INSERT | `admin_insert`: shop admin/manager |
+| UPDATE | `admin_update`: shop admin/manager |
+| DELETE | None (implicit deny) — only platform_admin via Edge Function |
+
+**Indexes:**
+| Index | Column(s) | Type | Notes |
+|-------|-----------|------|-------|
+| `idx_shop_invitations_shop_id` | `shop_id` | B-tree | |
+| `idx_shop_invitations_token` | `token` | B-tree | Token lookup on acceptance |
+| `idx_shop_invitations_email` | `email` | B-tree | Duplicate check |
+| `idx_shop_invitations_expires_at` | `expires_at` | B-tree | Stale cleanup |
+| `idx_shop_invitations_pending` | `shop_id, email` | Partial | `WHERE accepted_at IS NULL` |
+
+**Service:** `shopInvitationsService` (Phase 2 — frontend implementation).
+
+---
+
+### 7.11 Simplified Inventory Tables (Growth+)
 
 Added per VISION.md v3.1.0 §10 (Simplified Inventory Model). Growth+ only —
 capability keys `purchase_log` and `stock_overview` (VISION.md §5.5). Manual
