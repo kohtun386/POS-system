@@ -2,7 +2,7 @@
 
 **Source of truth for tier definitions, feature gating, and capability mapping.**
 **Any discrepancy between this document and code/DB → this document wins.**
-**When VISION.md excludes a feature from business scope, VISION.md wins. For full precedence rules, see `docs/GOVERNANCE.md`.**
+**When VISION.md excludes a feature from business scope, VISION.md wins. For full precedence rules, see `docs/README.md` (Governance section).**
 
 ---
 

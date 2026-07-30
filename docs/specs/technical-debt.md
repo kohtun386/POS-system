@@ -67,7 +67,7 @@ React Fast Refresh expects a file to export **only** React components OR **only*
 
 **Verification date:** 2026-07-28
 
-Per `design-system.md §1.6`: "Inline Hex Migration — Complete ✅ (2026-07-10), all className hex replaced; remaining hex are acceptable runtime values (Recharts/SweetAlert/Framer Motion)." Per `docs/GOVERNANCE.md`, design-system.md (architecture doc) outranks this spec.
+Per `design-system.md §1.6`: "Inline Hex Migration — Complete ✅ (2026-07-10), all className hex replaced; remaining hex are acceptable runtime values (Recharts/SweetAlert/Framer Motion)." Per `docs/README.md` (Governance section), design-system.md (architecture doc) outranks this spec.
 
 ### Residual className hex (not yet tokenized)
 

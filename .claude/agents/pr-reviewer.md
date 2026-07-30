@@ -152,4 +152,4 @@ These are the sources the rules above are distilled from. **Never reference them
 - `.claude/rules/migration-safety.md` — DB safety checklist
 - `docs/specs/tier-spec.md` — capability keys, tier gating
 - `.claude/skills/design-system/SKILL.md` — CSS classes
-- `docs/GOVERNANCE.md` — document precedence
+- `docs/README.md` (Governance section) — document precedence

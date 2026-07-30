@@ -379,8 +379,8 @@ Documentation-Driven Development (DDD) workflow. Docs are source of truth.
 | **Multi-Tenancy** | [`docs/specs/multi-tenancy.md`](docs/specs/multi-tenancy.md) | Current shop_id foundation, dynamic shop configuration target, historical context |
 | **Inventory Alerts** | [`docs/specs/inventory-alerts.md`](docs/specs/inventory-alerts.md) | Alert system spec (5 alert types, email/SMS, templates) |
 | **Tier Spec** | [`docs/specs/tier-spec.md`](docs/specs/tier-spec.md) | Canonical tier definitions, capability mapping, resolution rules |
-| **Governance** | [`docs/GOVERNANCE.md`](docs/GOVERNANCE.md) | Document precedence and conflict resolution rules |
-| **Maintenance** | [`docs/ops/maintenance-checklist.md`](docs/ops/maintenance-checklist.md) | Monthly security & DB maintenance |
+| **Governance** | [`docs/README.md`](docs/README.md) | Document precedence and conflict resolution rules |
+| **Maintenance** | [`docs/operations/maintenance-checklist.md`](docs/operations/maintenance-checklist.md) | Monthly security & DB maintenance |
 
 ---
 
