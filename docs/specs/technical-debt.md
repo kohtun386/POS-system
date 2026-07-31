@@ -3,7 +3,7 @@
 Originally captured 2026-06-16 during POS Helper lint + theme consistency audit.
 Commit: `8556dc3` (159 → 140 lint problems).
 
-Last updated: 2026-07-28 (audit: any count 31→0, hex 401→114, approve-shop §6).
+Last updated: 2026-07-31 (React Refresh §2 resolved, approve-shop security hotfix §6).
 
 ---
 
@@ -22,42 +22,38 @@ Last updated: 2026-07-28 (audit: any count 31→0, hex 401→114, approve-shop �
 
 ## 2. React Refresh Warnings in Context Files
 
-**Lint count:** 0 warnings across 6 files (rule now allows mixed exports via `allowConstantExport: true` in eslint.config.js).
+**Lint count:** 0 warnings across all files.
+**Status:** ✅ RESOLVED (2026-07-31)
+
+All hooks extracted to dedicated files (`src/hooks/`), eliminating mixed export boundaries. Context files re-export hooks for backward compatibility. `allowExportNames` added to eslint config for the three re-exported hooks.
 
 ### Affected Files
 
-| File | Warning |
-|---|---|
-| ~~`src/context/AppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` hook + `checkDiscountEligibility` utility~~ (deleted v3.1.0) |
-| `src/context/AuthContext.tsx` | Exports `AuthProvider` + `useAuth` hook |
-| `src/context/SupabaseAppContext.tsx` | Exports `AppProvider` + `useApp` + `useInvoiceGeneration` + `checkDiscountEligibility` |
-| `src/context/ThemeContext.tsx` | Exports `ThemeProvider` + `useTheme` hook |
-| `src/lib/alertScheduler.tsx` | Exports `useAlertScheduler` hook + `AlertStatusIndicator` component |
+| File | Warning | Status |
+|---|---|---|
+| ~~`src/context/AppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` hook + `checkDiscountEligibility` utility~~ | ~~deleted v3.1.0~~ |
+| ~~`src/context/AuthContext.tsx`~~ | ~~Exports `AuthProvider` + `useAuth` hook~~ | ✅ resolved 2026-07-31 |
+| ~~`src/context/SupabaseAppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` + `useInvoiceGeneration` + `checkDiscountEligibility`~~ | ✅ resolved 2026-07-31 |
+| ~~`src/context/ThemeContext.tsx`~~ | ~~Exports `ThemeProvider` + `useTheme` hook~~ | ✅ resolved 2026-07-31 |
+| ~~`src/lib/alertScheduler.tsx`~~ | ~~Exports `useAlertScheduler` hook + `AlertStatusIndicator` component~~ | ✅ resolved 2026-07-31 |
 
 ### Root Cause
 
 React Fast Refresh expects a file to export **only** React components OR **only** non-component exports. Context files export a Provider (component) **and** one or more custom hooks (non-component). Fast Refresh can't handle mixed exports — any edit forces a full remount, losing component state.
 
-### Recommended Next Steps
+### Resolution
 
-1. **Extract non-component exports to sibling files.** Pattern for each context:
-   ```
-   src/context/AuthContext.tsx      → AuthProvider (component only)
-   src/context/useAuth.ts          → useAuth hook
-   ```
-   The hook file imports from the context file:
-   ```ts
-   // src/context/useAuth.ts
-   import { AuthContext } from './AuthContext';
-   import { useContext } from 'react';
-   export function useAuth() { return useContext(AuthContext); }
-   ```
+All hooks extracted to `src/hooks/`:
+- `src/hooks/useAuth.ts` — `useAuth` hook (imports `AuthContext` from context file)
+- `src/hooks/useTheme.ts` — `useTheme` hook (imports `ThemeContext` from context file)
+- `src/hooks/useAlertScheduler.ts` — `useAlertScheduler` hook
 
-2. **For utility exports** (`checkDiscountEligibility`, `useInvoiceGeneration`, `CurrencyUtils`): move to `src/lib/` — these aren't context concerns and don't belong in context files anyway.
+Context files re-export hooks for backward compatibility:
+- `src/context/AuthContext.tsx` → `export { useAuth } from '../hooks/useAuth'`
+- `src/context/ThemeContext.tsx` → `export { useTheme } from '../hooks/useTheme'`
+- `src/lib/alertScheduler.tsx` → `export { useAlertScheduler } from '../hooks/useAlertScheduler'`
 
-3. **`alertScheduler.tsx`:** Extract `AlertStatusIndicator` to `src/components/alerts/AlertStatusIndicator.tsx`. Keep `useAlertScheduler` in `src/lib/alertScheduler.tsx` (no JSX needed → back to `.ts`).
-
-**Effort:** Low (~1 hour). Seven file splits. No logic changes, just import path updates in consumers.
+ESLint config updated: `allowExportNames: ['useAuth', 'useTheme', 'useAlertScheduler']` suppresses the re-export warnings.
 
 ---
 
@@ -183,6 +179,8 @@ round-trip to PostgREST. There is no client-side transaction primitive.
 - Insert into `audit_logs`
 
 **Pattern followed:** `provision_user()` RPC from `20260730124100_onboarding_provision_rpc.sql`.
+
+**Security Hotfix Note:** On 2026-07-31, a security hotfix (PR #22) was applied to `REVOKE EXECUTE ON FUNCTION public.approve_shop FROM PUBLIC` to close a privilege escalation vector discovered by Greptile audit.
 
 **Related:** `migration 20260730160000`, `docs/architecture/database.md §4`.
 
