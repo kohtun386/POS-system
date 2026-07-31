@@ -3,7 +3,7 @@
 Originally captured 2026-06-16 during POS Helper lint + theme consistency audit.
 Commit: `8556dc3` (159 → 140 lint problems).
 
-Last updated: 2026-07-31 (React Refresh §2 resolved, approve-shop security hotfix §6).
+Last updated: 2026-07-31 (React Refresh §2 partial — SupabaseAppContext fixed, 3 files still suppressed; approve-shop security hotfix §6).
 
 ---
 
@@ -22,20 +22,20 @@ Last updated: 2026-07-31 (React Refresh §2 resolved, approve-shop security hotf
 
 ## 2. React Refresh Warnings in Context Files
 
-**Lint count:** 0 warnings across 6 files (rule now allows mixed exports via `allowConstantExport: true` in eslint.config.js).
-**Status:** ✅ RESOLVED (2026-07-31)
+**Lint count:** 0 warnings (3 files still suppress via `eslint-disable-next-line`).
+**Status:** 🟡 PARTIALLY RESOLVED — `SupabaseAppContext.tsx` fixed via Phase 5 refactor (2026-07-31); 3 files still suppress.
 
-Resolved via Phase 5 refactor: extracted hooks and utilities to dedicated files (`src/hooks/`, `src/lib/`), eliminating mixed export boundaries.
+Phase 5 extracted hooks and utilities from `SupabaseAppContext.tsx` to dedicated files (`src/hooks/`, `src/lib/`), eliminating its mixed export boundary. The remaining three files suppress the warning with `eslint-disable-next-line react-refresh/only-export-components` — they still export both a component and a hook from the same file.
 
 ### Affected Files
 
-| File | Warning |
-|---|---|
-| ~~`src/context/AppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` hook + `checkDiscountEligibility` utility~~ (deleted v3.1.0) |
-| `src/context/AuthContext.tsx` | Exports `AuthProvider` + `useAuth` hook |
-| ~~`src/context/SupabaseAppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` + `useInvoiceGeneration` + `checkDiscountEligibility`~~ (resolved 2026-07-31) |
-| `src/context/ThemeContext.tsx` | Exports `ThemeProvider` + `useTheme` hook |
-| `src/lib/alertScheduler.tsx` | Exports `useAlertScheduler` hook + `AlertStatusIndicator` component |
+| File | Warning | Status |
+|---|---|---|
+| ~~`src/context/AppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` hook + `checkDiscountEligibility` utility~~ | ~~deleted v3.1.0~~ |
+| `src/context/AuthContext.tsx` | Exports `AuthProvider` + `useAuth` hook | 🔴 suppressed |
+| ~~`src/context/SupabaseAppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` + `useInvoiceGeneration` + `checkDiscountEligibility`~~ | ✅ resolved 2026-07-31 |
+| `src/context/ThemeContext.tsx` | Exports `ThemeProvider` + `useTheme` hook | 🔴 suppressed |
+| `src/lib/alertScheduler.tsx` | Exports `useAlertScheduler` hook + `AlertStatusIndicator` component | 🔴 suppressed |
 
 ### Root Cause
 
@@ -43,7 +43,7 @@ React Fast Refresh expects a file to export **only** React components OR **only*
 
 ### Recommended Next Steps
 
-1. **Extract non-component exports to sibling files.** Pattern for each context:
+1. **`AuthContext.tsx`** — Extract `useAuth` hook to `src/context/useAuth.ts`:
    ```
    src/context/AuthContext.tsx      → AuthProvider (component only)
    src/context/useAuth.ts          → useAuth hook
@@ -56,11 +56,11 @@ React Fast Refresh expects a file to export **only** React components OR **only*
    export function useAuth() { return useContext(AuthContext); }
    ```
 
-2. **For utility exports** (`checkDiscountEligibility`, `useInvoiceGeneration`, `CurrencyUtils`): move to `src/lib/` — these aren't context concerns and don't belong in context files anyway.
+2. **`ThemeContext.tsx`** — Same pattern: extract `useTheme` to `src/context/useTheme.ts`.
 
-3. **`alertScheduler.tsx`:** Extract `AlertStatusIndicator` to `src/components/alerts/AlertStatusIndicator.tsx`. Keep `useAlertScheduler` in `src/lib/alertScheduler.tsx` (no JSX needed → back to `.ts`).
+3. **`alertScheduler.tsx`** — Extract `AlertStatusIndicator` to `src/components/alerts/AlertStatusIndicator.tsx`. Keep `useAlertScheduler` in `src/lib/alertScheduler.tsx` (no JSX needed → back to `.ts`).
 
-**Effort:** Low (~1 hour). Seven file splits. No logic changes, just import path updates in consumers.
+**Effort:** Low (~30 min). Three file splits. No logic changes, just import path updates in consumers.
 
 ---
 
