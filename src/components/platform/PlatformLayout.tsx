@@ -90,7 +90,7 @@ export function PlatformLayout() {
           className={`
             fixed md:static inset-y-0 left-0 z-40
             w-64 bg-secondary-100 dark:bg-surface-dark border-r border-secondary-200 dark:border-secondary-800
-            flex flex-col pt-4 pb-4
+            flex flex-col pt-4 pb-4 overflow-y-auto
             transition-transform duration-200 ease-out
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
             md:translate-x-0
@@ -127,7 +127,7 @@ export function PlatformLayout() {
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-medium text-secondary-900 dark:text-secondary-100 truncate">{profile?.name}</div>
-                <div className="text-xs text-secondary-500 dark:text-secondary-400 capitalize">{profile?.role}</div>
+                <div className="text-xs text-secondary-500 dark:text-secondary-400">{profile?.role?.replaceAll('_', ' ')}</div>
               </div>
             </div>
             <div className="flex items-center gap-1 px-2">
