@@ -141,6 +141,7 @@ Deno.serve(async (req) => {
           username,
           staff_creation: true,
           target_role: invitation.role,
+          shop_id: invitation.shop_id,
         },
       });
 

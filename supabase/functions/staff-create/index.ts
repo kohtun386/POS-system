@@ -127,6 +127,7 @@ Deno.serve(async (req) => {
         username,
         staff_creation: true,
         target_role: role,
+        shop_id,
       },
     });
 
