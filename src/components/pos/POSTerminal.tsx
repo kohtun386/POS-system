@@ -142,6 +142,8 @@ export function POSTerminal() {
 
       // Save to Supabase and update local state
       const savedDraft = await salesService.create(draftSale);
+      // Register sale ID for Realtime dedup — prevents echo duplicate on creating terminal
+      (window as Record<string, unknown>).__markSaleLocallyCreated?.(savedDraft.id);
       dispatch({ type: 'ADD_SALE', payload: savedDraft });
       dispatch({ type: 'CLEAR_CART' });
 

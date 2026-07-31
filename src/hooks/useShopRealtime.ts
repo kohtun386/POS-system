@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Product, Sale, CartItem, Payment, AppliedDiscount } from '../types';
 import type { AppAction } from '../context/reducers/types';
@@ -83,8 +83,39 @@ interface UseShopRealtimeOptions {
  *
  * Graceful degradation: logs warnings on failure, never throws (PRD §4.2).
  */
+// How long to remember a sale ID to prevent Realtime echo duplicates (5 minutes)
+const SALE_DEDUP_TTL_MS = 5 * 60 * 1000;
+
 export function useShopRealtime({ activeShopId, dispatch }: UseShopRealtimeOptions) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  // Tracks recently processed sale IDs to prevent echo duplicates from Realtime
+  // when the creating terminal also receives its own INSERT event.
+  // Populated by markSaleLocallyCreated() — call this before checkout dispatch.
+  const processedSalesRef = useRef<Set<string>>(new Set());
+
+  /**
+   * Register a sale ID as locally created to prevent Realtime echo.
+   * Call this from the checkout flow BEFORE dispatching ADD_SALE.
+   */
+  const markSaleLocallyCreated = useCallback((saleId: string) => {
+    processedSalesRef.current.add(saleId);
+    // Auto-cleanup after TTL to prevent memory leaks
+    setTimeout(() => {
+      processedSalesRef.current.delete(saleId);
+    }, SALE_DEDUP_TTL_MS);
+  }, []);
+
+  // Expose markSaleLocallyCreated on window for checkout flow access
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as Record<string, unknown>).__markSaleLocallyCreated = markSaleLocallyCreated;
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as Record<string, unknown>).__markSaleLocallyCreated;
+      }
+    };
+  }, [markSaleLocallyCreated]);
 
   useEffect(() => {
     if (!activeShopId) return;
@@ -126,7 +157,16 @@ export function useShopRealtime({ activeShopId, dispatch }: UseShopRealtimeOptio
         },
         (payload) => {
           try {
-            const sale = mapSaleRow(payload.new as Record<string, unknown>);
+            const raw = payload.new as Record<string, unknown>;
+            const saleId = raw.id as string;
+
+            // Dedup: skip if this sale was already added locally (echo from Realtime)
+            if (processedSalesRef.current.has(saleId)) {
+              processedSalesRef.current.delete(saleId);
+              return;
+            }
+
+            const sale = mapSaleRow(raw);
             dispatch({ type: 'ADD_SALE', payload: sale });
           } catch (err) {
             console.warn('[Realtime] Failed to map sale insert:', err);
