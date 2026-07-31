@@ -489,5 +489,5 @@ Close: UPDATE cash_shifts (closing_cash, expected_cash, variance, status='closed
 | Change | Impact | Status |
 |--------|--------|--------|
 | Discriminated union for actions | Eliminates `payload: any`. Type-safe dispatch. | Planned (tech debt #1) |
-| Split context exports to separate files | Fixes React Refresh warnings (15 warnings, 6 files). | Planned (tech debt #2) |
+| Split context exports to separate files | Fixes React Refresh warnings (15 warnings, 6 files). | ✅ Resolved (tech debt #2) — hooks live in `src/hooks/`, context files export providers only |
 | Zustand or Redux Toolkit evaluation | Current useReducer pattern works but scales poorly with ~44 actions. | Not started |
