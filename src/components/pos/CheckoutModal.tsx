@@ -373,6 +373,8 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         // Re‑throw other errors to be handled by outer catch
         throw err;
       }
+      // Register sale ID for Realtime dedup — prevents echo duplicate on creating terminal
+      (window as Record<string, unknown>).__markSaleLocallyCreated?.(savedSale.id);
       dispatch({ type: 'ADD_SALE', payload: savedSale });
 
       dispatch({ type: 'CLEAR_CART' });

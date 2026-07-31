@@ -19,6 +19,7 @@ import {
 } from '../lib/services';
 import { appReducer, initialState } from './reducers';
 import type { AppState, AppAction } from './reducers';
+import { useShopRealtime } from '../hooks/useShopRealtime';
 
 const AppContext = createContext<{
   state: AppState;
@@ -217,6 +218,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   }
+
+  // Realtime subscriptions for multi-device sync (PRD §4.2 — graceful degradation)
+  // Subscribes to products (UPDATE) and sales (INSERT) scoped by shop_id.
+  useShopRealtime({ activeShopId: state.activeShopId, dispatch });
 
   // Expose dispatch globally for E2E tests to set capabilities without page reload
   if (typeof window !== 'undefined') {
