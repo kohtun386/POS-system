@@ -65,3 +65,15 @@
 **Root cause:** PostgreSQL re-applies RLS to self-table subqueries inside UPDATE policy; self-scoping on auth.uid() does NOT satisfy the recursion detector.
 **Fix:** Route privilege + immutable-field checks through 3 SECURITY DEFINER helpers (users_get_own_role/active/shop_id), self-scoped to auth.uid(), SET search_path='', GRANT EXECUTE to authenticated. No direct `users` reference remains in the policy.
 **Confirmed:** G1/G2/admin-self-promotion/kokoe escalation all remain closed; legit admin flows preserved.
+
+---
+
+## db-guardian Verdict: `20260731152000_constrain_users_self_insert.sql`
+
+**Date:** 2026-07-31
+**Operation:** Tighten users self-INSERT to unprivileged row (role='cashier' AND active=false)
+**Source:** Code-review finding (valid) — INSERT pin left caller-controlled role unconstrained; self-insert of role='admin' would unlock the UPDATE admin branch.
+**Guardian verdict:** ✅ **Safe to proceed** (v5)
+**Closure:** Self-inserted row can never yield users_get_own_role()='admin' → admin branch never unlocks.
+**No legit client INSERT into users** (trigger/EF/RPC all bypass RLS by design).
+**Flagged (separate):** handle_new_auth_user() omits shop_id (NOT NULL, no default) — root cause; needs follow-up fix.
