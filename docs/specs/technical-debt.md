@@ -3,7 +3,7 @@
 Originally captured 2026-06-16 during POS Helper lint + theme consistency audit.
 Commit: `8556dc3` (159 → 140 lint problems).
 
-Last updated: 2026-07-28 (audit: any count 31→0, hex 401→114, approve-shop §6).
+Last updated: 2026-07-31 (React Refresh §2 resolved, approve-shop security hotfix §6).
 
 ---
 
@@ -23,6 +23,9 @@ Last updated: 2026-07-28 (audit: any count 31→0, hex 401→114, approve-shop �
 ## 2. React Refresh Warnings in Context Files
 
 **Lint count:** 0 warnings across 6 files (rule now allows mixed exports via `allowConstantExport: true` in eslint.config.js).
+**Status:** ✅ RESOLVED (2026-07-31)
+
+Resolved via Phase 5 refactor: extracted hooks and utilities to dedicated files (`src/hooks/`, `src/lib/`), eliminating mixed export boundaries.
 
 ### Affected Files
 
@@ -30,7 +33,7 @@ Last updated: 2026-07-28 (audit: any count 31→0, hex 401→114, approve-shop �
 |---|---|
 | ~~`src/context/AppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` hook + `checkDiscountEligibility` utility~~ (deleted v3.1.0) |
 | `src/context/AuthContext.tsx` | Exports `AuthProvider` + `useAuth` hook |
-| `src/context/SupabaseAppContext.tsx` | Exports `AppProvider` + `useApp` + `useInvoiceGeneration` + `checkDiscountEligibility` |
+| ~~`src/context/SupabaseAppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` + `useInvoiceGeneration` + `checkDiscountEligibility`~~ (resolved 2026-07-31) |
 | `src/context/ThemeContext.tsx` | Exports `ThemeProvider` + `useTheme` hook |
 | `src/lib/alertScheduler.tsx` | Exports `useAlertScheduler` hook + `AlertStatusIndicator` component |
 
@@ -183,6 +186,8 @@ round-trip to PostgREST. There is no client-side transaction primitive.
 - Insert into `audit_logs`
 
 **Pattern followed:** `provision_user()` RPC from `20260730124100_onboarding_provision_rpc.sql`.
+
+**Security Hotfix Note:** On 2026-07-31, a security hotfix (PR #22) was applied to `REVOKE EXECUTE ON FUNCTION public.approve_shop FROM PUBLIC` to close a privilege escalation vector discovered by Greptile audit.
 
 **Related:** `migration 20260730160000`, `docs/architecture/database.md §4`.
 
