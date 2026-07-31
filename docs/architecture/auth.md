@@ -112,34 +112,27 @@ User can access app data for the active shop
 
 **Self-registration role:** The intended owner of a self-registered shop is a pending shop admin/owner. Existing admins creating staff can assign `cashier`, `manager`, or `admin` through the user-management workflow after the trigger-created profile exists.
 
-### 2.3 Admin Creating New User
+### 2.3 Admin Creating New User (Staff Creation)
+
+Admins create staff via the `staff-create` Edge Function — **not** direct `signUp()`.
 
 ```
 Admin opens UserManager → UserModal → fills form
     │
     ▼
-Save admin session: supabase.auth.getSession()
+supabase.functions.invoke('staff-create', { body: { shop_id, email, password, name, username, role } })
     │
     ▼
-supabase.auth.signUp({ email, password, options: { data: { name, username } } })
-    │
-    ├─ This REPLACES the current session (admin gets logged out as new user)
-    │
+Edge Function (service_role) → supabase.auth.admin.createUser({ email, password, email_confirm: true })
+    │   No session replacement — admin session untouched
     ▼
-DB trigger: handle_new_auth_user() creates profile (role='cashier')
-    │
-    ▼
-Restore admin session: supabase.auth.setSession(adminSession)
-    │
-    ▼
-UPDATE public.users SET username, name, role, permissions, active
-WHERE id = newUserId
+provision_user RPC → creates the shop_memberships row after the trigger-created public.users row
     │
     ▼
 dispatch({ type: 'SET_USERS', payload: [...state.users, newUser] })
 ```
 
-**Why this pattern:** Supabase Auth has no admin "create user" API that doesn't change session. `signUp()` replaces session. Must save/restore.
+**Why this pattern:** Direct `signUp()` replaces the current session, logging the admin out as the new user (no save/restore hack survives a network hiccup). The Edge Function uses the Admin API (`auth.admin.createUser`) with the `service_role` key, which never touches the caller's client session. The `handle_new_auth_user()` trigger skips shop/membership creation when `user_metadata.staff_creation = true`; the trigger still creates the `public.users` profile row. `provision_user` then creates the `shop_memberships` row in its own transaction — note the boundary: if the RPC fails, the auth user + profile exist but the membership is missing (the Edge Function surfaces this as `PROVISION_FAILED`).
 
 ### 2.4 Sign Out
 

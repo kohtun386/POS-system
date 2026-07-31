@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, User, Mail, Eye, EyeOff, ShoppingCart, Store, MailCheck } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { swalConfig } from '../../lib/sweetAlert';
 
 export function LoginPage() {

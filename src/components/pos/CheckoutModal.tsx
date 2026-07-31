@@ -6,7 +6,7 @@ import { useApp } from '../../hooks/useApp';
 import { useCapability } from '../../hooks/useCapability';
 import { checkDiscountEligibility } from '../../lib/discountUtils';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { ReceiptPrint } from './ReceiptPrint';
 import { UpgradePrompt } from '../ui/UpgradePrompt';
 import { checkoutService, DailyLimitError } from '../../lib/services';

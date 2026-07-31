@@ -70,7 +70,7 @@ vi.mock('../../../lib/discountUtils', () => ({
   checkDiscountEligibility: () => false,
 }))
 
-vi.mock('../../../context/AuthContext', () => ({
+vi.mock('../../../hooks/useAuth', () => ({
   useAuth: () => ({
     user: { id: 'cashier-1', email: 'test@test.com', user_metadata: { full_name: 'Cashier' } },
   }),

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
 import { useCapability } from '../../hooks/useCapability';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../hooks/useTheme';
 interface HeaderProps {
   currentView: string;
   onViewChange: (view: string) => void;

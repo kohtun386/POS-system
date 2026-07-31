@@ -3,7 +3,7 @@ import {
   Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, Shop,
   CashShift
 } from '../types';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import {
   productsService,
   customersService,

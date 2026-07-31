@@ -3,7 +3,7 @@ import { Save, Store, DollarSign, Printer, Users, Globe, FileText, Lock, LogOut 
 import { useApp } from '../../hooks/useApp';
 import { useCapability } from '../../hooks/useCapability';
 import { useInvoiceStats } from '../../hooks/useInvoiceStats';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { LogoUpload } from './LogoUpload';
 import { swalConfig } from '../../lib/sweetAlert';
 import { UpgradePrompt } from '../ui/UpgradePrompt';

@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import { AppProvider } from './context/SupabaseAppContext';
 import { useApp } from './hooks/useApp';
 import { useCapability } from './hooks/useCapability';
