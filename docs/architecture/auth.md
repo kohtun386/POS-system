@@ -126,13 +126,13 @@ supabase.functions.invoke('staff-create', { body: { shop_id, email, password, na
 Edge Function (service_role) → supabase.auth.admin.createUser({ email, password, email_confirm: true })
     │   No session replacement — admin session untouched
     ▼
-provision_user RPC → atomically creates public.users + shop_memberships rows
+provision_user RPC → creates the shop_memberships row after the trigger-created public.users row
     │
     ▼
 dispatch({ type: 'SET_USERS', payload: [...state.users, newUser] })
 ```
 
-**Why this pattern:** Direct `signUp()` replaces the current session, logging the admin out as the new user (no save/restore hack survives a network hiccup). The Edge Function uses the Admin API (`auth.admin.createUser`) with the `service_role` key, which never touches the caller's client session. The `handle_new_auth_user()` trigger skips shop/membership creation when `user_metadata.staff_creation = true`; membership is provisioned atomically by the `provision_user` RPC.
+**Why this pattern:** Direct `signUp()` replaces the current session, logging the admin out as the new user (no save/restore hack survives a network hiccup). The Edge Function uses the Admin API (`auth.admin.createUser`) with the `service_role` key, which never touches the caller's client session. The `handle_new_auth_user()` trigger skips shop/membership creation when `user_metadata.staff_creation = true`; the trigger still creates the `public.users` profile row. `provision_user` then creates the `shop_memberships` row in its own transaction — note the boundary: if the RPC fails, the auth user + profile exist but the membership is missing (the Edge Function surfaces this as `PROVISION_FAILED`).
 
 ### 2.4 Sign Out
 
