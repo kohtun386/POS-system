@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import { Sale } from '../../types';
-import { useApp, useCapability } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
+import { useCapability } from '../../hooks/useCapability';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';

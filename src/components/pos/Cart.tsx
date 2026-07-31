@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Trash2, Plus, Minus, User, Percent, FileText, ShoppingCart } from 'lucide-react';
 import { CartItem, Customer } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 
 interface CartProps {

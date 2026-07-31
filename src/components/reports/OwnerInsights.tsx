@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 
 interface OwnerInsightsProps {

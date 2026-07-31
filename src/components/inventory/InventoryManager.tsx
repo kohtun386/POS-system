@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Product } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { ProductModal } from './ProductModal';
 import { swalConfig } from '../../lib/sweetAlert';

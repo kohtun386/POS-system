@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Mail, Lock, Shield, Crown } from 'lucide-react';
 import { User as UserType } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
 import { usersService } from '../../lib/services';
 import { supabase } from '../../lib/supabase';
 import { swalConfig } from '../../lib/sweetAlert';

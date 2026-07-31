@@ -235,16 +235,3 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Re-export hooks from dedicated files for Fast Refresh compatibility
-export { useApp, useActiveShopId } from '../hooks/useApp';
-export { useCapability } from '../hooks/useCapability';
-export { useInvoiceGeneration, useInvoiceStats } from '../hooks/useInvoiceStats';
-
-// Re-export utilities from dedicated files for Fast Refresh compatibility
-export { checkDiscountEligibility } from '../lib/discountUtils';
-export {
-  getNextInvoiceNumber,
-  generateNextInvoiceNumber,
-  resetInvoiceCounter,
-  setInvoicePrefix,
-} from '../lib/invoiceUtils';

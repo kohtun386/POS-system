@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { X, User, Mail, Phone, MapPin, CreditCard, Calendar, ShoppingBag, Receipt } from 'lucide-react';
 import { Customer } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { format } from 'date-fns';
 

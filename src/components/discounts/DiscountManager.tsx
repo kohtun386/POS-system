@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Percent, Gift } from 'lucide-react';
 import { Discount } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { DiscountModal } from './DiscountModal';
 import { format } from 'date-fns';

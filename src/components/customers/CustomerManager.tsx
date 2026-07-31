@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search, Edit, Trash2, User, Mail, Phone, CreditCard, Eye } from 'lucide-react';
 import { Customer } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { CustomerModal } from './CustomerModal';
 import { CustomerDetailModal } from './CustomerDetailModal';

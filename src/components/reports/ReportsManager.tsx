@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
 import { DollarSign, ShoppingCart, Users, TrendingUp, Download, BarChart3 } from 'lucide-react';
-import { useApp, useCapability } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
+import { useCapability } from '../../hooks/useCapability';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { UpgradePrompt } from '../ui/UpgradePrompt';

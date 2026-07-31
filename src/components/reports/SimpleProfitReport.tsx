@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
 import { purchaseLogsService, salesService } from '../../lib/services';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 

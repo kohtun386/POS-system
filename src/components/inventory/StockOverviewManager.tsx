@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit, Trash2, Package, AlertTriangle, ArrowUpDown } from 'lucide-react';
 import { StockItem } from '../../types';
 import { stockItemsService } from '../../lib/services';
-import { useApp, useCapability } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
+import { useCapability } from '../../hooks/useCapability';
 import { swalConfig } from '../../lib/sweetAlert';
 import { UpgradePrompt } from '../ui/UpgradePrompt';
 
