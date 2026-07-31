@@ -75,12 +75,30 @@ export function PendingApprovalPage() {
               <li>• You'll receive an email once approved</li>
               <li>• Then you can start using the POS system</li>
             </ul>
+            <p className="text-xs font-semibold text-secondary-700 dark:text-secondary-200 mt-2">
+              This usually takes 1-2 business days.
+            </p>
           </div>
 
           {/* Email notification info */}
           <div className="mb-6 p-3 bg-secondary-50 dark:bg-secondary-900 rounded-lg">
             <p className="text-xs text-secondary-600 dark:text-secondary-300">
               You'll receive an email when your shop is approved. No need to refresh.
+            </p>
+          </div>
+
+          {/* Support contact info */}
+          <div className="mb-6 p-3 bg-secondary-50 dark:bg-secondary-900 rounded-lg">
+            <p className="text-xs text-secondary-600 dark:text-secondary-300">
+              If you have questions, contact support at{' '}
+              <span className="font-semibold text-secondary-900 dark:text-secondary-100">
+                Gmail - kohtunhtun386@gmail.com
+              </span>
+              ,{' '}
+              <span className="font-semibold text-secondary-900 dark:text-secondary-100">
+                Telegram - @smithkht13
+              </span>
+              .
             </p>
           </div>
 
