@@ -136,6 +136,9 @@ Deno.serve(async (req) => {
         email: invitation.email,
         password,
         email_confirm: true,
+        app_metadata: {
+          staff_provisioned: true,
+        },
         user_metadata: {
           name,
           username,

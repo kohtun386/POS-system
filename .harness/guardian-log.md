@@ -92,3 +92,16 @@
 **Self-reg branch order-safe:** shops.owner_id has no FK (verified pg_constraint) → shops INSERT before users is legal.
 **Companion change set:** migration + supabase/functions/staff-create/index.ts + supabase/functions/staff-accept-invitation/index.ts → PR #29.
 **Closure:** previously-flagged shop_id omission resolved.
+
+---
+
+## db-guardian Verdict: security hardening — staff branch gates on app_metadata.staff_provisioned
+
+**Date:** 2026-07-31
+**Operation:** Re-applied `handle_new_auth_user()` so the staff branch is entered ONLY when `raw_app_meta_data ->> 'staff_provisioned'` is true (server-controlled).
+**Source:** Code-review finding — the P0 trigger previously trusted caller-controlled `raw_user_meta_data.staff_creation`; a public signup could forge it to self-assign an ACTIVE admin/manager profile in an arbitrary shop (bypassing EF admin-JWT/tier/invitation checks).
+**Guardian verdict:** ✅ **Safe to proceed** (post-deploy revalidation)
+**Fix:** both Edge Functions set `app_metadata: { staff_provisioned: true }` via admin.createUser (staff-create v4, staff-accept-invitation v2). Public signup writes only raw_user_meta_data and cannot set app_metadata → escalation closed.
+**Deploy order honored:** EFs re-deployed BEFORE the hardened trigger was re-applied (db-guardian BLOCKED until EFs were live, to avoid phantom-shop fallthrough).
+**Confirmed:** live function gates on app_metadata; no existing user carries staff_provisioned (0 misclassification); trigger still wired on auth.users AFTER INSERT.
+**Non-blocking:** dead `staff_creation: true` flag left in EF user_metadata; stale staff-create header comment.

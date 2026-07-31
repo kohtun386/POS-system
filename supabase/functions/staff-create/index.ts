@@ -116,12 +116,17 @@ Deno.serve(async (req) => {
     }
 
     // ── 4. Create auth user with staff_creation metadata ──────────
-    // The handle_new_auth_user() trigger reads staff_creation=true
-    // and target_role from metadata, then skips shop+membership creation.
+    // The handle_new_auth_user() trigger enters the staff branch ONLY when
+    // app_metadata.staff_provisioned=true (server-controlled — public signup
+    // cannot set app_metadata, closing the privilege-escalation hole where
+    // caller-supplied raw_user_meta_data could claim staff/admin).
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
+      app_metadata: {
+        staff_provisioned: true,
+      },
       user_metadata: {
         name,
         username,

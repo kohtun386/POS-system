@@ -11,6 +11,16 @@
 --   This migration adds shop_id to both INSERT statements:
 --   - Self-registration: uses v_new_shop_id (newly created shop)
 --   - Staff creation: uses shop_id from raw_user_meta_data
+--
+--   SECURITY (review finding): the staff branch previously gated on
+--   caller-controlled raw_user_meta_data.staff_creation, which a public
+--   signup could forge (signUp writes options.data to that column) to
+--   self-assign an ACTIVE admin/manager profile in an arbitrary shop —
+--   bypassing the Edge Functions' admin-JWT, tier, and invitation checks.
+--   The staff branch now gates on app_metadata.staff_provisioned, which is
+--   server-controlled (set by the staff-create / staff-accept-invitation
+--   Edge Functions via admin.createUser). Public signup cannot set
+--   app_metadata, so the escalation is closed.
 -- ================================================================
 
 CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
@@ -26,9 +36,14 @@ DECLARE
     v_target_role TEXT;
     v_user_shop_id UUID;
 BEGIN
-    -- Check if this is a staff creation (via staff-create Edge Function)
+    -- Staff creation is authenticated via app_metadata.staff_provisioned,
+    -- which is SERVER-controlled (set by the staff-create / staff-accept-
+    -- invitation Edge Functions through admin.createUser). Public signup
+    -- writes options.data to raw_user_meta_data only and cannot set
+    -- app_metadata — so a caller-supplied staff_creation flag can never
+    -- reach this branch (privilege-escalation fix).
     v_is_staff := COALESCE(
-        (NEW.raw_user_meta_data ->> 'staff_creation')::BOOLEAN,
+        (NEW.raw_app_meta_data ->> 'staff_provisioned')::BOOLEAN,
         false
     );
 
@@ -46,8 +61,10 @@ BEGIN
 
     -- ================================================================
     -- BRANCH A: Staff Creation (via Edge Function)
-    --   Only insert user profile. Skip shop + membership.
-    --   shop_id comes from raw_user_meta_data (set by Edge Function).
+    --   Entered ONLY when app_metadata.staff_provisioned=true (set by the
+    --   Edge Functions). Only inserts the user profile — skips shop +
+    --   membership (membership is created by provision_user RPC).
+    --   role / active / shop_id come from the Edge Functions' metadata.
     -- ================================================================
     IF v_is_staff THEN
         v_target_role := COALESCE(
