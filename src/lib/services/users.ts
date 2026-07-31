@@ -23,36 +23,6 @@ export const usersService = {
     }))
   },
 
-  async create(user: Omit<User, 'id'>): Promise<User> {
-    const { data, error } = await supabase
-      .from('users')
-      .insert({
-        username: user.username,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions,
-        active: user.active,
-        avatar: user.avatar
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-
-    return {
-      id: data.id,
-      username: data.username,
-      name: data.name,
-      email: data.email,
-      role: data.role as User['role'],
-      permissions: data.permissions || [],
-      active: data.active ?? true,
-      lastLogin: data.last_login ? new Date(data.last_login) : undefined,
-      avatar: data.avatar || undefined
-    }
-  },
-
   async update(id: string, user: Partial<User>): Promise<User> {
     const { data, error } = await supabase
       .from('users')
