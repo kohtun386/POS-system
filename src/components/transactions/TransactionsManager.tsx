@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Search, Download, Eye, RefreshCw, CreditCard, Banknote, Smartphone, Receipt, FileText, X, ShoppingCart } from 'lucide-react';
-import { useApp, useCapability } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
+import { useCapability } from '../../hooks/useCapability';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { format } from 'date-fns';
 import { Sale } from '../../types';

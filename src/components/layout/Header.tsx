@@ -4,7 +4,8 @@ import {
   Receipt, Package, Users, BarChart3, Sun, Moon, ClipboardList, Layers,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { useApp, useCapability } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
+import { useCapability } from '../../hooks/useCapability';
 import { useTheme } from '../../context/ThemeContext';
 interface HeaderProps {
   currentView: string;

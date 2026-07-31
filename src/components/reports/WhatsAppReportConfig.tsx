@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { swalConfig } from '../../lib/sweetAlert';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
 

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Search, Edit, Trash2, UserCheck, Crown, Shield, User } from 'lucide-react';
 import { User as UserType } from '../../types';
-import { useApp, useCapability } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
+import { useCapability } from '../../hooks/useCapability';
 import { usersService } from '../../lib/services';
 import { UserModal } from './UserModal';
 import { swalConfig } from '../../lib/sweetAlert';

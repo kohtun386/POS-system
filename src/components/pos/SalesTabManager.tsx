@@ -1,5 +1,6 @@
 import { Plus, X } from 'lucide-react';
-import { useApp, useCapability } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
+import { useCapability } from '../../hooks/useCapability';
 import { SalesTab } from '../../types';
 import { salesTabsService } from '../../lib/services';
 import { useAuth } from '../../context/AuthContext';

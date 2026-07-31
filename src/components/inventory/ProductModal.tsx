@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Scale } from 'lucide-react';
 import { Product, ProductBatch } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
 import { productsService } from '../../lib/services';
 import Swal from 'sweetalert2';
 

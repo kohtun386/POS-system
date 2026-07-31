@@ -1,6 +1,8 @@
 import { useState, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { AppProvider, useApp } from './context/SupabaseAppContext';
+import { AppProvider } from './context/SupabaseAppContext';
+import { useApp } from './hooks/useApp';
+import { useCapability } from './hooks/useCapability';
 import { ThemeProvider } from './context/ThemeContext';
 import { LoadingSpinner } from './components/ui/LoadingComponents';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -8,7 +10,6 @@ import { LoginPage } from './components/auth/LoginPage';
 import { PendingApprovalPage } from './components/auth/PendingApprovalPage';
 import { Header } from './components/layout/Header';
 import { PlatformLayout } from './components/platform/PlatformLayout';
-import { useCapability } from './context/SupabaseAppContext';
 import { ReportsManager } from './lazyComponents';
 import { Analytics } from '@vercel/analytics/react';
 // Lazy-loaded route components for code-splitting

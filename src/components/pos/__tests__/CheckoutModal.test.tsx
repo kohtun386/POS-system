@@ -55,13 +55,18 @@ const mockState = {
   products: [],
 }
 
-vi.mock('../../../context/SupabaseAppContext', () => ({
+vi.mock('../../../hooks/useApp', () => ({
   useApp: () => ({
     state: mockState,
     dispatch: vi.fn(),
   }),
+}))
+
+vi.mock('../../../hooks/useCapability', () => ({
   useCapability: (name: string) => mockState.capabilities.includes(name),
-  useInvoiceGeneration: () => async () => 'INV-TEST',
+}))
+
+vi.mock('../../../lib/discountUtils', () => ({
   checkDiscountEligibility: () => false,
 }))
 

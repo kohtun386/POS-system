@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getNextInvoiceNumber, generateNextInvoiceNumber } from '../context/SupabaseAppContext';
+import { getNextInvoiceNumber, generateNextInvoiceNumber } from '../lib/invoiceUtils';
 import { AppSettings } from '../types';
 
 // Helper to create minimal AppSettings for testing

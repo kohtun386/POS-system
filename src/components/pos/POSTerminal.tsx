@@ -5,7 +5,7 @@ import { Cart } from './Cart';
 import { CheckoutModal } from './CheckoutModal';
 import { SalesTabManager } from './SalesTabManager';
 import { Product, CartItem, Sale } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
 import { useAuth } from '../../context/AuthContext';
 import { salesService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';

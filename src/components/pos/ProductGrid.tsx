@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Search, Plus, Package, Scale, X, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { Product } from '../../types';
-import { useApp } from '../../context/SupabaseAppContext';
+import { useApp } from '../../hooks/useApp';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 
 interface ProductGridProps {
