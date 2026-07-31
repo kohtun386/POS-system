@@ -77,3 +77,18 @@
 **Closure:** Self-inserted row can never yield users_get_own_role()='admin' → admin branch never unlocks.
 **No legit client INSERT into users** (trigger/EF/RPC all bypass RLS by design).
 **Flagged (separate):** handle_new_auth_user() omits shop_id (NOT NULL, no default) — root cause; needs follow-up fix.
+
+---
+
+## db-guardian Verdict: `20260731160000_fix_users_shop_id_in_trigger.sql`
+
+**Date:** 2026-07-31
+**Operation:** CREATE OR REPLACE handle_new_auth_user() to populate users.shop_id (NOT NULL) in staff-creation + self-registration branches
+**Source:** P0 — closes the "handle_new_auth_user() omits shop_id" flag above
+**Guardian verdict:** ✅ **Safe to proceed** (revalidation, after BLOCKED v1)
+**Blocked v1:** staff-create + staff-accept-invitation did NOT set shop_id in user_metadata → `(metadata ->> 'shop_id')::UUID` NULL → NOT NULL violation
+**Fix:** added `shop_id` to user_metadata in both Edge Functions (staff-create + staff-accept-invitation Branch B)
+**Exhaustive trigger-fire audit:** 3 auth-user creation paths (signUp self-reg, staff-create, accept-invite Branch B) all satisfy NOT NULL. Branch A (existing user) no trigger.
+**Self-reg branch order-safe:** shops.owner_id has no FK (verified pg_constraint) → shops INSERT before users is legal.
+**Companion change set:** migration + supabase/functions/staff-create/index.ts + supabase/functions/staff-accept-invitation/index.ts → PR #29.
+**Closure:** previously-flagged shop_id omission resolved.
