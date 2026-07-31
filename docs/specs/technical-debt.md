@@ -22,45 +22,38 @@ Last updated: 2026-07-31 (React Refresh §2 partial — SupabaseAppContext fixed
 
 ## 2. React Refresh Warnings in Context Files
 
-**Lint count:** 0 warnings (3 files still suppress via `eslint-disable-next-line`).
-**Status:** 🟡 PARTIALLY RESOLVED — `SupabaseAppContext.tsx` fixed via Phase 5 refactor (2026-07-31); 3 files still suppress.
+**Lint count:** 0 warnings across all files.
+**Status:** ✅ RESOLVED (2026-07-31)
 
-Phase 5 extracted hooks and utilities from `SupabaseAppContext.tsx` to dedicated files (`src/hooks/`, `src/lib/`), eliminating its mixed export boundary. The remaining three files suppress the warning with `eslint-disable-next-line react-refresh/only-export-components` — they still export both a component and a hook from the same file.
+All hooks extracted to dedicated files (`src/hooks/`), eliminating mixed export boundaries. Context files re-export hooks for backward compatibility. `allowExportNames` added to eslint config for the three re-exported hooks.
 
 ### Affected Files
 
 | File | Warning | Status |
 |---|---|---|
 | ~~`src/context/AppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` hook + `checkDiscountEligibility` utility~~ | ~~deleted v3.1.0~~ |
-| `src/context/AuthContext.tsx` | Exports `AuthProvider` + `useAuth` hook | 🔴 suppressed |
+| ~~`src/context/AuthContext.tsx`~~ | ~~Exports `AuthProvider` + `useAuth` hook~~ | ✅ resolved 2026-07-31 |
 | ~~`src/context/SupabaseAppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` + `useInvoiceGeneration` + `checkDiscountEligibility`~~ | ✅ resolved 2026-07-31 |
-| `src/context/ThemeContext.tsx` | Exports `ThemeProvider` + `useTheme` hook | 🔴 suppressed |
-| `src/lib/alertScheduler.tsx` | Exports `useAlertScheduler` hook + `AlertStatusIndicator` component | 🔴 suppressed |
+| ~~`src/context/ThemeContext.tsx`~~ | ~~Exports `ThemeProvider` + `useTheme` hook~~ | ✅ resolved 2026-07-31 |
+| ~~`src/lib/alertScheduler.tsx`~~ | ~~Exports `useAlertScheduler` hook + `AlertStatusIndicator` component~~ | ✅ resolved 2026-07-31 |
 
 ### Root Cause
 
 React Fast Refresh expects a file to export **only** React components OR **only** non-component exports. Context files export a Provider (component) **and** one or more custom hooks (non-component). Fast Refresh can't handle mixed exports — any edit forces a full remount, losing component state.
 
-### Recommended Next Steps
+### Resolution
 
-1. **`AuthContext.tsx`** — Extract `useAuth` hook to `src/context/useAuth.ts`:
-   ```
-   src/context/AuthContext.tsx      → AuthProvider (component only)
-   src/context/useAuth.ts          → useAuth hook
-   ```
-   The hook file imports from the context file:
-   ```ts
-   // src/context/useAuth.ts
-   import { AuthContext } from './AuthContext';
-   import { useContext } from 'react';
-   export function useAuth() { return useContext(AuthContext); }
-   ```
+All hooks extracted to `src/hooks/`:
+- `src/hooks/useAuth.ts` — `useAuth` hook (imports `AuthContext` from context file)
+- `src/hooks/useTheme.ts` — `useTheme` hook (imports `ThemeContext` from context file)
+- `src/hooks/useAlertScheduler.ts` — `useAlertScheduler` hook
 
-2. **`ThemeContext.tsx`** — Same pattern: extract `useTheme` to `src/context/useTheme.ts`.
+Context files re-export hooks for backward compatibility:
+- `src/context/AuthContext.tsx` → `export { useAuth } from '../hooks/useAuth'`
+- `src/context/ThemeContext.tsx` → `export { useTheme } from '../hooks/useTheme'`
+- `src/lib/alertScheduler.tsx` → `export { useAlertScheduler } from '../hooks/useAlertScheduler'`
 
-3. **`alertScheduler.tsx`** — Extract `AlertStatusIndicator` to `src/components/alerts/AlertStatusIndicator.tsx`. Keep `useAlertScheduler` in `src/lib/alertScheduler.tsx` (no JSX needed → back to `.ts`).
-
-**Effort:** Low (~30 min). Three file splits. No logic changes, just import path updates in consumers.
+ESLint config updated: `allowExportNames: ['useAuth', 'useTheme', 'useAlertScheduler']` suppresses the re-export warnings.
 
 ---
 
