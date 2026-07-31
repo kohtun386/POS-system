@@ -799,6 +799,10 @@ Platform-level feature catalog. Managed exclusively by `platform_admin` via Edge
 | `applicable_types` | text[] | `'{coffee_shop}'` | Business types this feature applies to |
 | `created_at` | timestamptz NOT NULL | `now()` | |
 
+> **v1 Note:** All shops are `coffee_shop` — `applicable_types` is dormant.
+> Will activate when v2 adds `restaurant`/`food_court` business types (VISION.md §2.2).
+> The Feature Catalog UI is hidden in v1 (VISION.md §5.3 — Gate 2 is dormant).
+
 ---
 
 ### 7.2 `shop_features`

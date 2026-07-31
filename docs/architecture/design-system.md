@@ -623,10 +623,10 @@ Both widths satisfy §10.1.1 48px tap-target requirement.
 
 ---
 
-### 10.3 Platform Admin (Desktop-First)
+### 10.3 Platform Admin (Responsive)
 
-**Target:** Ko Htun's desktop for managing all shops
-**Form factor:** 24"+ monitor, mouse + keyboard
+**Target:** Ko Htun's desktop and mobile for managing all shops
+**Form factor:** Desktop (24"+ monitor, mouse + keyboard) and mobile (admin-on-the-go)
 **Architecture:** Edge Function only — `supabase.functions.invoke()` for all ops. Zero `supabase.from()` (VISION.md §17.4).
 
 #### 10.3.1 Responsive Breakpoints & Behavior
@@ -645,8 +645,8 @@ Both widths satisfy §10.1.1 48px tap-target requirement.
 
 ```
 ┌──────────────────────────────────────────────┐
-│ Header (h-16, sticky top-0)                  │
-│ [☰ hamburger]  Platform Admin    [user menu] │
+│ Header (h-12 mobile, sticky top-0)           │
+│ [☰ hamburger]  Platform Admin   Ko Htun [↗] │
 ├──────────┬───────────────────────────────────┤
 │ Sidebar  │  Main Content                     │
 │ 256px    │  p-6 max-w-7xl mx-auto            │
@@ -655,21 +655,23 @@ Both widths satisfy §10.1.1 48px tap-target requirement.
 │ ● Dash   │  │Stat │ │Stat │ │Stat │         │
 │ ○ Shops  │  │Card │ │Card │ │Card │         │
 │ ○ Subs   │  └─────┘ └─────┘ └─────┘         │
-│ ○ Feats  │                                   │
-│          │  ┌─────────────────────────────┐  │
-│          │  │ Data Table / Content         │  │
-│          │  └─────────────────────────────┘  │
+│          │                                   │
+│ ─────── │  ┌─────────────────────────────┐  │
+│ 👤 User │  │ Data Table / Content         │  │
+│ [🌙] [↗]│  └─────────────────────────────┘  │
 └──────────┴───────────────────────────────────┘
 ```
 
 **Sidebar:**
 - Width: 256px (`w-64`), fixed position
 - Background: `bg-secondary-100 dark:bg-[#2a1f15]`
-- Nav items: `.nav-item` pattern with Lucide icons + text labels
+- Nav items: Lucide icons + text labels
 - Active state: `bg-primary-600 text-white`
+- Bottom section (mt-auto): user profile (avatar, name, role), theme toggle, sign out button
 
 **Header (mobile):**
 - Height: 48px (`h-12`), sticky top-0
+- Shows: hamburger + "Platform Admin" title + user name + sign out icon
 - Hamburger button (40px tap target) toggles sidebar overlay
 - Overlay backdrop: `bg-secondary-950/40` on mobile when sidebar open
 
@@ -714,12 +716,12 @@ Both widths satisfy §10.1.1 48px tap-target requirement.
 
 | Aspect | POS Tablet | Owner Mobile | Platform Admin |
 |--------|-----------|--------------|----------------|
-| Form factor | 10-12" tablet | 5-6" phone | 24"+ monitor |
-| Input | Touch only | Touch only | Mouse + keyboard |
+| Form factor | 10-12" tablet | 5-6" phone | 24"+ monitor, mobile fallback |
+| Input | Touch only | Touch only | Mouse + keyboard, touch on mobile |
 | Min tap target | 48px | 56px | 40px |
-| Navigation | Top header | Bottom nav | Sidebar (256px, collapsible) |
-| Layout | Single column | Single column | Multi-column |
-| Data density | Medium | Low | High |
+| Navigation | Top header | Bottom nav | Sidebar (256px, collapsible on mobile) |
+| Layout | Single column | Single column | Multi-column (desktop), single column (mobile) |
+| Data density | Medium | Low | High (desktop), medium (mobile) |
 | Primary use | POS terminal | Read-only reports | Shop management |
 | Tier access | All tiers | Pro only | Platform admin |
 
