@@ -279,7 +279,7 @@ The client stores a `capabilities: string[]` array. Components check this array 
 |-------|--------|-------------|---------|
 | **POS Terminal** | Counter tablet | Mobile/tablet-first, PWA | Order taking, checkout, receipts |
 | **Owner Mobile** | Owner's phone | Mobile-first | Reports/insights only, NO POS terminal |
-| **Platform Admin** | Desktop browser | Desktop-first | Shop management, subscriptions |
+| **Platform Admin** | Desktop + mobile | Responsive | Shop management, subscriptions |
 
 ### 7.2 POS Tablet
 
@@ -300,7 +300,7 @@ The client stores a `capabilities: string[]` array. Components check this array 
 
 ### 7.4 Platform Admin
 
-- Desktop-first UI
+- Responsive UI — mobile-first for admin-on-the-go, desktop-optimized for management tasks
 - Full admin capabilities (see Section 16)
 - Component tree under `src/components/platform/`
 
@@ -630,7 +630,7 @@ When the server returns a `DAILY_LIMIT_REACHED` error, the client shows an upgra
 
 ### 17.1 Architecture
 
-**Desktop-first UI.** Edge Function only. Zero direct DB access.
+**Responsive UI.** Edge Function only. Zero direct DB access.
 
 ```
 Platform Admin UI (React)
@@ -672,8 +672,11 @@ src/components/platform/
   ├── PendingShopsList.tsx       # Approval queue
   ├── ShopDetail.tsx             # Full tenant view
   ├── SubscriptionManager.tsx    # Tier changes, manual activation
-  ├── FeatureDefinitions.tsx     # Global feature catalog
-  └── PlatformLayout.tsx         # Admin-specific layout/nav
+  ├── FeatureDefinitions.tsx     # Global feature catalog (hidden in v1, active in v2)
+  └── PlatformLayout.tsx         # Admin-specific layout/nav with:
+                                  #   - User profile display (name, role badge)
+                                  #   - Sign out button (with confirmation dialog)
+                                  #   - Theme toggle (light/dark, persisted to localStorage)
 ```
 
 ---
