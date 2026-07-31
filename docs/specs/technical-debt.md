@@ -3,7 +3,7 @@
 Originally captured 2026-06-16 during POS Helper lint + theme consistency audit.
 Commit: `8556dc3` (159 → 140 lint problems).
 
-Last updated: 2026-07-31 (React Refresh §2 partial — SupabaseAppContext fixed, 3 files still suppressed; approve-shop security hotfix §6).
+Last updated: 2026-07-31 (React Refresh §2 resolved, approve-shop security hotfix §6).
 
 ---
 
