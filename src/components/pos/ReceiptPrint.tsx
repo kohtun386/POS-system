@@ -3,7 +3,7 @@ import { Sale } from '../../types';
 import { useApp } from '../../hooks/useApp';
 import { useCapability } from '../../hooks/useCapability';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { format } from 'date-fns';
 
 interface ReceiptPrintProps {

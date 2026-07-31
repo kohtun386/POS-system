@@ -6,7 +6,7 @@ import { CheckoutModal } from './CheckoutModal';
 import { SalesTabManager } from './SalesTabManager';
 import { Product, CartItem, Sale } from '../../types';
 import { useApp } from '../../hooks/useApp';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { salesService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
 import { ReportsManager } from '../../lazyComponents';

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 
 // Mock auth context
 const mockSignOut = vi.fn()
-vi.mock('../../../context/AuthContext', () => ({
+vi.mock('../../../hooks/useAuth', () => ({
   useAuth: () => ({
     signOut: mockSignOut,
   }),

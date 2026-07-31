@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { LayoutDashboard, Clock, CreditCard, User, Sun, Moon, LogOut, Menu, X } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import { swalConfig } from '../../lib/sweetAlert';
 import { PlatformDashboard } from './PlatformDashboard';
 import { PendingShopsList } from './PendingShopsList';
