@@ -188,13 +188,13 @@ Customer contacts Ko Htun (phone/Viber/WhatsApp)
 
 ### 5.2 Resolution Flow
 
-At login time, the server reads the shop's subscription tier, business type, and per-shop overrides. It resolves these into a flat list of capability strings (e.g., `['pos', 'inventory', 'printer_integration']`) and returns them to the client.
+At login time, the server reads the shop's subscription tier and business type. It resolves these into a flat list of capability strings (e.g., `['pos', 'inventory', 'printer_integration']`) and returns them to the client.
 
 Components check capabilities like: `if (capabilities.includes('printer_integration')) { ... }`
 
 ### 5.3 Two Gates (Server-Side Only)
 
-**Gate 1: Subscription Tier** — Features below the shop's tier level are disabled. Free shops cannot access Growth+ features regardless of per-shop overrides.
+**Gate 1: Subscription Tier** — Features below the shop's tier level are disabled. Free shops cannot access Growth+ features. Feature availability is strictly determined by tier.
 
 **Gate 2: Business Type Defaults** — Different business types get different default capability sets. Coffee shops get POS + inventory + discounts. Restaurants (v2) additionally get table management.
 
@@ -656,7 +656,7 @@ Platform Admin UI (React)
 | `platform-admin-update-subscription` | Change shop subscription_tier |
 | `platform-admin-list-shops` | List all shops with status |
 | `platform-admin-get-shop-detail` | Full shop + owner + membership info |
-| `platform-admin-manage-features` | Update feature_definitions rows |
+| `platform-admin-manage-features` | Manage global feature catalog (feature_definitions). Per-shop overrides removed. |
 | `platform-admin-daily-stats` | Platform-wide metrics (MRR, active shops) |
 | `platform-admin-delete-shop` | Permanently delete inactive shops after approval or rejection |
 

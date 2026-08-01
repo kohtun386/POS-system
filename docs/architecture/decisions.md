@@ -96,10 +96,10 @@ Synthesized from existing documentation and VISION.md v3.1.0. Each decision link
 
 **What:** Server resolves all feature logic at login time. Client receives a flat `capabilities: string[]` array. Components check `capabilities.includes('printer_integration')` — never check `shop.subscriptionTier` or `shop.businessType` directly.
 
-**Why:** Decouples component code from tier/type logic. Adding a new tier or business type requires zero component changes — only server-side resolution updates. Feature definitions table (`feature_definitions`) + per-shop overrides (`shop_features`) give full flexibility.
+**Why:** Decouples component code from tier/type logic. Adding a new tier or business type requires zero component changes — only server-side resolution updates. Feature definitions table (`feature_definitions`) provides controlled flexibility via tier-based gating.
 
 **Resolution flow:**
-1. Login → server reads shop's subscription_tier, business_type, shop_features
+1. Login → server reads shop's subscription_tier, business_type
 2. Resolves final capability list (e.g., `['pos', 'inventory', 'printer_integration']`)
 3. Returns to client as flat string array
 4. Components check capabilities only
@@ -108,7 +108,7 @@ Synthesized from existing documentation and VISION.md v3.1.0. Each decision link
 - Gate 1: Subscription tier — features below shop's tier are disabled
 - Gate 2: Business type defaults — different business types get different default capability sets
 
-**Source:** `VISION.md v3.1.0 Section 5`, `docs/architecture/database.md` (feature_definitions, shop_features tables)
+**Source:** `VISION.md v3.1.0 Section 5`, `docs/architecture/database.md` (feature_definitions table)
 
 ---
 

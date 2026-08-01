@@ -27,7 +27,7 @@ Dev server runs on `http://localhost:5173`.
 
 ### State Management
 
-- **`src/context/SupabaseAppContext.tsx`** — the **active** app state. useReducer-based with `dispatch` + `state` pattern (44 reducer actions). All product, customer, sale, user, discount, cart, settings, capabilities, and salesTab state lives here. Loads from Supabase on auth via parallel `Promise.all`. Capabilities are resolved server-side from subscription tier + per-shop overrides.
+- **`src/context/SupabaseAppContext.tsx`** — the **active** app state. useReducer-based with `dispatch` + `state` pattern (44 reducer actions). All product, customer, sale, user, discount, cart, settings, capabilities, and salesTab state lives here. Loads from Supabase on auth via parallel `Promise.all`. Capabilities are resolved server-side from subscription tier and business type.
 
 - **`src/context/AuthContext.tsx`** — Supabase auth wrapper. Provides `user`, `profile`, `session`, `isPendingApproval`, `signIn`, `signUp`, `signOut`, `updateProfile`. User profile loaded from `public.users` table. Inactive users (`profile.active === false`) see PendingApprovalPage.
 
@@ -62,7 +62,7 @@ Access is enforced in `App.tsx` (`renderCurrentView`) and `Header.tsx` (nav item
 
 ### Capability-Based Feature Gating
 
-Features are gated by `capabilities: string[]` in state, resolved server-side from subscription tier + per-shop overrides. Components use `useCapability('key')` — never check `shop.subscriptionTier` directly.
+Features are gated by `capabilities: string[]` in state, resolved server-side from subscription tier and business type. Components use `useCapability('key')` — never check `shop.subscriptionTier` directly.
 
 ```typescript
 const canUsePrinter = useCapability('printer_integration');

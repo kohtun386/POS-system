@@ -101,7 +101,7 @@ const NO_ACTION_CHILDREN = [
   'alert_configurations', 'alert_history', 'alert_recipients', 'alert_templates',
 ];
 const CASCADE_CHILDREN = [
-  'shop_memberships', 'print_jobs', 'purchase_logs', 'shop_features',
+  'shop_memberships', 'print_jobs', 'purchase_logs',
   'shop_invitations', 'stock_items', 'stock_adjustments',
 ];
 const ALL_CHILDREN = [...NO_ACTION_CHILDREN, ...CASCADE_CHILDREN];

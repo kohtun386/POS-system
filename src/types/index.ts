@@ -330,7 +330,6 @@ export interface CapabilityResolution {
   capabilities: string[];
   shop: Shop;
   features: FeatureDefinition[];
-  overrides: ShopFeature[];
 }
 
 // Feature Flags types
@@ -343,14 +342,6 @@ export interface FeatureDefinition {
   defaultEnabled: boolean;
   subscriptionTier: 'free' | 'growth' | 'pro';
   createdAt: Date;
-}
-
-export interface ShopFeature {
-  id: string;
-  shopId: string;
-  featureKey: string;
-  enabled: boolean;
-  updatedAt: Date;
 }
 
 // ================================================================

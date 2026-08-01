@@ -1,3 +1,4 @@
+WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
 export type Json =
   | string
   | number
@@ -1062,45 +1063,6 @@ export type Database = {
           },
         ]
       }
-      shop_features: {
-        Row: {
-          enabled: boolean
-          feature_key: string
-          id: string
-          shop_id: string
-          updated_at: string
-        }
-        Insert: {
-          enabled?: boolean
-          feature_key: string
-          id?: string
-          shop_id: string
-          updated_at?: string
-        }
-        Update: {
-          enabled?: boolean
-          feature_key?: string
-          id?: string
-          shop_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "shop_features_feature_key_fkey"
-            columns: ["feature_key"]
-            isOneToOne: false
-            referencedRelation: "feature_definitions"
-            referencedColumns: ["key"]
-          },
-          {
-            foreignKeyName: "shop_features_shop_id_fkey"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       shop_invitations: {
         Row: {
           accepted_at: string | null
@@ -1510,6 +1472,10 @@ export type Database = {
           role: string
         }[]
       }
+      has_capability: {
+        Args: { p_capability_key: string; p_shop_id: string }
+        Returns: boolean
+      }
       is_shop_admin: { Args: { p_shop_id: string }; Returns: boolean }
       is_shop_admin_or_manager: {
         Args: { p_shop_id: string }
@@ -1517,8 +1483,8 @@ export type Database = {
       }
       provision_user: {
         Args: {
-          p_invited_by: string
           p_active?: boolean
+          p_invited_by: string
           p_shop_id: string
           p_target_role?: string
           p_token?: string
@@ -1545,6 +1511,9 @@ export type Database = {
         Args: { p_customer_id: string; p_sale_total: number }
         Returns: undefined
       }
+      users_get_own_active: { Args: never; Returns: boolean }
+      users_get_own_role: { Args: never; Returns: string }
+      users_get_own_shop_id: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

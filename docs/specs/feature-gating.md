@@ -17,11 +17,9 @@ Features like receipt printing, cash drawer management, and owner insights are c
 |---|---|---|
 | Architecture | **Capability-based, server-side resolution** | Server resolves all feature logic. Client receives flat `capabilities: string[]`. No tier/type conditionals in component code. (VISION §5.1) |
 | Granularity | Capability strings, not boolean flags | Simpler client contract. Components check `capabilities.includes('key')`. |
-| Resolution | At login time | Server reads shop's subscription tier, business type, and per-shop overrides. Returns flat capability list. (VISION §5.2) |
-| Two gates | Subscription tier + business type defaults | Both are server-side. Default resolution checks tier level first, but per-shop overrides can bypass tier gates. (tier-spec.md §3.3) |
-| Storage | Dedicated tables (`feature_definitions`, `shop_features`) | Queryable across shops, referential integrity, admin UI is straightforward |
-| Override | Per-shop `shop_features` table | Only rows that deviate from default are stored |
-| Override precedence | **Flexible** | Platform admins can override tier gates — e.g., enable a Pro feature on a Free shop for trials. `shop_features` always wins over `feature_definitions` defaults. (tier-spec.md §3.3) |
+| Resolution | At login time | Server reads shop's subscription tier and business type. Returns flat capability list. (VISION §5.2) |
+| Two gates | Subscription tier + business type defaults | Both are server-side. Feature availability is strictly determined by tier. (tier-spec.md §3.3) |
+| Storage | Dedicated table (`feature_definitions`) | Queryable across shops, referential integrity, admin UI is straightforward |
 | Platform admin | Edge Function only | `feature_definitions` writable by `platform_admin` via `service_role` key. No RLS bypass. (VISION §4.3) |
 
 ## 3. Schema
@@ -116,26 +114,9 @@ INSERT INTO feature_definitions (key, name, category, default_enabled, subscript
 
 > **Note:** `pos` is implicit (always available) and has no DB row. 18 keys total: 9 free, 6 growth, 3 pro (VISION.md §5.5).
 
-### 3.4 `shop_features` — Per-Shop Overrides
+### 3.4 Indexes
 
 ```sql
-CREATE TABLE shop_features (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  shop_id UUID NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
-  feature_key TEXT NOT NULL REFERENCES feature_definitions(key) ON DELETE CASCADE,
-  enabled BOOLEAN NOT NULL DEFAULT true,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(shop_id, feature_key)
-);
-```
-
-Only rows that **deviate from the default** are stored. If a feature has no row in `shop_features`, the `feature_definitions.default_enabled` value applies.
-
-### 3.5 Indexes
-
-```sql
-CREATE INDEX idx_shop_features_shop_id ON shop_features(shop_id);
-CREATE INDEX idx_shop_features_feature_key ON shop_features(feature_key);
 CREATE INDEX idx_feature_definitions_category ON feature_definitions(category);
 ```
 
@@ -151,25 +132,6 @@ CREATE POLICY "Feature definitions viewable by all authenticated" ON feature_def
 -- feature_definitions: no direct write policy for client roles.
 -- Platform admin writes via Edge Function using service_role key (bypasses RLS).
 -- See VISION §4.3, §17.
-
--- shop_features: readable by shop members, writable by shop admin
-ALTER TABLE shop_features ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Shop features viewable by shop members" ON shop_features
-  FOR SELECT USING (
-    auth.role() = 'authenticated'
-    AND shop_id IN (SELECT public.current_shop_ids())
-  );
-
-CREATE POLICY "Shop features writable by shop admin" ON shop_features
-  FOR ALL USING (
-    auth.role() = 'authenticated'
-    AND shop_id IN (SELECT public.current_shop_ids())
-    AND EXISTS (
-      SELECT 1 FROM public.shop_memberships sm
-      WHERE sm.user_id = auth.uid() AND sm.shop_id = shop_features.shop_id AND sm.role = 'admin'
-    )
-  );
 ```
 
 ## 4. Server-Side Capability Resolution (VISION §5)
@@ -182,16 +144,12 @@ At login time, the server resolves capabilities. The client receives a flat `cap
 Login time
   │
   ▼
-Server reads: shop.subscription_tier, shop.business_type, shop_features overrides
+Server reads: shop.subscription_tier, shop.business_type
   │
   ▼
 For each feature_definitions row:
   │
-  ├─ Check per-shop override (shop_features)
-  │   → If override exists: use override value (ENABLED or DISABLED)
-  │   → Overrides ALWAYS win — can enable Growth/Pro features on Free shops (tier-spec.md §3.3)
-  │
-  ├─ If no override: check tier gate
+  ├─ Check tier gate
   │   → Feature's subscription_tier level ≤ shop's tier level? → use default_enabled
   │   → Feature's subscription_tier level > shop's tier level? → disabled
   │
@@ -204,77 +162,31 @@ Result: flat string[] → ['pos', 'inventory', 'discounts', ...]
 Returned to client, stored in AppState.capabilities
 ```
 
-**Override Precedence (tier-spec.md §3.3):**
-```
-shop_features override > feature_definitions.default_enabled + tier gate
-```
-Platform admins can override tier gates — e.g., enable a Pro feature on a Free shop for trials.
-
 ### 4.2 Resolution Implementation
 
 ```sql
--- Supabase Edge Function or RPC: resolve_capabilities(p_shop_id UUID)
--- Returns: text[] of capability keys
--- Precedence: shop_features override > feature_definitions tier gate + default_enabled
--- (tier-spec.md §3.3 — Flexible model: overrides CAN beat tier gates)
+-- resolve_capabilities(p_shop_id UUID) → TABLE(capability TEXT)
+-- Tier-only resolution: subscription_tier + default_enabled
+-- (tier-spec.md §3.3 — no per-shop overrides)
 
 CREATE OR REPLACE FUNCTION resolve_capabilities(p_shop_id UUID)
-RETURNS TEXT[]
+RETURNS TABLE(capability TEXT)
 SET search_path = ''
 AS $$
 DECLARE
-  v_tier TEXT;
-  v_capabilities TEXT[] := '{}';
-  v_def RECORD;
-  v_override BOOLEAN;
-  v_tier_level INTEGER;
-  v_def_tier_level INTEGER;
+  v_tier_level INT;
 BEGIN
-  -- Get shop tier
-  SELECT subscription_tier INTO v_tier
-  FROM public.shops
-  WHERE id = p_shop_id;
+  SELECT CASE subscription_tier
+    WHEN 'free' THEN 0 WHEN 'growth' THEN 1 WHEN 'pro' THEN 2 ELSE 0
+  END INTO v_tier_level
+  FROM public.shops WHERE id = p_shop_id;
 
-  -- Tier level mapping
-  v_tier_level := CASE v_tier
-    WHEN 'free' THEN 0
-    WHEN 'growth' THEN 1
-    WHEN 'pro' THEN 2
-    ELSE 0
-  END;
-
-  -- For each feature definition
-  FOR v_def IN
-    SELECT key, subscription_tier, default_enabled
-    FROM public.feature_definitions
-    ORDER BY key
-  LOOP
-    -- Check per-shop override FIRST (overrides always win)
-    SELECT enabled INTO v_override
-    FROM public.shop_features
-    WHERE shop_id = p_shop_id AND feature_key = v_def.key;
-
-    IF v_override IS NOT NULL THEN
-      -- Override exists: use it regardless of tier gate
-      IF v_override THEN
-        v_capabilities := array_append(v_capabilities, v_def.key);
-      END IF;
-    ELSE
-      -- No override: apply tier gate
-      v_def_tier_level := CASE v_def.subscription_tier
-        WHEN 'free' THEN 0
-        WHEN 'growth' THEN 1
-        WHEN 'pro' THEN 2
-        ELSE 0
-      END;
-
-      IF v_tier_level >= v_def_tier_level AND v_def.default_enabled THEN
-        v_capabilities := array_append(v_capabilities, v_def.key);
-      END IF;
-    END IF;
-  END LOOP;
-
-  RETURN v_capabilities;
+  RETURN QUERY
+  SELECT fd.key FROM public.feature_definitions fd
+  WHERE v_tier_level >= CASE fd.subscription_tier
+    WHEN 'free' THEN 0 WHEN 'growth' THEN 1 WHEN 'pro' THEN 2 ELSE 0
+  END
+  AND fd.default_enabled = true;
 END;
 $$ LANGUAGE plpgsql;
 ```
@@ -319,14 +231,6 @@ export interface FeatureDefinition {
   createdAt: Date;
 }
 
-export interface ShopFeature {
-  id: string;
-  shopId: string;
-  featureKey: string;
-  enabled: boolean;
-  updatedAt: Date;
-}
-
 // Resolved capabilities for runtime use
 export type Capabilities = string[];
 ```
@@ -339,34 +243,6 @@ export type Capabilities = string[];
 export const featureDefinitionsService = {
   async getAll(): Promise<FeatureDefinition[]> { ... },
   // Platform admin only — writes via Edge Function, not direct client call
-};
-
-export const shopFeaturesService = {
-  async getByShopId(shopId: string): Promise<ShopFeature[]> { ... },
-
-  async setFeature(shopId: string, featureKey: string, enabled: boolean): Promise<ShopFeature> {
-    // UPSERT: INSERT or UPDATE on conflict (shop_id, feature_key)
-    const { data, error } = await supabase
-      .from('shop_features')
-      .upsert(
-        { shop_id: shopId, feature_key: featureKey, enabled },
-        { onConflict: 'shop_id,feature_key' }
-      )
-      .select()
-      .single();
-    if (error) throw error;
-    return mapShopFeatureRow(data);
-  },
-
-  async deleteFeature(shopId: string, featureKey: string): Promise<void> {
-    // Removes override, reverts to default
-    const { error } = await supabase
-      .from('shop_features')
-      .delete()
-      .eq('shop_id', shopId)
-      .eq('feature_key', featureKey);
-    if (error) throw error;
-  },
 };
 ```
 
@@ -448,7 +324,6 @@ A new component `FeatureDefinitions.tsx` accessible only to `platform_admin` via
 - Each row: feature name, description, current default state (toggle)
 - Toggle calls `supabase.functions.invoke('platform-admin-manage-features', ...)`
 - Subscription tier badge shown per feature
-- Per-shop overrides visible in Shop Detail view
 
 ## 9. Feature Gate Summary by Tier
 
@@ -495,22 +370,14 @@ All Growth capabilities PLUS:
 
 18 keys across 3 tiers (VISION.md §5.5). No dead/reserved keys in v3.1.0 scope.
 
-### 9.5 Platform Admin Override
-
-Platform admins can override tier gates via `shop_features` — e.g., enable `owner_insights` (Pro) on a Free shop for trials. Overrides always win over tier defaults (tier-spec.md §3.3).
-
 ## 10. Migration
 
 ```sql
 -- Feature flags migration
 
 CREATE TABLE feature_definitions ( ... );
-CREATE TABLE shop_features ( ... );
-CREATE INDEX idx_shop_features_shop_id ON shop_features(shop_id);
-CREATE INDEX idx_shop_features_feature_key ON shop_features(feature_key);
 CREATE INDEX idx_feature_definitions_category ON feature_definitions(category);
 ALTER TABLE feature_definitions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE shop_features ENABLE ROW LEVEL SECURITY;
 -- RLS policies ...
 -- Seed data INSERT ...
 -- resolve_capabilities() function ...
@@ -521,7 +388,7 @@ ALTER TABLE shop_features ENABLE ROW LEVEL SECURITY;
 | Phase | Scope | Effort |
 |---|---|---|
 | 1 | Migration: tables, indexes, RLS, seed data, `resolve_capabilities()` RPC | 45 min |
-| 2 | Service layer: `featureDefinitionsService`, `shopFeaturesService` | 1 hour |
+| 2 | Service layer: `featureDefinitionsService` | 1 hour |
 | 3 | State: `capabilities` in AppState, resolve on load via RPC | 30 min |
 | 4 | Hook: `useCapability()`, `useCapabilities()` | 15 min |
 | 5 | Component guards: wrap existing features with capability checks | 2 hours |
@@ -533,9 +400,9 @@ ALTER TABLE shop_features ENABLE ROW LEVEL SECURITY;
 
 ## Related Documents
 
-- **[docs/specs/tier-spec.md](tier-spec.md)** — **Canonical source of truth** for tier definitions, capability mapping, and override rules
+- **[docs/specs/tier-spec.md](tier-spec.md)** — **Canonical source of truth** for tier definitions, capability mapping, and resolution rules
 - [VISION.md](../vision/VISION.md) — Section 5: Feature Flag Architecture (business vision)
 - [Multi-Tenancy](multi-tenancy.md) — shop_id foundation, subscription tiers, role model
 - [Dynamic Shop Configuration](dynamic-configuration.md) — shops table, subscription_tier column
-- [Database Architecture](../architecture/database.md) — feature_definitions, shop_features schema
+- [Database Architecture](../architecture/database.md) — feature_definitions schema
 - [State Management](../architecture/state-management.md) — capabilities in AppState

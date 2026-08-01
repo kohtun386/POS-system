@@ -124,7 +124,6 @@ return { /* mapped data from DB row */ }
 | `shopsService` | shops | Business identity and per-shop POS behavior: name, logo, tax, currency, invoice config, draft retention |
 | `shopMembershipsService` | shop_memberships | Per-shop role assignments |
 | `featureDefinitionsService` | feature_definitions | Platform feature catalog (read-only) |
-| `shopFeaturesService` | shop_features | Per-shop feature overrides |
 | `printJobsService` | print_jobs | Print job queue management |
 | `cashShiftsService` | cash_shifts | Shift open/close/query |
 | `alertRecipientsService` | alert_recipients | alert_types JSONB array |
@@ -404,7 +403,7 @@ if (shop.subscriptionTier === 'growth') { /* ... */ }
 if (shop.businessType === 'coffee_shop') { /* ... */ }
 ```
 
-**Resolution flow:** At login, server reads shop's subscription tier, business type, and per-shop overrides → resolves into `capabilities: string[]` → returns to client.
+**Resolution flow:** At login, server reads shop's subscription tier and business type → resolves into `capabilities: string[]` → returns to client.
 
 **Two gates (server-side only):**
 1. Subscription tier — features below shop's tier level are disabled

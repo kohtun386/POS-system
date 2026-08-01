@@ -1,5 +1,5 @@
 import { supabase } from '../supabase'
-import type { FeatureDefinition, ShopFeature, Shop } from '../../types'
+import type { FeatureDefinition, Shop } from '../../types'
 
 export class DailyLimitError extends Error {
   constructor(message = 'Daily order limit reached. Upgrade to Growth.') {
@@ -11,39 +11,27 @@ export class DailyLimitError extends Error {
 const TIER_HIERARCHY: Record<string, number> = { free: 0, growth: 1, pro: 2 }
 
 /**
- * Resolve capabilities for a shop based on subscription tier + overrides.
+ * Resolve capabilities for a shop based on subscription tier only.
  *
- * VISION.md §5.3 — Subscription Tier is Gate 1 (ABSOLUTE).
- * Per-shop overrides (shop_features) can ONLY REMOVE features.
- * They CANNOT grant features above the shop's tier level.
+ * VISION.md §5.3 — Subscription Tier is the sole authority.
+ * No per-shop overrides. Feature availability is strictly
+ * determined by tier + default_enabled.
  *
- * Resolution order:
- *   1. Tier gate: feature's min_tier must be <= shop's tier level
- *   2. Default: feature must have default_enabled = true
- *   3. Override (shop_features): can only DISABLE, never enable beyond tier+default
+ * Resolution:
+ *   1. Tier gate: feature's subscription_tier must be <= shop's tier level
+ *   2. Feature must have default_enabled = true
  */
 export function resolveCapabilities(
   shop: Shop,
   definitions: FeatureDefinition[],
-  overrides: ShopFeature[]
 ): string[] {
   const shopTierLevel = TIER_HIERARCHY[shop.subscriptionTier] ?? 0
-
-  const overrideMap = new Map<string, boolean>()
-  for (const o of overrides) {
-    overrideMap.set(o.featureKey, o.enabled)
-  }
-
   const caps: string[] = []
 
   for (const def of definitions) {
     const defTierLevel = TIER_HIERARCHY[def.subscriptionTier] ?? 0
     if (shopTierLevel < defTierLevel) continue
-
-    const override = overrideMap.get(def.key)
-    if (override !== undefined) {
-      if (override) caps.push(def.key)
-    } else if (def.defaultEnabled) {
+    if (def.defaultEnabled) {
       caps.push(def.key)
     }
   }

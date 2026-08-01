@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { resolveCapabilities } from '../../services'
-import type { Shop, FeatureDefinition, ShopFeature } from '../../../types'
+import type { Shop, FeatureDefinition } from '../../../types'
 
 function makeShop(overrides: Partial<Shop> = {}): Shop {
   return {
@@ -38,16 +38,6 @@ function makeDef(overrides: Partial<FeatureDefinition> = {}): FeatureDefinition 
   }
 }
 
-function makeOverride(key: string, enabled: boolean, shopId = 'shop-1'): ShopFeature {
-  return {
-    id: 'ov-1',
-    shopId,
-    featureKey: key,
-    enabled,
-    updatedAt: new Date(),
-  }
-}
-
 describe('resolveCapabilities', () => {
   it('returns default-enabled free-tier features for a free shop', () => {
     const shop = makeShop({ subscriptionTier: 'free' })
@@ -57,7 +47,7 @@ describe('resolveCapabilities', () => {
       makeDef({ key: 'receipt_printing', subscriptionTier: 'growth', defaultEnabled: true }),
     ]
 
-    const caps = resolveCapabilities(shop, defs, [])
+    const caps = resolveCapabilities(shop, defs)
 
     expect(caps).toContain('pos')
     expect(caps).toContain('inventory')
@@ -72,7 +62,7 @@ describe('resolveCapabilities', () => {
       makeDef({ key: 'owner_insights', subscriptionTier: 'pro', defaultEnabled: true }),
     ]
 
-    const caps = resolveCapabilities(shop, defs, [])
+    const caps = resolveCapabilities(shop, defs)
 
     expect(caps).toContain('pos')
     expect(caps).toContain('receipt_printing')
@@ -87,7 +77,7 @@ describe('resolveCapabilities', () => {
       makeDef({ key: 'owner_insights', subscriptionTier: 'pro', defaultEnabled: true }),
     ]
 
-    const caps = resolveCapabilities(shop, defs, [])
+    const caps = resolveCapabilities(shop, defs)
 
     expect(caps).toContain('pos')
     expect(caps).toContain('receipt_printing')
@@ -101,53 +91,15 @@ describe('resolveCapabilities', () => {
       makeDef({ key: 'optional_feature', defaultEnabled: false }),
     ]
 
-    const caps = resolveCapabilities(shop, defs, [])
+    const caps = resolveCapabilities(shop, defs)
 
     expect(caps).toContain('pos')
     expect(caps).not.toContain('optional_feature')
   })
 
-  it('override enables feature even if defaultEnabled=false', () => {
-    const shop = makeShop({ subscriptionTier: 'free' })
-    const defs = [
-      makeDef({ key: 'optional_feature', defaultEnabled: false, subscriptionTier: 'free' }),
-    ]
-    const overrides = [makeOverride('optional_feature', true)]
-
-    const caps = resolveCapabilities(shop, defs, overrides)
-
-    expect(caps).toContain('optional_feature')
-  })
-
-  it('override disables feature even if defaultEnabled=true', () => {
-    const shop = makeShop({ subscriptionTier: 'free' })
-    const defs = [
-      makeDef({ key: 'pos', defaultEnabled: true, subscriptionTier: 'free' }),
-    ]
-    const overrides = [makeOverride('pos', false)]
-
-    const caps = resolveCapabilities(shop, defs, overrides)
-
-    expect(caps).not.toContain('pos')
-  })
-
-  it('override CANNOT enable feature above shop tier (VISION.md §5.3 — absolute tier gate)', () => {
-    const shop = makeShop({ subscriptionTier: 'free' })
-    const defs = [
-      makeDef({ key: 'owner_insights', subscriptionTier: 'pro', defaultEnabled: false }),
-    ]
-    const overrides = [makeOverride('owner_insights', true)]
-
-    const caps = resolveCapabilities(shop, defs, overrides)
-
-    // VISION.md §5.3: Subscription Tier is Gate 1 — ABSOLUTE.
-    // Overrides CANNOT grant features above the shop's tier level.
-    expect(caps).not.toContain('owner_insights')
-  })
-
   it('returns empty array when no definitions exist', () => {
     const shop = makeShop()
-    const caps = resolveCapabilities(shop, [], [])
+    const caps = resolveCapabilities(shop, [])
     expect(caps).toEqual([])
   })
 })

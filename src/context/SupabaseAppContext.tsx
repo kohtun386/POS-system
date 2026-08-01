@@ -13,7 +13,6 @@ import {
   usersService,
   salesTabsService,
   shopMembershipsService,
-  shopFeaturesService,
   cashShiftsService,
   resolveCapabilitiesRpc
 } from '../lib/services';
@@ -184,15 +183,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         console.warn('Failed to resolve capabilities:', capsError);
       }
 
-      // Cash shifts + shop features (non-critical, isolated from core data)
+      // Cash shifts (non-critical, isolated from core data)
       try {
-        const [, latestCashShifts] = await Promise.all([
-          shop ? shopFeaturesService.getByShopId(shop.id) : Promise.resolve([]),
-          shop ? cashShiftsService.getByShopId(shop.id, 1) : Promise.resolve([]),
-        ]);
+        const latestCashShifts = shop
+          ? await cashShiftsService.getByShopId(shop.id, 1)
+          : null;
         dispatch({ type: 'SET_CASH_SHIFTS', payload: latestCashShifts });
       } catch (shiftError) {
-        console.warn('Failed to load cash shifts/shop features:', shiftError);
+        console.warn('Failed to load cash shifts:', shiftError);
       }
 
       // Create initial sales tab if none exist
