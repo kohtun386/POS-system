@@ -65,7 +65,7 @@ interface AppState {
 
 `AppSettings` owns interface mode, auto backup, receipt printer, theme, and exchange-rate provider/key/update interval. It must not contain store identity, tax, currency, or invoice fields in the target architecture.
 
-`capabilities` is a flat string array of capability keys (e.g., `['pos', 'inventory', 'printer_integration', 'purchase_log']`). Resolved server-side at login from subscription tier, business type, and per-shop overrides. Components check `capabilities.includes('key')` — never check `shop.subscriptionTier` or `shop.businessType` directly. (VISION.md v3.1.0 Section 5)
+`capabilities` is a flat string array of capability keys (e.g., `['pos', 'inventory', 'printer_integration', 'purchase_log']`). Resolved server-side at login from subscription tier and business type. Components check `capabilities.includes('key')` — never check `shop.subscriptionTier` or `shop.businessType` directly. (VISION.md v3.1.0 Section 5)
 
 ### 3.2 Action Types (~44 actions)
 
@@ -150,7 +150,7 @@ const [shop, products, customers, sales, discounts, settings, users, salesTabs] 
 
 All data queries run in parallel after auth/profile are available. Shop loading is required for business identity, POS configuration, and approval gating. If any critical query fails, error is dispatched. On logout, all state resets to initial.
 
-**Capability loading:** After shop loads, capabilities are resolved server-side and dispatched via `SET_CAPABILITIES`. The server reads `shop.subscription_tier`, `shop.business_type`, and `shop_features` to produce the flat capability array.
+**Capability loading:** After shop loads, capabilities are resolved server-side and dispatched via `SET_CAPABILITIES`. The server reads `shop.subscription_tier` and `shop.business_type` to produce the flat capability array.
 
 If no sales tabs exist, initial tab auto-created:
 ```typescript

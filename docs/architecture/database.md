@@ -18,8 +18,9 @@
 > - `uom_conversions` — Unit conversions (out of scope)
 > - `kitchen_orders` — Kitchen display (out of scope, use thermal printer)
 > - `currency_config`, `exchange_rates`, `exchange_rate_history` — Multi-currency (out of scope, MMK only per §19)
+> - `shop_features` — Per-shop feature overrides (removed in v3.1.3; feature resolution is now tier-only per VISION §5.3)
 >
-> **Table Count (v3.1.0):** 26 active tables (all present in the live database) + 9 deprecated tables (not present in the database; documented above for historical reference per VISION.md §19).
+> **Table Count (v3.1.0):** 25 active tables (all present in the live database) + 10 deprecated tables (not present in the database; documented above for historical reference per VISION.md §19).
 >
 > **Note:** For precise counts, run:
 > ```bash
@@ -370,7 +371,6 @@ users
 
 shops
   ├── shop_memberships.shop_id (CASCADE)
-  ├── shop_features.shop_id (CASCADE)
   ├── print_jobs.shop_id
   ├── cash_shifts.shop_id
   ├── alert_recipients.shop_id
@@ -383,9 +383,6 @@ shops
 
 sales
   └── print_jobs.sale_id
-
-feature_definitions
-  └── shop_features.feature_key (CASCADE)
 ```
 
 **⚠️ Deprecated FKs (v3.1.0 — out of scope per §19):**
@@ -545,7 +542,6 @@ currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only
 | `sales` | Shop members | Shop members | admin/manager | admin/manager |
 | `sales_tabs` | Own tabs only | Own tabs only | Own tabs only | Own tabs only |
 | `feature_definitions` | All authenticated | (Edge Function only) | (Edge Function only) | (Edge Function only) |
-| `shop_features` | Shop members | admin only | admin only | admin only |
 | `print_jobs` | Shop members | (RPC/Edge Function) | (Edge Function) | (none) |
 | `cash_shifts` | Shop members | cashier+ (own) | cashier+ (own) | admin/manager |
 | `shop_invitations` | Invited user (own) OR admin/manager (all) | admin/manager | admin/manager | (none — service_role only) |
@@ -795,7 +791,7 @@ Platform-level feature catalog. Managed exclusively by `platform_admin` via Edge
 | `description` | text | | |
 | `category` | text NOT NULL | `'general'` | |
 | `default_enabled` | boolean NOT NULL | `true` | |
-| `min_tier` | text NOT NULL | `'free'` | CHECK: `'free'` \| `'growth'` \| `'pro'` |
+| `subscription_tier` | text NOT NULL | `'free'` | CHECK: `'free'` \| `'growth'` \| `'pro'` |
 | `applicable_types` | text[] | `'{coffee_shop}'` | Business types this feature applies to |
 | `created_at` | timestamptz NOT NULL | `now()` | |
 
@@ -805,9 +801,9 @@ Platform-level feature catalog. Managed exclusively by `platform_admin` via Edge
 
 ---
 
-### 7.2 `shop_features`
+### 7.2 `shop_features` ⚠️ DEPRECATED
 
-Per-shop feature overrides. Only stores deviations from defaults.
+Per-shop feature overrides. **Removed in v3.1.3** — feature resolution is now tier-only per VISION §5.3. Documented here for historical reference.
 
 | Column | Type | Default | Notes |
 |--------|------|---------|-------|
@@ -934,7 +930,6 @@ Cash drawer shift tracking. Growth+ only (VISION.md v3.1.0 §12).
 | Index | Table | Column(s) | Type | Notes |
 |-------|-------|-----------|------|-------|
 | `idx_feature_definitions_key` | feature_definitions | `key` | B-tree (UNIQUE) | |
-| `idx_shop_features_shop_key` | shop_features | `shop_id, feature_key` | B-tree (UNIQUE) | |
 | `idx_recipes_shop_product` | recipes | `shop_id, product_id` | B-tree (UNIQUE) | |
 | `idx_recipe_items_recipe` | recipe_items | `recipe_id` | B-tree | |
 | `idx_recipe_items_ingredient` | recipe_items | `ingredient_id` | B-tree | |
@@ -1122,7 +1117,7 @@ All user-defined functions use `SET search_path = ''` to prevent search path inj
 | Free: 50 orders/day | `shops.daily_order_limit` + `checkout_complete()` RPC |
 | Free: 50 products max | Client + server validation (no DB constraint) |
 | 4 roles | `users.role` CHECK + `shop_memberships.role` |
-| Feature flags (capability-based) | `feature_definitions` + `shop_features` |
+| Feature flags (capability-based) | `feature_definitions` (tier-based only) |
 | Recipe/BOM **OUT OF SCOPE** | `recipes` + `recipe_lines` deprecated (§10.3, §19) |
 | COGS / consumption log **OUT OF SCOPE** | `consumption_log` deprecated (§10.3, §19) |
 | Multi-currency **DEAD** | `currency_config` + `exchange_rates` + `exchange_rate_history` deprecated (§19) |

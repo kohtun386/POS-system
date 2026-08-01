@@ -78,18 +78,17 @@ A shop at tier N gets all features where `minTier ≤ N`.
 ### 3.2 Resolution Flow
 
 1. Read `shops.subscription_tier` → map to level (0/1/2)
-2. Read `feature_definitions` → for each row, check `subscription_tier` level ≤ shop level
-3. Apply `shop_features` overrides (per-shop enable/disable)
-4. Filter by `default_enabled` if no override exists
-5. Return flat `string[]` of capability keys
+2. Query `feature_definitions` WHERE subscription_tier level ≤ shop level AND `default_enabled = true`
+3. Return flat `string[]` of capability keys
 
-### 3.3 Override Precedence
+### 3.3 Feature Availability (Tier-Only)
 
-```
-shop_features override > feature_definitions.default_enabled
-```
+Feature availability is strictly determined by subscription tier. No per-shop overrides exist in v1.
 
-If a shop has `{ feature_key: 'printer_integration', enabled: true }` in `shop_features`, the feature is available regardless of tier.
+Resolution logic:
+1. Read `shops.subscription_tier` → map to level (0/1/2)
+2. Query `feature_definitions` WHERE `subscription_tier` level ≤ shop level AND `default_enabled = true`
+3. Return flat `string[]` of capability keys
 
 ### 3.4 Quantitative Tier Limits
 
@@ -110,7 +109,6 @@ These limits are NOT capability keys — they're enforced in the business logic 
 
 - All 18 active features listed in §2.1
 - 3-tier gating (free → growth → pro)
-- Per-shop feature overrides via `shop_features`
 - `advanced_reports` as consolidated Pro reports gate
 
 ### OUT OF SCOPE (deferred to v2)
@@ -132,7 +130,6 @@ When modifying feature gating, capability keys, or tier assignments:
 3. **Migration First** — DB tier changes require a migration; never update `feature_definitions` without a migration file
 4. **New Features Require Tier Assignment** — Every new feature key must specify a `minTier` in this document before implementation
 5. **Dead Keys Are Dead** — Do not reference `kitchen_display`, `online_ordering`, `supplier_management`, `recipe_bom`, `raw_materials`, `waste_tracking`, or `multi_currency` in new code
-6. **Override Precedence** — Per-shop overrides always win; document the override in the migration if it's business-critical
 
 ---
 

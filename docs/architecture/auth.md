@@ -470,27 +470,14 @@ CREATE POLICY "authenticated_select" ON feature_definitions
 -- No RLS policy — platform_admin bypasses RLS via service_role key
 ```
 
-### 5.9 Shop Features Pattern
+### 5.9 Feature Gating Pattern
 
+Feature gating is tier-only via `has_capability()` function. No per-shop overrides.
 ```sql
--- SELECT: shop members
-CREATE POLICY "shop_member_select" ON shop_features
-  FOR SELECT USING (
-    shop_id = ANY(current_shop_ids())
-  );
-
--- INSERT/UPDATE/DELETE: shop admin only
-CREATE POLICY "shop_admin_write" ON shop_features
-  FOR INSERT WITH CHECK (
-    shop_id = ANY(current_shop_ids())
-    AND EXISTS (
-      SELECT 1 FROM shop_memberships
-      WHERE user_id = auth.uid()
-        AND shop_id = shop_features.shop_id
-        AND role = 'admin'
-        AND is_active = true
-    )
-  );
+-- has_capability() calls resolve_capabilities() which checks:
+--   1. shops.subscription_tier → tier level (free=0, growth=1, pro=2)
+--   2. feature_definitions WHERE subscription_tier <= shop_tier AND default_enabled = true
+-- Returns boolean. Used in RLS policies for capability-gated tables.
 ```
 
 ### 5.10 Print Jobs Pattern

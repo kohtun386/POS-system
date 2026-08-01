@@ -135,6 +135,7 @@ const DEPRECATED_TABLES = new Set([
   'currency_config', 'exchange_rates', 'exchange_rate_history',
   'recipes', 'recipe_lines', 'recipe_items', 'raw_materials',
   'consumption_log', 'uom_conversions', 'kitchen_orders',
+  'shop_features',
 ])
 
 function parseDatabaseMd(dbPath: string): string[] {
@@ -143,7 +144,7 @@ function parseDatabaseMd(dbPath: string): string[] {
 
   // Match both formats:
   // §1: #### `table_name`
-  // §7: ### 7.1 `feature_definitions`  or  ### `shop_features`
+  // §7: ### 7.1 `feature_definitions`
   const tableRegex = /#{3,4}\s+(?:\d+\.\d+\s+)?`(\w+)`/g
   let match
   while ((match = tableRegex.exec(content)) !== null) {

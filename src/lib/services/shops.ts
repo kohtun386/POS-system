@@ -1,5 +1,5 @@
 import { supabase } from '../supabase'
-import type { Shop, FeatureDefinition, ShopFeature, CapabilityResolution } from '../../types'
+import type { Shop, FeatureDefinition, CapabilityResolution } from '../../types'
 import { resolveCapabilitiesRpc } from './common'
 
 function mapShopRow(row: Record<string, unknown>): Shop {
@@ -68,13 +68,12 @@ export const shopsService = {
     const shop = await shopMembershipsService.getShopByUserId(userId)
     if (!shop) return null
 
-    const [features, overrides, capabilities] = await Promise.all([
+    const [features, capabilities] = await Promise.all([
       featureDefinitionsService.getAll(),
-      shopFeaturesService.getByShopId(shop.id),
       resolveCapabilitiesRpc(shop.id),
     ])
 
-    return { capabilities, shop, features, overrides }
+    return { capabilities, shop, features }
   },
 }
 
@@ -94,50 +93,5 @@ export const featureDefinitionsService = {
       subscriptionTier: row.subscription_tier as string,
       createdAt: new Date(row.created_at as string),
     }))
-  },
-}
-
-export const shopFeaturesService = {
-  async getByShopId(shopId: string): Promise<ShopFeature[]> {
-    const { data, error } = await supabase
-      .from('shop_features')
-      .select('*')
-      .eq('shop_id', shopId)
-    if (error) throw error
-    return (data || []).map((row: Record<string, unknown>) => ({
-      id: row.id as string,
-      shopId: row.shop_id as string,
-      featureKey: row.feature_key as string,
-      enabled: row.enabled as boolean,
-      updatedAt: new Date(row.updated_at as string),
-    }))
-  },
-
-  async setFeature(shopId: string, featureKey: string, enabled: boolean): Promise<ShopFeature> {
-    const { data, error } = await supabase
-      .from('shop_features')
-      .upsert(
-        { shop_id: shopId, feature_key: featureKey, enabled },
-        { onConflict: 'shop_id,feature_key' }
-      )
-      .select()
-      .single()
-    if (error) throw error
-    return {
-      id: data.id,
-      shopId: data.shop_id,
-      featureKey: data.feature_key,
-      enabled: data.enabled,
-      updatedAt: new Date(data.updated_at),
-    }
-  },
-
-  async deleteFeature(shopId: string, featureKey: string): Promise<void> {
-    const { error } = await supabase
-      .from('shop_features')
-      .delete()
-      .eq('shop_id', shopId)
-      .eq('feature_key', featureKey)
-    if (error) throw error
   },
 }
