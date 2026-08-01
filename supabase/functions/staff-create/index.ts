@@ -116,10 +116,13 @@ Deno.serve(async (req) => {
     }
 
     // ── 4. Create auth user with staff_creation metadata ──────────
-    // The handle_new_auth_user() trigger enters the staff branch ONLY when
-    // app_metadata.staff_provisioned=true (server-controlled — public signup
-    // cannot set app_metadata, closing the privilege-escalation hole where
-    // caller-supplied raw_user_meta_data could claim staff/admin).
+    // The handle_new_auth_user() trigger's staff branch gates on
+    // user_metadata.staff_creation=true. It inserts ONLY a DORMANT cashier
+    // profile (role='cashier', active=false) — role/active are hardcoded
+    // server-side, so a forged staff_creation flag cannot escalate. The
+    // real role/active/shop_id assignment happens in provision_user() below
+    // (service_role-only). staff_provisioned in app_metadata is retained
+    // for observability only — an AFTER INSERT trigger cannot read it.
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -151,9 +154,10 @@ Deno.serve(async (req) => {
     }
 
     // ── 5. Atomic provisioning via RPC ───────────────────────────
-    // Replaces sequential membership insert + audit trail with a
-    // single DB transaction (provision_user RPC).
-    // Technical debt fix: docs/specs/technical-debt.md §6
+    // provision_user now owns ALL staff authorization: it upserts the
+    // users.role/active/shop_id and the shop_membership, and cleans up any
+    // phantom shop left by the trigger. Callers are service_role-only
+    // (REVOKEd from PUBLIC — migration 20260731170000).
     const { data: provisionResult, error: rpcError } = await adminClient.rpc(
       "provision_user",
       {
@@ -161,7 +165,8 @@ Deno.serve(async (req) => {
         p_shop_id: shop_id,
         p_invited_by: caller.id,
         p_token: null,
-        p_role: role,
+        p_target_role: role,
+        p_active: true,
       },
     );
 
