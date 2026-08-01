@@ -238,3 +238,42 @@ The phantom-shop cleanup is now partially unreachable: it only fires when v_prom
 
 ### Not done by guardian (orchestrator)
 Apply `172000` live, then re-verify proacl + `has_function_privilege` per the file's VERIFICATION block (expected anon/authenticated=false, service_role=true, no PUBLIC member).
+
+## db-guardian verdict — 2026-08-01 — B1 scan phase (read-only)
+- Verdict: BLOCKED (1 of 5 queries), safe after correction
+- Live schema verified: YES
+- Queries 1-4: SAFE — columns exist live, no writes, no RLS recursion (pg_policies verified)
+- Query 5: ❌ `sales.name` does not exist live → use `sales.customer_name`
+  Corrected: `SELECT id, customer_name, cashier FROM sales WHERE created_at >= date_trunc('day', now()) ORDER BY created_at DESC LIMIT 5;`
+- Warnings: queries 1-3,5 are cross-shop scans; results depend on connector (authenticated RLS-scoped vs service_role bypass). Record which was used.
+- types drift affecting this scan: NONE
+
+---
+
+## db-guardian verdict — 2026-08-01 — B1 fix re-verification & migration sync resolution
+
+**Date:** 2026-08-01
+**Operation:** Verify B1 fixes (daily_order_limit provisioning + checkout enforcement) are LIVE, and resolve the local-vs-remote migration sync mismatch (remote-only `20260801094135` vs local-only `20260801180000`).
+**Guardian verdict:** ✅ **Safe to proceed / Safe to Merge**
+**Live schema verified:** YES (via supabase-platform MCP `execute_sql`, elevated/owner, read-only; NOT RLS-scoped, NOT service_role)
+
+### Migration sync state (`supabase migration list`, CLI 2.111.0)
+- 69 versions total: 67 matched, 2 divergent.
+  - **Remote-only:** `20260801094135`
+  - **Local-only:** `20260801180000`
+- **`20260801094135` IS the B1 migration.** name = `20260801180000_fix_daily_order_limit_provisioning`, statements **byte-for-byte match** the local `20260801180000` file (md5 of joined statements `d3232f38…` == local file md5 minus trailing newline; 7217 vs 7218 bytes). Contains all 3 fixes.
+- `20260801180000` is **NOT** recorded in remote `schema_migrations` — the B1 content is live, but remote recorded it under `20260801094135`.
+
+### Live DB verification (source of truth)
+1. **`shops.daily_order_limit` default:** `'50'` ✅
+2. **`checkout_complete`:** `FOR UPDATE` = yes · `shop_id = p_shop_id` filter = yes · `status = 'completed'` filter = yes · byte-match-with-local = yes (normalized) ✅
+3. **`approve_shop`:** `daily_order_limit = 50` in UPDATE = yes · byte-match-with-local = yes ✅
+4. **Backfill:** `SELECT count(*) FROM shops WHERE subscription_tier='free' AND daily_order_limit IS NULL` = **0** ✅ (all 5 free shops = 50 live)
+5. **Signature stability:** both RPC signatures unchanged from pre-B1 shape → no Edge Function dependency hazard.
+- Note: paid-tier shops show `daily_order_limit = 0` live — by design (`0` disables enforcement via `v_daily_limit > 0` guard), not a B1 defect.
+
+### Sync resolution (tracking artifact, not a code gap)
+- No `db push`, no `db pull` performed — B1 is fully live.
+- **Action taken:** added local mirror `supabase/migrations/20260801094135_fix_daily_order_limit_provisioning.sql` (executable SQL identical to remote record; provenance header added) per the `20260731162223` precedent. This keeps `migration list` matched and prevents a future `LegacyDbPushMissingLocalError`. `db push` of `20260801180000` later is idempotent (CREATE OR REPLACE + idempotent DEFAULT/backfill) — a no-op on live.
+
+**Outcome:** ✅ B1 fixes confirmed live; sync artifact resolved; ready for Ko Htun review/merge.
