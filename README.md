@@ -286,7 +286,6 @@ supabase/
 | `sales_tabs` | Multi-tab POS workflow (user-scoped) |
 | `shops` | Shop identity and per-shop POS configuration |
 | `shop_memberships` | User-to-shop role assignments |
-| `feature_definitions` | Platform-wide feature flag definitions |
 | `feature_definitions` | Platform feature catalog (tier-based only) |
 | `alert_recipients` | Alert notification recipients |
 | `alert_templates` | Email/SMS alert templates |

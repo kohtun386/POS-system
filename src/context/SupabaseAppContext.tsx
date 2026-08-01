@@ -187,7 +187,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         const latestCashShifts = shop
           ? await cashShiftsService.getByShopId(shop.id, 1)
-          : null;
+          : [];
         dispatch({ type: 'SET_CASH_SHIFTS', payload: latestCashShifts });
       } catch (shiftError) {
         console.warn('Failed to load cash shifts:', shiftError);
