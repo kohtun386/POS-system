@@ -1518,8 +1518,9 @@ export type Database = {
       provision_user: {
         Args: {
           p_invited_by: string
-          p_role?: string
+          p_active?: boolean
           p_shop_id: string
+          p_target_role?: string
           p_token?: string
           p_user_id: string
         }

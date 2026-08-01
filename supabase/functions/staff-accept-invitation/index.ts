@@ -136,11 +136,15 @@ Deno.serve(async (req) => {
         email: invitation.email,
         password,
         email_confirm: true,
+        app_metadata: {
+          staff_provisioned: true,
+        },
         user_metadata: {
           name,
           username,
           staff_creation: true,
           target_role: invitation.role,
+          shop_id: invitation.shop_id,
         },
       });
 
@@ -162,6 +166,9 @@ Deno.serve(async (req) => {
     }
 
     // ── 3. Call provision_user RPC (atomic membership + audit) ──
+    // p_target_role stays null in the token flow — role is resolved from the
+    // invitation inside the RPC (prevents escalation). p_active=true activates
+    // the dormant cashier profile the trigger may have created.
     const { data: provisionResult, error: rpcError } = await adminClient.rpc(
       "provision_user",
       {
@@ -169,7 +176,8 @@ Deno.serve(async (req) => {
         p_shop_id: invitation.shop_id,
         p_invited_by: invitedBy,
         p_token: token,
-        p_role: null, // Ignored when p_token is set; role comes from invitation
+        p_target_role: null, // Role comes from invitation when p_token is set
+        p_active: true,
       },
     );
 
