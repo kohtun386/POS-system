@@ -79,3 +79,6 @@ production-readiness-report.json
 # Out of scope / local environment
 docs/.obsidian/
 .harness/guardian-log.md
+
+# Database backups
+backups/
