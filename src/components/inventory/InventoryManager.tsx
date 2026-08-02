@@ -7,7 +7,7 @@ import { ProductModal } from './ProductModal';
 import { swalConfig } from '../../lib/sweetAlert';
 
 export function InventoryManager() {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showProductModal, setShowProductModal] = useState(false);
@@ -69,8 +69,7 @@ export function InventoryManager() {
         swalConfig.loading('Deleting product...');
         const { productsService } = await import('../../lib/services');
         await productsService.delete(productId);
-        // Re-fetch products or update state
-        window.location.reload(); // Simple approach for now
+        dispatch({ type: 'DELETE_PRODUCT', payload: productId });
         swalConfig.success('Product deleted successfully!');
       } catch (error) {
         console.error('Error deleting product:', error);
