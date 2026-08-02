@@ -39,9 +39,9 @@
 | 14 | `purchase_log` | **growth** | true | Purchase recording (supplier, item, qty, cost) |
 | 15 | `stock_overview` | **growth** | true | Stock levels & manual adjustments |
 | 16 | `low_stock_alerts` | **growth** | true | Threshold-based stock alerts |
-| 17 | `advanced_reports` | **pro** | false | Consolidated Pro reports gate |
-| 18 | `owner_insights` | **pro** | false | P&L dashboard |
-| 19 | `simple_profit_report` | **pro** | false | Revenue − Purchases profit calculation |
+| 17 | `advanced_reports` | **pro** | true | Consolidated Pro reports gate |
+| 18 | `owner_insights` | **pro** | true | P&L dashboard |
+| 19 | `simple_profit_report` | **pro** | true | Revenue − Purchases profit calculation |
 
 ### 2.2 Dead Keys (DB rows only — no UI or code reference)
 
