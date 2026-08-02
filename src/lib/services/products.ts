@@ -1,5 +1,6 @@
 import { supabase } from '../supabase'
 import type { Product, ProductBatch } from '../../types'
+import { ProductLimitError } from './common'
 
 interface RawProductBatch {
   id: string
@@ -95,7 +96,16 @@ export const productsService = {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      // Server-side guard (BEFORE INSERT trigger) raises 'Unable to create product'
+      // when a Free-tier shop is at the 50-product cap. ALL products count toward the
+      // cap (active or inactive — anti-bypass, commit 5aa689e). VISION.md §3.3 / §16.3.
+      // Message is uniform to prevent tenant state disclosure (no shop existence or tier leak).
+      if (error.message?.includes('Unable to create product')) {
+        throw new ProductLimitError()
+      }
+      throw error
+    }
 
     if (product.batches && product.batches.length > 0) {
       const batchesData = product.batches.map(batch => ({

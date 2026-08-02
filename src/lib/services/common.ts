@@ -8,6 +8,13 @@ export class DailyLimitError extends Error {
   }
 }
 
+export class ProductLimitError extends Error {
+  constructor(message = 'Product limit reached. Upgrade to Growth.') {
+    super(message)
+    this.name = 'ProductLimitError'
+  }
+}
+
 const TIER_HIERARCHY: Record<string, number> = { free: 0, growth: 1, pro: 2 }
 
 /**
