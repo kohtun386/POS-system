@@ -17,9 +17,11 @@
 --      assigned NEW.shop_id satisfies the insert policy. (Verified.)
 --
 --   2. ENFORCE the 50-product cap — Free-tier shops raise
---      'Unable to create product' at active count >= 50. Growth/Pro
---      are unlimited. Message is uniform to prevent tenant state
---      disclosure (no shop existence or tier leak). Shop row lock
+--      'Unable to create product' at count >= 50. Growth/Pro
+--      are unlimited. All products (active and inactive) count
+--      toward the quota to prevent bypass via deactivation.
+--      Message is uniform to prevent tenant state disclosure
+--      (no shop existence or tier leak). Shop row lock
 --      (FOR NO KEY UPDATE) serializes concurrent inserts
 --      (VISION §16.2 race-condition pattern, same idiom as
 --      reserve_invoice_number's FOR UPDATE lock).
@@ -78,8 +80,7 @@ BEGIN
   -- 4. Enforce the cap.
   SELECT COUNT(*) INTO v_count
   FROM public.products
-  WHERE shop_id = v_shop_id
-    AND active = true;
+  WHERE shop_id = v_shop_id;
 
   IF v_count >= 50 THEN
     RAISE EXCEPTION 'Unable to create product';
