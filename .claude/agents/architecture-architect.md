@@ -1,3 +1,9 @@
+---
+name: architecture-architect
+description: Approves or rejects architectural changes against VISION.md §19 and existing ADRs; flags need for migration review and phased rollouts
+agentType: general-purpose
+---
+
 # Architecture Architect Agent
 
 ## Role

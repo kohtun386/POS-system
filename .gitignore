@@ -35,6 +35,9 @@ supabase/seed.sql
 .mcp.json
 .claude/settings*.json
 .claude/plans/
+.claude/**/cache/**
+.claude/**/logs/**
+.claude/**/sessions/**
 opencode.json
 
 .agents/
