@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Search, Plus, Package, Scale, X, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { Product } from '../../types';
 import { useApp } from '../../hooks/useApp';
@@ -18,6 +18,13 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
   const [showLeftScroll, setShowLeftScroll] = useState(false);
   const [showRightScroll, setShowRightScroll] = useState(false);
   const [recentlyAdded, setRecentlyAdded] = useState<string | null>(null);
+  const recentlyAddedTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (recentlyAddedTimeout.current) clearTimeout(recentlyAddedTimeout.current);
+    };
+  }, []);
 
   const filteredProducts = state.products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -69,7 +76,8 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
     } else {
       onAddToCart(product);
       setRecentlyAdded(product.id);
-      setTimeout(() => setRecentlyAdded(null), 600);
+      if (recentlyAddedTimeout.current) clearTimeout(recentlyAddedTimeout.current);
+      recentlyAddedTimeout.current = setTimeout(() => setRecentlyAdded(null), 600);
     }
   }, [onAddToCart]);
 
@@ -195,7 +203,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
         <div className="modal-overlay">
           <div className="modal max-w-sm">
             <div className="modal-header">
-              <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 font-fraunces font-fraunces">Enter Weight</h3>
+              <h3 className="text-lg font-bold text-secondary-900 dark:text-secondary-100 font-fraunces">Enter Weight</h3>
               <button
                 onClick={() => setShowWeightModal(null)}
                 className="text-secondary-400 hover:text-secondary-600"
@@ -272,7 +280,7 @@ interface ProductCardProps {
   isRecentlyAdded?: boolean;
 }
 
-function ProductCard({ product, onAddToCart, isTouchMode, currency, isRecentlyAdded }: ProductCardProps) {
+const ProductCard = React.memo(function ProductCard({ product, onAddToCart, isTouchMode, currency, isRecentlyAdded }: ProductCardProps) {
   const shouldTrackInventory = product.trackInventory !== false;
   const isLowStock = shouldTrackInventory ? product.stock <= product.minStock : false;
   const isOutOfStock = shouldTrackInventory ? product.stock === 0 : false;
@@ -384,4 +392,4 @@ function ProductCard({ product, onAddToCart, isTouchMode, currency, isRecentlyAd
       </div>
     </div>
   );
-}
+});

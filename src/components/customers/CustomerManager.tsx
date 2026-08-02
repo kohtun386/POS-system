@@ -188,6 +188,7 @@ export function CustomerManager() {
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         onClick={() => handleViewCustomer(customer)}
+                        aria-label="View customer details"
                         className="text-success-600 hover:text-success-900 p-2 rounded-xl hover:bg-success-50 transition-colors"
                         title="View Details"
                       >
@@ -195,6 +196,7 @@ export function CustomerManager() {
                       </button>
                       <button
                         onClick={() => handleEditCustomer(customer)}
+                        aria-label="Edit customer"
                         className="text-primary-600 hover:text-primary-900 p-2 rounded-xl hover:bg-primary-50 transition-colors"
                         title="Edit Customer"
                       >
@@ -202,6 +204,7 @@ export function CustomerManager() {
                       </button>
                       <button
                         onClick={() => handleDeleteCustomer(customer.id)}
+                        aria-label="Delete customer"
                         className="text-danger-600 hover:text-danger-900 p-2 rounded-xl hover:bg-danger-50 transition-colors"
                         title="Delete Customer"
                       >

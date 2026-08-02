@@ -19,9 +19,9 @@ export const initialState: AppState = {
   selectedCustomer: null,
   settings: {
     storeName: 'CoffeeShop POS',
-    storeAddress: '123 Business Street, Colombo 03, Sri Lanka',
-    storePhone: '+94 11 234 5678',
-    storeEmail: 'info@sekalabs.lk',
+    storeAddress: 'Yangon, Myanmar',
+    storePhone: '+95',
+    storeEmail: 'support.coffeeshop.pos@gmail.com',
     taxRate: 0,
     interfaceMode: 'touch',
     autoBackup: true,

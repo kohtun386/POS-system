@@ -270,12 +270,14 @@ export function InventoryManager() {
                       <div className="flex items-center justify-end space-x-2">
                         <button
                           onClick={() => handleEditProduct(product)}
+                          aria-label="Edit product"
                           className="text-primary-600 hover:text-primary-900 p-2 rounded-xl hover:bg-primary-50 transition-colors"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteProduct(product.id)}
+                          aria-label="Delete product"
                           className="text-danger-600 hover:text-danger-900 p-2 rounded-xl hover:bg-danger-50 transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />

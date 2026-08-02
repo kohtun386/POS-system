@@ -67,7 +67,7 @@ If BLOCKED → stop. Do not proceed to git-pilot.
 ### Allowed actions
 - Read live schema via `supabase-platform` (management API — RLS-aware)
 - Cross-check against `database.types.ts`
-- Report known type/doc drift (shops missing 7 cols, sales.cashier_id missing, etc.)
+- Report known type/doc drift (e.g., discounts.type CHECK constraint narrower than TS union)
 - Validate CHECK constraints against TS union types (e.g., `discounts.type` expects `bogo` but DB CHECK only allows `percentage`, `fixed`, `free_gift`)
 - Clean test data when explicitly asked — show SQL for human approval FIRST
 
