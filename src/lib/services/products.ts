@@ -1,5 +1,6 @@
 import { supabase } from '../supabase'
 import type { Product, ProductBatch } from '../../types'
+import { ProductLimitError } from './common'
 
 interface RawProductBatch {
   id: string
@@ -95,7 +96,14 @@ export const productsService = {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      // Server-side guard (BEFORE INSERT trigger) raises PRODUCT_LIMIT_REACHED
+      // when a Free-tier shop is at 50 products. VISION.md §3.3 / §16.3.
+      if (error.message?.includes('PRODUCT_LIMIT_REACHED')) {
+        throw new ProductLimitError()
+      }
+      throw error
+    }
 
     if (product.batches && product.batches.length > 0) {
       const batchesData = product.batches.map(batch => ({

@@ -16,7 +16,11 @@ export function InventoryManager() {
   const [sortBy, setSortBy] = useState<'name' | 'stock' | 'price'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showUpgrade, setShowUpgrade] = useState(false);
-  const atProductLimit = state.products.length >= 50;
+  // Only Free tier is capped at 50 products (VISION §16.3). The server-side
+  // trigger (enforce_free_tier_product_limit) is authoritative; this client
+  // gate is a soft guard that must not block Growth/Pro shops.
+  const isFreeTier = state.shop?.subscriptionTier === 'free';
+  const atProductLimit = isFreeTier && state.products.length >= 50;
 
   const categories = ['All', ...Array.from(new Set(state.products.map((p: Product) => p.category)))];
 

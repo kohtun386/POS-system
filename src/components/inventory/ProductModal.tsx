@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Scale } from 'lucide-react';
 import { Product, ProductBatch } from '../../types';
 import { useApp } from '../../hooks/useApp';
-import { productsService } from '../../lib/services';
+import { productsService, ProductLimitError } from '../../lib/services';
 import Swal from 'sweetalert2';
 
 interface ProductModalProps {
@@ -215,6 +215,15 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
       }
       onClose();
     } catch (error) {
+      if (error instanceof ProductLimitError) {
+        await Swal.fire({
+          title: 'Product Limit Reached',
+          text: 'You\'ve reached the 50 product limit on the Free plan. Upgrade to Growth for unlimited products.',
+          icon: 'warning',
+          confirmButtonText: 'OK'
+        });
+        return;
+      }
       console.error('Error saving product:', error);
       await Swal.fire({
         title: 'Error!',
