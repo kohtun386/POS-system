@@ -77,18 +77,21 @@ export function POSTerminal() {
       };
       dispatch({ type: 'ADD_TO_CART', payload: newItem });
     }
-
-    // Update current sales tab
-    if (state.activeSalesTab) {
-      dispatch({
-        type: 'UPDATE_SALES_TAB',
-        payload: {
-          id: state.activeSalesTab,
-          updates: { cart: state.cart }
-        }
-      });
-    }
   };
+
+  // Keep the active sales tab's cart in sync with local cart state (C3 fix).
+  // addToCart previously wrote state.cart into the tab in the same handler — a
+  // stale closure that saved the pre-dispatch cart, so items vanished on tab switch.
+  useEffect(() => {
+    if (!state.activeSalesTab) return;
+    dispatch({
+      type: 'UPDATE_SALES_TAB',
+      payload: {
+        id: state.activeSalesTab,
+        updates: { cart: state.cart, selectedCustomer: state.selectedCustomer },
+      },
+    });
+  }, [state.cart, state.selectedCustomer, state.activeSalesTab]);
 
   const handleCheckout = () => {
     setShowCheckout(true);
