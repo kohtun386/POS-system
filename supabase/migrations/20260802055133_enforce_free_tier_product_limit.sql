@@ -1,6 +1,14 @@
 -- ================================================================
 -- Migration: Enforce Free-tier 50-product limit + resolve shop_id
 -- Date: 2026-08-03
+--
+-- NOTE (consolidated): This is the single truthful migration for the
+-- 50-product cap. The earlier patch migration
+-- (20260803020000_fix_product_limit_count_all_products.sql) was removed
+-- from the repo; the live DB already carries the final function body
+-- under both recorded versions, so fresh environments get the correct
+-- function + trigger from this file alone.
+--
 -- Description:
 --   Server-side guard for VISION.md §3.3 / §16.3:
 --   "Max 50 products — enforced at product creation with

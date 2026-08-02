@@ -5,7 +5,6 @@ import { useApp } from '../../hooks/useApp';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { ProductModal } from './ProductModal';
 import { swalConfig } from '../../lib/sweetAlert';
-import { UpgradePrompt } from '../ui/UpgradePrompt';
 
 export function InventoryManager() {
   const { state } = useApp();
@@ -15,12 +14,6 @@ export function InventoryManager() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [sortBy, setSortBy] = useState<'name' | 'stock' | 'price'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [showUpgrade, setShowUpgrade] = useState(false);
-  // Only Free tier is capped at 50 products (VISION §16.3). The server-side
-  // trigger (enforce_free_tier_product_limit) is authoritative; this client
-  // gate is a soft guard that must not block Growth/Pro shops.
-  const isFreeTier = state.shop?.subscriptionTier === 'free';
-  const atProductLimit = isFreeTier && state.products.length >= 50;
 
   const categories = ['All', ...Array.from(new Set(state.products.map((p: Product) => p.category)))];
 
@@ -102,23 +95,12 @@ export function InventoryManager() {
         
         <div className="relative">
           <button
-            onClick={() => {
-              if (atProductLimit) {
-                setShowUpgrade(true);
-                return;
-              }
-              handleAddProduct();
-            }}
-            className={`btn btn-lg ${atProductLimit ? 'btn-secondary opacity-60' : 'btn-primary'}`}
+            onClick={handleAddProduct}
+            className="btn btn-lg btn-primary"
           >
             <Plus className="h-5 w-5" />
-            <span>Add Product {atProductLimit && `(${state.products.length}/50)`}</span>
+            <span>Add Product</span>
           </button>
-          {showUpgrade && (
-            <div className="absolute right-0 top-full mt-2 z-50 w-72">
-              <UpgradePrompt feature="More than 50 products" tier="growth" onClose={() => setShowUpgrade(false)} />
-            </div>
-          )}
         </div>
       </div>
 
