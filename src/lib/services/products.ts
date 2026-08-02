@@ -97,9 +97,10 @@ export const productsService = {
       .single()
 
     if (error) {
-      // Server-side guard (BEFORE INSERT trigger) raises PRODUCT_LIMIT_REACHED
-      // when a Free-tier shop is at 50 products. VISION.md §3.3 / §16.3.
-      if (error.message?.includes('PRODUCT_LIMIT_REACHED')) {
+      // Server-side guard (BEFORE INSERT trigger) raises 'Unable to create product'
+      // when a Free-tier shop is at 50 active products. VISION.md §3.3 / §16.3.
+      // Message is uniform to prevent tenant state disclosure (no shop existence or tier leak).
+      if (error.message?.includes('Unable to create product')) {
         throw new ProductLimitError()
       }
       throw error

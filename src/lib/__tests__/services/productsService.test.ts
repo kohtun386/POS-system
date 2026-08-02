@@ -48,11 +48,12 @@ describe('productsService.create', () => {
     vi.clearAllMocks()
   })
 
-  it('throws ProductLimitError when the trigger raises PRODUCT_LIMIT_REACHED', async () => {
+  it('throws ProductLimitError when the trigger raises unable to create product', async () => {
     // The BEFORE INSERT trigger (enforce_free_tier_product_limit) raises
-    // PRODUCT_LIMIT_REACHED for a Free-tier shop at 50 products.
+    // 'Unable to create product' for a Free-tier shop at 50 active products.
+    // Uniform message prevents tenant state disclosure.
     mockInsertResolving({
-      message: 'PRODUCT_LIMIT_REACHED: Free tier limit of 50 products exceeded',
+      message: 'Unable to create product',
     })
 
     await expect(productsService.create(baseProduct)).rejects.toThrow(ProductLimitError)
