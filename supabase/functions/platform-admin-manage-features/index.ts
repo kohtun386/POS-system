@@ -6,12 +6,13 @@
 // ================================================================
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 import { verifyPlatformAdmin, createAdminClient } from "../_shared/auth.ts";
 import { extractIp, recordAudit } from "../_shared/audit.ts";
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
+  const corsHeaders = getCorsHeaders(req);
   if (corsResponse) return corsResponse;
 
   try {
