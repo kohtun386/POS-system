@@ -130,25 +130,19 @@ export function SalesTabManager() {
 
                 {/* Close button */}
                 {state.salesTabs.length > 1 && (
-                  <span
-                    role="button"
-                    tabIndex={0}
+                  <button
+                    type="button"
+                    aria-label="Close tab"
                     onClick={(e) => {
                       e.stopPropagation();
                       closeTab(tab.id);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.stopPropagation();
-                        closeTab(tab.id);
-                      }
                     }}
                     className={`absolute -bottom-2 -right-2 w-6 h-6 min-w-[44px] min-h-[44px] rounded-full bg-danger-600 text-white flex items-center justify-center hover:bg-danger-700 transition-colors ${
                       isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                     }`}
                   >
                     <X className="h-3 w-3" />
-                  </span>
+                  </button>
                 )}
               </button>
             </div>
@@ -166,6 +160,7 @@ export function SalesTabManager() {
               createNewTab();
             }}
             disabled={!canManageTabs}
+            aria-label={canManageTabs ? 'Add New Sale' : 'Multi-tab sales disabled'}
             className={`w-12 min-h-[48px] rounded-xl transition-all duration-300 flex items-center justify-center shadow-soft ${
               canManageTabs
                 ? 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white'

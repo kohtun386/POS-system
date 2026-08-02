@@ -99,8 +99,6 @@ Output a structured report:
 - Dates are stored as `TIMESTAMP WITH TIME ZONE` and hydrated to `new Date()` in services
 - **`docs/architecture/database.md` describes a target architecture that has NOT been fully migrated.** Treat it as aspirational, not current, until Ko Htun confirms a docs-sync pass has been completed. Always verify against live schema (Step 0).
 - **Known type/doc drift to watch for on every check:**
-  - `shops` missing: `logo`, `business_type`, `tax_rate`, `invoice_prefix`, `invoice_counter`, `draft_retention_days`, `receipt_setting`
-  - `sales` missing: `cashier_id`
   - `print_jobs` narrower than TS `PrintJob` interface
   - `discounts.type` CHECK constraint narrower than TS `Discount.type` union (`'bogo'` not allowed live)
   - Undocumented live tables: `purchase_logs`, `stock_items`, `stock_adjustments`, `audit_logs`

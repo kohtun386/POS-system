@@ -272,6 +272,7 @@ export function UserManager() {
                       <button
                         onClick={() => handleEditUser(user)}
                         disabled={loading}
+                        aria-label="Edit user"
                         className="btn btn-ghost text-primary-600 hover:text-primary-900 p-2 rounded-xl hover:bg-primary-50 transition-colors disabled:opacity-50"
                       >
                         <Edit className="h-4 w-4" />
@@ -280,6 +281,7 @@ export function UserManager() {
                         <button
                           onClick={() => handleDeleteUser(user.id)}
                           disabled={loading}
+                          aria-label="Delete user"
                           className="btn btn-ghost text-danger-600 hover:text-danger-900 p-2 rounded-xl hover:bg-danger-50 transition-colors disabled:opacity-50"
                         >
                           <Trash2 className="h-4 w-4" />

@@ -44,28 +44,20 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const [cardNumberInput, setCardNumberInput] = useState('');
   const [upgradePrompt, setUpgradePrompt] = useState<{ feature: string; tier: 'growth' | 'pro' } | null>(null);
 
-  // Sri Lankan banks list
-  const sriLankanBanks = [
-    'Bank of Ceylon',
-    'People\'s Bank',
-    'Commercial Bank of Ceylon PLC',
-    'Hatton National Bank PLC',
-    'Sampath Bank PLC',
-    'Nations Trust Bank PLC',
-    'DFCC Bank PLC',
-    'Pan Asia Banking Corporation PLC',
-    'Seylan Bank PLC',
-    'Union Bank of Colombo PLC',
-    'National Development Bank PLC',
-    'Regional Development Bank',
-    'Sanasa Development Bank PLC',
-    'HDFC Bank',
-    'Standard Chartered Bank',
-    'Citibank N.A.',
-    'MCB Bank Limited',
-    'Habib Bank Limited',
-    'Deutsche Bank AG',
-    'ICBC'
+  // Myanmar banks — default list, configurable per shop later
+  const myanmarBanks = [
+    'KBZ Bank',
+    'AYA Bank',
+    'CB Bank (Co-operative Bank)',
+    'Myanmar Economic Bank',
+    'Myanmar Citizens Bank',
+    'Global Treasure Bank',
+    'United Amara Bank',
+    'Innwa Bank',
+    'Yoma Bank',
+    'Asia Green Development Bank',
+    'Ayeyarwady Bank',
+    'Construction & Housing Development Bank',
   ];
 
   // Function to detect card type from card number
@@ -700,7 +692,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                         disabled={isProcessing}
                       >
                         <option value="">Select Bank</option>
-                        {sriLankanBanks.map((bank) => (
+                        {myanmarBanks.map((bank) => (
                           <option key={bank} value={bank}>{bank}</option>
                         ))}
                       </select>

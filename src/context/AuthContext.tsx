@@ -15,7 +15,6 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, name: string, username: string, shopName: string) => Promise<{emailConfirmationSent: boolean}>
   signOut: () => Promise<void>
-  updateProfile: (updates: Partial<User>) => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -304,12 +303,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function updateProfile(updates: Partial<User>) {
-    if (!user) throw new Error('No user logged in')
-    const updatedProfile = await usersService.update(user.id, updates)
-    setProfile(updatedProfile)
-  }
-
   const value = {
     user,
     profile,
@@ -319,7 +312,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
-    updateProfile,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

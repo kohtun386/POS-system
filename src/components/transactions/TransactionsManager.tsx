@@ -317,6 +317,7 @@ export function TransactionsManager() {
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => setSelectedTransaction(transaction)}
+                      aria-label="View transaction details"
                       className="btn btn-ghost text-primary-600 hover:text-primary-900 p-2 rounded-xl hover:bg-primary-50 transition-colors"
                     >
                       <Eye className="h-4 w-4" />
@@ -397,6 +398,7 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
             <h2 className="text-xl font-bold text-secondary-900 font-fraunces">Transaction Details</h2>
             <button
               onClick={onClose}
+              aria-label="Close transaction details"
               className="text-secondary-400 hover:text-secondary-600 p-2 rounded-xl hover:bg-secondary-100 transition-colors"
             >
               <X className="h-6 w-6" />
