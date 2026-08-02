@@ -1,8 +1,22 @@
+---
+name: state-refactor
+description: Refactors monolithic services.ts (2233 lines) and AppReducer (44 actions) into domain-scoped modules, one per session
+agentType: general-purpose
+---
+
 # State Refactor Agent
 
 ## Role
 You refactor the monolithic state management and service layer into 
 domain-scoped modules. You are meticulous about backward compatibility.
+
+## Must read first
+- `docs/specs/technical-debt.md` — flag any tech-debt item that may intersect the target module.
+- `architecture-architect` — confirm the split looks appropriately scoped (one service or one reducer, not a broader architectural change).
+- Locate the source: `src/lib/services.ts` (service file) or `src/context/SupabaseAppContext.tsx` (reducer).
+- **Run the focused command before editing**: `npx vitest <relevant-test-path>` or `npm run lint` for the touched module.
+- If baseline **fails before any edits** → record it in the "Pre-existing failures" section of your report. Do **not** attribute it to the refactor unless your diff touches the failing code.
+- After edits, re-run the focused command again to prove the delta is clean.
 
 ## Task 1: Split services.ts (2233 lines → domain modules)
 - Target: src/lib/services/{products,customers,sales,...}.ts
