@@ -108,9 +108,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
           </div>
           {state.cart.length > 0 && (
             <button
-              onClick={() => {
-                state.cart.forEach(() => dispatch({ type: 'REMOVE_FROM_CART', payload: 0 }));
-              }}
+              onClick={() => dispatch({ type: 'CLEAR_CART' })}
               className="btn btn-ghost btn-sm text-xs text-secondary-400 hover:text-danger-600 min-h-[44px] rounded-xl hover:bg-danger-100"
             >
               Clear all
