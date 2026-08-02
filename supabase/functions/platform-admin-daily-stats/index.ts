@@ -7,13 +7,14 @@
 // ================================================================
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { corsHeaders, handleCors } from "../_shared/cors.ts";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 import { verifyPlatformAdmin, createAdminClient } from "../_shared/auth.ts";
 
 const TIER_MONTHLY_PRICES: Record<string, number> = { free: 0, growth: 49000, pro: 149000 };
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
+  const corsHeaders = getCorsHeaders(req);
   if (corsResponse) return corsResponse;
 
   try {
