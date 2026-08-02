@@ -1,0 +1,24 @@
+-- ================================================================
+-- NO-OP HISTORICAL PLACEHOLDER — intentionally performs no SQL.
+-- ================================================================
+--
+-- This migration version (20260803020000) exists in the LIVE remote
+-- database's migration history (supabase_migrations.schema_migrations).
+-- The local repository does not carry its original file.
+--
+-- Its actual logic was consolidated into
+-- 20260802055133_enforce_free_tier_product_limit.sql, which is now the
+-- single truthful migration for the 50-product cap. See commit c01b643
+-- ("fix: address PR #34 review — consolidate migration, drop client gate"):
+-- the earlier patch migration was removed from the repo after its body was
+-- folded into 20260802055133. The live DB already carries the final
+-- function body, so fresh environments get the correct function + trigger
+-- from 20260802055133 alone.
+--
+-- This placeholder keeps the local supabase/migrations/ directory aligned
+-- with the remote migration history so `supabase db push` does not treat
+-- 20260803020000 as a version applied remotely but missing locally.
+--
+-- It intentionally performs no SQL. It must never be pushed to the live
+-- database (it is already recorded there); it exists purely to make local
+-- history match remote.

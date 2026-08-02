@@ -276,11 +276,11 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
       return;
     }
     const newPayment: Payment = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       method: pendingPayment.method,
       amount: amt,
       cardDetails: pendingPayment.method === 'card' ? {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         bankName: cardDetails.bankName || '',
         cardType: cardDetails.cardType || 'unknown',
         lastFourDigits: cardDetails.lastFourDigits || '',
@@ -315,10 +315,10 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
       await new Promise(resolve => setTimeout(resolve, 400));
 
       const salePayments: Payment[] = payments.length > 0 ? payments : [{
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         method: paymentMethod as Payment['method'],
         amount: paymentMethod === 'cash' ? parseFloat(amountPaid || '0') : total,
-        cardDetails: paymentMethod === 'card' ? { ...cardDetails as CardDetails, id: Date.now().toString() } : undefined
+        cardDetails: paymentMethod === 'card' ? { ...cardDetails as CardDetails, id: crypto.randomUUID() } : undefined
       }];
 
       // Invoice number is generated server-side by checkout_complete RPC.
