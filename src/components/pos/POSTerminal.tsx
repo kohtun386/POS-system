@@ -1,6 +1,7 @@
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { ShoppingCart, ChevronUp, X } from 'lucide-react';
 import { ProductGrid } from './ProductGrid';
+import { MobileProductList } from './MobileProductList';
 import { Cart } from './Cart';
 import { CheckoutModal } from './CheckoutModal';
 import { SalesTabManager } from './SalesTabManager';
@@ -9,7 +10,6 @@ import { useApp } from '../../hooks/useApp';
 import { useAuth } from '../../hooks/useAuth';
 import { salesService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
-import { ReportsManager } from '../../lazyComponents';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 
 export function POSTerminal() {
@@ -168,22 +168,17 @@ export function POSTerminal() {
     }
   };
 
-  // On mobile (< 768px), admin/manager see the dashboard, not POS
-  if (isMobile && state.currentUser?.role !== 'cashier') {
-    return (
-      <Suspense fallback={<div className="flex items-center justify-center h-full text-secondary-400">Loading dashboard...</div>}>
-        <ReportsManager />
-      </Suspense>
-    );
-  }
-
   return (
     <div className="flex h-full bg-secondary-50 dark:bg-primary-950">
       <SalesTabManager />
       <div className="flex flex-col md:flex-row flex-1 min-h-0">
-        {/* ProductGrid */}
+        {/* ProductGrid / MobileProductList */}
         <div className={`flex-1 min-h-0 ${!usesTwoColumn ? 'pb-20' : 'pb-0'}`}>
-          <ProductGrid onAddToCart={addToCart} />
+          {isMobile ? (
+            <MobileProductList onAddToCart={addToCart} />
+          ) : (
+            <ProductGrid onAddToCart={addToCart} />
+          )}
         </div>
 
         {/* Cart — side panel on landscape tablet / desktop */}
@@ -194,8 +189,8 @@ export function POSTerminal() {
         )}
       </div>
 
-      {/* Mobile/Portrait Cart — floating bar + full-screen overlay (cashiers only) */}
-      {!usesTwoColumn && state.currentUser?.role === 'cashier' && (
+      {/* Mobile/Portrait Cart — floating bar + full-screen overlay (all roles) */}
+      {!usesTwoColumn && (
         <>
           <MobileCartBar cart={state.cart} onTap={() => setShowMobileCart(true)} />
 
@@ -241,19 +236,20 @@ function MobileCartBar({ cart, onTap }: { cart: CartItem[]; onTap: () => void })
     return sum + price * item.quantity;
   }, 0);
 
-  if (itemCount === 0) return null;
-
   return (
     <button
       onClick={onTap}
-      className="fixed bottom-4 left-4 right-4 z-40 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white rounded-2xl px-5 py-4 shadow-lg flex items-center justify-between md:hidden transition-colors"
+      className="fixed bottom-4 left-4 right-4 z-40 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white rounded-2xl px-5 py-4 shadow-lg flex items-center justify-between md:hidden animate-slide-up transition-colors touch-friendly pb-safe"
+      aria-label="Open cart"
     >
       <div className="flex items-center gap-3">
         <div className="relative">
           <ShoppingCart className="h-5 w-5" />
-          <span className="absolute -top-2 -right-2 bg-accent-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
-            {itemCount}
-          </span>
+          {itemCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-accent-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+              {itemCount}
+            </span>
+          )}
         </div>
         <span className="font-medium">{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
       </div>

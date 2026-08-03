@@ -349,6 +349,11 @@
     }
   }
 
+  /* iOS safe-area inset bottom padding */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   /* Glassmorphism utilities */
   .glass {
     @apply bg-secondary-50/20 backdrop-blur-md border border-secondary-200/30;
