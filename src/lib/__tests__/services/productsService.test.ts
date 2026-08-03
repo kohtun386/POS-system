@@ -10,7 +10,8 @@ vi.mock('../../supabase', () => {
 })
 
 // Import after mock (hoisted). Service module path: src/lib/services/products.ts
-import { productsService, ProductLimitError } from '../../services'
+import { productsService } from '../../services/products'
+import { ProductLimitError } from '../../services/common'
 
 // Refs to the mocked supabase object
 import { supabase } from '../../supabase'

@@ -1,11 +1,34 @@
 import { supabase } from '../supabase'
-import type { AlertRecipient, AlertTemplate, AlertConfiguration, AlertHistory, NotificationServiceConfig } from '../../types'
+import type { AlertRecipient, AlertTemplate, AlertConfiguration, AlertHistory, NotificationServiceConfig, Product } from '../../types'
 
 export const alertRecipientsService = {
   async getAll(): Promise<AlertRecipient[]> {
     const { data, error } = await supabase
       .from('alert_recipients')
       .select('*')
+      .order('name')
+
+    if (error) throw error
+
+    return data.map(recipient => ({
+      id: recipient.id,
+      name: recipient.name,
+      email: recipient.email || undefined,
+      phone: recipient.phone || undefined,
+      role: recipient.role as 'admin' | 'manager' | 'cashier',
+      alertTypes: recipient.alert_types as ('low_stock' | 'out_of_stock' | 'reorder' | 'expiry_warning' | 'batch_expiry')[],
+      isActive: recipient.is_active ?? true,
+      createdAt: new Date(recipient.created_at),
+      updatedAt: new Date(recipient.updated_at)
+    }))
+  },
+
+  async getByAlertType(alertType: string): Promise<AlertRecipient[]> {
+    const { data, error } = await supabase
+      .from('alert_recipients')
+      .select('*')
+      .contains('alert_types', [alertType])
+      .eq('is_active', true)
       .order('name')
 
     if (error) throw error
@@ -94,6 +117,31 @@ export const alertRecipientsService = {
 }
 
 export const alertTemplatesService = {
+  async getByTypeAndChannel(type: string, channel: 'email' | 'sms'): Promise<AlertTemplate | null> {
+    const { data, error } = await supabase
+      .from('alert_templates')
+      .select('*')
+      .eq('type', type)
+      .eq('channel', channel)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (error) throw error
+    if (!data) return null
+
+    return {
+      id: data.id,
+      name: data.name,
+      type: data.type as 'low_stock' | 'out_of_stock' | 'reorder' | 'expiry_warning' | 'batch_expiry',
+      channel: data.channel as 'email' | 'sms' | 'both',
+      subject: data.subject || undefined,
+      body: data.body,
+      isActive: data.is_active ?? true,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    }
+  },
+
   async getAll(): Promise<AlertTemplate[]> {
     const { data, error } = await supabase
       .from('alert_templates')
@@ -186,6 +234,31 @@ export const alertTemplatesService = {
 }
 
 export const alertConfigurationsService = {
+  async getByType(alertType: string): Promise<AlertConfiguration | null> {
+    const { data, error } = await supabase
+      .from('alert_configurations')
+      .select('*')
+      .eq('alert_type', alertType)
+      .eq('is_enabled', true)
+      .maybeSingle()
+
+    if (error) throw error
+    if (!data) return null
+
+    return {
+      id: data.id,
+      alertType: data.alert_type as 'low_stock' | 'out_of_stock' | 'reorder' | 'expiry_warning' | 'batch_expiry',
+      isEnabled: data.is_enabled ?? true,
+      thresholdValue: data.threshold_value || undefined,
+      checkFrequencyMinutes: data.check_frequency_minutes || 60,
+      cooldownMinutes: data.cooldown_minutes || 1440,
+      emailTemplateId: data.email_template_id || undefined,
+      smsTemplateId: data.sms_template_id || undefined,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    }
+  },
+
   async getAll(): Promise<AlertConfiguration[]> {
     const { data, error } = await supabase
       .from('alert_configurations')
@@ -337,6 +410,43 @@ export const alertHistoryService = {
   }
 }
 
+export const productsService = {
+  async getById(id: string): Promise<Product | null> {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (error) throw error
+    if (!data) return null
+
+    return {
+      id: data.id,
+      name: data.name,
+      sku: data.sku,
+      category: data.category,
+      stock: data.stock,
+      minStock: data.min_stock,
+      price: data.price,
+      pricePerUnit: data.price_per_unit,
+      isWeightBased: data.is_weight_based,
+      unit: data.unit,
+      trackInventory: data.track_inventory,
+      barcode: data.barcode,
+      image: data.image,
+      description: data.description,
+      cost: data.cost,
+      taxable: data.taxable,
+      active: data.active,
+      shopId: data.shop_id,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    }
+  },
+}
+
+// Send notification via Edge Function (server-side credentials)
 export const notificationServiceConfigService = {
   async getAll(): Promise<NotificationServiceConfig[]> {
     const { data, error } = await supabase
