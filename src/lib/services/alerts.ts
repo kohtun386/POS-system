@@ -1,5 +1,5 @@
 import { supabase } from '../supabase'
-import type { AlertRecipient, AlertTemplate, AlertConfiguration, AlertHistory, NotificationServiceConfig, Product } from '../../types'
+import type { AlertRecipient, AlertTemplate, AlertConfiguration, AlertHistory, NotificationServiceConfig } from '../../types'
 
 export const alertRecipientsService = {
   async getAll(): Promise<AlertRecipient[]> {
@@ -408,42 +408,6 @@ export const alertHistoryService = {
 
     if (error) throw error
   }
-}
-
-export const productsService = {
-  async getById(id: string): Promise<Product | null> {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle()
-
-    if (error) throw error
-    if (!data) return null
-
-    return {
-      id: data.id,
-      name: data.name,
-      sku: data.sku,
-      category: data.category,
-      stock: data.stock,
-      minStock: data.min_stock,
-      price: data.price,
-      pricePerUnit: data.price_per_unit,
-      isWeightBased: data.is_weight_based,
-      unit: data.unit,
-      trackInventory: data.track_inventory,
-      barcode: data.barcode,
-      image: data.image,
-      description: data.description,
-      cost: data.cost,
-      taxable: data.taxable,
-      active: data.active,
-      shopId: data.shop_id,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
-    }
-  },
 }
 
 // Send notification via Edge Function (server-side credentials)

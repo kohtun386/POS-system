@@ -3,9 +3,9 @@ import {
     alertConfigurationsService,
     alertTemplatesService,
     alertRecipientsService,
-    productsService,
     alertHistoryService,
 } from './services/alerts';
+import { productsService } from './services/products';
 import {
     AlertRecipient,
     AlertTemplate,
