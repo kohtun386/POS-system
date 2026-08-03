@@ -1,7 +1,6 @@
 import React, { createContext, useReducer, useEffect, useState, useRef } from 'react';
 import {
-  Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab, Shop,
-  CashShift
+  Product, Customer, Sale, User, Discount, CartItem, AppSettings, SalesTab
 } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import {
