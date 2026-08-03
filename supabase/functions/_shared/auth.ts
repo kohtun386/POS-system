@@ -115,9 +115,3 @@ export function createAdminClient() {
   );
 }
 
-export function createClient() {
-  return createClient(
-    Deno.env.get("URL")!,
-    Deno.env.get("ANON_KEY")!,
-  );
-}

@@ -1,3 +1,13 @@
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function isValidEmail(email: string): boolean {
+  return EMAIL_RE.test(email);
+}
+
+export function isValidStaffPassword(password: string): boolean {
+  return password.length >= 8 && /[A-Z]/.test(password) && /\d/.test(password);
+}
+
 export interface SendNotificationInput {
   alert_type: string;
   recipient: {

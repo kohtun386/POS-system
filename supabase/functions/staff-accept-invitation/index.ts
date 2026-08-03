@@ -17,6 +17,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/auth.ts";
+import { isValidStaffPassword } from "../_shared/validation.ts";
+import { sanitizeDbError } from "../_shared/errors.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 Deno.serve(async (req) => {
@@ -126,9 +128,11 @@ Deno.serve(async (req) => {
         );
       }
 
-      if (password.length < 6) {
+      if (!isValidStaffPassword(password)) {
         return new Response(
-          JSON.stringify({ error: "Password must be at least 6 characters long" }),
+          JSON.stringify({
+            error: "Password must be at least 8 characters long and include at least one uppercase letter and one digit",
+          }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
@@ -157,7 +161,7 @@ Deno.serve(async (req) => {
           );
         }
         return new Response(
-          JSON.stringify({ error: `Failed to create user: ${createError?.message ?? "Unknown error"}` }),
+          JSON.stringify({ error: sanitizeDbError(createError).message }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
@@ -184,14 +188,14 @@ Deno.serve(async (req) => {
 
     if (rpcError) {
       return new Response(
-        JSON.stringify({ error: `Provisioning failed: ${rpcError.message}` }),
+        JSON.stringify({ error: sanitizeDbError(rpcError).message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     if (!provisionResult.success) {
       return new Response(
-        JSON.stringify({ error: provisionResult.error }),
+        JSON.stringify({ error: sanitizeDbError(provisionResult.error).message }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
