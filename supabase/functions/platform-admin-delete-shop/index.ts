@@ -14,6 +14,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 import { verifyPlatformAdmin, createAdminClient } from "../_shared/auth.ts";
 import { extractIp, recordAudit } from "../_shared/audit.ts";
+import { sanitizeDbError } from "../_shared/errors.ts";
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -55,29 +56,31 @@ Deno.serve(async (req) => {
     }
 
     // Delete in order: audit_logs → app_settings → shops (CASCADE handles remaining FK tables)
-    const errors: string[] = [];
+    const errors: unknown[] = [];
 
     const { error: auditErr } = await adminClient
       .from("audit_logs")
       .delete()
       .eq("shop_id", shop_id);
-    if (auditErr) errors.push(`audit_logs: ${auditErr.message}`);
+    if (auditErr) errors.push(auditErr);
 
     const { error: settingsErr } = await adminClient
       .from("app_settings")
       .delete()
       .eq("shop_id", shop_id);
-    if (settingsErr) errors.push(`app_settings: ${settingsErr.message}`);
+    if (settingsErr) errors.push(settingsErr);
 
     const { error: shopDelErr } = await adminClient
       .from("shops")
       .delete()
       .eq("id", shop_id);
-    if (shopDelErr) errors.push(`shops: ${shopDelErr.message}`);
+    if (shopDelErr) errors.push(shopDelErr);
 
     if (errors.length > 0) {
+      // Output-shaping only: full errors logged server-side, generic ref'd message returned.
+      const { message, code } = sanitizeDbError(errors);
       return new Response(
-        JSON.stringify({ error: "Partial failure", details: errors }),
+        JSON.stringify({ error: message, ...(code ? { code } : {}) }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }

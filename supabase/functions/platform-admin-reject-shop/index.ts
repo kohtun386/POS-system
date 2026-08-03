@@ -13,6 +13,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 import { verifyPlatformAdmin, createAdminClient } from "../_shared/auth.ts";
 import { extractIp, recordAudit } from "../_shared/audit.ts";
+import { sanitizeDbError } from "../_shared/errors.ts";
 
 const RESEND_API_URL = "https://api.resend.com/emails";
 
@@ -98,23 +99,25 @@ Deno.serve(async (req) => {
     }
 
     // Deactivate membership and user
-    const errors: string[] = [];
+    const errors: unknown[] = [];
 
     const { error: memberErr } = await adminClient
       .from("shop_memberships")
       .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq("shop_id", shop_id);
-    if (memberErr) errors.push(`membership: ${memberErr.message}`);
+    if (memberErr) errors.push(memberErr);
 
     const { error: userErr } = await adminClient
       .from("users")
       .update({ active: false, updated_at: new Date().toISOString() })
       .eq("id", shop.owner_id);
-    if (userErr) errors.push(`user: ${userErr.message}`);
+    if (userErr) errors.push(userErr);
 
     if (errors.length > 0) {
+      // Output-shaping only: full errors logged server-side, generic ref'd message returned.
+      const { message, code } = sanitizeDbError(errors);
       return new Response(
-        JSON.stringify({ error: "Partial failure", details: errors }),
+        JSON.stringify({ error: message, ...(code ? { code } : {}) }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
