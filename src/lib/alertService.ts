@@ -1,11 +1,16 @@
 import { supabase } from './supabase';
-import { alertHistoryService } from './services';
+import {
+    alertConfigurationsService,
+    alertTemplatesService,
+    alertRecipientsService,
+    productsService,
+    alertHistoryService,
+} from './services/alerts';
 import {
     AlertRecipient,
     AlertTemplate,
     AlertConfiguration,
     AlertHistory,
-    NotificationServiceConfig,
     InventoryAlert,
     AlertType,
     AlertContext,
@@ -13,216 +18,8 @@ import {
     Product
 } from '../types';
 
-// Email Service Interface
-interface EmailService {
-    sendEmail(to: string, subject: string, body: string): Promise<{ success: boolean; messageId?: string; error?: string }>;
-}
-
-// SMS Service Interface
-interface SMSService {
-    sendSMS(to: string, message: string): Promise<{ success: boolean; messageId?: string; error?: string }>;
-}
-
-// SendGrid Email Service Implementation
-class SendGridEmailService implements EmailService {
-    private apiKey: string;
-    private fromEmail: string;
-
-    constructor(apiKey: string, fromEmail: string) {
-        this.apiKey = apiKey;
-        this.fromEmail = fromEmail;
-    }
-
-    async sendEmail(to: string, subject: string, body: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
-        try {
-            const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.apiKey}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    personalizations: [{ to: [{ email: to }] }],
-                    from: { email: this.fromEmail },
-                    subject: subject,
-                    content: [{ type: 'text/html', value: body }],
-                }),
-            });
-
-            if (response.ok) {
-                const messageId = response.headers.get('X-Message-Id') || 'unknown';
-                return { success: true, messageId };
-            } else {
-                const error = await response.text();
-                return { success: false, error: `SendGrid error: ${error}` };
-            }
-        } catch (error) {
-            return { success: false, error: `Network error: ${error}` };
-        }
-    }
-}
-
-// Twilio SMS Service Implementation
-class TwilioSMSService implements SMSService {
-    private accountSid: string;
-    private authToken: string;
-    private fromNumber: string;
-
-    constructor(accountSid: string, authToken: string, fromNumber: string) {
-        this.accountSid = accountSid;
-        this.authToken = authToken;
-        this.fromNumber = fromNumber;
-    }
-
-    async sendSMS(to: string, message: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
-        try {
-            const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${this.accountSid}/Messages.json`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Basic ${btoa(`${this.accountSid}:${this.authToken}`)}`,
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    To: to,
-                    From: this.fromNumber,
-                    Body: message,
-                }),
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return { success: true, messageId: data.sid };
-            } else {
-                const error = await response.text();
-                return { success: false, error: `Twilio error: ${error}` };
-            }
-        } catch (error) {
-            return { success: false, error: `Network error: ${error}` };
-        }
-    }
-}
-
-// AWS SES Email Service Implementation
-class AWSEmailService implements EmailService {
-    private accessKeyId: string;
-    private secretAccessKey: string;
-    private region: string;
-    private fromEmail: string;
-
-    constructor(accessKeyId: string, secretAccessKey: string, region: string, fromEmail: string) {
-        this.accessKeyId = accessKeyId;
-        this.secretAccessKey = secretAccessKey;
-        this.region = region;
-        this.fromEmail = fromEmail;
-    }
-
-    async sendEmail(to: string, subject: string, body: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
-        try {
-            // This is a simplified implementation. In production, you'd use AWS SDK
-            const response = await fetch(`https://email.${this.region}.amazonaws.com/`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `AWS4-HMAC-SHA256 Credential=${this.accessKeyId}`,
-                    'Content-Type': 'application/x-amz-json-1.0',
-                },
-                body: JSON.stringify({
-                    Destination: { ToAddresses: [to] },
-                    Message: {
-                        Subject: { Data: subject },
-                        Body: { Html: { Data: body } },
-                    },
-                    Source: this.fromEmail,
-                }),
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return { success: true, messageId: data.MessageId };
-            } else {
-                const error = await response.text();
-                return { success: false, error: `AWS SES error: ${error}` };
-            }
-        } catch (error) {
-            return { success: false, error: `Network error: ${error}` };
-        }
-    }
-}
-
 // Alert Service Class
 export class AlertService {
-    private emailService?: EmailService;
-    private smsService?: SMSService;
-
-    constructor() {
-        this.initializeServices();
-    }
-
-    private async initializeServices() {
-        try {
-            // Get notification service configurations
-            // Use maybeSingle() instead of single() — returns null for 0 rows
-            // instead of 406 error (PostgREST can't produce object from empty result)
-            const { data: emailConfigs, error: emailError } = await supabase
-                .from('notification_service_config')
-                .select('*')
-                .eq('service_type', 'email')
-                .eq('is_active', true)
-                .eq('is_default', true)
-                .maybeSingle();
-
-            const { data: smsConfigs, error: smsError } = await supabase
-                .from('notification_service_config')
-                .select('*')
-                .eq('service_type', 'sms')
-                .eq('is_active', true)
-                .eq('is_default', true)
-                .maybeSingle();
-
-            if (!emailError && emailConfigs) {
-                this.emailService = this.createEmailService(emailConfigs);
-            }
-
-            if (!smsError && smsConfigs) {
-                this.smsService = this.createSMSService(smsConfigs);
-            }
-        } catch (error) {
-            console.error('Error initializing notification services:', error);
-        }
-    }
-
-    private createEmailService(config: NotificationServiceConfig): EmailService {
-        const { serviceName, configData } = config;
-
-        switch (serviceName) {
-            case 'sendgrid':
-                return new SendGridEmailService(configData.apiKey, configData.fromEmail);
-            case 'aws_ses':
-                return new AWSEmailService(
-                    configData.accessKeyId,
-                    configData.secretAccessKey,
-                    configData.region,
-                    configData.fromEmail
-                );
-            default:
-                throw new Error(`Unsupported email service: ${serviceName}`);
-        }
-    }
-
-    private createSMSService(config: NotificationServiceConfig): SMSService {
-        const { serviceName, configData } = config;
-
-        switch (serviceName) {
-            case 'twilio':
-                return new TwilioSMSService(
-                    configData.accountSid,
-                    configData.authToken,
-                    configData.fromNumber
-                );
-            default:
-                throw new Error(`Unsupported SMS service: ${serviceName}`);
-        }
-    }
-
     // Template processing with variable substitution
     private processTemplate(template: string, context: AlertContext): string {
         const variables = {
@@ -270,26 +67,31 @@ export class AlertService {
         }
     }
 
-    // Send email alert
-    private async sendEmailAlert(context: AlertContext): Promise<{ success: boolean; messageId?: string; error?: string }> {
-        if (!this.emailService) {
-            return { success: false, error: 'Email service not configured' };
+    // Send notification via Edge Function (credentials never touch frontend)
+    private async sendViaEdgeFunction(
+        payload: {
+            alert_type: string;
+            recipient: { email?: string; phone?: string; name: string };
+            template: { subject?: string; body: string };
+            channel: 'email' | 'sms';
+            shop_id: string;
         }
+    ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+        try {
+            const { data, error } = await supabase.functions.invoke('send-notification', {
+                body: payload,
+            });
 
-        const subject = this.processTemplate(context.template.subject || '', context);
-        const body = this.processTemplate(context.template.body, context);
+            if (error) {
+                console.error('Edge Function error:', error);
+                return { success: false, error: error.message || 'Failed to send notification' };
+            }
 
-        return await this.emailService.sendEmail(context.recipient.email!, subject, body);
-    }
-
-    // Send SMS alert
-    private async sendSMSAlert(context: AlertContext): Promise<{ success: boolean; messageId?: string; error?: string }> {
-        if (!this.smsService) {
-            return { success: false, error: 'SMS service not configured' };
+            return data as { success: boolean; messageId?: string; error?: string };
+        } catch (error) {
+            console.error('Error invoking send-notification Edge Function:', error);
+            return { success: false, error: `Network error: ${error}` };
         }
-
-        const message = this.processTemplate(context.template.body, context);
-        return await this.smsService.sendSMS(context.recipient.phone!, message);
     }
 
     // Record alert in history
@@ -334,15 +136,10 @@ export class AlertService {
     // Main method to process and send alerts
     async processAlert(alert: InventoryAlert): Promise<ProcessedAlert> {
         try {
-            // Get alert configuration
-            const { data: configuration, error: configError } = await supabase
-                .from('alert_configurations')
-                .select('*')
-                .eq('alert_type', alert.alertType)
-                .eq('is_enabled', true)
-                .single();
+            // Get alert configuration via service
+            const configuration = await alertConfigurationsService.getByType(alert.alertType);
 
-            if (configError || !configuration) {
+            if (!configuration) {
                 return {
                     alert,
                     recipients: [],
@@ -351,12 +148,10 @@ export class AlertService {
                 };
             }
 
-            // Get recipients for this alert type
-            const { data: recipients, error: recipientsError } = await supabase.rpc('get_alert_recipients', {
-                alert_type_param: alert.alertType,
-            });
+            // Get recipients for this alert type via service
+            const recipients = await alertRecipientsService.getByAlertType(alert.alertType);
 
-            if (recipientsError || !recipients || recipients.length === 0) {
+            if (!recipients || recipients.length === 0) {
                 return {
                     alert,
                     recipients: [],
@@ -365,14 +160,10 @@ export class AlertService {
                 };
             }
 
-            // Get product details
-            const { data: product, error: productError } = await supabase
-                .from('products')
-                .select('*')
-                .eq('id', alert.productId)
-                .single();
+            // Get product details via service
+            const product = await productsService.getById(alert.productId);
 
-            if (productError || !product) {
+            if (!product) {
                 return {
                     alert,
                     recipients: [],
@@ -381,22 +172,40 @@ export class AlertService {
                 };
             }
 
-            // Get templates
-            const { data: emailTemplate } = await supabase
-                .from('alert_templates')
-                .select('*')
-                .eq('type', alert.alertType)
-                .eq('channel', 'email')
-                .eq('is_active', true)
-                .single();
+            // Get templates via service
+            const [emailTemplate, smsTemplate] = await Promise.all([
+                alertTemplatesService.getByTypeAndChannel(alert.alertType, 'email'),
+                alertTemplatesService.getByTypeAndChannel(alert.alertType, 'sms'),
+            ]);
 
-            const { data: smsTemplate } = await supabase
-                .from('alert_templates')
-                .select('*')
-                .eq('type', alert.alertType)
-                .eq('channel', 'sms')
+            // Get shop ID from current context
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                return {
+                    alert,
+                    recipients: [],
+                    shouldSend: false,
+                    reason: 'User not authenticated',
+                };
+            }
+
+            const { data: membership } = await supabase
+                .from('shop_memberships')
+                .select('shop_id')
+                .eq('user_id', user.id)
                 .eq('is_active', true)
-                .single();
+                .maybeSingle();
+
+            if (!membership) {
+                return {
+                    alert,
+                    recipients: [],
+                    shouldSend: false,
+                    reason: 'No active shop membership found',
+                };
+            }
+
+            const shop_id = membership.shop_id;
 
             // Process each recipient
             const processedRecipients: AlertRecipient[] = [];
@@ -421,10 +230,21 @@ export class AlertService {
 
                 // Send email if configured and recipient has email
                 if (emailTemplate && recipient.email) {
-                    const emailResult = await this.sendEmailAlert({
-                        ...context,
-                        template: emailTemplate as AlertTemplate,
-                    });
+                    const emailPayload = {
+                        alert_type: alert.alertType,
+                        recipient: {
+                            email: recipient.email,
+                            name: recipient.name,
+                        },
+                        template: {
+                            subject: this.processTemplate(emailTemplate.subject || '', context),
+                            body: this.processTemplate(emailTemplate.body, context),
+                        },
+                        channel: 'email' as const,
+                        shop_id,
+                    };
+
+                    const emailResult = await this.sendViaEdgeFunction(emailPayload);
 
                     await this.recordAlertHistory(
                         alert,
@@ -439,10 +259,20 @@ export class AlertService {
 
                 // Send SMS if configured and recipient has phone
                 if (smsTemplate && recipient.phone) {
-                    const smsResult = await this.sendSMSAlert({
-                        ...context,
-                        template: smsTemplate as AlertTemplate,
-                    });
+                    const smsPayload = {
+                        alert_type: alert.alertType,
+                        recipient: {
+                            phone: recipient.phone,
+                            name: recipient.name,
+                        },
+                        template: {
+                            body: this.processTemplate(smsTemplate.body, context),
+                        },
+                        channel: 'sms' as const,
+                        shop_id,
+                    };
+
+                    const smsResult = await this.sendViaEdgeFunction(smsPayload);
 
                     await this.recordAlertHistory(
                         alert,
