@@ -21,12 +21,22 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
 
     const [loading, setLoading] = useState(false);
 
+    const MASK = '••••••••';
+
     useEffect(() => {
+        const passwordKeys = new Set(
+            serviceOptions.flatMap(o => o.fields.filter(f => f.type === 'password').map(f => f.key)),
+        );
         if (service) {
+            // Do not load password-type secrets into form state — they are masked on render.
+            const secretsMasked: Record<string, string | number | boolean> = {};
+            for (const [key, value] of Object.entries(service.configData ?? {})) {
+                if (!passwordKeys.has(key)) secretsMasked[key] = value;
+            }
             setFormData({
                 serviceName: service.serviceName,
                 serviceType: service.serviceType,
-                configData: service.configData,
+                configData: secretsMasked,
                 isActive: service.isActive,
                 isDefault: service.isDefault,
             });
@@ -52,7 +62,9 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
         setLoading(true);
         try {
             if (service) {
-                await notificationServiceConfigService.update(service.id, formData);
+                // Preserve untouched masked secrets; only overwrite fields the user changed.
+                const mergedConfig = { ...(service.configData ?? {}), ...formData.configData };
+                await notificationServiceConfigService.update(service.id, { ...formData, configData: mergedConfig });
                 swalConfig.success('Service updated successfully!');
             } else {
                 await notificationServiceConfigService.create(formData);
@@ -118,6 +130,10 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
             }
         }));
     };
+
+    const originalConfig = service?.configData ?? {};
+    const isMaskedSecret = (key: string) =>
+        key in originalConfig && !(key in formData.configData);
 
     return (
         <div className="modal-overlay">
@@ -207,7 +223,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                                         </label>
                                         <input
                                             type={field.type}
-                                            value={formData.configData[field.key] || ''}
+                                            value={isMaskedSecret(field.key) ? MASK : (formData.configData[field.key] ?? '')}
                                             onChange={(e) => updateConfigData(field.key, e.target.value)}
                                             className="input"
                                             placeholder={`Enter ${field.label.toLowerCase()}`}

@@ -712,9 +712,14 @@ function ServicesTab({
     const [showModal, setShowModal] = useState(false);
     const [editingService, setEditingService] = useState<NotificationServiceConfig | null>(null);
 
-    const handleEdit = (service: NotificationServiceConfig) => {
-        setEditingService(service);
-        setShowModal(true);
+    const handleEdit = async (service: NotificationServiceConfig) => {
+        try {
+            const full = await notificationServiceConfigService.getById(service.id);
+            setEditingService(full);
+            setShowModal(true);
+        } catch {
+            swalConfig.error('Failed to load service details');
+        }
     };
 
     const handleDelete = async (id: string) => {
