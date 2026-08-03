@@ -165,7 +165,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                                 {serviceOptions.map((option) => (
                                     <label
                                         key={option.value}
-                                        className={`flex items-center space-x-3 p-4 border rounded-xl cursor-pointer transition-colors ${formData.serviceName === option.value
+                                        className={`flex items-center space-x-3 p-4 border rounded-xl ${service ? 'cursor-default opacity-60' : 'cursor-pointer'} transition-colors ${formData.serviceName === option.value
                                                 ? 'border-primary-500 bg-primary-50'
                                                 : 'border-secondary-300 hover:border-secondary-400'
                                             }`}
@@ -175,6 +175,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                                             name="serviceName"
                                             value={option.value}
                                             checked={formData.serviceName === option.value}
+                                            disabled={!!service}
                                             onChange={(e) => setFormData(prev => ({
                                                 ...prev,
                                                 serviceName: e.target.value,
