@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Save, Mail, MessageSquare, Key } from 'lucide-react';
 import { NotificationServiceConfig } from '../../types';
 import { notificationServiceConfigService } from '../../lib/services';
@@ -49,7 +49,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                 isDefault: false,
             });
         }
-    }, [service]);
+    }, [service, serviceOptions]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -80,44 +80,46 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
         }
     };
 
-    const serviceOptions: Array<{ value: string; label: string; type: 'email' | 'sms' | 'both'; description: string; icon: React.ReactNode; fields: Array<{ key: string; label: string; type: string; required: boolean }> }> = [
-        {
-            value: 'sendgrid',
-            label: 'SendGrid',
-            type: 'email',
-            description: 'Email delivery service',
-            icon: <Mail className="h-5 w-5" />,
-            fields: [
-                { key: 'apiKey', label: 'API Key', type: 'password', required: true },
-                { key: 'fromEmail', label: 'From Email', type: 'email', required: true },
-            ]
-        },
-        {
-            value: 'twilio',
-            label: 'Twilio',
-            type: 'sms',
-            description: 'SMS delivery service',
-            icon: <MessageSquare className="h-5 w-5" />,
-            fields: [
-                { key: 'accountSid', label: 'Account SID', type: 'text', required: true },
-                { key: 'authToken', label: 'Auth Token', type: 'password', required: true },
-                { key: 'fromNumber', label: 'From Number', type: 'tel', required: true },
-            ]
-        },
-        {
-            value: 'aws_ses',
-            label: 'AWS SES',
-            type: 'email',
-            description: 'Amazon Simple Email Service',
-            icon: <Mail className="h-5 w-5" />,
-            fields: [
-                { key: 'accessKeyId', label: 'Access Key ID', type: 'text', required: true },
-                { key: 'secretAccessKey', label: 'Secret Access Key', type: 'password', required: true },
-                { key: 'region', label: 'Region', type: 'text', required: true },
-                { key: 'fromEmail', label: 'From Email', type: 'email', required: true },
-            ]
-        },
-    ];
+    const serviceOptions = useMemo(() => (
+        [
+            {
+                value: 'sendgrid',
+                label: 'SendGrid',
+                type: 'email' as const,
+                description: 'Email delivery service',
+                icon: <Mail className="h-5 w-5" />,
+                fields: [
+                    { key: 'apiKey', label: 'API Key', type: 'password', required: true },
+                    { key: 'fromEmail', label: 'From Email', type: 'email', required: true },
+                ]
+            },
+            {
+                value: 'twilio',
+                label: 'Twilio',
+                type: 'sms' as const,
+                description: 'SMS delivery service',
+                icon: <MessageSquare className="h-5 w-5" />,
+                fields: [
+                    { key: 'accountSid', label: 'Account SID', type: 'text', required: true },
+                    { key: 'authToken', label: 'Auth Token', type: 'password', required: true },
+                    { key: 'fromNumber', label: 'From Number', type: 'tel', required: true },
+                ]
+            },
+            {
+                value: 'aws_ses',
+                label: 'AWS SES',
+                type: 'email' as const,
+                description: 'Amazon Simple Email Service',
+                icon: <Mail className="h-5 w-5" />,
+                fields: [
+                    { key: 'accessKeyId', label: 'Access Key ID', type: 'text', required: true },
+                    { key: 'secretAccessKey', label: 'Secret Access Key', type: 'password', required: true },
+                    { key: 'region', label: 'Region', type: 'text', required: true },
+                    { key: 'fromEmail', label: 'From Email', type: 'email', required: true },
+                ]
+            },
+        ] as const
+    ), []);
 
     const selectedService = serviceOptions.find(s => s.value === formData.serviceName);
 
