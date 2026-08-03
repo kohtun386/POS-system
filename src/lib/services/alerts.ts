@@ -415,7 +415,7 @@ export const notificationServiceConfigService = {
   async getAll(): Promise<NotificationServiceConfig[]> {
     const { data, error } = await supabase
       .from('notification_service_config')
-      .select('*')
+      .select('id, service_name, service_type, is_active, is_default, created_at, updated_at')
       .order('service_name')
 
     if (error) throw error
@@ -424,12 +424,34 @@ export const notificationServiceConfigService = {
       id: config.id,
       serviceName: config.service_name,
       serviceType: config.service_type as 'email' | 'sms' | 'both',
-      configData: config.config_data,
+      configData: config.config_data ?? {},
       isActive: config.is_active ?? true,
       isDefault: config.is_default ?? false,
       createdAt: new Date(config.created_at),
       updatedAt: new Date(config.updated_at)
     }))
+  },
+
+  // Single-record fetch — the only flow that needs config_data (edit modal).
+  async getById(id: string): Promise<NotificationServiceConfig> {
+    const { data, error } = await supabase
+      .from('notification_service_config')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) throw error
+
+    return {
+      id: data.id,
+      serviceName: data.service_name,
+      serviceType: data.service_type as 'email' | 'sms' | 'both',
+      configData: data.config_data,
+      isActive: data.is_active ?? true,
+      isDefault: data.is_default ?? false,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    }
   },
 
   async create(config: Omit<NotificationServiceConfig, 'id' | 'createdAt' | 'updatedAt'>): Promise<NotificationServiceConfig> {
