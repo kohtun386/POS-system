@@ -1,59 +1,64 @@
 export interface Product {
   id: string;
+  shopId: string;
   name: string;
   sku: string;
   barcode?: string;
   price: number;
-  cost: number;
-  stock: number;
-  minStock: number;
+  cost?: number;
+  stock?: number;
+  minStock?: number;
   category: string;
-  description: string;
+  description?: string;
   image?: string;
-  taxable: boolean;
-  active: boolean;
+  taxable?: boolean;
+  active?: boolean;
   createdAt: Date;
   updatedAt: Date;
-  // New fields for advanced features
   isWeightBased?: boolean;
-  pricePerUnit?: number; // For weight-based pricing (per kg, per lb, etc.)
-  unit?: string; // kg, lb, piece, etc.
+  pricePerUnit?: number;
+  unit?: string;
   batches?: ProductBatch[];
-  trackInventory?: boolean; // Whether to track and manage inventory for this product
+  trackInventory?: boolean;
 }
 
 export interface ProductBatch {
   id: string;
+  shopId?: string;
   batchNumber: string;
   manufacturingDate: Date;
   expiryDate: Date;
   quantity: number;
   costPrice: number;
   supplierInfo?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Customer {
   id: string;
+  shopId?: string;
   name: string;
-  email: string;
-  phone: string;
-  address: string;
-  creditLimit: number;
-  creditUsed: number;
-  priceTier: string;
-  totalPurchases: number;
+  email?: string;
+  phone?: string;
+  address?: string;
+  creditLimit?: number;
+  creditUsed?: number;
+  priceTier?: string;
+  totalPurchases?: number;
   lastPurchase?: Date;
   createdAt: Date;
 }
 
 export interface Supplier {
   id: string;
+  shopId?: string;
   name: string;
-  email: string;
-  phone: string;
-  address: string;
-  paymentTerms: string;
-  rating: number;
+  email?: string;
+  phone?: string;
+  address?: string;
+  paymentTerms?: string;
+  rating?: number;
   createdAt: Date;
 }
 
@@ -69,18 +74,19 @@ export interface CartItem {
 
 export interface Discount {
   id: string;
+  shopId?: string;
   name: string;
-  description: string;
+  description?: string;
   type: 'percentage' | 'fixed' | 'free_gift';
-  value: number;
-  conditions: DiscountCondition[];
-  freeGiftProducts?: string[]; // Product IDs for free gifts
+  value?: number;
+  conditions?: DiscountCondition[];
+  freeGiftProducts?: string[];
   minAmount?: number;
   maxDiscount?: number;
   validFrom: Date;
   validTo: Date;
-  validDays?: number[]; // 0-6 (Sunday-Saturday)
-  active: boolean;
+  validDays?: number[];
+  active?: boolean;
   createdAt: Date;
 }
 
@@ -109,26 +115,24 @@ export interface Payment {
 
 export interface Sale {
   id: string;
+  shopId?: string;
   invoiceNumber: string;
   customerId?: string;
   customerName?: string;
   items: CartItem[];
-  subtotal: number;
-  discountAmount: number;
-  taxAmount: number;
-  total: number;
-  // allow split payments; keep legacy single-method field
+  subtotal?: number;
+  discountAmount?: number;
+  taxAmount?: number;
+  total?: number;
   paymentMethod: 'cash' | 'card' | 'digital' | 'credit' | 'split' | 'kbzpay' | 'wavepay' | 'ayapay' | 'cbpay' | 'mpu';
-  // when split payments used, payments contains breakdown
   payments?: Payment[];
   cardDetails?: CardDetails;
   status: 'pending' | 'completed' | 'refunded' | 'credit' | 'draft';
-  cashier: string;
+  cashier?: string;
   cashierId?: string;
   cashierRole?: 'platform_admin' | 'admin' | 'manager' | 'cashier';
   timestamp: Date;
-  receiptNumber: string;
-  receiptPrinted?: boolean;
+  receiptNumber?: string;
   notes?: string;
   appliedDiscounts?: AppliedDiscount[];
   freeGifts?: CartItem[];
@@ -143,6 +147,7 @@ export interface AppliedDiscount {
 
 export interface SalesTab {
   id: string;
+  shopId?: string;
   name: string;
   cart: CartItem[];
   selectedCustomer: Customer | null;
@@ -151,12 +156,13 @@ export interface SalesTab {
 
 export interface User {
   id: string;
+  shopId?: string;
   username: string;
   name: string;
-  email: string;
+  email?: string;
   role: 'platform_admin' | 'admin' | 'manager' | 'cashier';
-  permissions: string[];
-  active: boolean;
+  permissions?: string[];
+  active?: boolean;
   lastLogin?: Date;
   avatar?: string;
 }
@@ -164,20 +170,22 @@ export interface User {
 export interface Shop {
   id: string;
   name: string;
-  address: string;
-  phone: string;
-  email: string;
+  address?: string;
+  phone?: string;
+  email?: string;
   logo?: string;
   ownerId?: string;
-  businessType: 'coffee_shop';
-  taxRate: number;
-  invoicePrefix: string;
-  invoiceCounter: number;
-  draftRetentionDays: number;
-  subscriptionTier: 'free' | 'growth' | 'pro';
+  businessType?: 'coffee_shop';
+  currency?: string;
+  baseCurrency?: string;
+  taxRate?: number;
+  invoicePrefix?: string;
+  invoiceCounter?: number;
+  draftRetentionDays?: number;
+  subscriptionTier?: 'free' | 'growth' | 'pro';
   dailyOrderLimit?: number;
-  receiptSetting: 'always' | 'ask' | 'never';
-  isActive: boolean;
+  receiptSetting?: 'always' | 'ask' | 'never';
+  isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -206,35 +214,38 @@ export interface LoginCredentials {
 // Inventory Alert System Types
 export interface AlertRecipient {
   id: string;
+  shopId?: string;
   name: string;
   email?: string;
   phone?: string;
   role: 'admin' | 'manager' | 'cashier';
   alertTypes: AlertType[];
-  isActive: boolean;
+  isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface AlertTemplate {
   id: string;
+  shopId?: string;
   name: string;
   type: AlertType;
   channel: 'email' | 'sms' | 'both';
   subject?: string;
   body: string;
-  isActive: boolean;
+  isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface AlertConfiguration {
   id: string;
+  shopId?: string;
   alertType: AlertType;
-  isEnabled: boolean;
-  thresholdValue?: number; // percentage of min_stock for low_stock alerts
-  checkFrequencyMinutes: number;
-  cooldownMinutes: number;
+  isEnabled?: boolean;
+  thresholdValue?: number;
+  checkFrequencyMinutes?: number;
+  cooldownMinutes?: number;
   emailTemplateId?: string;
   smsTemplateId?: string;
   createdAt: Date;
@@ -243,12 +254,13 @@ export interface AlertConfiguration {
 
 export interface AlertHistory {
   id: string;
+  shopId?: string;
   alertType: AlertType;
   productId: string;
   productName: string;
   productSku: string;
-  currentStock: number;
-  minStock: number;
+  currentStock?: number;
+  minStock?: number;
   thresholdValue?: number;
   recipientId: string;
   recipientName: string;
@@ -266,22 +278,24 @@ export interface AlertHistory {
 
 export interface AlertSchedule {
   id: string;
+  shopId?: string;
   alertType: AlertType;
-  isActive: boolean;
+  isActive?: boolean;
   lastRun?: Date;
   nextRun?: Date;
-  runCount: number;
+  runCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface NotificationServiceConfig {
   id: string;
-  serviceName: string; // sendgrid, twilio, aws_ses, etc.
+  shopId?: string;
+  serviceName: string;
   serviceType: 'email' | 'sms' | 'both';
-  configData: Record<string, string | number | boolean>; // API keys, endpoints, etc.
-  isActive: boolean;
-  isDefault: boolean;
+  configData?: Record<string, string | number | boolean>;
+  isActive?: boolean;
+  isDefault?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

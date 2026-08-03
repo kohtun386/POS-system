@@ -79,6 +79,7 @@ export const settingsService = {
         theme: settings.theme,
         invoice_prefix: settings.invoicePrefix,
         invoice_counter: settings.invoiceCounter,
+        updated_at: new Date().toISOString()
       })
       .eq('id', existingData.id)
       .select()

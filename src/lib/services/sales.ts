@@ -35,6 +35,7 @@ export const salesService = {
 
     const sales = data.map(sale => ({
       id: sale.id,
+      shopId: sale.shop_id || undefined,
       invoiceNumber: sale.invoice_number,
       customerId: sale.customer_id || undefined,
       customerName: sale.customer_name || undefined,
@@ -48,6 +49,7 @@ export const salesService = {
       cardDetails: sale.card_details as CardDetails | undefined,
       status: sale.status as Sale['status'],
       cashier: sale.cashier || '',
+      cashierId: sale.cashier_id || undefined,
       timestamp: new Date(sale.created_at),
       receiptNumber: sale.receipt_number || undefined,
       notes: sale.notes || undefined,
@@ -66,6 +68,7 @@ export const salesService = {
     const { data, error } = await supabase
       .from('sales')
       .insert({
+        shop_id: sale.shopId,
         invoice_number: sale.invoiceNumber,
         customer_id: sale.customerId,
         customer_name: sale.customerName,
@@ -79,6 +82,7 @@ export const salesService = {
         card_details: sale.cardDetails,
         status: sale.status,
         cashier: sale.cashier,
+        cashier_id: sale.cashierId,
         receipt_number: sale.receiptNumber,
         notes: sale.notes,
         applied_discounts: sale.appliedDiscounts,
@@ -91,6 +95,7 @@ export const salesService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       invoiceNumber: data.invoice_number,
       customerId: data.customer_id || undefined,
       customerName: data.customer_name || undefined,
@@ -100,9 +105,11 @@ export const salesService = {
       taxAmount: data.tax_amount || 0,
       total: data.total || 0,
       paymentMethod: data.payment_method as Sale['paymentMethod'],
+      payments: data.payments as Payment[] | undefined,
       cardDetails: data.card_details as CardDetails | undefined,
       status: data.status as Sale['status'],
       cashier: data.cashier || '',
+      cashierId: data.cashier_id || undefined,
       timestamp: new Date(data.created_at),
       receiptNumber: data.receipt_number || undefined,
       notes: data.notes || undefined,

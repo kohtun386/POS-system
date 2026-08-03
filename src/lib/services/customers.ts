@@ -18,6 +18,7 @@ export const customersService = {
 
     return data.map(customer => ({
       id: customer.id,
+      shopId: customer.shop_id || undefined,
       name: customer.name,
       email: customer.email || '',
       phone: customer.phone || '',
@@ -52,6 +53,7 @@ export const customersService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       name: data.name,
       email: data.email || '',
       phone: data.phone || '',
@@ -77,6 +79,7 @@ export const customersService = {
     if (customer.priceTier !== undefined) updateData.price_tier = customer.priceTier
     if (customer.totalPurchases !== undefined) updateData.total_purchases = customer.totalPurchases
     if (customer.lastPurchase !== undefined) updateData.last_purchase = customer.lastPurchase?.toISOString()
+    updateData.updated_at = new Date().toISOString()
 
     const { data, error } = await supabase
       .from('customers')
@@ -89,6 +92,7 @@ export const customersService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       name: data.name,
       email: data.email || '',
       phone: data.phone || '',

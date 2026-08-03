@@ -12,6 +12,7 @@ export const alertRecipientsService = {
 
     return data.map(recipient => ({
       id: recipient.id,
+      shopId: recipient.shop_id || undefined,
       name: recipient.name,
       email: recipient.email || undefined,
       phone: recipient.phone || undefined,
@@ -35,6 +36,7 @@ export const alertRecipientsService = {
 
     return data.map(recipient => ({
       id: recipient.id,
+      shopId: recipient.shop_id || undefined,
       name: recipient.name,
       email: recipient.email || undefined,
       phone: recipient.phone || undefined,
@@ -64,6 +66,7 @@ export const alertRecipientsService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       name: data.name,
       email: data.email || undefined,
       phone: data.phone || undefined,
@@ -95,6 +98,7 @@ export const alertRecipientsService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       name: data.name,
       email: data.email || undefined,
       phone: data.phone || undefined,
@@ -131,6 +135,7 @@ export const alertTemplatesService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       name: data.name,
       type: data.type as 'low_stock' | 'out_of_stock' | 'reorder' | 'expiry_warning' | 'batch_expiry',
       channel: data.channel as 'email' | 'sms' | 'both',
@@ -152,6 +157,7 @@ export const alertTemplatesService = {
 
     return data.map(template => ({
       id: template.id,
+      shopId: template.shop_id || undefined,
       name: template.name,
       type: template.type as 'low_stock' | 'out_of_stock' | 'reorder' | 'expiry_warning' | 'batch_expiry',
       channel: template.channel as 'email' | 'sms' | 'both',
@@ -181,6 +187,7 @@ export const alertTemplatesService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       name: data.name,
       type: data.type as 'low_stock' | 'out_of_stock' | 'reorder' | 'expiry_warning' | 'batch_expiry',
       channel: data.channel as 'email' | 'sms' | 'both',
@@ -212,6 +219,7 @@ export const alertTemplatesService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       name: data.name,
       type: data.type as 'low_stock' | 'out_of_stock' | 'reorder' | 'expiry_warning' | 'batch_expiry',
       channel: data.channel as 'email' | 'sms' | 'both',
@@ -247,6 +255,7 @@ export const alertConfigurationsService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       alertType: data.alert_type as 'low_stock' | 'out_of_stock' | 'reorder' | 'expiry_warning' | 'batch_expiry',
       isEnabled: data.is_enabled ?? true,
       thresholdValue: data.threshold_value || undefined,
@@ -269,6 +278,7 @@ export const alertConfigurationsService = {
 
     return data.map(config => ({
       id: config.id,
+      shopId: config.shop_id || undefined,
       alertType: config.alert_type as 'low_stock' | 'out_of_stock' | 'reorder' | 'expiry_warning' | 'batch_expiry',
       isEnabled: config.is_enabled ?? true,
       thresholdValue: config.threshold_value || undefined,
@@ -302,6 +312,7 @@ export const alertConfigurationsService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       alertType: data.alert_type as 'low_stock' | 'out_of_stock' | 'reorder' | 'expiry_warning' | 'batch_expiry',
       isEnabled: data.is_enabled ?? true,
       thresholdValue: data.threshold_value || undefined,
@@ -327,6 +338,7 @@ export const alertHistoryService = {
 
     return data.map(history => ({
       id: history.id,
+      shopId: history.shop_id || undefined,
       alertType: history.alert_type as 'low_stock' | 'out_of_stock' | 'reorder' | 'expiry_warning' | 'batch_expiry',
       productId: history.product_id,
       productName: history.product_name,
@@ -360,6 +372,7 @@ export const alertHistoryService = {
 
     return data.map(history => ({
       id: history.id,
+      shopId: history.shop_id || undefined,
       alertType: history.alert_type as 'low_stock' | 'out_of_stock' | 'reorder' | 'expiry_warning' | 'batch_expiry',
       productId: history.product_id,
       productName: history.product_name,
@@ -422,6 +435,7 @@ export const notificationServiceConfigService = {
 
     return data.map(config => ({
       id: config.id,
+      shopId: config.shop_id || undefined,
       serviceName: config.service_name,
       serviceType: config.service_type as 'email' | 'sms' | 'both',
       configData: config.config_data ?? {},
@@ -444,6 +458,7 @@ export const notificationServiceConfigService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       serviceName: data.service_name,
       serviceType: data.service_type as 'email' | 'sms' | 'both',
       configData: data.config_data,
@@ -471,6 +486,7 @@ export const notificationServiceConfigService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       serviceName: data.service_name,
       serviceType: data.service_type as 'email' | 'sms' | 'both',
       configData: data.config_data,
@@ -500,6 +516,7 @@ export const notificationServiceConfigService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       serviceName: data.service_name,
       serviceType: data.service_type as 'email' | 'sms' | 'both',
       configData: data.config_data,
