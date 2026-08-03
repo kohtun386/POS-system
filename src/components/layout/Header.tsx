@@ -26,7 +26,6 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
 
   // Effect for scroll detection and click outside for mobile menu
   useEffect(() => {
@@ -60,13 +59,6 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
     };
   }, [navScrollRef, showMobileMenu]);
 
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 639px)');
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
   const scrollNav = (direction: 'left' | 'right') => {
     if (navScrollRef) {
       const scrollAmount = direction === 'left' ? -120 : 120;
@@ -85,9 +77,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
     const role = state.currentUser?.role;
     const items = [];
 
-    if (!isMobile || role === 'cashier') {
-      items.push({ id: 'pos', label: 'POS', icon: ShoppingCart, color: 'text-primary-600' });
-    }
+    items.push({ id: 'pos', label: 'POS', icon: ShoppingCart, color: 'text-primary-600' });
     if (role === 'admin' || role === 'manager') {
       items.push({ id: 'transactions', label: 'Sales', icon: Receipt, color: 'text-success-500' });
     }

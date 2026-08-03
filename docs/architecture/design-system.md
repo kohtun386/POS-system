@@ -549,7 +549,7 @@ VISION.md v3.1.0 defines three device layers. Each has distinct form factors, in
 |---------|---------------|
 | Navigation | Top header bar with icon buttons |
 | Layout (landscape) | Two-column split: Products on left, Cart on right. Cart width `w-96` in touch mode, `w-80` in traditional mode. Activates when `width ≥ 768px` AND viewport is landscape. |
-| Layout (portrait) | Single-column, full-width cards stacked vertically. Cart accessed via floating bottom cart bar (cashier only). Triggered when `width < 768px` OR viewport is portrait. |
+| Layout (portrait) | Single-column, full-width cards stacked vertically. Cart accessed via floating bottom cart bar (all roles). Triggered when `width < 768px` OR viewport is portrait. |
 | Buttons | `.btn-lg` minimum in touch mode |
 | Tables | Standard `.table` with horizontal scroll |
 | Modals | Full-width on small tablets, `max-w-md` on larger |
@@ -574,8 +574,8 @@ The POS adapts to both form factor and orientation to keep the §10.1
 
 | Viewport | Mode | Layout |
 |----------|------|--------|
-| `width < 768px` | Mobile | Single-column. Floating bottom cart bar (cashier). |
-| `width ≥ 768px` AND portrait | Tablet-portrait | Single-column. Floating bottom cart bar (cashier). Suppresses side-panel cart. |
+| `width < 768px` | Mobile | Single-column. Floating bottom cart bar (all roles). |
+| `width ≥ 768px` AND portrait | Tablet-portrait | Single-column. Floating bottom cart bar (all roles). Suppresses side-panel cart. |
 | `width ≥ 768px` AND landscape | Tablet-landscape | Two-column: Products left, Cart right. No floating cart bar. |
 
 **Detection:** Use `matchMedia('(max-width: 767px)')` for mobile and
@@ -589,6 +589,22 @@ avoiding render churn during rotation gestures.
 
 Both widths satisfy §10.1.1 48px tap-target requirement.
 
+#### 10.1.3 Mobile List View (`MobileProductList`)
+
+On `width < 768px` the POS renders `MobileProductList` instead of the
+two-column grid, for **all roles** (admin/manager previously were redirected
+to Reports). Compact vertical `.card` list — image/icon, name
+(`line-clamp-2`), price, stock badge — with a search input, horizontally
+scrollable category chips (+ arrow buttons), a weight modal, skeleton
+loading, and an empty state. Dark mode variants throughout.
+
+- Every interactive element uses `.touch-friendly` (≥48px)
+- Floating bottom cart bar (`MobileCartBar`) is **always visible** on mobile,
+  even with an empty cart, as the primary cart affordance
+- Uses `animate-slide-up` on the cart bar and `.pb-safe` for iOS
+  safe-area insets
+- Reuses the existing `Cart`/`CheckoutModal` flow via the cart overlay
+
 ---
 
 ### 10.2 Owner Mobile (Mobile-First, Read-Only)
@@ -601,7 +617,7 @@ Both widths satisfy §10.1.1 48px tap-target requirement.
 - Large tap targets (56px) for thumb navigation
 - Simplified navigation (bottom nav bar)
 - Read-only dashboards (P&L, shift variances, alerts)
-- No POS terminal functionality
+- Simplified POS list view available to admin/manager (see §10.3), dashboards remain read-only
 
 **UI patterns:**
 

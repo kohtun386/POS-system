@@ -278,7 +278,7 @@ The client stores a `capabilities: string[]` array. Components check this array 
 | Layer | Device | Form Factor | Purpose |
 |-------|--------|-------------|---------|
 | **POS Terminal** | Counter tablet | Mobile/tablet-first, PWA | Order taking, checkout, receipts |
-| **Owner Mobile** | Owner's phone | Mobile-first | Reports/insights only, NO POS terminal |
+| **Owner Mobile** | Owner's phone | Mobile-first | Reports/insights + simplified POS list view |
 | **Platform Admin** | Desktop + mobile | Responsive | Shop management, subscriptions |
 
 ### 7.2 POS Tablet
@@ -293,7 +293,7 @@ The client stores a `capabilities: string[]` array. Components check this array 
 
 - Mobile-first responsive design
 - Read-only dashboard: daily P&L, shift variances, alerts
-- NO POS terminal functionality
+- Simplified POS list view for admin/manager (see §7.2); checkouts via cart bar
 - NO product/inventory management
 - Purpose: "Check my shop from anywhere"
 - **Available in v1** (Pro tier feature)
