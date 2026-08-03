@@ -420,12 +420,12 @@ Free tier: No receipt printing, no toggle, no reprint. Transaction History visib
 | Layer | Device | Form Factor | Purpose |
 |-------|--------|-------------|---------|
 | POS Terminal | Counter tablet | Mobile/tablet-first, PWA | Order taking, checkout, receipts |
-| Owner Mobile | Owner's phone | Mobile-first | Reports/insights only, no POS |
+| Owner Mobile | Owner's phone | Mobile-first | Reports/insights + simplified POS list view |
 | Platform Admin | Desktop browser | Desktop-first | Shop management, subscriptions |
 
-**Why:** Different users have different needs. Cashiers need fast touch UI on a tablet. Owners need to check reports on their phone. Platform admin needs desktop for bulk operations.
+**Why:** Different users have different needs. Cashiers need fast touch UI on a tablet. Owners need to check reports on their phone — and, since v3.2, can also take orders through the simplified mobile POS list view. Platform admin needs desktop for bulk operations.
 
-**Owner Mobile:** Pro tier feature. Read-only dashboard (daily P&L, shift variances, alerts). No POS terminal, no product/inventory management.
+**Owner Mobile:** Pro tier feature. Read-only dashboard (daily P&L, shift variances, alerts). No product/inventory management. Mobile POS list view is available to admin/manager (see `MobileProductList`).
 
 **Source:** `VISION.md v3.1.0 Section 7`
 
