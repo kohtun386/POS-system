@@ -10,6 +10,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 import { createAdminClient } from "../_shared/auth.ts";
+import { isValidEmail, isValidStaffPassword } from "../_shared/validation.ts";
+import { sanitizeDbError } from "../_shared/errors.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const VALID_ROLES = ["admin", "manager", "cashier"];
@@ -37,9 +39,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (password.length < 6) {
+    if (!isValidEmail(email)) {
       return new Response(
-        JSON.stringify({ error: "Password must be at least 6 characters long" }),
+        JSON.stringify({ error: "Invalid email format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (!isValidStaffPassword(password)) {
+      return new Response(
+        JSON.stringify({
+          error: "Password must be at least 8 characters long and include at least one uppercase letter and one digit",
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -149,7 +160,7 @@ Deno.serve(async (req) => {
         );
       }
       return new Response(
-        JSON.stringify({ error: `Failed to create user: ${createError?.message ?? "Unknown error"}` }),
+        JSON.stringify({ error: sanitizeDbError(createError).message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -187,7 +198,7 @@ Deno.serve(async (req) => {
       console.error("Provision RPC returned error:", provisionResult.error);
       return new Response(
         JSON.stringify({
-          error: `Provisioning failed: ${provisionResult.error}`,
+          error: sanitizeDbError(provisionResult.error).message,
           user_id: newUser.user.id,
         }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
