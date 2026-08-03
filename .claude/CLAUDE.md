@@ -29,7 +29,7 @@ Dev server runs on `http://localhost:5173`.
 
 - **`src/context/SupabaseAppContext.tsx`** — the **active** app state. useReducer-based with `dispatch` + `state` pattern (44 reducer actions). All product, customer, sale, user, discount, cart, settings, capabilities, and salesTab state lives here. Loads from Supabase on auth via parallel `Promise.all`. Capabilities are resolved server-side from subscription tier and business type.
 
-- **`src/context/AuthContext.tsx`** — Supabase auth wrapper. Provides `user`, `profile`, `session`, `isPendingApproval`, `signIn`, `signUp`, `signOut`, `updateProfile`. User profile loaded from `public.users` table. Inactive users (`profile.active === false`) see PendingApprovalPage.
+- **`src/context/AuthContext.tsx`** — Supabase auth wrapper. Provides `user`, `profile`, `session`, `isPendingApproval`, `signIn`, `signUp`, `signOut`. User profile loaded from `public.users` table. Inactive users (`profile.active === false`) see PendingApprovalPage.
 
 - **`src/context/ThemeContext.tsx`** — Light/dark/system theme. Toggles `dark` class on `<html>`.
 
