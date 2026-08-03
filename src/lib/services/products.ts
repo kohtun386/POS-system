@@ -30,6 +30,7 @@ export const productsService = {
 
     return data.map(product => ({
       id: product.id,
+      shopId: product.shop_id || undefined,
       name: product.name,
       sku: product.sku,
       barcode: product.barcode || undefined,
@@ -143,7 +144,8 @@ export const productsService = {
         is_weight_based: product.isWeightBased,
         price_per_unit: product.pricePerUnit,
         unit: product.unit,
-        track_inventory: product.trackInventory
+        track_inventory: product.trackInventory,
+        updated_at: new Date().toISOString()
       })
       .eq('id', id)
       .select()
@@ -195,6 +197,7 @@ export const productsService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       name: data.name,
       sku: data.sku,
       barcode: data.barcode || undefined,

@@ -2,16 +2,23 @@ import { supabase } from '../supabase'
 import type { User } from '../../types'
 
 export const usersService = {
-  async getAll(): Promise<User[]> {
-    const { data, error } = await supabase
+  async getAll(shopId?: string): Promise<User[]> {
+    let query = supabase
       .from('users')
       .select('*')
       .order('name')
+
+    if (shopId) {
+      query = query.eq('shop_id', shopId)
+    }
+
+    const { data, error } = await query
 
     if (error) throw error
 
     return data.map(user => ({
       id: user.id,
+      shopId: user.shop_id || undefined,
       username: user.username,
       name: user.name,
       email: user.email,
@@ -34,7 +41,8 @@ export const usersService = {
         permissions: user.permissions,
         active: user.active,
         avatar: user.avatar,
-        last_login: user.lastLogin?.toISOString()
+        last_login: user.lastLogin?.toISOString(),
+        updated_at: new Date().toISOString()
       })
       .eq('id', id)
       .select()
@@ -44,6 +52,7 @@ export const usersService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       username: data.username,
       name: data.name,
       email: data.email,

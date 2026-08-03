@@ -18,6 +18,7 @@ export const discountsService = {
 
     return data.map(discount => ({
       id: discount.id,
+      shopId: discount.shop_id || undefined,
       name: discount.name,
       description: discount.description || '',
       type: discount.type as Discount['type'],
@@ -58,6 +59,7 @@ export const discountsService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       name: data.name,
       description: data.description || '',
       type: data.type as Discount['type'],
@@ -89,7 +91,8 @@ export const discountsService = {
         valid_from: discount.validFrom?.toISOString(),
         valid_to: discount.validTo?.toISOString(),
         valid_days: discount.validDays,
-        active: discount.active
+        active: discount.active,
+        updated_at: new Date().toISOString()
       })
       .eq('id', id)
       .select()
@@ -99,6 +102,7 @@ export const discountsService = {
 
     return {
       id: data.id,
+      shopId: data.shop_id || undefined,
       name: data.name,
       description: data.description || '',
       type: data.type as Discount['type'],

@@ -69,30 +69,39 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
       return;
     }
 
-    const customerData: Customer = {
-      id: customer?.id || Date.now().toString(),
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      address: formData.address,
-      creditLimit: parseFloat(formData.creditLimit) || 0,
-      creditUsed: customer?.creditUsed || 0,
-      priceTier: formData.priceTier,
-      totalPurchases: customer?.totalPurchases || 0,
-      lastPurchase: customer?.lastPurchase,
-      createdAt: customer?.createdAt || new Date(),
-    };
-
     try {
       swalConfig.loading(`${customer ? 'Updating' : 'Creating'} customer...`);
       const { customersService } = await import('../../lib/services');
       
       if (customer) {
+        const customerData: Customer = {
+          id: customer.id,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          creditLimit: parseFloat(formData.creditLimit) || 0,
+          creditUsed: customer.creditUsed || 0,
+          priceTier: formData.priceTier,
+          totalPurchases: customer.totalPurchases || 0,
+          lastPurchase: customer.lastPurchase,
+          createdAt: customer.createdAt,
+        };
         await customersService.update(customerData.id, customerData);
         dispatch({ type: 'UPDATE_CUSTOMER', payload: customerData });
         swalConfig.success('Customer updated successfully!');
       } else {
-        const newCustomer = await customersService.create(customerData);
+        const newCustomer = await customersService.create({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          creditLimit: parseFloat(formData.creditLimit) || 0,
+          creditUsed: 0,
+          priceTier: formData.priceTier,
+          totalPurchases: 0,
+          lastPurchase: undefined,
+        });
         dispatch({ type: 'ADD_CUSTOMER', payload: newCustomer });
         swalConfig.success('Customer created successfully!');
       }

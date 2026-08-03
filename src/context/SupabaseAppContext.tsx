@@ -151,7 +151,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           salesService.getAll({ shopId }).then(r => r.data),
           discountsService.getAll(shopId),
           settingsService.get(shopId),
-          usersService.getAll(),
+          usersService.getAll(shopId),
           user ? salesTabsService.getByUserId(user.id) : Promise.resolve([]),
         ]);
         console.log('✓ Data loaded — products:', products.length, 'customers:', customers.length, 'sales:', sales.length);

@@ -12,6 +12,8 @@ function mapShopRow(row: Record<string, unknown>): Shop {
     logo: (row.logo as string) || undefined,
     ownerId: (row.owner_id as string) || undefined,
     businessType: (row.business_type as string) || 'coffee_shop',
+    currency: (row.currency as string) || undefined,
+    baseCurrency: (row.base_currency as string) || undefined,
     taxRate: Number(row.tax_rate ?? 0),
     invoicePrefix: (row.invoice_prefix as string) || 'INV',
     invoiceCounter: (row.invoice_counter as number) ?? 0,
