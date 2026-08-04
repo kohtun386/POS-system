@@ -14,9 +14,15 @@ import {
     InventoryAlert,
     AlertType,
     AlertContext,
-    ProcessedAlert,
     Product
 } from '../types';
+
+interface ProcessedAlert {
+    alert: InventoryAlert;
+    recipients: AlertRecipient[];
+    shouldSend: boolean;
+    reason?: string;
+}
 
 // Alert Service Class
 export class AlertService {
@@ -26,8 +32,8 @@ export class AlertService {
             '{{product_name}}': context.product.name,
             '{{product_sku}}': context.product.sku,
             '{{product_category}}': context.product.category,
-            '{{current_stock}}': context.product.stock.toString(),
-            '{{min_stock}}': context.product.minStock.toString(),
+            '{{current_stock}}': (context.product.stock ?? 0).toString(),
+            '{{min_stock}}': (context.product.minStock ?? 0).toString(),
             '{{recipient_name}}': context.recipient.name,
             '{{store_name}}': 'Your Store', // This should come from app settings
             '{{alert_type}}': context.template.type,
@@ -313,7 +319,15 @@ export class AlertService {
                 return [];
             }
 
-            return data || [];
+            return (data || []).map((row: Record<string, unknown>) => ({
+                alertType: row.alert_type as InventoryAlert['alertType'],
+                productId: row.product_id as string,
+                productName: row.product_name as string,
+                productSku: row.product_sku as string,
+                currentStock: row.current_stock as number,
+                minStock: row.min_stock as number,
+                thresholdValue: row.threshold_value as number,
+            }));
         } catch (error) {
             console.error('Error checking inventory levels:', error);
             return [];

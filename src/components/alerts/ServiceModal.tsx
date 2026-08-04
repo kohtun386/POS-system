@@ -23,63 +23,6 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
 
     const MASK = '••••••••';
 
-    useEffect(() => {
-        const passwordKeys = new Set(
-            serviceOptions.flatMap(o => o.fields.filter(f => f.type === 'password').map(f => f.key)),
-        );
-        if (service) {
-            // Do not load password-type secrets into form state — they are masked on render.
-            const secretsMasked: Record<string, string | number | boolean> = {};
-            for (const [key, value] of Object.entries(service.configData ?? {})) {
-                if (!passwordKeys.has(key)) secretsMasked[key] = value;
-            }
-            setFormData({
-                serviceName: service.serviceName,
-                serviceType: service.serviceType,
-                configData: secretsMasked,
-                isActive: service.isActive,
-                isDefault: service.isDefault,
-            });
-        } else {
-            setFormData({
-                serviceName: 'sendgrid',
-                serviceType: 'email',
-                configData: {},
-                isActive: true,
-                isDefault: false,
-            });
-        }
-    }, [service, serviceOptions]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!formData.serviceName.trim()) {
-            swalConfig.error('Service name is required');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            if (service) {
-                // Preserve untouched masked secrets; only overwrite fields the user changed.
-                const mergedConfig = { ...(service.configData ?? {}), ...formData.configData };
-                await notificationServiceConfigService.update(service.id, { ...formData, configData: mergedConfig });
-                swalConfig.success('Service updated successfully!');
-            } else {
-                await notificationServiceConfigService.create(formData);
-                swalConfig.success('Service created successfully!');
-            }
-            onSave();
-            onClose();
-        } catch (error) {
-            console.error('Error saving service:', error);
-            swalConfig.error('Failed to save service');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const serviceOptions = useMemo(() => (
         [
             {
@@ -120,6 +63,63 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
             },
         ] as const
     ), []);
+
+    useEffect(() => {
+        const passwordKeys = new Set<string>(
+            serviceOptions.flatMap(o => o.fields.filter(f => f.type === 'password').map(f => f.key)),
+        );
+        if (service) {
+            // Do not load password-type secrets into form state — they are masked on render.
+            const secretsMasked: Record<string, string | number | boolean> = {};
+            for (const [key, value] of Object.entries(service.configData ?? {})) {
+                if (!passwordKeys.has(key)) secretsMasked[key] = value;
+            }
+            setFormData({
+                serviceName: service.serviceName,
+                serviceType: service.serviceType,
+                configData: secretsMasked,
+                isActive: service.isActive ?? false,
+                isDefault: service.isDefault ?? false,
+            });
+        } else {
+            setFormData({
+                serviceName: 'sendgrid',
+                serviceType: 'email',
+                configData: {},
+                isActive: true,
+                isDefault: false,
+            });
+        }
+    }, [service, serviceOptions]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!formData.serviceName.trim()) {
+            swalConfig.error('Service name is required');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            if (service) {
+                // Preserve untouched masked secrets; only overwrite fields the user changed.
+                const mergedConfig = { ...(service.configData ?? {}), ...formData.configData };
+                await notificationServiceConfigService.update(service.id, { ...formData, configData: mergedConfig });
+                swalConfig.success('Service updated successfully!');
+            } else {
+                await notificationServiceConfigService.create(formData);
+                swalConfig.success('Service created successfully!');
+            }
+            onSave();
+            onClose();
+        } catch (error) {
+            console.error('Error saving service:', error);
+            swalConfig.error('Failed to save service');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const selectedService = serviceOptions.find(s => s.value === formData.serviceName);
 
@@ -226,7 +226,7 @@ export function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
                                         </label>
                                         <input
                                             type={field.type}
-                                            value={isMaskedSecret(field.key) ? MASK : (formData.configData[field.key] ?? '')}
+                                            value={isMaskedSecret(field.key) ? MASK : String(formData.configData[field.key] ?? '')}
                                             onChange={(e) => updateConfigData(field.key, e.target.value)}
                                             className="input"
                                             placeholder={`Enter ${field.label.toLowerCase()}`}

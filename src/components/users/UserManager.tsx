@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Search, Edit, Trash2, UserCheck, Crown, Shield, User } from 'lucide-react';
 import { User as UserType } from '../../types';
 import { useApp } from '../../hooks/useApp';
@@ -30,7 +30,7 @@ export function UserManager() {
 
   const filteredUsers = state.users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { X, User, Mail, Phone, MapPin, CreditCard, Calendar, ShoppingBag, Receipt } from 'lucide-react';
 import { Customer } from '../../types';
 import { useApp } from '../../hooks/useApp';
@@ -22,9 +22,9 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
   }, [state.sales, customer.id]);
 
   const totalTransactions = customerTransactions.length;
-  const totalSpent = customerTransactions.reduce((sum, sale) => sum + sale.total, 0);
+  const totalSpent = customerTransactions.reduce((sum, sale) => sum + (sale.total ?? 0), 0);
   const averageTransaction = totalTransactions > 0 ? totalSpent / totalTransactions : 0;
-  const creditAvailable = customer.creditLimit - customer.creditUsed;
+  const creditAvailable = (customer.creditLimit ?? 0) - (customer.creditUsed ?? 0);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -137,21 +137,21 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
                       <Mail className="h-5 w-5 text-secondary-400" />
                       <div>
                         <p className="text-sm font-medium text-secondary-600">Email</p>
-                        <p className="text-secondary-900">{customer.email}</p>
+                        <p className="text-secondary-900">{customer.email ?? ''}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
                       <Phone className="h-5 w-5 text-secondary-400" />
                       <div>
                         <p className="text-sm font-medium text-secondary-600">Phone</p>
-                        <p className="text-secondary-900">{customer.phone}</p>
+                        <p className="text-secondary-900">{customer.phone ?? ''}</p>
                       </div>
                     </div>
                     <div className="flex items-start space-x-3">
                       <MapPin className="h-5 w-5 text-secondary-400 mt-1" />
                       <div>
                         <p className="text-sm font-medium text-secondary-600">Address</p>
-                        <p className="text-secondary-900">{customer.address}</p>
+                        <p className="text-secondary-900">{customer.address ?? ''}</p>
                       </div>
                     </div>
                   </div>
@@ -165,7 +165,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
                       <div>
                         <p className="text-sm font-medium text-secondary-600">Price Tier</p>
                         <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-primary-800">
-                          {customer.priceTier}
+                          {customer.priceTier ?? ''}
                         </span>
                       </div>
                     </div>
@@ -198,11 +198,11 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <p className="text-sm font-medium text-secondary-600">Credit Limit</p>
-                    <p className="text-xl font-bold text-secondary-900">{DEFAULT_CURRENCY} {customer.creditLimit.toFixed(2)}</p>
+                    <p className="text-xl font-bold text-secondary-900">{DEFAULT_CURRENCY} {(customer.creditLimit ?? 0).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-secondary-600">Credit Used</p>
-                    <p className="text-xl font-bold text-danger-600">{DEFAULT_CURRENCY} {customer.creditUsed.toFixed(2)}</p>
+                    <p className="text-xl font-bold text-danger-600">{DEFAULT_CURRENCY} {(customer.creditUsed ?? 0).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-secondary-600">Available Credit</p>
@@ -211,10 +211,10 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
                 </div>
                 <div className="mt-4">
                   <div className="bg-white rounded-xl p-2">
-                    <div className="bg-blue-500 h-3 rounded-xl" style={{ width: `${(customer.creditUsed / customer.creditLimit) * 100}%` }}></div>
+                    <div className="bg-blue-500 h-3 rounded-xl" style={{ width: `${((customer.creditUsed ?? 0) / (customer.creditLimit ?? 1)) * 100}%` }}></div>
                   </div>
                   <p className="text-xs text-secondary-600 mt-2">
-                    {((customer.creditUsed / customer.creditLimit) * 100).toFixed(1)}% of credit limit used
+                    {(((customer.creditUsed ?? 0) / (customer.creditLimit ?? 1)) * 100).toFixed(1)}% of credit limit used
                   </p>
                 </div>
               </div>
@@ -246,7 +246,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
                         </div>
                         <div className="text-right">
                           <p className="text-xl font-bold text-secondary-900">
-                            {DEFAULT_CURRENCY} {transaction.total.toFixed(2)}
+                            {DEFAULT_CURRENCY} {(transaction.total ?? 0).toFixed(2)}
                           </p>
                           <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(transaction.status)}`}>
                             {transaction.status}

@@ -32,7 +32,7 @@ export function resolveCapabilities(
   shop: Shop,
   definitions: FeatureDefinition[],
 ): string[] {
-  const shopTierLevel = TIER_HIERARCHY[shop.subscriptionTier] ?? 0
+  const shopTierLevel = shop.subscriptionTier ? TIER_HIERARCHY[shop.subscriptionTier] ?? 0 : 0
   const caps: string[] = []
 
   for (const def of definitions) {

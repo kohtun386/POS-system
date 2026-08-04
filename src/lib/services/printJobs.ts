@@ -23,10 +23,10 @@ export const printJobsService = {
     if (error) throw error
     return {
       id: data.id,
-      shopId: data.shop_id,
-      orderId: data.order_id,
+      shopId: data.shop_id as string,
+      orderId: data.order_id as string,
       status: data.status as PrintJobStatus,
-      configData: data.config_data || {},
+      configData: (data.config_data as Record<string, string | number | boolean>) || {},
       createdAt: new Date(data.created_at),
       completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
     }
@@ -42,10 +42,10 @@ export const printJobsService = {
     if (error) throw error
     return {
       id: data.id,
-      shopId: data.shop_id,
-      orderId: data.order_id,
+      shopId: data.shop_id as string,
+      orderId: data.order_id as string,
       status: data.status as PrintJobStatus,
-      configData: data.config_data || {},
+      configData: (data.config_data as Record<string, string | number | boolean>) || {},
       createdAt: new Date(data.created_at),
       completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
     }
@@ -59,10 +59,10 @@ export const printJobsService = {
     if (error) throw error
     return {
       id: data.id,
-      shopId: data.shop_id,
-      orderId: data.order_id,
+      shopId: data.shop_id as string,
+      orderId: data.order_id as string,
       status: data.status as PrintJobStatus,
-      configData: data.config_data || {},
+      configData: (data.config_data as Record<string, string | number | boolean>) || {},
       createdAt: new Date(data.created_at),
       completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
     }

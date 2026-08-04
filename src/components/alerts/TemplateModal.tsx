@@ -30,7 +30,7 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
                 channel: template.channel,
                 subject: template.subject || '',
                 body: template.body,
-                isActive: template.isActive,
+                isActive: template.isActive ?? false,
             });
         } else {
             setFormData({
@@ -235,7 +235,7 @@ export function TemplateModal({ template, onClose, onSave }: TemplateModalProps)
                                     onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
                                     className="input"
                                     placeholder="Enter email subject"
-                                    required={formData.channel !== 'sms'}
+                                    required={true}
                                 />
                             </div>
                         </div>

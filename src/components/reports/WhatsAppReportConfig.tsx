@@ -6,9 +6,10 @@ import { supabase } from '../../lib/supabase';
 
 export function WhatsAppReportConfig() {
   const { state } = useApp();
-  const [enabled, setEnabled] = useState(state.settings.whatsappReportsEnabled ?? false);
-  const [recipientPhone, setRecipientPhone] = useState(state.settings.whatsappRecipientPhone ?? '');
-  const [reportTime, setReportTime] = useState(state.settings.whatsappReportTime ?? '18:00');
+  const settings = state.settings as unknown as Record<string, unknown>;
+  const [enabled, setEnabled] = useState((settings.whatsappReportsEnabled as boolean) ?? false);
+  const [recipientPhone, setRecipientPhone] = useState((settings.whatsappRecipientPhone as string) ?? '');
+  const [reportTime, setReportTime] = useState((settings.whatsappReportTime as string) ?? '18:00');
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
@@ -19,8 +20,8 @@ export function WhatsAppReportConfig() {
         whatsapp_reports_enabled: enabled,
         whatsapp_recipient_phone: recipientPhone,
         whatsapp_report_time: reportTime,
-      })
-      .eq('id', state.settings.id);
+      } as Record<string, unknown>)
+      .eq('id', settings.id as string);
 
     if (error) {
       swalConfig.error('Failed to save WhatsApp report settings');

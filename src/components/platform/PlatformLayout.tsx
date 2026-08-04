@@ -127,7 +127,7 @@ export function PlatformLayout() {
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-medium text-secondary-900 dark:text-secondary-100 truncate">{profile?.name}</div>
-                <div className="text-xs text-secondary-500 dark:text-secondary-400">{profile?.role?.replaceAll('_', ' ')}</div>
+                <div className="text-xs text-secondary-500 dark:text-secondary-400">{profile?.role?.replace(/_/g, ' ')}</div>
               </div>
             </div>
             <div className="flex items-center gap-1 px-2">

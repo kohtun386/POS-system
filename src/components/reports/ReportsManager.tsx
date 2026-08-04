@@ -45,7 +45,7 @@ export function ReportsManager() {
     filteredSales.forEach(sale => {
       const date = format(new Date(sale.timestamp), 'MM/dd');
       if (salesByDay[date]) {
-        salesByDay[date].sales += sale.total;
+        salesByDay[date].sales += sale.total ?? 0;
         salesByDay[date].transactions += 1;
       }
     });
@@ -97,10 +97,10 @@ export function ReportsManager() {
   }, [filteredSales]);
 
   // Summary Stats
-  const totalRevenue = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
+  const totalRevenue = filteredSales.reduce((sum, sale) => sum + (sale.total ?? 0), 0);
   const totalTransactions = filteredSales.length;
   const averageTransaction = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
-  const totalDiscounts = filteredSales.reduce((sum, sale) => sum + sale.discountAmount, 0);
+  const totalDiscounts = filteredSales.reduce((sum, sale) => sum + (sale.discountAmount ?? 0), 0);
 
   // Customer Analytics
   const customerData = useMemo(() => {
@@ -141,7 +141,7 @@ export function ReportsManager() {
     filteredSales.forEach(sale => {
       const customerId = sale.customerId || 'walk-in';
       if (customerStats[customerId]) {
-        customerStats[customerId].totalSpent += sale.total;
+        customerStats[customerId].totalSpent += sale.total ?? 0;
         customerStats[customerId].totalTransactions += 1;
         customerStats[customerId].totalItems += sale.items.reduce((sum, item) => sum + item.quantity, 0);
         customerStats[customerId].lastPurchase = new Date(sale.timestamp);
@@ -173,18 +173,18 @@ export function ReportsManager() {
           .reduce((itemSum, item) => itemSum + item.subtotal, 0);
       }, 0);
 
-      const stockValue = product.stock * (product.cost || 0);
-      const potentialRevenue = product.stock * (product.isWeightBased ? (product.pricePerUnit || 0) : product.price);
-      const turnoverRatio = product.stock > 0 ? soldQuantity / product.stock : 0;
+      const stockValue = (product.stock ?? 0) * (product.cost || 0);
+      const potentialRevenue = (product.stock ?? 0) * (product.isWeightBased ? (product.pricePerUnit || 0) : product.price);
+      const turnoverRatio = (product.stock ?? 0) > 0 ? soldQuantity / (product.stock ?? 0) : 0;
 
       return {
         id: product.id,
         name: product.name,
         sku: product.sku,
         category: product.category,
-        currentStock: product.stock,
-        minStock: product.minStock,
-        stockStatus: product.stock <= product.minStock ? 'Low Stock' : 
+        currentStock: product.stock ?? 0,
+        minStock: product.minStock ?? 0,
+        stockStatus: (product.stock ?? 0) <= (product.minStock ?? 0) ? 'Low Stock' : 
                     product.stock === 0 ? 'Out of Stock' : 'In Stock',
         costPrice: product.cost || 0,
         sellingPrice: product.isWeightBased ? (product.pricePerUnit || 0) : product.price,
@@ -231,11 +231,11 @@ export function ReportsManager() {
         if (sale.payments && sale.payments.length > 0) {
           paymentsStr = sale.payments.map(p => `${p.method}:${p.amount.toFixed(2)}`).join(';');
         } else {
-          paymentsStr = `${sale.paymentMethod}:${sale.total.toFixed(2)}`;
+          paymentsStr = `${sale.paymentMethod}:${(sale.total ?? 0).toFixed(2)}`;
         }
         // Escape commas in customer name
         const safeCustomer = customerName.replace(/,/g, ' ');
-        return `${format(new Date(sale.timestamp), 'yyyy-MM-dd HH:mm:ss')},${sale.invoiceNumber},${safeCustomer},${itemCount},${sale.total.toFixed(2)},${sale.discountAmount.toFixed(2)},"${paymentsStr}",${sale.cashier}`;
+        return `${format(new Date(sale.timestamp), 'yyyy-MM-dd HH:mm:ss')},${sale.invoiceNumber},${safeCustomer},${itemCount},${(sale.total ?? 0).toFixed(2)},${(sale.discountAmount ?? 0).toFixed(2)},"${paymentsStr}",${sale.cashier}`;
       }).join('\n');
       fileName = `pos-sales-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
     } else if (reportType === 'customers') {
@@ -871,7 +871,7 @@ export function ReportsManager() {
                     </td>
                     <td className="table-cell font-semibold">
                       {item.currentStock}
-                      {item.minStock > 0 && (
+                      {(item.minStock ?? 0) > 0 && (
                         <span className="text-xs text-secondary-500 ml-1">/ {item.minStock}</span>
                       )}
                     </td>

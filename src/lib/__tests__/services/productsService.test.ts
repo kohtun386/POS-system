@@ -30,6 +30,7 @@ function mockInsertResolving(error: unknown) {
 }
 
 const baseProduct = {
+  shopId: 'shop-1',
   name: 'Test',
   sku: 'TEST-1',
   price: 1000,

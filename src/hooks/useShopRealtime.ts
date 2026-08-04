@@ -9,6 +9,7 @@ import type { AppAction } from '../context/reducers/types';
 function mapProductRow(row: Record<string, unknown>): Product {
   return {
     id: row.id as string,
+    shopId: (row.shop_id as string) ?? '',
     name: row.name as string,
     sku: row.sku as string,
     barcode: (row.barcode as string) || undefined,
@@ -53,7 +54,6 @@ function mapSaleRow(row: Record<string, unknown>): Sale {
     cashierRole: (row.cashier_role as Sale['cashierRole']) || undefined,
     timestamp: new Date(row.created_at as string),
     receiptNumber: (row.receipt_number as string) || '',
-    receiptPrinted: undefined,
     notes: (row.notes as string) || undefined,
     appliedDiscounts: parseJsonField<AppliedDiscount[] | undefined>(row.applied_discounts, undefined),
     freeGifts: parseJsonField<CartItem[] | undefined>(row.free_gifts, undefined),
@@ -108,11 +108,11 @@ export function useShopRealtime({ activeShopId, dispatch }: UseShopRealtimeOptio
   // Expose markSaleLocallyCreated on window for checkout flow access
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      (window as Record<string, unknown>).__markSaleLocallyCreated = markSaleLocallyCreated;
+      (window as unknown as Record<string, unknown>).__markSaleLocallyCreated = markSaleLocallyCreated;
     }
     return () => {
       if (typeof window !== 'undefined') {
-        delete (window as Record<string, unknown>).__markSaleLocallyCreated;
+        delete (window as unknown as Record<string, unknown>).__markSaleLocallyCreated;
       }
     };
   }, [markSaleLocallyCreated]);

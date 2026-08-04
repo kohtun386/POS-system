@@ -213,7 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false)
         swalConfig.success('Verification email sent! Please check your inbox and click the link to verify your account.')
         // Track the user ID so onAuthStateChange doesn't attempt to load profile
-        loadedProfileUserId.current = data.user.id
+        loadedProfileUserId.current = data.user?.id ?? ''
         return { emailConfirmationSent: true }
       }
 

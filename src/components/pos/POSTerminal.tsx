@@ -41,7 +41,7 @@ export function POSTerminal() {
 
   const addToCart = (product: Product, weight?: number) => {
     // Only check stock if inventory tracking is enabled
-    if (product.trackInventory && product.stock <= 0) return;
+    if (product.trackInventory && (product.stock ?? 0) <= 0) return;
 
     const existingItemIndex = state.cart.findIndex(item =>
       item.product.id === product.id &&
@@ -53,7 +53,7 @@ export function POSTerminal() {
       const newQuantity = existingItem.quantity + 1;
 
       // Only check stock limits if inventory tracking is enabled
-      if (!product.trackInventory || newQuantity <= product.stock) {
+      if (!product.trackInventory || newQuantity <= (product.stock ?? 0)) {
         const updatedItem = {
           ...existingItem,
           quantity: newQuantity,
@@ -91,7 +91,7 @@ export function POSTerminal() {
         updates: { cart: state.cart, selectedCustomer: state.selectedCustomer },
       },
     });
-  }, [state.cart, state.selectedCustomer, state.activeSalesTab]);
+  }, [state.cart, state.selectedCustomer, state.activeSalesTab, dispatch]);
 
   const handleCheckout = () => {
     setShowCheckout(true);
@@ -146,7 +146,8 @@ export function POSTerminal() {
       // Save to Supabase and update local state
       const savedDraft = await salesService.create(draftSale);
       // Register sale ID for Realtime dedup — prevents echo duplicate on creating terminal
-      (window as Record<string, unknown>).__markSaleLocallyCreated?.(savedDraft.id);
+      const markSale = (window as unknown as Record<string, unknown>).__markSaleLocallyCreated as ((id: string) => void) | undefined;
+      if (markSale) markSale(savedDraft.id);
       dispatch({ type: 'ADD_SALE', payload: savedDraft });
       dispatch({ type: 'CLEAR_CART' });
 

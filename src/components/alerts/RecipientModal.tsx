@@ -30,7 +30,7 @@ export function RecipientModal({ recipient, onClose, onSave }: RecipientModalPro
                 phone: recipient.phone || '',
                 role: recipient.role,
                 alertTypes: recipient.alertTypes,
-                isActive: recipient.isActive,
+                isActive: recipient.isActive ?? false,
             });
         } else {
             setFormData({

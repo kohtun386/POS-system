@@ -223,7 +223,7 @@ export const swalConfig = {
       title,
       input: 'textarea',
       inputPlaceholder: placeholder,
-      inputAttributes: { rows: 3 },
+      inputAttributes: { rows: '3' },
       showCancelButton: true,
       confirmButtonColor: '#9a693a',
       cancelButtonColor: '#6b7280',

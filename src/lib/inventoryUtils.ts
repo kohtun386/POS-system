@@ -11,11 +11,11 @@ export async function checkStockAvailability(
   const insufficientItems: Array<{ productName: string; needed: number; available: number }> = []
 
   for (const item of cartItems) {
-    if (item.product.trackInventory && item.product.stock < item.quantity) {
+    if (item.product.trackInventory && (item.product.stock ?? 0) < item.quantity) {
       insufficientItems.push({
         productName: item.product.name,
         needed: item.quantity,
-        available: item.product.stock,
+        available: item.product.stock ?? 0,
       })
     }
   }

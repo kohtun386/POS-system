@@ -39,7 +39,7 @@ function checkCondition(
 ): boolean {
   switch (condition.type) {
     case 'min_amount':
-      return total >= condition.value;
+      return total >= Number(condition.value);
 
     case 'specific_products': {
       if (!Array.isArray(condition.value)) return false;
