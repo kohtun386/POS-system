@@ -250,7 +250,8 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
               {navigationItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     onViewChange(item.id);
                     setShowMobileMenu(false);
                   }}
@@ -265,7 +266,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                 </button>
               ))}
               <div className="border-t border-secondary-200/50 pt-4 mt-4 space-y-2">
-                <button onClick={() => { onViewChange('settings'); setShowMobileMenu(false); }} className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300">
+                <button onClick={(e) => { e.stopPropagation(); onViewChange('settings'); setShowMobileMenu(false); }} className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300">
                   <Settings className="h-5 w-5 text-secondary-600" />
                   <span>Settings</span>
                 </button>
