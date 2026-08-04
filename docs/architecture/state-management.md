@@ -1,6 +1,6 @@
 # State Management Architecture — CoffeeShop POS
 
-**Last updated:** 2026-07-14 (Aligned with VISION.md v3.1.0: receipt state §9, shift state §12, checkout RPC §11)
+**Last updated:** 2026-08-04 (capture-phase click anti-pattern §8, aligned with VISION.md v3.1.2)
 **Source of truth:** `src/context/SupabaseAppContext.tsx` (active), `src/context/AuthContext.tsx`, `src/context/ThemeContext.tsx`
 
 ---
@@ -481,6 +481,7 @@ Close: UPDATE cash_shifts (closing_cash, expected_cash, variance, status='closed
 | Check `shop.subscriptionTier` in components | Couples component code to tier logic. Adding a new tier requires component changes. | Check `state.capabilities.includes('key')` |
 | Check `shop.businessType` in components | Couples component code to business type. Adding a new type requires component changes. | Check `state.capabilities.includes('key')` |
 | Read `feature_definitions` table client-side | Server resolves capabilities at login. Client only needs the flat array. | Use `state.capabilities` only |
+| Capture-phase click-outside without stopPropagation | `document.addEventListener('click', handler, true)` intercepts clicks on overlay children before React onClick fires. Menu closes but view never changes. | Add `e.stopPropagation()` to all interactive elements inside the overlay |
 
 ---
 

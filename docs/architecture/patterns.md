@@ -1,6 +1,6 @@
 # Coding Conventions & Patterns — CoffeeShop POS
 
-**Last updated:** 2026-07-13 (aligned with VISION.md v3.1.0)
+**Last updated:** 2026-08-04 (mobile event handling pattern, aligned with VISION.md v3.1.2)
 
 Synthesized from existing documentation. Each pattern links to its source.
 
@@ -434,6 +434,33 @@ Use `checkDiscountEligibility()` from SupabaseAppContext. Don't reimplement cond
 | Reimplement discount checking | Edge cases not covered | Use `checkDiscountEligibility()` |
 
 **Source:** `CLAUDE.md`, `docs/architecture/state-management.md`
+
+---
+
+## Mobile Event Handling
+
+### Click-Outside Detection with Capture Phase
+
+When using `document.addEventListener('click', handler, true)` (capture phase) for click-outside detection on overlays (dropdowns, mobile menus):
+
+1. **Always add `e.stopPropagation()` to interactive children** inside the overlay
+2. Without it, the capture handler fires before React's synthetic onClick, closing the overlay before the click action executes
+3. This is critical on mobile browsers where synthetic event timing differs from desktop
+
+**Example (Header.tsx mobile menu):**
+```tsx
+// ❌ BAD — capture handler swallows the click
+onClick={() => { onViewChange(item.id); setShowMobileMenu(false); }}
+
+// ✅ GOOD — stopPropagation prevents capture-phase interference
+onClick={(e) => {
+  e.stopPropagation();
+  onViewChange(item.id);
+  setShowMobileMenu(false);
+}}
+```
+
+**Source:** PR #54, technical debt §7
 
 ---
 
