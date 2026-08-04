@@ -3,7 +3,7 @@
 Originally captured 2026-06-16 during POS Helper lint + theme consistency audit.
 Commit: `8556dc3` (159 → 140 lint problems).
 
-Last updated: 2026-07-31 (React Refresh §2 resolved, approve-shop security hotfix §6).
+Last updated: 2026-08-04 (mobile nav click propagation §7 resolved, lint _ prefix config).
 
 ---
 
@@ -186,7 +186,52 @@ round-trip to PostgREST. There is no client-side transaction primitive.
 
 ---
 
-## 7. Resolved Items (v3.1.0)
+## 7. Mobile Navigation Click Propagation Bug
+
+**Status:** ✅ RESOLVED (2026-08-04)
+**PRs:** #52 (Header guard), #54 (click propagation)
+
+### Symptom
+
+On mobile (< 768px), the hamburger menu opens and shows all navigation tabs for admin users, but tapping a tab does nothing — the view stays on POS. Desktop navigation worked fine.
+
+### Root Cause (two issues)
+
+**Issue A — Timing (PR #52):**
+
+`getNavigationItems()` in `Header.tsx:76-110` checks `state.currentUser?.role` to decide which nav items to show. Every non-POS item requires `role === 'admin' || role === 'manager'`. However, `initialState.currentUser` is `null` (`appReducer.ts:18`). During the brief window between initial render and profile load, `role = undefined` → only POS is pushed. On desktop this was invisible (icon nav re-renders after profile loads), but on mobile users who opened the hamburger during the null-state window saw only POS.
+
+**Fix:** Guard `Header` render on `state.currentUser` being set. Show a same-height placeholder div while loading.
+
+**Issue B — Capture-phase interference (PR #54):**
+
+The `handleClickOutside` handler (`Header.tsx:42-46`) registers on `document` with `useCapture: true`. When a user taps a nav item:
+
+1. Document capture listener fires → `setShowMobileMenu(false)` (menu closes)
+2. React onClick should fire → `onViewChange(item.id)` (view changes)
+
+On mobile browsers, the capture-phase state update can interfere with the React synthetic event, preventing `onViewChange` from executing. The menu closes but the view never changes.
+
+**Fix:** Added `e.stopPropagation()` to mobile nav item and settings button `onClick` handlers to prevent the capture-phase handler from intercepting intentional nav clicks.
+
+### Key Code Paths
+
+| File | Line(s) | Role |
+|------|---------|------|
+| `src/components/layout/Header.tsx` | 76-110 | `getNavigationItems()` — role-gated nav items |
+| `src/components/layout/Header.tsx` | 42-46 | `handleClickOutside` — capture-phase menu closer |
+| `src/components/layout/Header.tsx` | 253, 268 | Mobile nav onClick — `e.stopPropagation()` added |
+| `src/App.tsx` | 68-71 | Cashier redirect guard |
+| `src/App.tsx` | 152-156 | Header render guard behind `state.currentUser` |
+| `src/context/reducers/appReducer.ts` | 18 | `initialState.currentUser = null` |
+
+### Lesson
+
+When using capture-phase event listeners on `document` for click-outside detection, always add `e.stopPropagation()` to interactive elements inside the overlay to prevent the capture handler from swallowing intentional clicks. This is especially critical on mobile browsers where synthetic event handling differs from desktop.
+
+---
+
+## 8. Resolved Items (v3.1.0)
 
 ### CurrencyContext — ✅ RESOLVED (2026-07-10)
 
