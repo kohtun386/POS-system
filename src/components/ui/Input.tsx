@@ -61,7 +61,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
                         }`}
                     whileFocus={{ scale: 1.01 }}
                     transition={{ duration: 0.2 }}
-                    {...props}
+                    {...(props as Record<string, unknown>)}
                 />
 
                 {icon && iconPosition === 'right' && (
@@ -133,7 +133,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
                     }`}
                 whileFocus={{ scale: 1.01 }}
                 transition={{ duration: 0.2 }}
-                {...props}
+                {...(props as Record<string, unknown>)}
             />
 
             {error && (

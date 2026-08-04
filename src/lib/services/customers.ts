@@ -36,14 +36,15 @@ export const customersService = {
     const { data, error } = await supabase
       .from('customers')
       .insert({
+        shop_id: customer.shopId ?? '',
         name: customer.name,
         email: customer.email,
         phone: customer.phone,
         address: customer.address,
-        credit_limit: customer.creditLimit,
-        credit_used: customer.creditUsed,
+        credit_limit: customer.creditLimit ?? 0,
+        credit_used: customer.creditUsed ?? 0,
         price_tier: customer.priceTier,
-        total_purchases: customer.totalPurchases,
+        total_purchases: customer.totalPurchases ?? 0,
         last_purchase: customer.lastPurchase?.toISOString()
       })
       .select()

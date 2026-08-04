@@ -23,7 +23,7 @@ export function OwnerInsights({ dateRange }: OwnerInsightsProps) {
 
   // Revenue = total of all sales
   const totalRevenue = useMemo(
-    () => filteredSales.reduce((sum, sale) => sum + sale.total, 0),
+    () => filteredSales.reduce((sum, sale) => sum + (sale.total ?? 0), 0),
     [filteredSales],
   );
 

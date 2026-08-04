@@ -1,5 +1,6 @@
 import { supabase } from '../supabase'
 import type { Discount, DiscountCondition } from '../../types'
+import type { Database } from '../database.types'
 
 export const discountsService = {
   async getAll(shopId?: string): Promise<Discount[]> {
@@ -23,7 +24,7 @@ export const discountsService = {
       description: discount.description || '',
       type: discount.type as Discount['type'],
       value: discount.value || 0,
-      conditions: Array.isArray(discount.conditions) ? discount.conditions as DiscountCondition[] : [],
+      conditions: Array.isArray(discount.conditions) ? discount.conditions as unknown as DiscountCondition[] : [],
       freeGiftProducts: discount.free_gift_products || undefined,
       minAmount: discount.min_amount || undefined,
       maxDiscount: discount.max_discount || undefined,
@@ -43,7 +44,7 @@ export const discountsService = {
         description: discount.description,
         type: discount.type,
         value: discount.value,
-        conditions: discount.conditions,
+        conditions: discount.conditions as unknown as Record<string, unknown>[],
         free_gift_products: discount.freeGiftProducts,
         min_amount: discount.minAmount,
         max_discount: discount.maxDiscount,
@@ -51,7 +52,7 @@ export const discountsService = {
         valid_to: discount.validTo.toISOString(),
         valid_days: discount.validDays,
         active: discount.active
-      })
+      } as unknown as Database['public']['Tables']['discounts']['Insert'])
       .select()
       .single()
 
@@ -64,7 +65,7 @@ export const discountsService = {
       description: data.description || '',
       type: data.type as Discount['type'],
       value: data.value || 0,
-      conditions: Array.isArray(data.conditions) ? data.conditions as DiscountCondition[] : [],
+      conditions: Array.isArray(data.conditions) ? data.conditions as unknown as DiscountCondition[] : [],
       freeGiftProducts: data.free_gift_products || undefined,
       minAmount: data.min_amount || undefined,
       maxDiscount: data.max_discount || undefined,
@@ -84,7 +85,7 @@ export const discountsService = {
         description: discount.description,
         type: discount.type,
         value: discount.value,
-        conditions: discount.conditions,
+        conditions: discount.conditions as unknown as Record<string, unknown>[],
         free_gift_products: discount.freeGiftProducts,
         min_amount: discount.minAmount,
         max_discount: discount.maxDiscount,
@@ -93,7 +94,7 @@ export const discountsService = {
         valid_days: discount.validDays,
         active: discount.active,
         updated_at: new Date().toISOString()
-      })
+      } as unknown as Database['public']['Tables']['discounts']['Update'])
       .eq('id', id)
       .select()
       .single()
@@ -107,7 +108,7 @@ export const discountsService = {
       description: data.description || '',
       type: data.type as Discount['type'],
       value: data.value || 0,
-      conditions: Array.isArray(data.conditions) ? data.conditions as DiscountCondition[] : [],
+      conditions: Array.isArray(data.conditions) ? data.conditions as unknown as DiscountCondition[] : [],
       freeGiftProducts: data.free_gift_products || undefined,
       minAmount: data.min_amount || undefined,
       maxDiscount: data.max_discount || undefined,

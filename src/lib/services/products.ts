@@ -1,16 +1,7 @@
 import { supabase } from '../supabase'
 import type { Product, ProductBatch } from '../../types'
+import type { Database } from '../database.types'
 import { ProductLimitError } from './common'
-
-interface RawProductBatch {
-  id: string
-  batch_number: string
-  manufacturing_date: string
-  expiry_date: string
-  quantity: number
-  cost_price: number
-  supplier_info: string
-}
 
 export const productsService = {
   async getAll(shopId?: string): Promise<Product[]> {
@@ -30,7 +21,7 @@ export const productsService = {
 
     return data.map(product => ({
       id: product.id,
-      shopId: product.shop_id || undefined,
+      shopId: (product.shop_id as string) || '',
       name: product.name,
       sku: product.sku,
       barcode: product.barcode || undefined,
@@ -62,14 +53,14 @@ export const productsService = {
 
     if (error) throw error
 
-    return data.map((batch: RawProductBatch) => ({
-      id: batch.id,
-      batchNumber: batch.batch_number,
-      manufacturingDate: new Date(batch.manufacturing_date),
-      expiryDate: new Date(batch.expiry_date),
-      quantity: batch.quantity || 0,
-      costPrice: batch.cost_price || 0,
-      supplierInfo: batch.supplier_info || ''
+    return data.map((batch) => ({
+      id: (batch as Record<string, unknown>).id as string,
+      batchNumber: (batch as Record<string, unknown>).batch_number as string,
+      manufacturingDate: new Date((batch as Record<string, unknown>).manufacturing_date as string),
+      expiryDate: new Date((batch as Record<string, unknown>).expiry_date as string),
+      quantity: ((batch as Record<string, unknown>).quantity as number) || 0,
+      costPrice: ((batch as Record<string, unknown>).cost_price as number) || 0,
+      supplierInfo: ((batch as Record<string, unknown>).supplier_info as string) || ''
     }))
   },
 
@@ -79,21 +70,21 @@ export const productsService = {
       .insert({
         name: product.name,
         sku: product.sku,
-        barcode: product.barcode,
+        barcode: product.barcode ?? null,
         price: product.price,
-        cost: product.cost,
-        stock: product.stock,
-        min_stock: product.minStock,
+        cost: product.cost ?? 0,
+        stock: product.stock ?? 0,
+        min_stock: product.minStock ?? 0,
         category: product.category,
-        description: product.description,
-        image: product.image,
-        taxable: product.taxable,
-        active: product.active,
-        is_weight_based: product.isWeightBased,
-        price_per_unit: product.pricePerUnit,
-        unit: product.unit,
-        track_inventory: product.trackInventory
-      })
+        description: product.description ?? null,
+        image: product.image ?? null,
+        taxable: product.taxable ?? true,
+        active: product.active ?? true,
+        is_weight_based: product.isWeightBased ?? false,
+        price_per_unit: product.pricePerUnit ?? null,
+        unit: product.unit ?? null,
+        track_inventory: product.trackInventory ?? true
+      } as unknown as Database['public']['Tables']['products']['Insert'])
       .select()
       .single()
 
@@ -146,7 +137,7 @@ export const productsService = {
         unit: product.unit,
         track_inventory: product.trackInventory,
         updated_at: new Date().toISOString()
-      })
+      } as unknown as Database['public']['Tables']['products']['Update'])
       .eq('id', id)
       .select()
       .single()
@@ -197,7 +188,7 @@ export const productsService = {
 
     return {
       id: data.id,
-      shopId: data.shop_id || undefined,
+      shopId: (data.shop_id as string) || '',
       name: data.name,
       sku: data.sku,
       barcode: data.barcode || undefined,
@@ -213,14 +204,14 @@ export const productsService = {
       isWeightBased: data.is_weight_based ?? false,
       pricePerUnit: data.price_per_unit || undefined,
       unit: data.unit || undefined,
-      batches: data.product_batches?.map((batch: RawProductBatch) => ({
-        id: batch.id,
-        batchNumber: batch.batch_number,
-        manufacturingDate: new Date(batch.manufacturing_date),
-        expiryDate: new Date(batch.expiry_date),
-        quantity: batch.quantity || 0,
-        costPrice: batch.cost_price || 0,
-        supplierInfo: batch.supplier_info || ''
+      batches: data.product_batches?.map((batch) => ({
+        id: (batch as Record<string, unknown>).id as string,
+        batchNumber: (batch as Record<string, unknown>).batch_number as string,
+        manufacturingDate: new Date((batch as Record<string, unknown>).manufacturing_date as string),
+        expiryDate: new Date((batch as Record<string, unknown>).expiry_date as string),
+        quantity: ((batch as Record<string, unknown>).quantity as number) || 0,
+        costPrice: ((batch as Record<string, unknown>).cost_price as number) || 0,
+        supplierInfo: ((batch as Record<string, unknown>).supplier_info as string) || ''
       })) || [],
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)

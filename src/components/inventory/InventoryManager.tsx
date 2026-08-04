@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Product } from '../../types';
 import { useApp } from '../../hooks/useApp';
@@ -34,8 +34,8 @@ export function InventoryManager() {
           bValue = b.name.toLowerCase();
           break;
         case 'stock':
-          aValue = a.stock;
-          bValue = b.stock;
+          aValue = a.stock ?? 0;
+          bValue = b.stock ?? 0;
           break;
         case 'price':
           aValue = a.price;
@@ -53,8 +53,8 @@ export function InventoryManager() {
       }
     });
 
-  const lowStockProducts = state.products.filter((p: Product) => p.trackInventory && p.stock <= p.minStock);
-  const totalValue = state.products.reduce((sum: number, p: Product) => sum + (p.stock * p.cost), 0);
+  const lowStockProducts = state.products.filter((p: Product) => p.trackInventory && (p.stock ?? 0) <= (p.minStock ?? 0));
+  const totalValue = state.products.reduce((sum: number, p: Product) => sum + ((p.stock ?? 0) * (p.cost ?? 0)), 0);
   const outOfStockProducts = state.products.filter((p: Product) => p.trackInventory && p.stock === 0);
 
   const handleEditProduct = (product: Product) => {
@@ -217,7 +217,7 @@ export function InventoryManager() {
             </thead>
             <tbody className="bg-secondary-50 divide-y divide-secondary-200">
               {filteredProducts.map((product) => {
-                const isLowStock = product.trackInventory && product.stock <= product.minStock;
+                const isLowStock = product.trackInventory && (product.stock ?? 0) <= (product.minStock ?? 0);
                 const isOutOfStock = product.trackInventory && product.stock === 0;
                 
                 return (
@@ -241,7 +241,7 @@ export function InventoryManager() {
                       {DEFAULT_CURRENCY} {product.price.toFixed(2)}
                     </td>
                     <td className="table-cell text-secondary-600">
-                      {DEFAULT_CURRENCY} {product.cost.toFixed(2)}
+                      {DEFAULT_CURRENCY} {(product.cost ?? 0).toFixed(2)}
                     </td>
                     <td className="table-cell">
                       <div className="flex items-center space-x-2">

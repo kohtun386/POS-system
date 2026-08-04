@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Search, Edit, Trash2, User, Mail, Phone, CreditCard, Eye } from 'lucide-react';
 import { Customer } from '../../types';
 import { useApp } from '../../hooks/useApp';
@@ -16,8 +16,8 @@ export function CustomerManager() {
 
   const filteredCustomers = state.customers.filter((customer: Customer) =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone.includes(searchTerm)
+    (customer.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (customer.phone ?? '').includes(searchTerm)
   );
 
   const handleEditCustomer = (customer: Customer) => {
@@ -51,7 +51,7 @@ export function CustomerManager() {
   };
 
   const totalCustomers = state.customers.length;
-  const totalPurchases = state.customers.reduce((sum: number, c: Customer) => sum + c.totalPurchases, 0);
+  const totalPurchases = state.customers.reduce((sum: number, c: Customer) => sum + (c.totalPurchases ?? 0), 0);
   const averagePurchase = totalCustomers > 0 ? totalPurchases / totalCustomers : 0;
   const activeCustomers = state.customers.filter((c: Customer) => c.lastPurchase && 
     new Date().getTime() - new Date(c.lastPurchase).getTime() < 30 * 24 * 60 * 60 * 1000
@@ -171,7 +171,7 @@ export function CustomerManager() {
                     <div className="text-sm text-secondary-500">{customer.phone}</div>
                   </td>
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-semibold text-secondary-900">
-                    {DEFAULT_CURRENCY} {customer.totalPurchases.toFixed(2)}
+                    {DEFAULT_CURRENCY} {(customer.totalPurchases ?? 0).toFixed(2)}
                   </td>
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                     <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-primary-800">

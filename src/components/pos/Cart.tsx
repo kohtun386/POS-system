@@ -69,8 +69,8 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
 
   const filteredCustomers = state.customers.filter(customer =>
     customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    customer.email.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    customer.phone.includes(customerSearch)
+    (customer.email ?? '').toLowerCase().includes(customerSearch.toLowerCase()) ||
+    (customer.phone ?? '').includes(customerSearch)
   );
 
   const subtotal = state.cart.reduce((sum, item) => {

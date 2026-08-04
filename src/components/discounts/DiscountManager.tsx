@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Percent, Gift } from 'lucide-react';
 import { Discount } from '../../types';
 import { useApp } from '../../hooks/useApp';
@@ -15,7 +15,7 @@ export function DiscountManager() {
 
   const filteredDiscounts = state.discounts.filter(discount =>
     discount.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    discount.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (discount.description ?? '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleEditDiscount = (discount: Discount) => {

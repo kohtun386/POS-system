@@ -25,11 +25,11 @@ export function CustomerModal({ isOpen, onClose, customer }: CustomerModalProps)
     if (customer) {
       setFormData({
         name: customer.name,
-        email: customer.email,
-        phone: customer.phone,
-        address: customer.address,
-        creditLimit: customer.creditLimit.toString(),
-        priceTier: customer.priceTier,
+        email: customer.email ?? '',
+        phone: customer.phone ?? '',
+        address: customer.address ?? '',
+        creditLimit: (customer.creditLimit ?? 0).toString(),
+        priceTier: customer.priceTier ?? '',
       });
     } else {
       setFormData({

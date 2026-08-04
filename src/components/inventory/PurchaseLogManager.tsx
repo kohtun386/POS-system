@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit, Trash2, ShoppingCart, Calendar, TrendingUp, Filter } from 'lucide-react';
 import { PurchaseLog } from '../../types';
 import { purchaseLogsService } from '../../lib/services';

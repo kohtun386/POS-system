@@ -1,5 +1,6 @@
 import { supabase } from '../supabase'
 import type { SalesTab, CartItem } from '../../types'
+import type { Database } from '../database.types'
 
 export const salesTabsService = {
   async getByUserId(userId: string): Promise<SalesTab[]> {
@@ -17,7 +18,7 @@ export const salesTabsService = {
     return data.map(tab => ({
       id: tab.id,
       name: tab.name,
-      cart: (tab.cart as CartItem[]) || [],
+      cart: (tab.cart as unknown as CartItem[]) || [],
       selectedCustomer: tab.selected_customer ? {
         id: tab.selected_customer.id,
         name: tab.selected_customer.name,
@@ -47,7 +48,7 @@ export const salesTabsService = {
     }
     const { data, error } = await supabase
       .from('sales_tabs')
-      .insert(insertData)
+      .insert(insertData as unknown as Database['public']['Tables']['sales_tabs']['Insert'])
       .select()
       .single()
 
@@ -56,7 +57,7 @@ export const salesTabsService = {
     return {
       id: data.id,
       name: data.name,
-      cart: (data.cart as CartItem[]) || [],
+      cart: (data.cart as unknown as CartItem[]) || [],
       selectedCustomer: tab.selectedCustomer,
       createdAt: new Date(data.created_at)
     }
@@ -67,9 +68,9 @@ export const salesTabsService = {
       .from('sales_tabs')
       .update({
         name: tab.name,
-        cart: tab.cart,
+        cart: tab.cart as unknown as Record<string, unknown>[],
         selected_customer_id: tab.selectedCustomer?.id
-      })
+      } as unknown as Database['public']['Tables']['sales_tabs']['Update'])
       .eq('id', id)
       .select()
       .single()
@@ -79,7 +80,7 @@ export const salesTabsService = {
     return {
       id: data.id,
       name: data.name,
-      cart: (data.cart as CartItem[]) || [],
+      cart: (data.cart as unknown as CartItem[]) || [],
       selectedCustomer: tab.selectedCustomer || null,
       createdAt: new Date(data.created_at)
     }

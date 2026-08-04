@@ -30,10 +30,10 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
       setFormData({
         username: user.username,
         name: user.name,
-        email: user.email,
+        email: user.email ?? '',
         password: '', // Don't pre-fill password for existing users
-        role: user.role,
-        active: user.active,
+        role: user.role as 'cashier' | 'admin' | 'manager',
+        active: user.active ?? false,
         avatar: user.avatar || ''
       });
     } else {
@@ -113,9 +113,9 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
           username: profileData.username,
           name: profileData.name,
           email: profileData.email,
-          role: profileData.role,
+          role: profileData.role as 'cashier' | 'admin' | 'manager',
           permissions: profileData.permissions || [],
-          active: profileData.active,
+          active: profileData.active ?? false,
           avatar: profileData.avatar || undefined
         };
 

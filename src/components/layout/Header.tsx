@@ -40,7 +40,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
     };
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (showMobileMenu && !event.target?.closest('button[aria-label=Menu]') && !event.target?.closest('button[aria-label="Close menu"]')) {
+      if (showMobileMenu && !(event.target as Element)?.closest('button[aria-label=Menu]') && !(event.target as Element)?.closest('button[aria-label="Close menu"]')) {
         setShowMobileMenu(false);
       }
     };

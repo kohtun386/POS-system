@@ -62,7 +62,7 @@ export function TransactionsManager() {
     }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [state.sales, searchTerm, statusFilter, paymentFilter, dateFilter]);
 
-  const totalRevenue = filteredTransactions.reduce((sum, sale) => sum + sale.total, 0);
+  const totalRevenue = filteredTransactions.reduce((sum, sale) => sum + (sale.total ?? 0), 0);
   const totalTransactions = filteredTransactions.length;
   const averageTransaction = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
 
@@ -95,7 +95,7 @@ export function TransactionsManager() {
         format(new Date(sale.timestamp), 'yyyy-MM-dd HH:mm'),
         sale.customerName || 'Walk-in',
         sale.items.length,
-        sale.total.toFixed(2),
+        (sale.total ?? 0).toFixed(2),
         sale.paymentMethod,
         sale.status,
         sale.cashier ?? ''
@@ -291,7 +291,7 @@ export function TransactionsManager() {
                   </td>
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-semibold text-secondary-900">
-                      {DEFAULT_CURRENCY} {transaction.total.toFixed(2)}
+                      {DEFAULT_CURRENCY} {(transaction.total ?? 0).toFixed(2)}
                     </div>
                   </td>
                               <td className="px-4 md:px-6 py-4 whitespace-nowrap">
@@ -486,21 +486,21 @@ function TransactionDetailModal({ transaction, onClose }: TransactionDetailModal
           <div className="space-y-2 pt-4 border-t border-secondary-200">
             <div className="flex justify-between">
               <span className="text-secondary-600">Subtotal:</span>
-              <span className="font-medium">{DEFAULT_CURRENCY} {transaction.subtotal.toFixed(2)}</span>
+              <span className="font-medium">{DEFAULT_CURRENCY} {(transaction.subtotal ?? 0).toFixed(2)}</span>
             </div>
-            {transaction.discountAmount > 0 && (
+            {((transaction.discountAmount ?? 0) > 0) && (
               <div className="flex justify-between text-success-600">
                 <span>Discount:</span>
-                <span className="font-medium">-{DEFAULT_CURRENCY} {transaction.discountAmount.toFixed(2)}</span>
+                <span className="font-medium">-{DEFAULT_CURRENCY} {(transaction.discountAmount ?? 0).toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span className="text-secondary-600">Tax:</span>
-              <span className="font-medium">{DEFAULT_CURRENCY} {transaction.taxAmount.toFixed(2)}</span>
+              <span className="font-medium">{DEFAULT_CURRENCY} {(transaction.taxAmount ?? 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold pt-2 border-t border-secondary-200">
               <span>Total:</span>
-              <span>{DEFAULT_CURRENCY} {transaction.total.toFixed(2)}</span>
+              <span>{DEFAULT_CURRENCY} {(transaction.total ?? 0).toFixed(2)}</span>
             </div>
           </div>
 

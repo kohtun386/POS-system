@@ -187,12 +187,12 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         } else {
           let discountAmount = 0;
           if (discount.type === 'percentage') {
-            discountAmount = (subtotal * discount.value) / 100;
+            discountAmount = (subtotal * (discount.value ?? 0)) / 100;
             if (discount.maxDiscount) {
               discountAmount = Math.min(discountAmount, discount.maxDiscount);
             }
           } else if (discount.type === 'fixed') {
-            discountAmount = discount.value;
+            discountAmount = discount.value ?? 0;
           }
 
           if (discountAmount > 0) {
@@ -225,7 +225,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const remaining = Math.max(0, total - paidSoFar);
 
   const canPayWithCredit = state.selectedCustomer &&
-    (state.selectedCustomer.creditLimit - state.selectedCustomer.creditUsed) >= total;
+    ((state.selectedCustomer.creditLimit ?? 0) - (state.selectedCustomer.creditUsed ?? 0)) >= total;
 
   const canProcessPayment = () => {
     if (isProcessing) return false;
@@ -353,8 +353,8 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
       try {
         savedSale = await checkoutService.complete(
           state.activeShopId!,
-          sale,
-          salePayments,
+          sale as unknown as Record<string, unknown>,
+          salePayments as unknown as Record<string, unknown>,
           user?.id || '',
         );
       } catch (err: unknown) {
@@ -368,7 +368,10 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
         throw err;
       }
       // Register sale ID for Realtime dedup — prevents echo duplicate on creating terminal
-      (window as Record<string, unknown>).__markSaleLocallyCreated?.(savedSale.id);
+        const markSale = (window as unknown as Record<string, unknown>).__markSaleLocallyCreated as ((id: string) => void) | undefined;
+        if (markSale && savedSale?.id) {
+          markSale(savedSale.id);
+        }
       dispatch({ type: 'ADD_SALE', payload: savedSale });
 
       dispatch({ type: 'CLEAR_CART' });
@@ -651,15 +654,15 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                     <div className="text-sm text-secondary-900 dark:text-secondary-100">
                       <div className="flex justify-between">
                         <span>Credit Limit:</span>
-                        <span className="font-medium">{DEFAULT_CURRENCY} {state.selectedCustomer.creditLimit.toFixed(2)}</span>
+                        <span className="font-medium">{DEFAULT_CURRENCY} {(state.selectedCustomer.creditLimit ?? 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Used:</span>
-                        <span className="font-medium">{DEFAULT_CURRENCY} {state.selectedCustomer.creditUsed.toFixed(2)}</span>
+                        <span className="font-medium">{DEFAULT_CURRENCY} {(state.selectedCustomer.creditUsed ?? 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between font-semibold border-t border-primary-300 dark:border-primary-700/50 pt-1 mt-1">
                         <span>Available:</span>
-                        <span className="text-success-600">{DEFAULT_CURRENCY} {(state.selectedCustomer.creditLimit - state.selectedCustomer.creditUsed).toFixed(2)}</span>
+                        <span className="text-success-600">{DEFAULT_CURRENCY} {((state.selectedCustomer.creditLimit ?? 0) - (state.selectedCustomer.creditUsed ?? 0)).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

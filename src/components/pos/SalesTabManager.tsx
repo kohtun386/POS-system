@@ -172,7 +172,7 @@ export function SalesTabManager() {
           </button>
           {showUpgrade && (
             <div className="absolute left-14 top-0 z-50 w-64">
-              <UpgradePrompt feature="Multi-tab sales" tier="free" onClose={() => setShowUpgrade(false)} />
+              <UpgradePrompt feature="Multi-tab sales" tier="growth" onClose={() => setShowUpgrade(false)} />
             </div>
           )}
         </div>

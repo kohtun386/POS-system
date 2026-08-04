@@ -102,12 +102,12 @@ function ReceiptContent({ sale }: { sale: Sale }) {
       <div style={{ borderTop: '1px solid #d1d5db', paddingTop: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 4 }}>
           <span>Subtotal:</span>
-          <span>{DEFAULT_CURRENCY} {sale.subtotal.toFixed(2)}</span>
+          <span>{DEFAULT_CURRENCY} {(sale.subtotal ?? 0).toFixed(2)}</span>
         </div>
-        {sale.discountAmount > 0 && (
+        {(sale.discountAmount ?? 0) > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#16a34a', marginBottom: 4 }}>
             <span>Total Discount:</span>
-            <span>-{DEFAULT_CURRENCY} {sale.discountAmount.toFixed(2)}</span>
+            <span>-{DEFAULT_CURRENCY} {(sale.discountAmount ?? 0).toFixed(2)}</span>
           </div>
         )}
         {sale.appliedDiscounts && sale.appliedDiscounts.length > 0 && (
@@ -119,11 +119,11 @@ function ReceiptContent({ sale }: { sale: Sale }) {
         )}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 4 }}>
           <span>Tax ({state.settings.taxRate}%):</span>
-          <span>{DEFAULT_CURRENCY} {sale.taxAmount.toFixed(2)}</span>
+          <span>{DEFAULT_CURRENCY} {(sale.taxAmount ?? 0).toFixed(2)}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 'bold', borderTop: '1px solid #d1d5db', paddingTop: 8 }}>
           <span>Total:</span>
-          <span>{DEFAULT_CURRENCY} {sale.total.toFixed(2)}</span>
+          <span>{DEFAULT_CURRENCY} {(sale.total ?? 0).toFixed(2)}</span>
         </div>
 
         {sale.payments && sale.payments.length > 0 ? (

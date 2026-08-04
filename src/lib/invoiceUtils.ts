@@ -1,4 +1,5 @@
-import type { AppSettings, AppAction } from '../context/reducers';
+import type { AppSettings } from '../types';
+import type { AppAction } from '../context/reducers/types';
 
 export function getNextInvoiceNumber(settings: AppSettings): string {
   const nextCounter = settings.invoiceCounter + 1;

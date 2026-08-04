@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Calendar, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
 import { purchaseLogsService, salesService } from '../../lib/services';
@@ -28,7 +28,7 @@ export function SimpleProfitReport() {
         const d = new Date(s.timestamp);
         return d >= from && d <= to && s.status === 'completed';
       });
-      const totalRevenue = monthSales.reduce((sum, s) => sum + s.total, 0);
+      const totalRevenue = monthSales.reduce((sum, s) => sum + (s.total ?? 0), 0);
 
       // Calculate purchases from purchase log in the same month
       const totalPurchases = await purchaseLogsService.getMonthlyTotal(currentShop.id, selectedYear, selectedMonth + 1);

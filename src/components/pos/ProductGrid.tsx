@@ -282,7 +282,7 @@ interface ProductCardProps {
 
 const ProductCard = React.memo(function ProductCard({ product, onAddToCart, isTouchMode, currency, isRecentlyAdded }: ProductCardProps) {
   const shouldTrackInventory = product.trackInventory !== false;
-  const isLowStock = shouldTrackInventory ? product.stock <= product.minStock : false;
+  const isLowStock = shouldTrackInventory ? (product.stock ?? 0) <= (product.minStock ?? 0) : false;
   const isOutOfStock = shouldTrackInventory ? product.stock === 0 : false;
 
   return (

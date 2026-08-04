@@ -32,14 +32,14 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
     if (discount) {
       setFormData({
         name: discount.name,
-        description: discount.description,
+        description: discount.description ?? '',
         type: discount.type,
-        value: discount.value.toString(),
+        value: (discount.value ?? 0).toString(),
         minAmount: discount.minAmount?.toString() || '',
         maxDiscount: discount.maxDiscount?.toString() || '',
         validFrom: discount.validFrom.toISOString().split('T')[0],
         validTo: discount.validTo.toISOString().split('T')[0],
-        active: discount.active,
+        active: discount.active ?? false,
       });
       setConditions((discount.conditions || []).map(condition => 
         condition.type === 'specific_products' && !condition.minQuantity 

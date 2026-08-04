@@ -48,7 +48,7 @@ describe('checkoutService.complete', () => {
     const result = await checkoutService.complete(
       'shop-1',
       { items: [], total: 100 },
-      [{ method: 'cash', amount: 100 }],
+      [{ method: 'cash', amount: 100 }] as unknown as Record<string, unknown>,
       'cashier-1',
     )
 
@@ -70,7 +70,7 @@ describe('checkoutService.complete', () => {
     })
 
     await expect(
-      checkoutService.complete('shop-1', {}, [], 'cashier-1'),
+      checkoutService.complete('shop-1', {}, [] as unknown as Record<string, unknown>, 'cashier-1'),
     ).rejects.toThrow(DailyLimitError)
   })
 
@@ -79,7 +79,7 @@ describe('checkoutService.complete', () => {
     mockRpc.mockResolvedValue({ data: null, error: dbError })
 
     await expect(
-      checkoutService.complete('shop-1', {}, [], 'cashier-1'),
+      checkoutService.complete('shop-1', {}, [] as unknown as Record<string, unknown>, 'cashier-1'),
     ).rejects.toEqual(dbError)
   })
 
@@ -110,7 +110,7 @@ describe('checkoutService.complete', () => {
       error: null,
     })
 
-    const result = await checkoutService.complete('shop-1', {}, [], 'cashier-2')
+    const result = await checkoutService.complete('shop-1', {}, [] as unknown as Record<string, unknown>, 'cashier-2')
 
     expect(result.customerId).toBe('cust-1')
     expect(result.customerName).toBe('Alice')

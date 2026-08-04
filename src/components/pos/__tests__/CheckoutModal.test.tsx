@@ -101,6 +101,7 @@ describe('CheckoutModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   it('shows upgrade prompt when DailyLimitError is thrown', async () => {
