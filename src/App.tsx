@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { AppProvider } from './context/SupabaseAppContext';
@@ -35,6 +35,21 @@ function AppContent() {
   const purchaseLogEnabled = useCapability('purchase_log');
   const stockOverviewEnabled = useCapability('stock_overview');
 
+  const handleViewChange = (view: string) => {
+    setCurrentView(view);
+  };
+
+  // Cashier redirect — runs AFTER render, not during it.
+  // Previously this was inside renderCurrentView() calling setCurrentView
+  // during render, which caused React to abandon the render and lock the
+  // view to POS permanently when userRole was undefined (profile loading).
+  useEffect(() => {
+    const userRole = state.currentUser?.role;
+    if (userRole === 'cashier' && currentView !== 'pos') {
+      setCurrentView('pos');
+    }
+  }, [state.currentUser?.role, currentView]);
+
   // Show loading spinner while auth is loading
   if (loading) {
     return (
@@ -64,82 +79,58 @@ function AppContent() {
   const renderCurrentView = () => {
     const userRole = state.currentUser?.role;
 
-    // Restrict cashiers to POS only
-    if (userRole === 'cashier' && currentView !== 'pos') {
-      setCurrentView('pos');
-      return <POSTerminal />;
-    }
-
     switch (currentView) {
       case 'pos':
         return <POSTerminal />;
       case 'transactions':
-        // Only allow admin and manager to access transactions
         if (userRole === 'admin' || userRole === 'manager') {
           return <TransactionsManager />;
         }
-        setCurrentView('pos');
         return <POSTerminal />;
       case 'inventory':
-        // Only allow admin and manager to access inventory (feature-gated)
         if ((userRole === 'admin' || userRole === 'manager') && inventoryEnabled) {
           return <InventoryManager />;
         }
-        setCurrentView('pos');
         return <POSTerminal />;
       case 'purchase-log':
         if ((userRole === 'admin' || userRole === 'manager') && purchaseLogEnabled) {
           return <PurchaseLogManager />;
         }
-        setCurrentView('pos');
         return <POSTerminal />;
       case 'stock-overview':
         if ((userRole === 'admin' || userRole === 'manager') && stockOverviewEnabled) {
           return <StockOverviewManager />;
         }
-        setCurrentView('pos');
         return <POSTerminal />;
       case 'customers':
-        // Only allow admin and manager to access customers (feature-gated)
         if ((userRole === 'admin' || userRole === 'manager') && customerEnabled) {
           return <CustomerManager />;
         }
-        setCurrentView('pos');
         return <POSTerminal />;
       case 'reports':
-        // Only allow admin and manager to access reports
         if (userRole === 'admin' || userRole === 'manager') {
           return <ReportsManager />;
         }
-        setCurrentView('pos');
         return <POSTerminal />;
       case 'discounts':
-        // Only allow admin and manager to access discounts (feature-gated)
         if ((userRole === 'admin' || userRole === 'manager') && discountEnabled) {
           return <DiscountManager />;
         }
-        setCurrentView('pos');
         return <POSTerminal />;
       case 'users':
-        // Only allow admin to access users
         if (userRole === 'admin') {
           return <UserManager />;
         }
-        setCurrentView('pos');
         return <POSTerminal />;
       case 'settings':
-        // Only allow admin and manager to access settings
         if (userRole === 'admin' || userRole === 'manager') {
           return <Settings />;
         }
-        setCurrentView('pos');
         return <POSTerminal />;
       case 'alerts':
-        // Only allow admin and manager to access alerts
         if (userRole === 'admin' || userRole === 'manager') {
           return <AlertManager />;
         }
-        setCurrentView('pos');
         return <POSTerminal />;
       default:
         return <POSTerminal />;
@@ -150,7 +141,7 @@ function AppContent() {
     <div className="h-dvh bg-[#faf8f5] dark:bg-[#1f1309] flex flex-col">
       <a href="#main-content" className="skip-link">Skip to main content</a>
       {state.currentUser ? (
-        <Header currentView={currentView} onViewChange={setCurrentView} />
+        <Header currentView={currentView} onViewChange={handleViewChange} />
       ) : (
         <div className="h-16 lg:h-20 bg-secondary-50/80" />
       )}
