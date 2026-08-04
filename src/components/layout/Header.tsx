@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type MouseEvent as ReactMouseEvent } from 'react';
 import {
   User, Settings, ShoppingCart, Monitor, Smartphone, Bell, Menu, X, Percent,
   Receipt, Package, Users, BarChart3, Sun, Moon, ClipboardList, Layers,
@@ -26,6 +26,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Effect for scroll detection and click outside for mobile menu
   useEffect(() => {
@@ -39,8 +40,12 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
       }
     };
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showMobileMenu && !(event.target as Element)?.closest('button[aria-label=Menu]') && !(event.target as Element)?.closest('button[aria-label="Close menu"]')) {
+    const handleClickOutside: EventListener = (event) => {
+      const target = event.target as Element | null;
+      const clickedMenuToggle = target?.closest('button[aria-label="Open menu"], button[aria-label="Close menu"]');
+      const clickedInsideMenu = mobileMenuRef.current?.contains(target);
+
+      if (showMobileMenu && !clickedMenuToggle && !clickedInsideMenu) {
         setShowMobileMenu(false);
       }
     };
@@ -63,6 +68,14 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
     if (navScrollRef) {
       const scrollAmount = direction === 'left' ? -120 : 120;
       navScrollRef.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  const handleNavItemClick = (itemId: string, source: 'desktop' | 'mobile', event?: ReactMouseEvent<HTMLButtonElement>) => {
+    event?.stopPropagation();
+    onViewChange(itemId);
+    if (source === 'mobile') {
+      setShowMobileMenu(false);
     }
   };
 
@@ -137,6 +150,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
             <nav className="hidden md:flex items-center ml-4">
               {canScrollLeft && (
                 <button
+                  type="button"
                   onClick={() => scrollNav('left')}
                   className="flex items-center justify-center w-10 h-10 rounded-2xl text-secondary-600 hover:text-primary-600 hover:bg-secondary-100/50 dark:hover:bg-primary-900/50 transition-all duration-200 touch-friendly flex-shrink-0 focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   aria-label="Scroll navigation left"
@@ -153,7 +167,8 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                 {navigationItems.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => onViewChange(item.id)}
+                    type="button"
+                    onClick={() => handleNavItemClick(item.id, 'desktop')}
                     className={`relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-200 touch-friendly flex-shrink-0 group ${
                       currentView === item.id
                         ? 'bg-primary-50 text-primary-700 shadow-soft dark:bg-primary-900/50 dark:text-primary-300'
@@ -175,6 +190,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
 
               {canScrollRight && (
                 <button
+                  type="button"
                   onClick={() => scrollNav('right')}
                   className="flex items-center justify-center w-10 h-10 rounded-2xl text-secondary-600 hover:text-primary-600 hover:bg-secondary-100/50 dark:hover:bg-primary-900/50 transition-all duration-200 touch-friendly flex-shrink-0 focus:ring-2 focus:ring-primary-500 focus:outline-none"
                   aria-label="Scroll navigation right"
@@ -226,7 +242,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                 </div>
 
                 <div className="hidden md:flex items-center space-x-1">
-                  <button onClick={() => onViewChange('settings')} className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300" aria-label="Settings">
+                  <button type="button" onClick={() => onViewChange('settings')} className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300" aria-label="Settings">
                     <Settings className="h-4 w-4" />
                   </button>
                 </div>
@@ -234,6 +250,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
             </div>
 
             <button
+              type="button"
               onClick={() => setShowMobileMenu(!showMobileMenu)}
               className="md:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300"
               aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
@@ -245,16 +262,13 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
 
         {/* Mobile Navigation Menu */}
         {showMobileMenu && (
-          <div className="md:hidden border-t border-secondary-200/50 py-4 animate-slide-down">
+          <div ref={mobileMenuRef} className="md:hidden border-t border-secondary-200/50 py-4 animate-slide-down">
             <nav className="space-y-2">
               {navigationItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onViewChange(item.id);
-                    setShowMobileMenu(false);
-                  }}
+                  type="button"
+                  onClick={(e) => handleNavItemClick(item.id, 'mobile', e)}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 ${
                     currentView === item.id
                       ? 'bg-primary-50 text-primary-700 shadow-soft'
@@ -266,7 +280,7 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                 </button>
               ))}
               <div className="border-t border-secondary-200/50 pt-4 mt-4 space-y-2">
-                <button onClick={(e) => { e.stopPropagation(); onViewChange('settings'); setShowMobileMenu(false); }} className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300">
+                <button type="button" onClick={(e) => { e.stopPropagation(); onViewChange('settings'); setShowMobileMenu(false); }} className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100/50 transition-all duration-300">
                   <Settings className="h-5 w-5 text-secondary-600" />
                   <span>Settings</span>
                 </button>

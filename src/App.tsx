@@ -35,6 +35,10 @@ function AppContent() {
   const purchaseLogEnabled = useCapability('purchase_log');
   const stockOverviewEnabled = useCapability('stock_overview');
 
+  const handleViewChange = (view: string) => {
+    setCurrentView(view);
+  };
+
   // Cashier redirect — runs AFTER render, not during it.
   // Previously this was inside renderCurrentView() calling setCurrentView
   // during render, which caused React to abandon the render and lock the
@@ -137,7 +141,7 @@ function AppContent() {
     <div className="h-dvh bg-[#faf8f5] dark:bg-[#1f1309] flex flex-col">
       <a href="#main-content" className="skip-link">Skip to main content</a>
       {state.currentUser ? (
-        <Header currentView={currentView} onViewChange={setCurrentView} />
+        <Header currentView={currentView} onViewChange={handleViewChange} />
       ) : (
         <div className="h-16 lg:h-20 bg-secondary-50/80" />
       )}
