@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, Download, Eye, RefreshCw, CreditCard, Banknote, Smartphone, Receipt, FileText, X, ShoppingCart } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
 import { useCapability } from '../../hooks/useCapability';
@@ -24,6 +24,13 @@ export function TransactionsManager() {
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedTransaction, setSelectedTransaction] = useState<Sale | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Brief skeleton display on mount while context hydrates
+    const t = setTimeout(() => setLoading(false), 400);
+    return () => clearTimeout(t);
+  }, []);
 
   const filteredTransactions = useMemo(() => {
     return state.sales.filter(sale => {
@@ -265,7 +272,21 @@ export function TransactionsManager() {
               </tr>
             </thead>
             <tbody className="bg-secondary-50 divide-y divide-secondary-200">
-              {filteredTransactions.map((transaction) => (
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="px-4 md:px-6 py-4"><div className="skeleton h-4 w-20 rounded-xl" /></td>
+                    <td className="px-4 md:px-6 py-4"><div className="skeleton h-4 w-28 rounded-xl" /></td>
+                    <td className="px-4 md:px-6 py-4"><div className="skeleton h-4 w-24 rounded-xl" /></td>
+                    <td className="px-4 md:px-6 py-4"><div className="skeleton h-4 w-8 rounded-xl" /></td>
+                    <td className="px-4 md:px-6 py-4"><div className="skeleton h-4 w-16 rounded-xl" /></td>
+                    <td className="px-4 md:px-6 py-4"><div className="skeleton h-4 w-16 rounded-xl" /></td>
+                    <td className="px-4 md:px-6 py-4"><div className="skeleton h-4 w-16 rounded-xl" /></td>
+                    <td className="px-4 md:px-6 py-4 hidden lg:table-cell"><div className="skeleton h-4 w-20 rounded-xl" /></td>
+                    <td className="px-4 md:px-6 py-4"><div className="skeleton h-4 w-16 rounded-xl" /></td>
+                  </tr>
+                ))
+              ) : filteredTransactions.map((transaction) => (
                 <tr key={transaction.id} className="hover:bg-secondary-50 transition-colors">
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
