@@ -391,7 +391,7 @@ shops
   └── (all 13 original tables via shop_id)
 
 sales
-  └── print_jobs.sale_id
+  └── print_jobs.order_id
 ```
 
 **⚠️ Deprecated FKs (v3.1.0 — out of scope per §19):**
@@ -878,21 +878,15 @@ Logs actual ingredient consumption per sale. Used for COGS calculation. Inserted
 
 ### 7.6 `print_jobs`
 
-Print job queue for receipt and kitchen printers. Growth+ only (VISION.md v3.1.0 §8).
+Print job queue for thermal printers. Growth+ only (VISION.md v3.1.0 §8). Table scaffold for printer integration (not yet wired into UI or Edge Functions in v1).
 
 | Column | Type | Default | Notes |
 |--------|------|---------|-------|
 | `id` | uuid PK | `gen_random_uuid()` | |
-| `shop_id` | uuid FK NOT NULL | | → `shops(id)` |
-| `sale_id` | uuid FK NOT NULL | | → `sales(id)` |
-| `printer_type` | text NOT NULL | | CHECK: `'receipt'` \| `'kitchen'` |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)` ON DELETE CASCADE |
+| `order_id` | uuid FK | | → `sales(id)` ON DELETE SET NULL |
 | `status` | text NOT NULL | `'pending'` | CHECK: `'pending'` \| `'printing'` \| `'completed'` \| `'failed'` |
-| `connection_type` | text NOT NULL | | CHECK: `'bluetooth'` \| `'network'` |
-| `printer_address` | text NOT NULL | | BT MAC address or IP:port |
-| `payload` | jsonb NOT NULL | | Formatted print content |
-| `is_reprint` | boolean | `false` | True if reprinted from history (VISION.md v3.1.0 §9.3) |
-| `retry_count` | integer | `0` | |
-| `error_message` | text | | |
+| `config_data` | jsonb NOT NULL | `'{}'` | Formatted print config |
 | `created_at` | timestamptz NOT NULL | `now()` | |
 | `completed_at` | timestamptz | | |
 
