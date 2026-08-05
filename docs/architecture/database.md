@@ -432,7 +432,6 @@ currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only
 | `idx_products_active` | `active` | B-tree | |
 | `idx_products_name_search` | `name` | GIN | Full-text search |
 | `idx_products_category_active` | `category, active` | Composite | |
-| `idx_products_base_currency` | `base_currency` | B-tree | |
 
 ### Customers
 | Index | Column(s) | Type | Notes |
@@ -452,8 +451,6 @@ currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only
 | `idx_sales_payment_method` | `payment_method` | B-tree | |
 | `idx_sales_cashier` | `cashier` | B-tree | |
 | `idx_sales_created_at_status` | `created_at, status` | Composite | |
-| `idx_sales_transaction_currency` | `transaction_currency` | B-tree | |
-| `idx_sales_created_at_currency` | `created_at, transaction_currency` | Composite | |
 
 ### Product Batches
 | Index | Column(s) | Type | Notes |
@@ -481,18 +478,6 @@ currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only
 | Index | Column(s) | Type | Notes |
 |-------|-----------|------|-------|
 | `idx_sales_tabs_user_id` | `user_id` | B-tree | |
-
-### Currency Tables
-| Index | Column(s) | Table | Notes |
-|-------|-----------|-------|-------|
-| `idx_exchange_rates_base_target` | `base_currency, target_currency` | exchange_rates | |
-| `idx_exchange_rates_effective_from` | `effective_from` | exchange_rates | |
-| `idx_exchange_rates_active` | `base_currency, target_currency, effective_from` | exchange_rates | Partial: `WHERE effective_to IS NULL` |
-| `idx_currency_config_code` | `code` | currency_config | |
-| `idx_currency_config_active` | `is_active` | currency_config | |
-| `idx_currency_config_base` | `is_base_currency` | currency_config | Partial: `WHERE is_base_currency = true` |
-| `idx_exchange_rate_history_currencies` | `base_currency, target_currency` | exchange_rate_history | |
-| `idx_exchange_rate_history_recorded_at` | `recorded_at` | exchange_rate_history | |
 
 ### Missing Indexes (Identified)
 
@@ -763,9 +748,6 @@ Tables: `app_settings`, `categories`, `customers`, `suppliers`, `products`, `pro
 | `idx_users_shop_id` | users | B-tree |
 | `idx_sales_shop_id` | sales | B-tree |
 | `idx_sales_tabs_shop_id` | sales_tabs | B-tree |
-| `idx_currency_config_shop_id` | currency_config | B-tree |
-| `idx_exchange_rates_shop_id` | exchange_rates | B-tree |
-| `idx_exchange_rate_history_shop_id` | exchange_rate_history | B-tree |
 | `idx_sales_shop_created_at` | sales | Composite (shop_id, created_at) |
 | `idx_products_shop_active` | products | Composite (shop_id, active) |
 | `idx_customers_shop_name` | customers | Composite (shop_id, name) |
@@ -940,17 +922,29 @@ Cash drawer shift tracking. Growth+ only (VISION.md v3.1.0 §12).
 | Index | Table | Column(s) | Type | Notes |
 |-------|-------|-----------|------|-------|
 | `idx_feature_definitions_key` | feature_definitions | `key` | B-tree (UNIQUE) | |
-| `idx_recipes_shop_product` | recipes | `shop_id, product_id` | B-tree (UNIQUE) | |
-| `idx_recipe_items_recipe` | recipe_items | `recipe_id` | B-tree | |
-| `idx_recipe_items_ingredient` | recipe_items | `ingredient_id` | B-tree | |
-| `idx_consumption_log_sale` | consumption_log | `sale_id` | B-tree | |
-| `idx_consumption_log_daily` | consumption_log | `shop_id, created_at` | B-tree | Daily COGS queries |
-| `idx_print_jobs_pending` | print_jobs | `status` | Partial | `WHERE status = 'pending'` — pg_cron polling |
-| `idx_print_jobs_shop` | print_jobs | `shop_id` | B-tree | |
-| `idx_cash_shifts_shop_open` | cash_shifts | `shop_id, status` | Partial | `WHERE status = 'open'` |
-| `idx_cash_shifts_cashier` | cash_shifts | `cashier_id` | B-tree | |
-| `idx_sales_cashier_id` | sales | `cashier_id` | B-tree | Shift tracking |
-| `idx_sales_shop_created_status` | sales | `shop_id, created_at, status` | Composite | Daily limit check in `checkout_complete` |
+| `idx_feature_definitions_category` | feature_definitions | `category` | B-tree | |
+| `idx_print_jobs_status` | print_jobs | `status` | B-tree | |
+| `idx_print_jobs_shop_id` | print_jobs | `shop_id` | B-tree | |
+| `idx_print_jobs_shop_status` | print_jobs | `shop_id, status` | Composite | |
+| `idx_print_jobs_order_id` | print_jobs | `order_id` | B-tree | |
+| `idx_print_jobs_created_at` | print_jobs | `created_at` | B-tree | DESC |
+| `idx_cash_shifts_status` | cash_shifts | `status` | B-tree | |
+| `idx_cash_shifts_shop_id` | cash_shifts | `shop_id` | B-tree | |
+| `idx_cash_shifts_cashier_id` | cash_shifts | `cashier_id` | B-tree | |
+| `idx_cash_shifts_opened_at` | cash_shifts | `opened_at` | B-tree | DESC |
+| `idx_stock_items_shop_id` | stock_items | `shop_id` | B-tree | |
+| `idx_stock_items_shop_name` | stock_items | `shop_id, name` | Composite | |
+| `idx_stock_items_name` | stock_items | `name` | B-tree | |
+| `idx_stock_items_low_threshold` | stock_items | `low_threshold` | B-tree | |
+| `idx_stock_adj_stock_item_id` | stock_adjustments | `stock_item_id` | B-tree | |
+| `idx_stock_adj_shop_id` | stock_adjustments | `shop_id` | B-tree | |
+| `idx_stock_adj_item_date` | stock_adjustments | `stock_item_id, adjusted_at` | Composite | DESC |
+| `idx_stock_adj_adjusted_at` | stock_adjustments | `adjusted_at` | B-tree | DESC |
+| `idx_purchase_logs_shop_id` | purchase_logs | `shop_id` | B-tree | |
+| `idx_purchase_logs_shop_date` | purchase_logs | `shop_id, purchase_date` | Composite | DESC |
+| `idx_purchase_logs_date` | purchase_logs | `purchase_date` | B-tree | DESC |
+| `idx_purchase_logs_item` | purchase_logs | `item` | B-tree | |
+| `idx_purchase_logs_supplier` | purchase_logs | `supplier` | B-tree | |
 
 ---
 
