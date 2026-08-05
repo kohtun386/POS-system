@@ -136,7 +136,7 @@ export function POSTerminal() {
         taxAmount,
         total,
         paymentMethod: 'cash',
-        status: 'completed',
+        status: 'draft',
         cashier: user?.user_metadata?.full_name || user?.email || 'Unknown',
         timestamp: new Date(),
         receiptNumber: `DRAFT-${Date.now().toString().slice(-6)}`,
