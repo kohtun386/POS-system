@@ -88,7 +88,7 @@ function StockItemModal({ isOpen, onClose, item, onSaved }: StockItemModalProps)
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal max-w-xl" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="text-xl font-bold text-secondary-900">{item ? 'Edit Stock Item' : 'Add Stock Item'}</h2>
           <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600 p-2 rounded-xl hover:bg-secondary-100 transition-colors">
