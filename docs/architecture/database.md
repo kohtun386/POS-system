@@ -18,7 +18,7 @@
 > - `uom_conversions` — Unit conversions (out of scope)
 > - `kitchen_orders` — Kitchen display (out of scope, use thermal printer)
 > - `currency_config`, `exchange_rates`, `exchange_rate_history` — Multi-currency (out of scope, MMK only per §19)
-> - `shop_features` — Per-shop feature overrides (removed in v3.1.3; feature resolution is now tier-only per VISION §5.3)
+> - `shop_features` — DROPPED (migration `20260803010000_drop_shop_features`); feature resolution is now tier-only per VISION §5.3
 >
 > **Table Count (v3.1.0):** 25 active tables (all present in the live database) + 10 deprecated tables (not present in the database; documented above for historical reference per VISION.md §19).
 >
@@ -44,7 +44,7 @@ Shop-level preferences and configuration. One row per shop. Auto-created by `trg
 | `store_email` | text | | Contact email |
 | `store_logo` | text | | Logo URL or base64 |
 | `tax_rate` | numeric | `0.0000` | Tax percentage (0-100) |
-| `currency` | text | `'USD'` | **RESERVED** — Not used in v1 (MMK-only per VISION.md §19). Kept for future multi-currency support. |
+| `currency` | text | `'MMK'` | **MMK only** per VISION.md §19. Default aligned to MMK. |
 | `interface_mode` | text | `'touch'` | CHECK: `'touch'` \| `'traditional'` |
 | `auto_backup` | boolean | `true` | Backup preference |
 | `receipt_printer` | boolean | `false` | Printer preference |
@@ -97,7 +97,7 @@ Product catalog. Supports weight-based and unit-based pricing.
 | `unit` | text | `'piece'` | `'kg'`, `'lb'`, `'g'`, `'oz'`, `'l'`, `'ml'`, `'piece'` |
 | `track_inventory` | boolean | `true` | When false, stock not checked/deducted |
 | `product_type` | text | `'finished'` | CHECK: `'finished'` \| `'raw_material'`. Distinguishes menu items from ingredients (Recipe/BOM support, VISION.md v3.1.0 §7). |
-| `base_currency` | text | `'USD'` | Added in currency migration |
+| `base_currency` | text | `'MMK'` | Added in currency migration |
 | `price_in_base_currency` | decimal(10,2) | | |
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
@@ -597,8 +597,8 @@ FOR INSERT WITH CHECK (
 | `owner_id` | uuid | | Future: link to auth.users |
 | `business_type` | text | `'coffee_shop'` | CHECK: `'coffee_shop'` only (v1). Restaurant/food_court are v2 planned. Pharmacy/retail/supermarket permanently excluded. |
 | `tax_rate` | numeric(5,4) | `0.0000` | Per-shop tax rate |
-| `currency` | text | `'USD'` | Per-shop display currency |
-| `base_currency` | text | `'USD'` | Per-shop base currency for pricing |
+| `currency` | text | `'MMK'` | Per-shop display currency |
+| `base_currency` | text | `'MMK'` | Per-shop base currency for pricing |
 | `invoice_prefix` | text | `'INV'` | Invoice prefix |
 | `invoice_counter` | integer | `1000` | Mutated only by atomic invoice DB function |
 | `draft_retention_days` | integer | `30` | Cleanup retention for draft sales |
@@ -801,19 +801,9 @@ Platform-level feature catalog. Managed exclusively by `platform_admin` via Edge
 
 ---
 
-### 7.2 `shop_features` ⚠️ DEPRECATED
+### 7.2 `shop_features` ⚠️ DROPPED
 
-Per-shop feature overrides. **Removed in v3.1.3** — feature resolution is now tier-only per VISION §5.3. Documented here for historical reference.
-
-| Column | Type | Default | Notes |
-|--------|------|---------|-------|
-| `id` | uuid PK | `gen_random_uuid()` | |
-| `shop_id` | uuid FK NOT NULL | | → `shops(id)` ON DELETE CASCADE |
-| `feature_key` | text NOT NULL | | → `feature_definitions(key)` ON DELETE CASCADE |
-| `enabled` | boolean NOT NULL | `true` | |
-| `updated_at` | timestamptz NOT NULL | `now()` | |
-
-**Constraint:** UNIQUE(`shop_id`, `feature_key`)
+Per-shop feature overrides. **Dropped in migration `20260803010000_drop_shop_features`** — feature resolution is now tier-only per VISION §5.3. No longer present in the live database.
 
 ---
 
