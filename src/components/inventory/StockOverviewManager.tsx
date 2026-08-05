@@ -4,6 +4,7 @@ import { StockItem } from '../../types';
 import { stockItemsService } from '../../lib/services';
 import { useApp } from '../../hooks/useApp';
 import { useCapability } from '../../hooks/useCapability';
+import { useModalEscape } from '../../hooks/useModalEscape';
 import { swalConfig } from '../../lib/sweetAlert';
 import { UpgradePrompt } from '../ui/UpgradePrompt';
 
@@ -17,6 +18,7 @@ interface StockItemModalProps {
 function StockItemModal({ isOpen, onClose, item, onSaved }: StockItemModalProps) {
   const { state } = useApp();
   const currentShop = state.shop;
+  useModalEscape(onClose, isOpen);
 
   const [formData, setFormData] = useState({
     name: '',

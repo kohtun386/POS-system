@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Scale } from 'lucide-react';
 import { Product, ProductBatch } from '../../types';
 import { useApp } from '../../hooks/useApp';
+import { useModalEscape } from '../../hooks/useModalEscape';
 import { productsService, ProductLimitError } from '../../lib/services';
 import Swal from 'sweetalert2';
 
@@ -13,6 +14,7 @@ interface ProductModalProps {
 
 export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
   const { dispatch } = useApp();
+  useModalEscape(onClose, isOpen);
   
   const [formData, setFormData] = useState({
     name: '',

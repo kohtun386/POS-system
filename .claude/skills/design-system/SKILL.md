@@ -26,7 +26,7 @@ Token architecture, component specifications, systematic design, slide generatio
 
 Load: `references/token-architecture.md`
 
-### Three-Layer Structure
+### Three-Layer Structure (Conceptual)
 
 ```
 Primitive (raw values)
@@ -36,27 +36,38 @@ Semantic (purpose aliases)
 Component (component-specific)
 ```
 
-**Example:**
-```css
-/* Primitive */
---color-blue-600: #2563EB;
+### Actual Implementation
 
-/* Semantic */
---color-primary: var(--color-blue-600);
+**Source of truth:** `tailwind.config.js` — all color, spacing, shadow, and animation tokens are defined as Tailwind theme extensions.
 
-/* Component */
---button-bg: var(--color-primary);
-```
+| Token Layer | Where It Lives |
+|-------------|----------------|
+| Primitive colors | `tailwind.config.js` lines 7-96 (primary, secondary, accent palettes with 11 shades each) |
+| Semantic colors | Same file: `success`, `warning`, `danger`, `surface.dark`, `hover.border` |
+| Component classes | `src/index.css` lines 60-295 (`.btn`, `.input`, `.modal`, `.card`, `.badge`, etc.) |
+| CSS variables | Referenced in `index.css` with inline fallbacks (e.g., `var(--color-primary-500, #b8854a)`) — fallbacks are the actual values |
+
+> ⚠️ The `generate-tokens.cjs` / `validate-tokens.cjs` scripts exist but are **not connected to the build**. The Tailwind config is hand-written and is the single source of truth for all design tokens.
+
+### Adding New Tokens
+
+1. Add the color/spacing value to `tailwind.config.js` theme extensions
+2. Use the Tailwind utility class in components (e.g., `text-primary-600`)
+3. For component classes, use `@apply` in `src/index.css`
 
 ## Quick Start
 
-**Generate tokens:**
+**Tokens are managed via Tailwind config — no generation step needed.**
+
+To add a new color token:
 ```bash
-node scripts/generate-tokens.cjs --config tokens.json -o tokens.css
+# Edit tailwind.config.js directly
+# Then use in components: bg-{token}-{shade}, text-{token}-{shade}
 ```
 
-**Validate usage:**
+**Validate color contrast:**
 ```bash
+# Check WCAG AA compliance (≥4.5:1 for normal text)
 node scripts/validate-tokens.cjs --dir src/
 ```
 
@@ -242,3 +253,54 @@ assets/designs/slides/claudekit-pitch-251223.html
 4. Use HSL format for opacity control
 5. Document every token's purpose
 6. **Slides must import design-tokens.css and use var() exclusively**
+
+## Accessibility Checklist
+
+Every component must satisfy these before merge:
+
+| Rule | How to Check |
+|------|-------------|
+| **Touch targets ≥ 44px** | `.touch-target` or `.touch-friendly` class on interactive elements |
+| **Color contrast ≥ 4.5:1** | Use `secondary-500` or darker for text; never `secondary-400` on light bg |
+| **Keyboard accessible** | Use `<button>` not `<div onClick>`; add `onKeyDown` for Enter/Space |
+| **Focus visible** | All interactive elements get `focus:ring-2` via `.btn` / `.input` classes |
+| **Search inputs labeled** | Add `aria-label` to every search/input without a visible `<label>` |
+| **Modal Escape to close** | Use `useModalEscape(onClose, isOpen)` hook from `src/hooks/useModalEscape.ts` |
+| **Alt text on images** | Every `<img>` must have a descriptive `alt` attribute |
+| **No emoji as icons** | Use Lucide React icons; emojis only in content text with `role="img" aria-label` |
+
+## Responsive Design
+
+### Breakpoints (Tailwind defaults)
+
+| Prefix | Width | Target |
+|--------|-------|--------|
+| `sm:` | 640px | Large phones |
+| `md:` | 768px | Tablets |
+| `lg:` | 1024px | Desktop |
+| `xl:` | 1280px | Large desktop |
+
+### Touch Mode
+
+The app has a `touch` / `traditional` mode toggle (`state.settings.interfaceMode`):
+
+- **Touch mode:** Larger buttons (`.btn-lg`), bigger fonts, `.touch-friendly` class
+- **Traditional mode:** Compact layout (`.btn-md`), standard sizing
+
+Check `isTouchMode` from state and conditionally apply sizing:
+```tsx
+const isTouchMode = state.settings.interfaceMode === 'touch';
+// ...
+className={`${isTouchMode ? 'btn-lg touch-friendly' : 'btn-md'}`}
+```
+
+### Mobile-Specific Utilities
+
+| Class | Purpose |
+|-------|---------|
+| `.mobile-stack` | Stacks flex items vertically below 640px |
+| `.mobile-full` | Full width below 640px |
+| `.mobile-hidden` | Hidden below 640px |
+| `.touch-target` | Min 44×44px touch area |
+| `.touch-target-lg` | Min 48×48px touch area |
+| `.pb-safe` | iOS safe area bottom padding |

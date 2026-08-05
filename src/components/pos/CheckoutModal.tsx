@@ -4,6 +4,7 @@ import { X, CreditCard, Banknote, Smartphone, Check, Receipt, AlertCircle, Gift 
 import { Sale, CardDetails, AppliedDiscount, CartItem, Payment } from '../../types';
 import { useApp } from '../../hooks/useApp';
 import { useCapability } from '../../hooks/useCapability';
+import { useModalEscape } from '../../hooks/useModalEscape';
 import { checkDiscountEligibility } from '../../lib/discountUtils';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { useAuth } from '../../hooks/useAuth';
@@ -23,6 +24,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const { state, dispatch } = useApp();
   const { user } = useAuth();
   const creditEnabled = useCapability('credit_system');
+  useModalEscape(onClose, isOpen);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [amountPaid, setAmountPaid] = useState('');
   const [payments, setPayments] = useState<Payment[]>([]);

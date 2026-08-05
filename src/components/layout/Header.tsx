@@ -162,7 +162,6 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
               <div
                 ref={setNavScrollRef}
                 className="flex items-center overflow-x-auto scrollbar-hide scroll-smooth space-x-1"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {navigationItems.map((item) => (
                   <button

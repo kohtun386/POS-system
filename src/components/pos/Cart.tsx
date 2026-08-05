@@ -160,6 +160,7 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
                   onChange={(e) => setCustomerSearch(e.target.value)}
                   className="input input-sm"
                   autoFocus
+                  aria-label="Search customers"
                 />
               </div>
               <div className="max-h-48 overflow-y-auto">

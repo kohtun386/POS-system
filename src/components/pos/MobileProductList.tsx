@@ -101,6 +101,7 @@ export function MobileProductList({ onAddToCart }: MobileProductListProps) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="input pl-12 h-14 text-lg touch-friendly"
+              aria-label="Search products"
             />
           </div>
 
@@ -118,7 +119,6 @@ export function MobileProductList({ onAddToCart }: MobileProductListProps) {
             <div
               ref={categoriesRef}
               className="flex overflow-x-auto space-x-2 max-w-full scrollbar-hide scroll-smooth px-6"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {categories.map((category) => (
                 <button
