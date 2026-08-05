@@ -2,14 +2,19 @@ import { useEffect, useState } from 'react';
 import { platformAdminService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
 import Swal from 'sweetalert2';
+import type { FeatureDefinition } from '../../types';
 
-interface FeatureDefinition {
-  id: string;
-  key: string;
-  name: string;
-  description: string;
-  subscription_tier: string;
-  default_enabled: boolean;
+function mapFeature(row: Record<string, unknown>): FeatureDefinition {
+  return {
+    id: row.id as string,
+    key: row.key as string,
+    name: row.name as string,
+    description: (row.description as string) ?? '',
+    category: (row.category as string) ?? 'general',
+    defaultEnabled: row.default_enabled as boolean,
+    subscriptionTier: row.subscription_tier as FeatureDefinition['subscriptionTier'],
+    createdAt: new Date(row.created_at as string),
+  };
 }
 
 export function FeatureDefinitions() {
@@ -24,7 +29,7 @@ export function FeatureDefinitions() {
     setLoading(true);
     try {
       const result = await platformAdminService.manageFeatures('list');
-      setFeatures((result.features ?? []) as unknown as FeatureDefinition[]);
+      setFeatures((result.features ?? []).map(mapFeature));
     } catch {
       swalConfig.error('Failed to load features');
     }
@@ -62,7 +67,7 @@ export function FeatureDefinitions() {
         feature_id: id,
         default_enabled: !currentState,
       });
-      setFeatures(features.map(f => f.id === id ? { ...f, default_enabled: !currentState } : f));
+      setFeatures(features.map(f => f.id === id ? { ...f, defaultEnabled: !currentState } : f));
       swalConfig.success('Feature updated');
     } catch {
       swalConfig.error('Failed to toggle feature');
@@ -117,14 +122,14 @@ export function FeatureDefinitions() {
                 <td className="table-cell font-mono text-sm">{feature.key}</td>
                 <td className="table-cell">{feature.name}</td>
                 <td className="table-cell">
-                  <span className="badge badge-info">{feature.subscription_tier}</span>
+                  <span className="badge badge-info">{feature.subscriptionTier}</span>
                 </td>
                 <td className="table-cell">
                   <button
-                    className={`btn btn-sm ${feature.default_enabled ? 'btn-success' : 'btn-ghost'}`}
-                    onClick={() => handleToggle(feature.id, feature.default_enabled)}
+                    className={`btn btn-sm ${feature.defaultEnabled ? 'btn-success' : 'btn-ghost'}`}
+                    onClick={() => handleToggle(feature.id, feature.defaultEnabled)}
                   >
-                    {feature.default_enabled ? 'Enabled' : 'Disabled'}
+                    {feature.defaultEnabled ? 'Enabled' : 'Disabled'}
                   </button>
                 </td>
                 <td className="table-cell">

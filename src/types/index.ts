@@ -276,18 +276,6 @@ export interface AlertHistory {
   createdAt: Date;
 }
 
-export interface AlertSchedule {
-  id: string;
-  shopId?: string;
-  alertType: AlertType;
-  isActive?: boolean;
-  lastRun?: Date;
-  nextRun?: Date;
-  runCount?: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export interface NotificationServiceConfig {
   id: string;
   shopId?: string;
