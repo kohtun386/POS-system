@@ -27,6 +27,8 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
     avatar: ''
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -53,8 +55,23 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
 
   if (!isOpen) return null;
 
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!formData.name.trim()) e.name = 'Name is required';
+    if (!formData.username.trim()) e.username = 'Username is required';
+    if (!user) {
+      if (!formData.email.trim()) e.email = 'Email is required';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) e.email = 'Invalid email format';
+      if (!formData.password) e.password = 'Password is required';
+      else if (formData.password.length < 6) e.password = 'Password must be at least 6 characters';
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     setLoading(true);
 
     try {
@@ -77,11 +94,6 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
         // Create new staff user via staff-create Edge Function
         // This bypasses the self-registration trigger's shop+membership creation
         // by setting staff_creation=true in user_metadata.
-        if (!formData.password || formData.password.length < 6) {
-          swalConfig.error('Password must be at least 6 characters long');
-          return;
-        }
-
         if (!state.shop?.id) {
           swalConfig.error('No active shop selected');
           return;
@@ -141,6 +153,9 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }));
+    if (errors[name]) {
+      setErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
+    }
   };
 
   const rolePermissions = {
@@ -180,10 +195,13 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="input pl-10"
+                    className={`input pl-10 ${errors.name ? 'border-danger-500' : ''}`}
                     placeholder="Enter full name"
+                    aria-invalid={!!errors.name}
+                    aria-describedby={errors.name ? 'error-name' : undefined}
                   />
                 </div>
+                {errors.name && <p id="error-name" className="text-danger-600 text-xs mt-1" role="alert">{errors.name}</p>}
               </div>
 
               <div>
@@ -196,10 +214,13 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                   value={formData.username}
                   onChange={handleChange}
                   required
-                  className="input"
+                  className={`input ${errors.username ? 'border-danger-500' : ''}`}
                   placeholder="Enter username"
-                  disabled={!!user} // Disable editing username for existing users
+                  disabled={!!user}
+                  aria-invalid={!!errors.username}
+                  aria-describedby={errors.username ? 'error-username' : undefined}
                 />
+                {errors.username && <p id="error-username" className="text-danger-600 text-xs mt-1" role="alert">{errors.username}</p>}
               </div>
 
               <div>
@@ -214,11 +235,14 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="input pl-10"
+                    className={`input pl-10 ${errors.email ? 'border-danger-500' : ''}`}
                     placeholder="Enter email address"
-                    disabled={!!user} // Disable editing email for existing users
+                    disabled={!!user}
+                    aria-invalid={!!errors.email}
+                    aria-describedby={errors.email ? 'error-email' : undefined}
                   />
                 </div>
+                {errors.email && <p id="error-email" className="text-danger-600 text-xs mt-1" role="alert">{errors.email}</p>}
               </div>
 
               {/* Password Field - Only show for new users */}
@@ -236,10 +260,13 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                       onChange={handleChange}
                       required={!user}
                       minLength={6}
-                      className="input pl-10"
+                      className={`input pl-10 ${errors.password ? 'border-danger-500' : ''}`}
                       placeholder="Enter password (min 6 characters)"
+                      aria-invalid={!!errors.password}
+                      aria-describedby={errors.password ? 'error-password' : undefined}
                     />
                   </div>
+                  {errors.password && <p id="error-password" className="text-danger-600 text-xs mt-1" role="alert">{errors.password}</p>}
                 </div>
               )}
 

@@ -36,6 +36,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
   });
   
   const [batches, setBatches] = useState<ProductBatch[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (product) {
@@ -85,91 +86,7 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
-    // Validate required fields
-    if (!formData.name.trim()) {
-      await Swal.fire({
-        title: 'Error!',
-        text: 'Please enter a product name',
-        icon: 'error',
-        confirmButtonText: 'OK'
-      });
-      return;
-    }
-
-    if (!formData.category.trim()) {
-      await Swal.fire({
-        title: 'Error!',
-        text: 'Please enter a category',
-        icon: 'error',
-        confirmButtonText: 'OK'
-      });
-      return;
-    }
-
-    if (!formData.sku.trim()) {
-      await Swal.fire({
-        title: 'Error!',
-        text: 'Please enter a SKU',
-        icon: 'error',
-        confirmButtonText: 'OK'
-      });
-      return;
-    }
-
-    if (formData.isWeightBased) {
-      if (!formData.pricePerUnit || parseFloat(formData.pricePerUnit) <= 0) {
-        await Swal.fire({
-          title: 'Error!',
-          text: 'Please enter a valid price per unit for weight-based product',
-          icon: 'error',
-          confirmButtonText: 'OK'
-        });
-        return;
-      }
-    } else {
-      if (!formData.price || parseFloat(formData.price) <= 0) {
-        await Swal.fire({
-          title: 'Error!',
-          text: 'Please enter a valid price',
-          icon: 'error',
-          confirmButtonText: 'OK'
-        });
-        return;
-      }
-    }
-
-    if (!formData.cost || parseFloat(formData.cost) < 0) {
-      await Swal.fire({
-        title: 'Error!',
-        text: 'Please enter a valid cost price (or 0 if no cost)',
-        icon: 'error',
-        confirmButtonText: 'OK'
-      });
-      return;
-    }
-
-    // Only validate stock fields if inventory tracking is enabled
-    if (formData.trackInventory) {
-      if (!formData.stock || parseInt(formData.stock) < 0) {
-        await Swal.fire({
-          title: 'Error!',
-          text: 'Please enter a valid stock quantity',
-          icon: 'error',
-          confirmButtonText: 'OK'
-        });
-        return;
-      }
-
-      if (!formData.minStock || parseInt(formData.minStock) < 0) {
-        await Swal.fire({
-          title: 'Error!',
-          text: 'Please enter a valid minimum stock level',
-          icon: 'error',
-          confirmButtonText: 'OK'
-        });
-        return;
-      }
-    }
+    if (!validate()) return;
 
     const productData: Product = {
       id: product?.id || Date.now().toString(),
@@ -243,6 +160,28 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }));
+    if (errors[name]) {
+      setErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
+    }
+  };
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!formData.name.trim()) e.name = 'Product name is required';
+    if (!formData.category.trim()) e.category = 'Category is required';
+    if (!formData.sku.trim()) e.sku = 'SKU is required';
+    if (formData.isWeightBased) {
+      if (!formData.pricePerUnit || parseFloat(formData.pricePerUnit) <= 0) e.pricePerUnit = 'Valid price per unit required';
+    } else {
+      if (!formData.price || parseFloat(formData.price) <= 0) e.price = 'Valid price required';
+    }
+    if (!formData.cost || parseFloat(formData.cost) < 0) e.cost = 'Valid cost required';
+    if (formData.trackInventory) {
+      if (!formData.stock || parseInt(formData.stock) < 0) e.stock = 'Valid stock quantity required';
+      if (!formData.minStock || parseInt(formData.minStock) < 0) e.minStock = 'Valid minimum stock required';
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -311,9 +250,12 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="input"
+                  className={`input ${errors.name ? 'border-danger-500' : ''}`}
                   placeholder="Enter product name"
+                  aria-invalid={!!errors.name}
+                  aria-describedby={errors.name ? 'error-name' : undefined}
                 />
+                {errors.name && <p id="error-name" className="text-danger-600 text-xs mt-1" role="alert">{errors.name}</p>}
               </div>
 
               <div>
@@ -326,9 +268,12 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   value={formData.category}
                   onChange={handleChange}
                   required
-                  className="input"
+                  className={`input ${errors.category ? 'border-danger-500' : ''}`}
                   placeholder="Enter category"
+                  aria-invalid={!!errors.category}
+                  aria-describedby={errors.category ? 'error-category' : undefined}
                 />
+                {errors.category && <p id="error-category" className="text-danger-600 text-xs mt-1" role="alert">{errors.category}</p>}
               </div>
 
               <div>
@@ -341,9 +286,12 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   value={formData.sku}
                   onChange={handleChange}
                   required
-                  className="input"
+                  className={`input ${errors.sku ? 'border-danger-500' : ''}`}
                   placeholder="Enter SKU"
+                  aria-invalid={!!errors.sku}
+                  aria-describedby={errors.sku ? 'error-sku' : undefined}
                 />
+                {errors.sku && <p id="error-sku" className="text-danger-600 text-xs mt-1" role="alert">{errors.sku}</p>}
               </div>
 
               <div>
@@ -410,9 +358,12 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                       value={formData.pricePerUnit}
                       onChange={handleChange}
                       required
-                      className="input"
+                      className={`input ${errors.pricePerUnit ? 'border-danger-500' : ''}`}
                       placeholder="0.00"
+                      aria-invalid={!!errors.pricePerUnit}
+                      aria-describedby={errors.pricePerUnit ? 'error-pricePerUnit' : undefined}
                     />
+                    {errors.pricePerUnit && <p id="error-pricePerUnit" className="text-danger-600 text-xs mt-1" role="alert">{errors.pricePerUnit}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-secondary-700 mb-2">
@@ -446,9 +397,12 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                     value={formData.price}
                     onChange={handleChange}
                     required
-                    className="input"
+                    className={`input ${errors.price ? 'border-danger-500' : ''}`}
                     placeholder="0.00"
+                    aria-invalid={!!errors.price}
+                    aria-describedby={errors.price ? 'error-price' : undefined}
                   />
+                  {errors.price && <p id="error-price" className="text-danger-600 text-xs mt-1" role="alert">{errors.price}</p>}
                 </div>
               )}
 
@@ -464,9 +418,12 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   value={formData.cost}
                   onChange={handleChange}
                   required
-                  className="input"
+                  className={`input ${errors.cost ? 'border-danger-500' : ''}`}
                   placeholder="0.00"
+                  aria-invalid={!!errors.cost}
+                  aria-describedby={errors.cost ? 'error-cost' : undefined}
                 />
+                {errors.cost && <p id="error-cost" className="text-danger-600 text-xs mt-1" role="alert">{errors.cost}</p>}
               </div>
             </div>
 
@@ -501,9 +458,12 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                     value={formData.stock}
                     onChange={handleChange}
                     required
-                    className="input"
+                    className={`input ${errors.stock ? 'border-danger-500' : ''}`}
                     placeholder="0"
+                    aria-invalid={!!errors.stock}
+                    aria-describedby={errors.stock ? 'error-stock' : undefined}
                   />
+                  {errors.stock && <p id="error-stock" className="text-danger-600 text-xs mt-1" role="alert">{errors.stock}</p>}
                 </div>
 
                 <div>
@@ -517,9 +477,12 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                     value={formData.minStock}
                     onChange={handleChange}
                     required
-                    className="input"
+                    className={`input ${errors.minStock ? 'border-danger-500' : ''}`}
                     placeholder="0"
+                    aria-invalid={!!errors.minStock}
+                    aria-describedby={errors.minStock ? 'error-minStock' : undefined}
                   />
+                  {errors.minStock && <p id="error-minStock" className="text-danger-600 text-xs mt-1" role="alert">{errors.minStock}</p>}
                 </div>
               </div>
             )}
