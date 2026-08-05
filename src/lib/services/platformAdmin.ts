@@ -1,4 +1,5 @@
 import { supabase } from '../supabase'
+import { Shop } from '../../types'
 
 export interface PlatformShop {
   id: string
@@ -7,7 +8,7 @@ export interface PlatformShop {
   email?: string
   phone?: string
   businessType?: string
-  subscriptionTier: string
+  subscriptionTier: Shop['subscriptionTier']
   isActive: boolean
   dailyOrderLimit?: number
   ownerId?: string
