@@ -327,7 +327,32 @@ export function StockOverviewManager() {
       {/* Stock Items Table */}
       <div className="card overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-secondary-500">Loading...</div>
+          <div className="overflow-x-auto">
+            <table className="table">
+              <thead className="table-header">
+                <tr>
+                  <th className="table-header-cell">Item</th>
+                  <th className="table-header-cell">Category</th>
+                  <th className="table-header-cell text-right">Quantity</th>
+                  <th className="table-header-cell text-right">Low Threshold</th>
+                  <th className="table-header-cell">Status</th>
+                  <th className="table-header-cell text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-secondary-50 divide-y divide-secondary-200">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="table-row">
+                    <td className="table-cell"><div className="skeleton h-4 w-32 rounded-xl" /></td>
+                    <td className="table-cell"><div className="skeleton h-4 w-20 rounded-xl" /></td>
+                    <td className="table-cell text-right"><div className="skeleton h-4 w-16 rounded-xl ml-auto" /></td>
+                    <td className="table-cell text-right"><div className="skeleton h-4 w-16 rounded-xl ml-auto" /></td>
+                    <td className="table-cell"><div className="skeleton h-4 w-16 rounded-xl" /></td>
+                    <td className="table-cell text-right"><div className="skeleton h-4 w-16 rounded-xl ml-auto" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-secondary-500">
             <Package className="h-12 w-12 mx-auto text-secondary-300 mb-3" />
