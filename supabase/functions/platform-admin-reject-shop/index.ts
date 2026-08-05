@@ -12,8 +12,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 import { verifyPlatformAdmin, createAdminClient } from "../_shared/auth.ts";
-import { extractIp, recordAudit } from "../_shared/audit.ts";
-import { sanitizeDbError } from "../_shared/errors.ts";
 
 const RESEND_API_URL = "https://api.resend.com/emails";
 
@@ -98,59 +96,48 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Deactivate membership and user
-    const errors: unknown[] = [];
+    // Atomic rejection via RPC (single DB transaction)
+    const { data: result, error: rpcError } = await adminClient.rpc(
+      "reject_shop",
+      { p_shop_id: shop_id, p_approver_id: caller.userId, p_reason: reason ?? null },
+    );
 
-    const { error: memberErr } = await adminClient
-      .from("shop_memberships")
-      .update({ is_active: false, updated_at: new Date().toISOString() })
-      .eq("shop_id", shop_id);
-    if (memberErr) errors.push(memberErr);
-
-    const { error: userErr } = await adminClient
-      .from("users")
-      .update({ active: false, updated_at: new Date().toISOString() })
-      .eq("id", shop.owner_id);
-    if (userErr) errors.push(userErr);
-
-    if (errors.length > 0) {
-      // Output-shaping only: full errors logged server-side, generic ref'd message returned.
-      const { message, code } = sanitizeDbError(errors);
+    if (rpcError) {
       return new Response(
-        JSON.stringify({ error: message, ...(code ? { code } : {}) }),
+        JSON.stringify({ error: rpcError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    await recordAudit(adminClient, {
-      actorId: caller.userId,
-      action: "reject_shop",
-      targetType: "shop",
-      targetId: shop_id,
-      shopId: shop_id,
-      details: { shop_name: shop.name, reason: reason ?? null },
-      ipAddress: extractIp(req),
-    });
+    if (!result.success) {
+      const status = result.error === "SHOP_NOT_FOUND" ? 404
+        : result.error === "SHOP_ALREADY_ACTIVE" ? 409
+        : result.error === "UNAUTHORIZED" ? 403
+        : result.error === "NO_ADMIN_MEMBERSHIP" ? 404
+        : 500;
+      return new Response(
+        JSON.stringify({ error: result.error }),
+        { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
-    // 4. Send rejection email (best-effort — does not block rejection)
-    if (shop.owner_id) {
+    // Send rejection email (best-effort — does not block rejection)
+    if (result.owner_id) {
       const { data: ownerUser } = await adminClient
         .from("users")
         .select("email")
-        .eq("id", shop.owner_id)
+        .eq("id", result.owner_id)
         .single();
 
       if (ownerUser?.email) {
-        // Fire-and-forget: Supabase Edge Runtime keeps the event loop alive
-        // after returning the response.
         sendRejectionEmail(ownerUser.email, shop.name, reason);
       } else {
-        console.warn("Rejection email skipped: no email found for user", shop.owner_id);
+        console.warn("Rejection email skipped: no email found for user", result.owner_id);
       }
     }
 
     return new Response(
-      JSON.stringify({ message: "Shop rejected successfully", shop_id }),
+      JSON.stringify({ message: "Shop rejected successfully", shop_id: result.shop_id, shop_name: result.shop_name }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
