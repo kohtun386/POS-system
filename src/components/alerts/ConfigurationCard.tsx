@@ -97,7 +97,7 @@ export function ConfigurationCard({ config, onToggle, onUpdate }: ConfigurationC
                     {config.isEnabled && (
                         <button
                             onClick={() => setIsEditing(true)}
-                            className="text-primary-600 hover:text-primary-900 p-2 rounded-xl hover:bg-primary-50 transition-colors"
+                            className="text-primary-600 hover:text-primary-900 min-w-[44px] min-h-[44px] p-2 rounded-xl hover:bg-primary-50 transition-colors"
                         >
                             <Settings className="h-4 w-4" />
                         </button>

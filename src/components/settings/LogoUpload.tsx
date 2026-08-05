@@ -74,9 +74,9 @@ export function LogoUpload({ currentLogo, onLogoChange, disabled = false }: Logo
           <button
             onClick={removeLogo}
             disabled={disabled}
-            className={`absolute -top-2 -right-2 rounded-full p-1 transition-colors ${
-              disabled 
-                ? 'bg-secondary-300 text-secondary-500 cursor-not-allowed' 
+            className={`absolute -top-2 -right-2 rounded-full min-w-[44px] min-h-[44px] p-2 transition-colors ${
+              disabled
+                ? 'bg-secondary-300 text-secondary-500 cursor-not-allowed'
                 : 'bg-red-500 text-white hover:bg-danger-600'
             }`}
           >

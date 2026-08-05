@@ -66,7 +66,7 @@ export function SubscriptionManager() {
                     {(['free', 'growth', 'pro'] as const).map(tier => (
                       <button
                         key={tier}
-                        className={`btn btn-sm ${shop.subscriptionTier === tier ? 'btn-primary' : 'btn-ghost'}`}
+                        className={`btn btn-sm min-h-[44px] ${shop.subscriptionTier === tier ? 'btn-primary' : 'btn-ghost'}`}
                         onClick={() => shop.subscriptionTier !== tier && updateTier(shop.id, tier)}
                         disabled={shop.subscriptionTier === tier}
                       >

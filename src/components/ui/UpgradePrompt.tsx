@@ -29,7 +29,7 @@ export function UpgradePrompt({ feature, tier, onClose }: UpgradePromptProps) {
         </div>
         <button
           onClick={onClose}
-          className="btn btn-ghost btn-sm flex-shrink-0 p-1"
+          className="btn btn-ghost min-w-[44px] min-h-[44px] p-2 flex-shrink-0"
         >
           <X className="h-4 w-4" />
         </button>
