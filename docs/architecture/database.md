@@ -1,9 +1,9 @@
 # Database Architecture — CoffeeShop POS
 
 **Supabase project:** `ejvvwnupiqytximrbmfw`
-**Last schema migration:** `20260620000001_shop_id_placeholder.sql`
+**Last schema migration:** `20260805144623_cashier_role_check.sql`
 **Generated:** 2026-06-20
-**Reconciled:** 2026-07-30 (aligned with VISION.md v3.1.0)
+**Reconciled:** 2026-08-05 (schema truth verified against live DB)
 
 > **Multi-tenancy:** The `shop_id` foundation exists with a single default shop and no shop-switching UI yet. Dynamic shop configuration is the next milestone: `shops` owns business identity and POS behavior, while `app_settings` is trimmed to global/preferences-style settings. See `docs/specs/multi-tenancy.md` and `docs/specs/dynamic-configuration.md`.
 
@@ -97,7 +97,7 @@ Product catalog. Supports weight-based and unit-based pricing.
 | `unit` | text | `'piece'` | `'kg'`, `'lb'`, `'g'`, `'oz'`, `'l'`, `'ml'`, `'piece'` |
 | `track_inventory` | boolean | `true` | When false, stock not checked/deducted |
 | `product_type` | text | `'finished'` | CHECK: `'finished'` \| `'raw_material'`. Distinguishes menu items from ingredients (Recipe/BOM support, VISION.md v3.1.0 §7). |
-| `base_currency` | text | `'MMK'` | Added in currency migration |
+| `base_currency` | text | | RESERVED — no default. Added in currency migration |
 | `price_in_base_currency` | decimal(10,2) | | |
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
@@ -255,17 +255,26 @@ Transaction records. JSONB `items` stores cart snapshot at time of sale.
 | `status` | text | `'completed'` | CHECK: `'pending'` \| `'completed'` \| `'refunded'` \| `'credit'` \| `'draft'` |
 | `cashier` | text | | Denormalized cashier name |
 | `cashier_id` | uuid FK | | → `users(id)`. Structured reference for shift tracking. Existing `cashier` text column retained for backward compat. |
-| `cashier_role` | text | | |
+| `cashier_role` | text | | CHECK: `cashier_role IS NULL OR IN ('platform_admin','admin','manager','cashier')` |
 | `receipt_number` | text | | |
 | `receipt_printed` | boolean | `false` | Whether receipt was printed for this sale (VISION.md v3.1.0 §9). |
 | `notes` | text | | |
 | `applied_discounts` | jsonb | `'[]'` | Array of AppliedDiscount objects |
 | `free_gifts` | jsonb | `'[]'` | Array of CartItem objects |
-| `transaction_currency` | text | `'USD'` | |
+| `transaction_currency` | text | | RESERVED — no default |
 | `base_currency_amount` | decimal(12,2) | | |
 | `exchange_rate_used` | decimal(15,8) | | |
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
+
+**CHECK Constraints (verified via `pg_constraint`):**
+
+| Constraint | Definition |
+|-----------|-----------|
+| `chk_sales_cashier_role` | `cashier_role IS NULL OR cashier_role IN ('platform_admin','admin','manager','cashier')` |
+| `sales_amounts_non_negative` | `subtotal >= 0 AND discount_amount >= 0 AND tax_amount >= 0 AND total >= 0` |
+| `sales_payment_method_check` | `payment_method IN ('cash','card','digital','credit','split','kbzpay','wavepay','ayapay','cbpay','mpu')` |
+| `sales_status_check` | `status IN ('pending','completed','refunded','credit','draft')` |
 
 **Triggers:**
 - ~~`trigger_auto_generate_invoice_number`~~ — **DROPPED** (migration m38). Invoice generation now handled inside `checkout_complete()` RPC.
@@ -518,6 +527,17 @@ currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only
 | `update_customer_stats(uuid, decimal)` | SECURITY DEFINER, `search_path=''` | Updates customer purchase totals. Increments `customers.total_purchases` by the sale total and sets `customers.last_purchase` to `now()`. Called inside `checkout_complete()` RPC. | No — called by `checkout_complete()` RPC |
 | `provision_user(uuid, uuid, uuid, text, text)` | SECURITY DEFINER, `search_path=''` | Atomic user provisioning. Upserts `shop_memberships`, marks invitation accepted (if token flow), and inserts to `audit_logs` — all in one transaction. Role is read from invitation when token is present (prevents privilege escalation). Called by Edge Functions after `auth.admin.createUser()`. Revoked from `anon`/`authenticated`. VISION.md §6. Related: `docs/specs/technical-debt.md §6` (replaces sequential writes pattern). | No — called via `supabase.rpc()` by Edge Functions |
 | `approve_shop(uuid, uuid)` | SECURITY DEFINER, `search_path=''` | Atomic shop approval. Validates shop exists and is inactive, validates approver is platform_admin, gets admin membership, then atomically updates `shops.is_active`, `shop_memberships.is_active`, and `users.active` in one transaction. Inserts audit log entry. Called by `platform-admin-approve-shop` Edge Function. Revoked from `anon`/`authenticated`. Resolves `docs/specs/technical-debt.md §6`. | No — called via `supabase.rpc()` by Edge Functions |
+| `reject_shop(uuid, uuid, text)` | SECURITY DEFINER, `search_path=''` | Atomic shop rejection. Validates shop exists and is inactive, validates approver is platform_admin, then deletes the shop and related rows in one transaction. Inserts audit log entry with rejection reason. Called by `platform-admin-reject-shop` Edge Function. Revoked from `anon`/`authenticated`. | No — called via `supabase.rpc()` by Edge Functions |
+| `has_capability(uuid, text)` | SECURITY DEFINER, `search_path=''` | Checks if a shop has a specific capability key via `resolve_capabilities()`. Used in RLS policies for capability-gated access. | No — called in RLS policies |
+| `count_shop_memberships(uuid)` | SECURITY DEFINER, `search_path=''` | Returns count of active members in a shop. Used to enforce free-tier member limits. | No — called via RPC |
+| `enforce_free_tier_product_limit()` | SECURITY DEFINER, `search_path=''` | Trigger function: BLOCKS product inserts when shop is at free-tier product limit (50 products). RAISES exception if limit exceeded. | Yes — BEFORE INSERT on `products` |
+| `is_shop_admin(uuid)` | SECURITY DEFINER, `search_path=''` | Returns `true` if the current user has `admin` role in the given shop. Used in RLS policies for admin-only operations. | No — called in RLS policies |
+| `is_shop_admin_or_manager(uuid)` | SECURITY DEFINER, `search_path=''` | Returns `true` if the current user has `admin` or `manager` role in the given shop. Used in RLS policies for write operations. | No — called in RLS policies |
+| `reserve_invoice_number(uuid)` | SECURITY DEFINER, `search_path='public'` | Reserves an invoice number atomically. Increments `shops.invoice_counter` and returns the formatted invoice number. Called by `checkout_complete()` RPC. | No — called by `checkout_complete()` RPC |
+| `resolve_capabilities(uuid)` | SECURITY DEFINER, `search_path=''` | Resolves feature capabilities for a shop based on its subscription tier. Queries `feature_definitions` filtered by tier. Used by `has_capability()` and the app context loader. | No — called via RPC |
+| `users_get_own_active()` | SECURITY DEFINER, `search_path=''` | Returns `true` if the current user (`auth.uid()`) has `active = true` in the `users` table. Used in RLS policies to gate access for inactive/pending users. | No — called in RLS policies |
+| `users_get_own_role()` | SECURITY DEFINER, `search_path=''` | Returns the current user's role from the `users` table. Used in RLS policies and app context. | No — called in RLS policies |
+| `users_get_own_shop_id()` | SECURITY DEFINER, `search_path=''` | Returns the current user's `shop_id` from the `users` table. Used in RLS policies and app context for single-shop users. | No — called in RLS policies |
 
 ---
 
