@@ -29,6 +29,8 @@ function StockItemModal({ isOpen, onClose, item, onSaved }: StockItemModalProps)
     notes: '',
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     if (item) {
       setFormData({
@@ -44,14 +46,22 @@ function StockItemModal({ isOpen, onClose, item, onSaved }: StockItemModalProps)
     }
   }, [item, isOpen]);
 
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!formData.name.trim()) e.name = 'Stock item name is required';
+    const qty = parseFloat(formData.quantity || '0');
+    if (qty < 0) e.quantity = 'Quantity cannot be negative';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentShop) return;
-    if (!formData.name.trim()) return swalConfig.error('Stock item name is required');
+    if (!validate()) return;
 
     const quantity = parseFloat(formData.quantity || '0');
     const lowThreshold = parseFloat(formData.lowThreshold || '0');
-    if (quantity < 0) return swalConfig.error('Quantity cannot be negative');
 
     try {
       swalConfig.loading(item ? 'Updating stock item...' : 'Adding stock item...');
@@ -101,13 +111,19 @@ function StockItemModal({ isOpen, onClose, item, onSaved }: StockItemModalProps)
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-secondary-700 mb-1">Item Name *</label>
-              <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="input" placeholder="e.g. Coffee Beans, Milk" required />
+              <input type="text" value={formData.name}
+                onChange={(e) => { setFormData({ ...formData, name: e.target.value }); if (errors.name) setErrors(prev => { const n = { ...prev }; delete n.name; return n; }); }}
+                className={`input ${errors.name ? 'border-danger-500' : ''}`} placeholder="e.g. Coffee Beans, Milk" required
+                aria-invalid={!!errors.name} aria-describedby={errors.name ? 'error-name' : undefined} />
+              {errors.name && <p id="error-name" className="text-danger-600 text-xs mt-1" role="alert">{errors.name}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-secondary-700 mb-1">Current Quantity</label>
               <input type="number" step="any" min="0" value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: e.target.value })} className="input" placeholder="0" />
+                onChange={(e) => { setFormData({ ...formData, quantity: e.target.value }); if (errors.quantity) setErrors(prev => { const n = { ...prev }; delete n.quantity; return n; }); }}
+                className={`input ${errors.quantity ? 'border-danger-500' : ''}`} placeholder="0"
+                aria-invalid={!!errors.quantity} aria-describedby={errors.quantity ? 'error-quantity' : undefined} />
+              {errors.quantity && <p id="error-quantity" className="text-danger-600 text-xs mt-1" role="alert">{errors.quantity}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-secondary-700 mb-1">Unit</label>

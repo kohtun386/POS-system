@@ -45,6 +45,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   });
   const [cardNumberInput, setCardNumberInput] = useState('');
   const [upgradePrompt, setUpgradePrompt] = useState<{ feature: string; tier: 'growth' | 'pro' } | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Myanmar banks — default list, configurable per shop later
   const myanmarBanks = [
@@ -291,7 +292,24 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
 
   if (!isOpen && !showReceipt) return null;
 
+  const validateCheckout = () => {
+    const e: Record<string, string> = {};
+    if (payments.length === 0) {
+      if (paymentMethod === 'cash' && (!amountPaid || parseFloat(amountPaid) < total)) {
+        e.amountPaid = `Amount must be at least ${total.toFixed(2)}`;
+      }
+      if (paymentMethod === 'card') {
+        if (!cardDetails.bankName) e.bankName = 'Bank name is required';
+        if (!cardDetails.holderName) e.holderName = 'Cardholder name is required';
+        if (!cardDetails.lastFourDigits || cardDetails.lastFourDigits.length !== 4) e.lastFourDigits = 'Last 4 digits required';
+      }
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handlePayment = async () => {
+    if (!validateCheckout()) return;
     setIsProcessing(true);
 
     try {
@@ -563,11 +581,14 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                       step="0.01"
                       min="0"
                       value={amountPaid}
-                      onChange={(e) => setAmountPaid(e.target.value)}
-                      className={`input ${isTouchMode ? 'h-11 text-lg' : 'h-10'}`}
+                      onChange={(e) => { setAmountPaid(e.target.value); if (errors.amountPaid) setErrors(prev => { const n = { ...prev }; delete n.amountPaid; return n; }); }}
+                      className={`input ${isTouchMode ? 'h-11 text-lg' : 'h-10'} ${errors.amountPaid ? 'border-danger-500' : ''}`}
                       placeholder={`Minimum: ${DEFAULT_CURRENCY} ${total.toFixed(2)}`}
                       disabled={isProcessing}
+                      aria-invalid={!!errors.amountPaid}
+                      aria-describedby={errors.amountPaid ? 'error-amountPaid' : undefined}
                     />
+                    {errors.amountPaid && <p id="error-amountPaid" className="text-danger-600 text-xs mt-1" role="alert">{errors.amountPaid}</p>}
                     <AnimatePresence>
                       {paymentMethod === 'cash' && amountPaid && parseFloat(amountPaid) >= total && (
                         <motion.div
@@ -692,15 +713,18 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                       </label>
                       <select
                         value={cardDetails.bankName}
-                        onChange={(e) => setCardDetails(prev => ({ ...prev, bankName: e.target.value }))}
-                        className="select"
+                        onChange={(e) => { setCardDetails(prev => ({ ...prev, bankName: e.target.value })); if (errors.bankName) setErrors(prev => { const n = { ...prev }; delete n.bankName; return n; }); }}
+                        className={`select ${errors.bankName ? 'border-danger-500' : ''}`}
                         disabled={isProcessing}
+                        aria-invalid={!!errors.bankName}
+                        aria-describedby={errors.bankName ? 'error-bankName' : undefined}
                       >
                         <option value="">Select Bank</option>
                         {myanmarBanks.map((bank) => (
                           <option key={bank} value={bank}>{bank}</option>
                         ))}
                       </select>
+                      {errors.bankName && <p id="error-bankName" className="text-danger-600 text-xs mt-1" role="alert">{errors.bankName}</p>}
                     </div>
 
                     <div>
@@ -711,11 +735,14 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                         type="text"
                         value={cardNumberInput}
                         onChange={(e) => handleCardNumberChange(e.target.value)}
-                        className="input"
+                        className={`input ${errors.lastFourDigits ? 'border-danger-500' : ''}`}
                         placeholder="Enter card number for detection"
                         disabled={isProcessing}
                         maxLength={cardDetails.cardType === 'amex' ? 17 : 19}
+                        aria-invalid={!!errors.lastFourDigits}
+                        aria-describedby={errors.lastFourDigits ? 'error-lastFourDigits' : undefined}
                       />
+                      {errors.lastFourDigits && <p id="error-lastFourDigits" className="text-danger-600 text-xs mt-1" role="alert">{errors.lastFourDigits}</p>}
                       {cardDetails.cardType !== 'unknown' && cardNumberInput && (
                         <div className="mt-2 flex items-center space-x-2">
                           <span className="text-sm text-secondary-600 dark:text-secondary-300">Detected:</span>
@@ -733,11 +760,14 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
                       <input
                         type="text"
                         value={cardDetails.holderName}
-                        onChange={(e) => setCardDetails(prev => ({ ...prev, holderName: e.target.value }))}
-                        className="input"
+                        onChange={(e) => { setCardDetails(prev => ({ ...prev, holderName: e.target.value })); if (errors.holderName) setErrors(prev => { const n = { ...prev }; delete n.holderName; return n; }); }}
+                        className={`input ${errors.holderName ? 'border-danger-500' : ''}`}
                         placeholder="Name on card"
                         disabled={isProcessing}
+                        aria-invalid={!!errors.holderName}
+                        aria-describedby={errors.holderName ? 'error-holderName' : undefined}
                       />
+                      {errors.holderName && <p id="error-holderName" className="text-danger-600 text-xs mt-1" role="alert">{errors.holderName}</p>}
                     </div>
                   </div>
                 </div>

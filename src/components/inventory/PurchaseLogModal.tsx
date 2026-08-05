@@ -28,6 +28,8 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
     notes: '',
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     if (editingEntry) {
       setFormData({
@@ -52,15 +54,25 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
     }
   }, [editingEntry, isOpen]);
 
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!formData.item.trim()) e.item = 'Item name is required';
+    if (!formData.supplier.trim()) e.supplier = 'Supplier is required';
+    const qty = parseFloat(formData.quantity);
+    if (!qty || qty <= 0) e.quantity = 'Quantity must be greater than 0';
+    const cost = parseFloat(formData.unitCost);
+    if (isNaN(cost) || cost < 0) e.unitCost = 'Unit cost cannot be negative';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentShop) return;
+    if (!validate()) return;
 
     const quantity = parseFloat(formData.quantity);
     const unitCost = parseFloat(formData.unitCost);
-    if (!quantity || quantity <= 0) return swalConfig.error('Quantity must be greater than 0');
-    if (!formData.item.trim()) return swalConfig.error('Item name is required');
-    if (unitCost < 0) return swalConfig.error('Unit cost cannot be negative');
 
     try {
       swalConfig.loading(editingEntry ? 'Updating purchase...' : 'Recording purchase...');
@@ -117,21 +129,27 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
                 <input
                   type="text"
                   value={formData.item}
-                  onChange={(e) => setFormData({ ...formData, item: e.target.value })}
-                  className="input"
+                  onChange={(e) => { setFormData({ ...formData, item: e.target.value }); if (errors.item) setErrors(prev => { const n = { ...prev }; delete n.item; return n; }); }}
+                  className={`input ${errors.item ? 'border-danger-500' : ''}`}
                   placeholder="e.g. Coffee beans, Milk"
                   required
+                  aria-invalid={!!errors.item}
+                  aria-describedby={errors.item ? 'error-item' : undefined}
                 />
+                {errors.item && <p id="error-item" className="text-danger-600 text-xs mt-1" role="alert">{errors.item}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-1">Supplier</label>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">Supplier *</label>
                 <input
                   type="text"
                   value={formData.supplier}
-                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  className="input"
+                  onChange={(e) => { setFormData({ ...formData, supplier: e.target.value }); if (errors.supplier) setErrors(prev => { const n = { ...prev }; delete n.supplier; return n; }); }}
+                  className={`input ${errors.supplier ? 'border-danger-500' : ''}`}
                   placeholder="e.g. ABC Suppliers"
+                  aria-invalid={!!errors.supplier}
+                  aria-describedby={errors.supplier ? 'error-supplier' : undefined}
                 />
+                {errors.supplier && <p id="error-supplier" className="text-danger-600 text-xs mt-1" role="alert">{errors.supplier}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-secondary-700 mb-1">Quantity *</label>
@@ -140,11 +158,14 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
                   step="any"
                   min="0.01"
                   value={formData.quantity}
-                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                  className="input"
+                  onChange={(e) => { setFormData({ ...formData, quantity: e.target.value }); if (errors.quantity) setErrors(prev => { const n = { ...prev }; delete n.quantity; return n; }); }}
+                  className={`input ${errors.quantity ? 'border-danger-500' : ''}`}
                   placeholder="0"
                   required
+                  aria-invalid={!!errors.quantity}
+                  aria-describedby={errors.quantity ? 'error-quantity' : undefined}
                 />
+                {errors.quantity && <p id="error-quantity" className="text-danger-600 text-xs mt-1" role="alert">{errors.quantity}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-secondary-700 mb-1">Unit</label>
@@ -169,11 +190,14 @@ export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: Pur
                   step="any"
                   min="0"
                   value={formData.unitCost}
-                  onChange={(e) => setFormData({ ...formData, unitCost: e.target.value })}
-                  className="input"
+                  onChange={(e) => { setFormData({ ...formData, unitCost: e.target.value }); if (errors.unitCost) setErrors(prev => { const n = { ...prev }; delete n.unitCost; return n; }); }}
+                  className={`input ${errors.unitCost ? 'border-danger-500' : ''}`}
                   placeholder="0"
                   required
+                  aria-invalid={!!errors.unitCost}
+                  aria-describedby={errors.unitCost ? 'error-unitCost' : undefined}
                 />
+                {errors.unitCost && <p id="error-unitCost" className="text-danger-600 text-xs mt-1" role="alert">{errors.unitCost}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-secondary-700 mb-1">Purchase Date</label>
