@@ -179,7 +179,7 @@ export function ReceiptPrint({ sale, onClose }: ReceiptPrintProps) {
             <h2 className="text-xl font-bold text-secondary-900 font-fraunces">Print Receipt</h2>
             <button
               onClick={onClose}
-              className="btn btn-ghost btn-sm p-2"
+              className="btn btn-ghost min-w-[44px] min-h-[44px] p-2"
             >
               &times;
             </button>

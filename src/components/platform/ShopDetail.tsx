@@ -67,7 +67,7 @@ export function ShopDetail() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
-        <button className="btn btn-ghost btn-sm" onClick={() => window.history.back()}>
+        <button className="btn btn-ghost btn-sm min-h-[44px]" onClick={() => window.history.back()}>
           ← Back
         </button>
         <h1 className="text-2xl font-fraunces font-bold text-secondary-900 dark:text-secondary-100">
@@ -98,7 +98,7 @@ export function ShopDetail() {
             {['free', 'growth', 'pro'].map(tier => (
               <button
                 key={tier}
-                className={`btn btn-sm ${shop.subscription_tier === tier ? 'btn-primary' : 'btn-secondary'}`}
+                className={`btn btn-sm min-h-[44px] ${shop.subscription_tier === tier ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => updateTier(tier)}
               >
                 {tier.charAt(0).toUpperCase() + tier.slice(1)}

@@ -97,28 +97,28 @@ export function PendingShopsList() {
       ) : (
         <div className="space-y-3">
           {pending.map((shop) => (
-            <div key={shop.shopId} className="card p-4 flex items-center justify-between">
+            <div key={shop.shopId} className="card p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <div className="font-semibold text-secondary-900 dark:text-secondary-100">{shop.shopName}</div>
                 <div className="text-xs text-[#a8978a] dark:text-[#8a7d70]">
                   Registered: {new Date(shop.createdAt).toLocaleDateString()}
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
-                  className="btn btn-success btn-sm"
+                  className="btn btn-success btn-sm min-h-[44px]"
                   onClick={() => handleApprove(shop.shopId)}
                 >
                   Approve
                 </button>
                 <button
-                  className="btn btn-danger btn-sm"
+                  className="btn btn-danger btn-sm min-h-[44px]"
                   onClick={() => handleReject(shop.shopId)}
                 >
                   Reject
                 </button>
                 <button
-                  className="btn btn-danger btn-sm"
+                  className="btn btn-danger btn-sm min-h-[44px]"
                   onClick={() => handleDelete(shop.shopId, shop.createdAt)}
                 >
                   Delete
