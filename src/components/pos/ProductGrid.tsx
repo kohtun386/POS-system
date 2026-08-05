@@ -103,6 +103,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`input pl-12 ${isTouchMode ? 'h-14 text-lg' : 'h-12'}`}
+                aria-label="Search products by name, SKU, or barcode"
               />
             </div>
 
@@ -121,7 +122,6 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
               <div
                 ref={categoriesRef}
                 className="flex overflow-x-auto space-x-2 lg:space-x-3 max-w-xl scrollbar-hide scroll-smooth px-6"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {categories.map((category) => (
                   <button
@@ -286,13 +286,21 @@ const ProductCard = React.memo(function ProductCard({ product, onAddToCart, isTo
   const isOutOfStock = shouldTrackInventory ? product.stock === 0 : false;
 
   return (
-    <div
-      className={`card card-hover cursor-pointer transition-all duration-200 hover:border-primary-300/60 ${
+    <button
+      type="button"
+      className={`card card-hover cursor-pointer transition-all duration-200 hover:border-primary-300/60 text-left w-full ${
         isLowStock && !isOutOfStock ? 'border-[#fcd3a0] bg-[#fef7ee]/50' : ''
       } ${isOutOfStock ? 'border-[#fecaca] bg-[#fef2f2]/50 opacity-75' : ''} ${
         isTouchMode ? 'p-4' : 'p-3'
       }`}
       onClick={() => !isOutOfStock && onAddToCart(product)}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && !isOutOfStock) {
+          e.preventDefault();
+          onAddToCart(product);
+        }
+      }}
+      aria-label={`${product.name}${isOutOfStock ? ' — out of stock' : ''}`}
     >
       <div className="flex flex-col h-full">
         {/* Product Image */}
@@ -390,6 +398,6 @@ const ProductCard = React.memo(function ProductCard({ product, onAddToCart, isTo
           <span>{isRecentlyAdded ? 'Added!' : isOutOfStock ? 'Out of Stock' : product.isWeightBased ? 'Enter Weight' : 'Add to Cart'}</span>
         </button>
       </div>
-    </div>
+    </button>
   );
 });

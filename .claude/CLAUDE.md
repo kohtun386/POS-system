@@ -104,6 +104,13 @@ Checkout uses `checkoutService.complete()` — single atomic RPC call. Handles s
 - Buttons/inputs: use custom CSS classes (`.btn`, `.btn-primary`, `.input`, `.select`, `.textarea`) — NOT raw Tailwind for form elements
 - Touch mode: check `state.settings.interfaceMode === 'touch'` and apply `.touch-friendly` class for larger tap targets
 
+### Accessibility (MANDATORY)
+- **Use `<button>` not `<div onClick>`** — every clickable element must be a semantic button or have `role="button"` + `tabIndex={0}` + `onKeyDown`
+- **Label all inputs** — add `aria-label` to search inputs and icon-only buttons
+- **Modal Escape to close** — use `useModalEscape(onClose, isOpen)` from `src/hooks/useModalEscape.ts`
+- **Color contrast** — text must meet WCAG AA (≥4.5:1); use `secondary-500` or darker for text on light backgrounds
+- **No emoji as UI icons** — use Lucide React icons; emojis only in content text with `role="img" aria-label`
+
 ### State Updates
 - **Always** use `dispatch()` from `useApp()`, never mutate `state` directly
 - Cart operations: `ADD_TO_CART`, `UPDATE_CART_ITEM`, `REMOVE_FROM_CART`, `CLEAR_CART`

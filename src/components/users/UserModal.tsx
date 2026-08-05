@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, User, Mail, Lock, Shield, Crown } from 'lucide-react';
 import { User as UserType } from '../../types';
 import { useApp } from '../../hooks/useApp';
+import { useModalEscape } from '../../hooks/useModalEscape';
 import { usersService } from '../../lib/services';
 import { supabase } from '../../lib/supabase';
 import { swalConfig } from '../../lib/sweetAlert';
@@ -14,6 +15,7 @@ interface UserModalProps {
 
 export function UserModal({ isOpen, onClose, user }: UserModalProps) {
   const { state, dispatch } = useApp();
+  useModalEscape(onClose, isOpen);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: '',

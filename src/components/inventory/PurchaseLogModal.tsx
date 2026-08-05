@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { PurchaseLog } from '../../types';
 import { purchaseLogsService } from '../../lib/services';
 import { useApp } from '../../hooks/useApp';
+import { useModalEscape } from '../../hooks/useModalEscape';
 import { swalConfig } from '../../lib/sweetAlert';
 
 interface PurchaseLogModalProps {
@@ -15,6 +16,7 @@ interface PurchaseLogModalProps {
 export function PurchaseLogModal({ isOpen, onClose, editingEntry, onSaved }: PurchaseLogModalProps) {
   const { state } = useApp();
   const currentShop = state.shop;
+  useModalEscape(onClose, isOpen);
 
   const [formData, setFormData] = useState({
     supplier: '',
