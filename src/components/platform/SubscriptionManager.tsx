@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { platformAdminService, PlatformShop } from '../../lib/services';
+import { SUBSCRIPTION_TIERS } from '../../lib/constants';
 import { swalConfig } from '../../lib/sweetAlert';
 
 export function SubscriptionManager() {
@@ -63,7 +64,7 @@ export function SubscriptionManager() {
                 </td>
                 <td className="table-cell">
                   <div className="flex gap-1">
-                    {(['free', 'growth', 'pro'] as const).map(tier => (
+                    {(SUBSCRIPTION_TIERS).map(tier => (
                       <button
                         key={tier}
                         className={`btn btn-sm min-h-[44px] ${shop.subscriptionTier === tier ? 'btn-primary' : 'btn-ghost'}`}

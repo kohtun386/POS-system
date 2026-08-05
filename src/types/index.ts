@@ -150,6 +150,7 @@ export interface SalesTab {
   shopId?: string;
   name: string;
   cart: CartItem[];
+  /** Hydrated by service layer from `selected_customer_id` */
   selectedCustomer: Customer | null;
   createdAt: Date;
 }
@@ -191,6 +192,7 @@ export interface Shop {
 }
 
 export interface AppSettings {
+  currency?: string; // ponytail: Reserved. MMK-only in v1. Not used directly.
   storeName: string;
   storeAddress: string;
   storePhone: string;
