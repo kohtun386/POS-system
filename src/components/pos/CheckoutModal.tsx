@@ -126,7 +126,14 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
       : item.product.price;
     return sum + (price * item.quantity);
   }, 0);
-  const manualDiscount = state.cart.reduce((sum, item) => sum + (item.discount || 0), 0);
+  // ponytail: Clamp item-level discount at item subtotal to prevent negative line totals
+  const manualDiscount = state.cart.reduce((sum, item) => {
+    const itemPrice = item.product.isWeightBased
+      ? (item.product.pricePerUnit || 0) * (item.weight || 1)
+      : item.product.price;
+    const itemSubtotal = itemPrice * item.quantity;
+    return sum + Math.min((item.discount || 0), itemSubtotal);
+  }, 0);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -194,8 +201,9 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
             if (discount.maxDiscount) {
               discountAmount = Math.min(discountAmount, discount.maxDiscount);
             }
+            discountAmount = Math.min(discountAmount, subtotal); // ponytail: Clamp percentage auto-discount at subtotal
           } else if (discount.type === 'fixed') {
-            discountAmount = discount.value ?? 0;
+            discountAmount = Math.min(discount.value ?? 0, subtotal); // ponytail: Clamp fixed auto-discount at subtotal
           }
 
           if (discountAmount > 0) {
@@ -221,7 +229,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
   const totalAutoDiscount = appliedDiscounts.reduce((sum, discount) => sum + discount.discountAmount, 0);
   const totalDiscount = manualDiscount + totalAutoDiscount;
   const taxAmount = (subtotal - totalDiscount) * (state.settings.taxRate / 100);
-  const total = subtotal - totalDiscount + taxAmount;
+  const total = Math.max(0, subtotal - totalDiscount + taxAmount); // ponytail: Final clamp to ensure total >= 0
   const change = parseFloat(amountPaid) - total;
 
   const paidSoFar = payments.reduce((s, p) => s + p.amount, 0);

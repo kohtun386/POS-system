@@ -310,9 +310,9 @@ describe('auto-discount calculation', () => {
       if (discount.maxDiscount) {
         amount = Math.min(amount, discount.maxDiscount)
       }
-      return amount
+      return Math.min(amount, subtotal) // ponytail: clamped to subtotal
     } else if (discount.type === 'fixed') {
-      return discount.value ?? 0
+      return Math.min(discount.value ?? 0, subtotal) // ponytail: clamped to subtotal
     }
     return 0
   }
@@ -333,10 +333,10 @@ describe('auto-discount calculation', () => {
     expect(calcAutoDiscount(d, 100000)).toBe(10000)
   })
 
-  it('fixed discount returns exact value regardless of subtotal', () => {
+  it('fixed discount returns value clamped to subtotal', () => {
     const d = makeDiscount({ type: 'fixed', value: 7500 })
     expect(calcAutoDiscount(d, 50000)).toBe(7500)
-    expect(calcAutoDiscount(d, 1000)).toBe(7500) // even if larger than subtotal
+    expect(calcAutoDiscount(d, 1000)).toBe(1000) // ponytail: clamped to subtotal
   })
 
   it('free_gift discount returns 0 amount (product added separately)', () => {

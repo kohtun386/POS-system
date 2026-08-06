@@ -25,10 +25,11 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
       const price = item.product.isWeightBased
         ? (item.product.pricePerUnit || 0) * (item.weight || 1)
         : item.product.price;
+      const newSubtotal = (price * newQuantity) - (item.discount || 0);
       const updatedItem = {
         ...item,
         quantity: newQuantity,
-        subtotal: (price * newQuantity) - (item.discount || 0)
+        subtotal: Math.max(0, newSubtotal), // ponytail: Clamp item subtotal at 0
       };
       dispatch({ type: 'UPDATE_CART_ITEM', payload: { index, item: updatedItem } });
     }
@@ -51,11 +52,12 @@ export function Cart({ onCheckout, onSaveDraft }: CartProps) {
       discountAmount = discount;
     }
 
+    const effectiveDiscountAmount = Math.min(discountAmount, price * item.quantity); // ponytail: Clamp item discount at item subtotal
     const updatedItem = {
       ...item,
-      discount: discountAmount,
+      discount: effectiveDiscountAmount,
       discountType,
-      subtotal: (price * item.quantity) - discountAmount
+      subtotal: Math.max(0, (price * item.quantity) - effectiveDiscountAmount), // ponytail: Clamp item subtotal at 0
     };
 
     dispatch({ type: 'UPDATE_CART_ITEM', payload: { index, item: updatedItem } });
