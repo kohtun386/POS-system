@@ -6,45 +6,17 @@
 @.claude/rules/migration-safety.md
 
 > Design system: see `.claude/skills/design-system/SKILL.md`
-> Tier gating: see `docs/specs/tier-spec.md`
+> Tier gating: see `.claude/skills/tier-gating/SKILL.md`
+> Scope guard: see `.claude/skills/scope-guard/SKILL.md`
 > Governance: see `docs/README.md` (Governance section)
-
-## Build & Run
-
-Supabase credentials are in `.env` — project ref is `ejvvwnupiqytximrbmfw`.
-Dev server runs on `http://localhost:5173`.
-
-## Tests
-
-8 test files using Vitest + React Testing Library. Run with `npx vitest`.
-
-- Component tests: co-locate `__tests__/ComponentName.test.tsx` with the component
-- Service tests: `__tests__/services/` under `src/lib/`
 
 ## Architecture
 
-**Layout:** Components live under `src/components/<domain>/`. Each domain has a Manager component (table/list view) and Modal sub-components (forms). Reusable UI primitives are in `src/components/ui/`.
-
-### State Management
-
-- **`src/context/SupabaseAppContext.tsx`** — the **active** app state. useReducer-based with `dispatch` + `state` pattern (44 reducer actions). All product, customer, sale, user, discount, cart, settings, capabilities, and salesTab state lives here. Loads from Supabase on auth via parallel `Promise.all`. Capabilities are resolved server-side from subscription tier and business type.
-
-- **`src/context/AuthContext.tsx`** — Supabase auth wrapper. Provides `user`, `profile`, `session`, `isPendingApproval`, `signIn`, `signUp`, `signOut`. User profile loaded from `public.users` table. Inactive users (`profile.active === false`) see PendingApprovalPage.
-
-- **`src/context/ThemeContext.tsx`** — Light/dark/system theme. Toggles `dark` class on `<html>`.
-
 ### Service Layer (`src/lib/services.ts`)
 
-All DB access goes through service objects, not raw `supabase.from()`. Each service maps **camelCase** (frontend) ↔ **snake_case** (PostgreSQL).
-
-- `checkoutService` — complete a sale via `checkoutService.complete()`. See §Checkout Pattern.
-- `cashShiftsService` — CRUD for shift management (open/close/query).
-- `settingsService.get()` returns a single row (app_settings). `settingsService.update()` updates by finding the existing record's ID first.
-- `platformAdminService` — CRUD via Edge Functions. See §Platform Admin Pattern.
+All DB access goes through service objects, not raw `supabase.from()`. Each service maps **camelCase** (frontend) ↔ **snake_case** (PostgreSQL). `settingsService.update()` updates by finding the existing record's ID first — not by name.
 
 ### Database
-
-Supabase project: `ejvvwnupiqytximrbmfw`. Migrations in `supabase/migrations/`.
 
 **Schema to front-end mapping rules:**
 - Column names: `snake_case` in DB ↔ `camelCase` in TypeScript
@@ -55,10 +27,6 @@ Supabase project: `ejvvwnupiqytximrbmfw`. Migrations in `supabase/migrations/`.
 **RLS:** All tables have Row Level Security enabled. Policies use `shop_id = ANY(current_shop_ids())` scoping. Sales tabs are user-scoped.
 
 > ⚠️ **RLS Recursion:** NEVER call `current_shop_ids()` in a policy ON `shop_memberships` (infinite recursion → 500). Full checklist: `.claude/rules/migration-safety.md`.
-
-### Role-Based Access
-
-Access is enforced in `App.tsx` (`renderCurrentView`) and `Header.tsx` (nav items). Cashiers redirected to POS if they try to navigate elsewhere. Platform admin sees separate component tree.
 
 ### Capability-Based Feature Gating
 
@@ -71,19 +39,7 @@ const canUseCashDrawer = useCapability('cash_drawer');
 
 ### Tier & Feature Gating Protocol
 
-**Source of truth:** `docs/specs/tier-spec.md` — read it before any tier/capability change.
-**Document precedence:** See `docs/README.md` (Governance section) for conflict resolution rules. Quick reference: VISION.md (scope) > tier-spec.md (implementation) > CLAUDE.md (agent rules).
-
-| Rule | Description |
-|------|-------------|
-| **Read Before Write** | Always read `tier-spec.md` before changing tier assignments or feature gating |
-| **Capability-Only Logic** | Gate via `useCapability('key')`, never check `shop.subscriptionTier` directly |
-| **Migration First** | DB tier changes require a migration file in `supabase/migrations/`; never update `feature_definitions` without one |
-| **New Features Require Tier Assignment** | Every new feature key must have a `minTier` in `tier-spec.md` before implementation starts |
-
-**Tier hierarchy:** `free (0) → growth (1) → pro (2)` — a shop at tier N gets all features where `minTier ≤ N`.
-
-**CI validation:** Run `npx tsx scripts/validate-tiers.ts` to verify DB matches tier-spec.md. Fails build on mismatch.
+See `.claude/skills/tier-gating/SKILL.md` for tier protocol, precedence rules, and the 18 valid capability keys.
 
 ### Checkout Pattern
 
@@ -111,14 +67,6 @@ Checkout uses `checkoutService.complete()` — single atomic RPC call. Handles s
 - **Color contrast** — text must meet WCAG AA (≥4.5:1); use `secondary-500` or darker for text on light backgrounds
 - **No emoji as UI icons** — use Lucide React icons; emojis only in content text with `role="img" aria-label`
 
-### State Updates
-- **Always** use `dispatch()` from `useApp()`, never mutate `state` directly
-- Cart operations: `ADD_TO_CART`, `UPDATE_CART_ITEM`, `REMOVE_FROM_CART`, `CLEAR_CART`
-- Product operations: `ADD_PRODUCT`, `UPDATE_PRODUCT`, `DELETE_PRODUCT`
-- Sales: `ADD_SALE`, `DELETE_SALE`
-- Discounts: `ADD_DISCOUNT`, `UPDATE_DISCOUNT`, `DELETE_DISCOUNT`
-- Settings: `SET_SETTINGS` (partial merge)
-
 ### async/Await & Error Handling
 - Wrap Supabase calls in try/catch
 - Use `swalConfig.error()` for user-facing error toasts (from `src/lib/sweetAlert.ts`)
@@ -137,25 +85,7 @@ See `.claude/skills/design-system/SKILL.md` for colors, typography, CSS classes,
 
 ### OUT OF SCOPE — Do NOT Build
 
-| Feature | Reason |
-|---------|--------|
-| Recipe BOM / Bill of Materials | Too complex for Myanmar coffee shops |
-| Auto-deduct ingredients on sale | Requires precise recipes; shops don't track this |
-| Per-drink COGS calculation | Monthly profit (Revenue − Purchases) is sufficient |
-| Consumption log per ingredient | No auto-deduction means no consumption to log |
-| UOM conversion system | Not needed without recipe tracking |
-| Waste tracking per recipe | No recipe tracking; use low stock alerts instead |
-| Kitchen Display System (KDS) | Not practical in Myanmar; use thermal printer |
-| Multi-currency / exchange rates | MMK only |
-
-### Guard Clause
-If a request implies any of the following → **STOP and ask before proceeding:**
-- BOM / Bill of Materials / recipe ingredient tracking
-- COGS calculation per product or per sale
-- Consumption logging per ingredient
-- Kitchen Display System / KDS screens
-- Multi-currency support or exchange rate integration
-- UOM conversion tables or logic
+See `.claude/skills/scope-guard/SKILL.md` for the full OUT OF SCOPE list and guard clause.
 
 ### Documentation-Driven Development (DDD)
 
@@ -166,28 +96,7 @@ If a request implies any of the following → **STOP and ask before proceeding:*
 
 ### Valid Capability Keys (18 total — VISION.md v3.1.0 §5.5)
 
-**DO NOT invent capability keys not in this list.** Components check these via `state.capabilities.includes('key')`.
-
-| Capability | Min Tier |
-|------------|----------|
-| `pos` | free |
-| `inventory` | free |
-| `discounts` | free |
-| `draft_sales` | free |
-| `customer_management` | free |
-| `batch_tracking` | free |
-| `weight_based_products` | free |
-| `credit_system` | free |
-| `multi_tab_sales` | free |
-| `printer_integration` | growth |
-| `purchase_log` | growth |
-| `stock_overview` | growth |
-| `low_stock_alerts` | growth |
-| `staff_accounts` | growth |
-| `cash_drawer` | growth |
-| `owner_insights` | pro |
-| `simple_profit_report` | pro |
-| `advanced_reports` | pro |
+See `.claude/skills/tier-gating/SKILL.md` for the full capability keys table.
 
 ### Platform Admin Pattern
 
