@@ -200,7 +200,7 @@ Acceptance Criteria:
 - Checkout modal checks all active discounts against cart + customer + payment method + card details
 - Eligible discounts shown in green alert box with discount name and amount
 - Free gifts shown with 🎁 prefix and "FREE" label
-- Discount types: percentage (capped by maxDiscount), fixed amount, free_gift (adds product with $0 subtotal)
+- Discount types: percentage (capped by maxDiscount), fixed amount, free_gift (adds product with $0 subtotal). All discounts are automatically clamped at the cart subtotal level so that the cart total never goes below 0. A discount larger than the subtotal makes the sale free (total = 0).
 - Condition types: min_amount, specific_products (with minQuantity), payment_method, customer_tier, card_type, bank_name
 - Total discount = manual per-item discounts + auto-applied discounts
 

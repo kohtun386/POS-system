@@ -124,14 +124,14 @@ describe('manual per-item discount', () => {
     expect(subtotal).toBe(7000)
   })
 
-  it('discount larger than item subtotal results in negative', () => {
-    // Spec: if code allows discount > subtotal, test that it surfaces
+  it('discount larger than item subtotal results in zero subtotal', () => {
     const item = makeCartItem({ quantity: 1 })
     const price = item.product.price // 5000
     const discountAmount = 8000
-    const subtotal = (price * item.quantity) - discountAmount
-    // 5000 - 8000 = -3000
-    expect(subtotal).toBe(-3000)
+    // ponytail: Formula must match updated Cart.tsx and CheckoutModal.tsx clamping
+    const effectiveDiscount = Math.min(discountAmount, price * item.quantity); // 5000
+    const subtotal = (price * item.quantity) - effectiveDiscount
+    expect(subtotal).toBe(0)
   })
 })
 
@@ -158,9 +158,9 @@ describe('cart-level totals', () => {
       return sum + (price * item.quantity)
     }, 0)
     const totalAutoDiscount = autoDiscounts.reduce((sum, d) => sum + d.discountAmount, 0)
-    const totalDiscount = manualDiscount + totalAutoDiscount
+    const totalDiscount = Math.min(manualDiscount + totalAutoDiscount, subtotal) // ponytail: Clamp total discount at subtotal
     const taxAmount = (subtotal - totalDiscount) * (taxRate / 100)
-    const total = subtotal - totalDiscount + taxAmount
+    const total = Math.max(0, subtotal - totalDiscount + taxAmount) // ponytail: Ensure total >= 0
     return { subtotal, totalDiscount, taxAmount, total }
   }
 
@@ -211,14 +211,54 @@ describe('cart-level totals', () => {
     expect(result.total).toBe(43050)
   })
 
-  it('discount larger than subtotal — total goes negative', () => {
+  it('discount larger than subtotal — total is clamped to zero', () => {
     const cart = [makeCartItem({ product: makeProduct({ price: 5000 }), quantity: 1 })]
     const autoDiscounts: AppliedDiscount[] = [
       { discountId: 'd1', discountName: 'Huge', discountAmount: 8000, type: 'fixed' },
     ]
     const result = calcTotals(cart, 0, autoDiscounts, 5)
-    // subtotal: 5000, discount: 8000, taxable: -3000, tax: -150, total: -3150
-    expect(result.total).toBe(-3150)
+    // subtotal: 5000, discountAmount (8000) clamped to subtotal (5000)
+    // taxable: 0, tax: 0, total: 0
+    expect(result.totalDiscount).toBe(5000)
+    expect(result.total).toBe(0)
+  })
+
+  it('discount equals subtotal — total is zero', () => {
+    const cart = [makeCartItem({ product: makeProduct({ price: 5000 }), quantity: 1 })]
+    const result = calcTotals(cart, 5000, [], 5)
+    expect(result.total).toBe(0)
+  })
+
+  it('discount > subtotal with tax — total remains zero', () => {
+    const cart = [makeCartItem({ product: makeProduct({ price: 10000 }), quantity: 1 })]
+    const result = calcTotals(cart, 15000, [], 5)
+    expect(result.total).toBe(0)
+  })
+
+  it('item discount > item subtotal in mixed cart', () => {
+    const cart = [
+      makeCartItem({ product: makeProduct({ id: 'p1', price: 5000 }), quantity: 1, discount: 8000 }), // clamped to 5000
+      makeCartItem({ product: makeProduct({ id: 'p2', price: 5000 }), quantity: 1, discount: 0 }),
+    ]
+    // item 1 effective discount 5000, subtotal 0
+    // item 2 effective discount 0, subtotal 5000
+    // cart subtotal 10000, total manual discount 5000 (after per-item clamp)
+    // result total 5000 + tax
+    const result = calcTotals(cart, 5000, [], 0)
+    expect(result.subtotal).toBe(10000)
+    expect(result.totalDiscount).toBe(5000)
+    expect(result.total).toBe(5000)
+  })
+
+  it('free-gift-only cart — subtotal 0, total 0', () => {
+    // A free-gift-only cart has effective value 0; any discount clamps to 0.
+    const cart = [
+      makeCartItem({ product: makeProduct({ id: 'gift', price: 0 }), quantity: 1 }),
+    ]
+    const result = calcTotals(cart, 5000, [], 5)
+    expect(result.subtotal).toBe(0)
+    expect(result.totalDiscount).toBe(0)
+    expect(result.total).toBe(0)
   })
 
   it('empty cart totals to zero', () => {
@@ -290,9 +330,9 @@ describe('realistic MMK checkout scenarios', () => {
       return sum + (price * item.quantity)
     }, 0)
     const totalAutoDiscount = autoDiscounts.reduce((sum, d) => sum + d.discountAmount, 0)
-    const totalDiscount = manualDiscount + totalAutoDiscount
+    const totalDiscount = Math.min(manualDiscount + totalAutoDiscount, subtotal) // ponytail: Clamp total discount at subtotal
     const taxAmount = (subtotal - totalDiscount) * (taxRate / 100)
-    const total = subtotal - totalDiscount + taxAmount
+    const total = Math.max(0, subtotal - totalDiscount + taxAmount) // ponytail: Ensure total >= 0
     return { subtotal, totalDiscount, taxAmount, total }
   }
 

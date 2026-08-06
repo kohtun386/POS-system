@@ -80,6 +80,16 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
       return;
     }
 
+    // ponytail: Soft warning for oversized fixed discounts
+    if (formData.type === 'fixed' && parseFloat(formData.value) > 50000) {
+        const result = await swalConfig.confirm(
+            'Large Discount Warning',
+            `You are creating a fixed discount of ${formData.value} ${DEFAULT_CURRENCY}. This is quite large and might exceed typical cart subtotals. Continue?`,
+            'Continue'
+        );
+        if (!result.isConfirmed) return;
+    }
+
     if (!formData.validFrom || !formData.validTo) {
       swalConfig.warning('Please select valid dates');
       return;
