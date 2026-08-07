@@ -1,0 +1,34 @@
+-- ================================================================
+-- Migration: Restore service_role EXECUTE on approve_shop RPC
+-- Date: 2026-08-06
+-- Description:
+--   20260731140000_revoke_approve_shop_public.sql revoked PUBLIC
+--   EXECUTE on approve_shop (closing the any-authenticated-user
+--   privilege escalation) but never re-granted EXECUTE to
+--   service_role. approve_shop is SECURITY DEFINER owned by postgres,
+--   so the platform-admin-approve-shop Edge Function (which runs its
+--   admin client as service_role) could no longer call it — the
+--   approval flow returned "permission denied for function
+--   approve_shop" and onboarding approvals were broken.
+--
+--   This mirrors the pattern established for provision_user in
+--   20260731170000: REVOKE FROM PUBLIC (already done) + GRANT EXECUTE
+--   TO service_role only. Authenticated users still cannot call it
+--   directly; only the Edge Function's privileged role can.
+--
+--   VISION.md §4.3 (platform_admin bypasses RLS via service_role EFs
+--   only), §6 (Onboarding pipeline).
+-- ================================================================
+
+GRANT EXECUTE ON FUNCTION public.approve_shop(UUID, UUID) TO service_role;
+
+-- ================================================================
+-- VERIFICATION (run after apply)
+-- ================================================================
+-- SELECT proacl FROM pg_proc
+-- WHERE proname = 'approve_shop';
+-- Expected: {service_role=X/postgres, postgres=X/postgres} — and NO
+-- bare '=X/...' (PUBLIC) entry.
+-- authenticated cannot execute:
+--   SELECT has_function_privilege('authenticated', 'public.approve_shop(uuid,uuid)', 'EXECUTE');
+-- Expected: false. service_role: true.
