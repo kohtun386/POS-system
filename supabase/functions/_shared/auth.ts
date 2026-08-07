@@ -1,13 +1,21 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-// Ensure required environment variables are set
-const requiredEnv = ["URL", "ANON_KEY", "SERVICE_ROLE_KEY"] as const;
-for (const key of requiredEnv) {
-  if (!Deno.env.get(key)) {
-    console.error(`Missing required environment variable: ${key}`);
-    // In Edge Functions, throwing a Response aborts the function execution
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
+/**
+ * Resolve an environment variable with fallback.
+ * Edge Runtime exposes SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY;
+ * older configs use URL / ANON_KEY / SERVICE_ROLE_KEY.
+ */
+function env(name: string, fallbackName?: string): string {
+  return Deno.env.get(name) || (fallbackName ? Deno.env.get(fallbackName) : "") || "";
+}
+
+const URL_VAL = env("URL", "SUPABASE_URL");
+const ANON_KEY_VAL = env("ANON_KEY", "SUPABASE_ANON_KEY");
+const SERVICE_ROLE_KEY_VAL = env("SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY");
+
+if (!URL_VAL || !ANON_KEY_VAL || !SERVICE_ROLE_KEY_VAL) {
+  console.error(`Missing required env vars: URL=${!!URL_VAL} ANON_KEY=${!!ANON_KEY_VAL} SERVICE_ROLE_KEY=${!!SERVICE_ROLE_KEY_VAL}`);
+  throw new Error("Missing required environment variables (URL, ANON_KEY, SERVICE_ROLE_KEY)");
 }
 
 /**
@@ -81,8 +89,8 @@ export async function verifyPlatformAdmin(
 
   // User JWT — verify with auth.getUser then check role
   const verifyClient = createClient(
-    Deno.env.get("URL")!,
-    Deno.env.get("ANON_KEY")!,
+    URL_VAL,
+    ANON_KEY_VAL,
     { global: { headers: { Authorization: authHeader } } },
   );
 
@@ -110,8 +118,7 @@ export async function verifyPlatformAdmin(
  */
 export function createAdminClient() {
   return createClient(
-    Deno.env.get("URL")!,
-    Deno.env.get("SERVICE_ROLE_KEY")!,
+    URL_VAL,
+    SERVICE_ROLE_KEY_VAL,
   );
 }
-
