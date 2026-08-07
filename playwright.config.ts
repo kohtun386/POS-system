@@ -40,7 +40,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    // Run the dev server in `test` mode so it loads .env.test.local (local
+    // Supabase) instead of .env.local/.env.development (deliberate cloud
+    // overrides). The E2E app must talk to the same local stack the test
+    // process hits via db-helpers.ts.
+    command: 'npm run dev -- --mode test',
     url: 'http://localhost:5173',
     reuseExistingServer: true,
     timeout: 30000,

@@ -26,7 +26,8 @@ export async function loginViaUI(page: Page, email?: string, password?: string) 
   const userPassword = password || TEST_ADMIN.password
 
   await page.goto('/')
-  await page.waitForLoadState('networkidle')
+  // Wait for the login form to actually render (not just network idle)
+  await page.waitForSelector('input[type="email"]', { timeout: 15000 })
 
   // Fill login form
   await page.fill('input[type="email"]', userEmail)
