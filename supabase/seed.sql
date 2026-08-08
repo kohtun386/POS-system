@@ -1,5 +1,5 @@
 -- ================================================================
--- DEVELOPMENT SEED: Platform Admin Accounts + Tier Test Accounts
+-- DEVELOPMENT SEED: Dummy-Only Local Credentials
 -- ================================================================
 -- ⚠️  FOR LOCAL DEVELOPMENT ONLY — NEVER RUN IN PRODUCTION ⚠️
 --
@@ -8,9 +8,12 @@
 --
 -- It runs automatically after `supabase db reset`.
 --
--- Platform admin credentials:
---   1. kohtunhtun386@gmail.com / 131986kohtun@  (personal dev)
---   2. test-admin@coffeeshop.local / TestAdmin123! (E2E testing)
+-- Local-dev dummy credentials only. Real personal platform admin
+-- accounts are provisioned separately (gitignored seed.local.sql
+-- or manual) — NEVER via this file.
+--
+-- Platform admin:
+--   test-admin@coffeeshop.local / TestAdmin123!
 --
 -- Tier test accounts (password: Test@1234):
 --   3-shop matrix: Free / Growth / Pro × admin / manager / cashier
@@ -31,7 +34,6 @@ DO $$
 DECLARE
   v_shop_id UUID := '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid;
   v_users JSONB := '[
-    {"id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", "email": "kohtunhtun386@gmail.com", "password": "131986kohtun@", "username": "kohtunhtun386", "name": "Ko HTun", "role": "platform_admin"},
     {"id": "b1ffcc88-2d31-4f7a-9c7e-7cc8ae491b22", "email": "test-admin@coffeeshop.local", "password": "TestAdmin123!", "username": "test_admin", "name": "Test Admin", "role": "platform_admin"},
     {"id": "c2dd8899-3e42-4f7a-ae8e-8cc9cf001122", "email": "test-admin-manager@coffeeshop.local", "password": "TestAdmin123!", "username": "test_admin_manager", "name": "Test Admin Manager", "role": "admin"}
   ]'::jsonb;
@@ -125,19 +127,26 @@ END $$;
 -- ================================================================
 -- 1c. CLEANUP ALL PHANTOM SHOPS — runs after all auth inserts.
 --     Deletes inactive shops + their children in FK-safe order.
+--     EXCLUDES platform_admin users to prevent their deletion
+--     (they get their own shop_id but need to persist).
 -- ================================================================
 DO $$
 BEGIN
   DELETE FROM public.app_settings
-  WHERE shop_id IN (SELECT id FROM public.shops WHERE is_active = false);
+  WHERE shop_id IN (SELECT id FROM public.shops WHERE is_active = false)
+  AND shop_id NOT IN (SELECT users.shop_id FROM public.users users WHERE users.role = 'platform_admin');
 
   DELETE FROM public.shop_memberships
-  WHERE shop_id IN (SELECT id FROM public.shops WHERE is_active = false);
+  WHERE shop_id IN (SELECT id FROM public.shops WHERE is_active = false)
+  AND shop_id NOT IN (SELECT users.shop_id FROM public.users users WHERE users.role = 'platform_admin');
 
   DELETE FROM public.users
-  WHERE shop_id IN (SELECT id FROM public.shops WHERE is_active = false);
+  WHERE shop_id IN (SELECT id FROM public.shops WHERE is_active = false)
+  AND role != 'platform_admin'
+  AND id NOT IN (SELECT id FROM auth.users WHERE role = 'platform_admin' OR raw_user_meta_data->>'role' = 'platform_admin');
 
-  DELETE FROM public.shops WHERE is_active = false;
+  DELETE FROM public.shops WHERE is_active = false
+  AND id NOT IN (SELECT DISTINCT shop_id FROM public.users WHERE role = 'platform_admin');
 
   RAISE NOTICE 'All phantom shops cleaned up';
 END $$;
@@ -179,8 +188,8 @@ BEGIN
   INSERT INTO public.users (id, username, name, email, role, permissions, active, shop_id)
   VALUES
     ('10000000-0000-0000-0000-000000000011'::uuid, 'free_admin',     'Free Admin',     'free-admin@test.local',     'admin',   ARRAY['all']::text[], true, v_free_shop),
-    ('10000000-0000-0000-0000-000000000012'::uuid, 'free_cashier',   'Free Cashier',   'free-cashier@test.local',   'cashier', ARRAY['all']::text[], true, v_free_shop),
-    ('20000000-0000-0000-0000-000000000021'::uuid, 'growth_admin',   'Growth Admin',   'growth-admin@test.local',   'admin',   ARRAY['all']::text[], true, v_growth_shop),
+    ('10000000-0000-0000-0000-000000000012'::uuid, 'free_cashier',   'Free Cashier',   'free-cashier@test.local', 'cashier', ARRAY['all']::text[], true, v_free_shop),
+    ('20000000-0000-0000-0000-000000000021'::uuid, 'growth_admin',   'Growth Admin',   'growth-admin@test.local', 'admin',   ARRAY['all']::text[], true, v_growth_shop),
     ('20000000-0000-0000-0000-000000000022'::uuid, 'growth_cashier', 'Growth Cashier', 'growth-cashier@test.local', 'cashier', ARRAY['all']::text[], true, v_growth_shop),
     ('20000000-0000-0000-0000-000000000023'::uuid, 'growth_manager', 'Growth Manager', 'growth-manager@test.local', 'manager', ARRAY['all']::text[], true, v_growth_shop),
     ('30000000-0000-0000-0000-000000000031'::uuid, 'pro_admin',      'Pro Admin',      'pro-admin@test.local',      'admin',   ARRAY['all']::text[], true, v_pro_shop),

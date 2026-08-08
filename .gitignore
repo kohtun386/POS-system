@@ -29,6 +29,7 @@ supabase-mcp-server-supabase-0.8.2.tgz
 
 # Supabase seed files (contain dev credentials)
 supabase/seed.sql
+supabase/seed.local.sql
 .vercel
 
 # MCP and Claude config (may contain env var references exposing project architecture)

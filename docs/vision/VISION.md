@@ -663,6 +663,7 @@ Platform Admin UI (React)
 | `platform-admin-manage-features` | Manage global feature catalog (feature_definitions). Per-shop overrides removed. |
 | `platform-admin-daily-stats` | Platform-wide metrics (MRR, active shops) |
 | `platform-admin-delete-shop` | Permanently delete inactive shops after approval or rejection |
+| `platform-admin-cleanup` | Remove test-generated shops and auth users (dry-run supported, service_role-only) |
 
 ### 17.4 Client-Side Constraint
 
