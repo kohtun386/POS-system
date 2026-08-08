@@ -140,9 +140,16 @@ test.describe('Platform Admin Cleanup', () => {
     expect(result.rpc_result.deleted_counts.shops).toBeGreaterThanOrEqual(1);
     expect(result.auth_users_deleted).toBeGreaterThanOrEqual(1);
 
-    // Verify test shop is gone
-    const shopsAfterCleanup = await countShopsByNamePattern('E2E Shop%');
-    expect(shopsAfterCleanup).toBe(0);
+    // Verify the specific test shop is gone (by exact name, not pattern —
+    // old active E2E shops from prior runs may still exist)
+    const url = new URL(`${VITE_SUPABASE_URL}/rest/v1/shops`);
+    url.searchParams.set('name', `eq.${shopName}`);
+    url.searchParams.set('select', 'id');
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${SERVICE_ROLE_KEY}`, apikey: SERVICE_ROLE_KEY },
+    });
+    const rows = await res.json();
+    expect(Array.isArray(rows) ? rows.length : 0).toBe(0);
 
     // Verify seed shops still exist
     const freeShop = await countShopsByNamePattern('Free Shop');
@@ -156,11 +163,9 @@ test.describe('Platform Admin Cleanup', () => {
     const tierUsers = await countShopInPublicUsers('%@test.local');
     expect(tierUsers).toBeGreaterThan(0); // at least the 8 tier accounts from seed
 
-    // Verify platform_admin users still exist
-    const platformAdmins = await countShopInPublicUsers('%@coffeeshop.local');
-    // Should include kohtunhtun386@gmail.com and test-admin@coffeeshop.local
-    // but not the onboarding-* ones (those were cleaned)
-    expect(platformAdmins).toBeGreaterThanOrEqual(2);
+    // Verify platform_admin user (test-admin@coffeeshop.local) still exists
+    const platformAdmin = await countShopInPublicUsers('%test-admin@coffeeshop.local');
+    expect(platformAdmin).toBe(1);
   });
 
   // ── Test 3: Idempotency — second run returns zero counts ───────────
