@@ -24,7 +24,7 @@
 
 | # | Feature Key | Min Tier | DB `default_enabled` | Description |
 |---|-------------|----------|---------------------|-------------|
-| 1 | `pos` | free | — | POS terminal (always available, not in feature_definitions) |
+| 1 | `pos` | free | false | POS terminal — always-on; DB row exists but is informational (`default_enabled=false`); client hardcodes `['pos']`; `resolve_capabilities` excludes it |
 | 2 | `inventory` | free | true | Stock tracking |
 | 3 | `discounts` | free | true | Discount engine |
 | 4 | `draft_sales` | free | true | Draft/pending sales |
@@ -57,11 +57,11 @@
 
 These keys stay in the DB for forward compatibility but are never checked in code. Do not gate new features on them.
 
-### 2.3 Implicit Features (no feature_definitions row)
+### 2.3 Implicit Features (informational row — not returned by resolve_capabilities)
 
 | Feature Key | Tier | Notes |
 |-------------|------|-------|
-| `pos` | free | Always available; VISION §5.5 lists it but no DB row needed |
+| `pos` | free | Implicit always-on; DB row exists but informational (`default_enabled=false`); client hardcodes `['pos']`; `resolve_capabilities` excludes it |
 
 ---
 
