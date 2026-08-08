@@ -16,14 +16,14 @@ Before any complex Supabase query, migration, or schema change is performed, you
 
 ### 0. Verify Live Schema First (MANDATORY — always run before Step 1)
 
-Call `Supabase:list_tables` (or the `supabase-platform` / `supabase-db` MCP tool) to fetch the LIVE schema directly from the database. This is the ONLY authoritative source of truth for this agent — not `database.types.ts`, and not `docs/architecture/database.md`.
+Call `mcp__supabase-platform__list_tables` (the `supabase-platform` MCP server) to fetch the LIVE schema directly from the database. This is the ONLY authoritative source of truth for this agent — not `database.types.ts`, and not `docs/architecture/database.md`.
 
-**Known drift as of 2026-07 (do not assume these are fixed unless you re-verify live):**
-- `shops` table is missing 7 columns that `docs/architecture/database.md` and `services.ts`'s `mapShopRow()` assume exist: `logo`, `business_type`, `tax_rate`, `invoice_prefix`, `invoice_counter`, `draft_retention_days`, `receipt_setting`. These silently fall back to hardcoded defaults in the frontend (`'coffee_shop'`, `0`, `'INV'`, `30`, `'ask'`) — no error, just wrong data.
-- `sales` table has no `cashier_id` column (only `cashier` TEXT and `cashier_role` TEXT). `checkoutService.complete()` reads `row.cashier_id` and always gets `undefined`.
-- `print_jobs` live schema is narrow (`id`, `shop_id`, `order_id`, `status`, `config_data`, `created_at`, `completed_at`). The `PrintJob` TypeScript interface declares 8 additional fields (`saleId`, `printerType`, `connectionType`, `printerAddress`, `payload`, `isReprint`, `retryCount`, `errorMessage`) that do not exist as DB columns.
-- `feature_definitions` uses `subscription_tier` (matches DB) — docs incorrectly reference `min_tier`.
-- 4 tables exist live but are undocumented in `database.md`: `purchase_logs`, `stock_items`, `stock_adjustments`, `audit_logs`.
+**Verified live as of 2026-08-08 (still re-verify in Step 0 — do not trust this list without a live check):**
+- ✅ **RESOLVED** — `shops` HAS all 7 columns (`logo`, `business_type`, `tax_rate`, `invoice_prefix`, `invoice_counter`, `draft_retention_days`, `receipt_setting`). A 2026-08 migration added them; do NOT report them as missing.
+- ✅ **RESOLVED** — `sales` HAS `cashier_id` (uuid, nullable, FK → `users.id`). `checkoutService.complete()` reads it correctly now.
+- ⚠️ `print_jobs` live schema is narrow (`id`, `shop_id`, `order_id`, `status`, `config_data`, `created_at`, `completed_at`). The `PrintJob` TypeScript interface declares 8 additional fields (`saleId`, `printerType`, `connectionType`, `printerAddress`, `payload`, `isReprint`, `retryCount`, `errorMessage`) that do not exist as DB columns — verify the interface before trusting it.
+- ⚠️ `feature_definitions` uses `subscription_tier` (matches DB) — docs may still reference `min_tier`.
+- ⚠️ 4 tables exist live but may be undocumented in `database.md`: `purchase_logs`, `stock_items`, `stock_adjustments`, `audit_logs`.
 
 **Rule:** If a proposed migration, query, or code change references a column that appears in `database.types.ts` and/or `docs/architecture/database.md` but is NOT present in the live `list_tables` result:
 → STOP. Report as `❌ Blocking: type/doc drift, not live schema.`
@@ -110,23 +110,23 @@ Output a structured report:
   management API and does NOT execute data queries against RLS-scoped
   data. Safe for schema inspection.
 
-- **`supabase-db-cloud`** — this connector authenticates with a
-  `service_role` JWT, which BYPASSES ALL RLS POLICIES. NEVER use this
-  tool to validate whether a proposed query is "RLS-safe" — a query run
-  through this connector will succeed regardless of shop_id scoping,
-  giving a false "✅ Safe to proceed" verdict. Only use this connector
-  when explicitly asked to inspect/fix data across all shops as a
-  platform-admin action (e.g. test data cleanup workflow below), and
-  always flag in the report: "⚠️ This query ran via service_role —
-  RLS was NOT enforced."
+- **`supabase-db-cloud` is DISABLED in this project** (2026-08) — do NOT
+  instruct sessions to use it. The platform-admin path is
+  `supabase.functions.invoke()` with `service_role`, never this raw REST
+  connector.
 
 - **`supabase-db-local`** — local dev Postgres, safe for experimentation,
-  but same service_role bypass caveat applies if RLS testing matters.
+  but it authenticates with a `service_role` JWT that BYPASSES ALL RLS
+  POLICIES. NEVER use it to validate whether a proposed query is
+  "RLS-safe" — a query run through it will succeed regardless of shop_id
+  scoping, giving a false "✅ Safe to proceed" verdict. If RLS testing
+  matters, inspect the policy definition via `supabase-platform`
+  (`SELECT * FROM pg_policies WHERE tablename = '<table>'`) instead.
 
 - When validating shop_id scoping (per the checklist above), NEVER
-  confirm safety by testing through supabase-db-cloud/local — those
-  bypass the exact mechanism being tested. Use supabase-platform to
-  inspect the policy definition instead (`SELECT * FROM pg_policies
+  confirm safety by testing through `supabase-db-local` — it bypasses
+  the exact mechanism being tested. Use `supabase-platform` to inspect
+  the policy definition instead (`SELECT * FROM pg_policies
   WHERE tablename = '<table>'`).
 
 ## Test Data Cleanup Workflow
@@ -146,7 +146,16 @@ User says: "db-guardian clean test data" or "wipe test data"
 3. Query `SELECT id, name FROM customers WHERE total_purchases = 0 AND email IS NULL AND phone IS NULL` — identify empty test customers
 4. Generate SQL with explicit WHERE clauses (never use DROP/CASCADE)
 5. Show generated SQL for human approval BEFORE any execution
-6. Execute via Supabase migration system only after approval
+6. **Execute only after approval, and only via the platform-admin path:**
+   - Wrap the destructive DML in a `SECURITY DEFINER` edge function
+     (e.g. `platform-cleanup`) invoked with
+     `supabase.functions.invoke()` and `service_role`, or
+   - a single atomic `supabase.functions.invoke()` RPC if the logic is
+     already server-side.
+   - Never run destructive DML as a raw migration or inline query —
+     VISION §4.3 requires platform-admin operations to route through
+     edge functions that bypass RLS, and to write an `audit_logs` row
+     for each action.
 
 ### Sample Cleanup SQL Template
 ```sql
