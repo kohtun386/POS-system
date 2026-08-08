@@ -248,3 +248,23 @@ Deleted. Components use `useCapability('key')` hook instead of `useFeatureFlag`.
 ### Checkout Atomic RPC — ✅ RESOLVED (2026-07-10)
 
 `checkoutService.complete()` single atomic RPC call replaces sequential JS service calls. Handles sale creation, inventory deduction, print jobs, and customer stats in one transaction. Race condition protection via `SELECT ... FOR UPDATE` in `checkout_complete` DB function.
+
+---
+
+## 9. Capability Resolution Deviations (v3.1.3)
+
+### 9.1 Edge Functions use direct tier conditionals instead of capabilities — §5.1 violation
+
+**Affected files:** `supabase/functions/staff-create/index.ts`, `supabase/functions/staff-invite/index.ts`
+
+**Problem:** Both functions gate staff creation/invitation with a direct tier conditional — `if (shop.subscription_tier === "free")` returning `TIER_UPGRADE_REQUIRED` — despite code comments claiming "verify shop has staff_accounts capability". This is a §5.1 violation: "No tier/type conditionals exist in component code" (and the spirit extends to Edge Functions, which are the server). It duplicates tier logic that `resolve_capabilities` already owns.
+
+**Refactor follow-up:** Replace the tier check with `has_capability(shop_id, 'staff_accounts')` (or `resolve_capabilities`) so tier logic lives in exactly one place. Note: `staff-accept-invitation` has no such check (role read from invitation token).
+
+### 9.2 Client `resolveCapabilities` helper is dead code
+
+**Affected file:** `src/lib/services/common.ts` (function `resolveCapabilities(shop, defs)`)
+
+**Problem:** The client-side resolver is imported only by tests (`src/lib/__tests__/services/capabilities.test.ts`). The runtime path (`src/context/SupabaseAppContext.tsx`) uses `resolveCapabilitiesRpc()` instead, so the helper can drift from the live RPC (it already omits the `pos`/`default_enabled` nuance).
+
+**Resolution:** Remove the dead helper, or explicitly mark it as a test fixture. If kept, keep it in sync with the RPC's resolution semantics.

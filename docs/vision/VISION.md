@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Version** | 3.1.2 |
-| **Date** | 2026-07-30 |
+| **Version** | 3.1.3 |
+| **Date** | 2026-08-07 |
 | **Status** | LOCKED |
 | **Author** | Ko Htun |
 | **Scope** | Business vision for Myanmar coffee/tea shop POS platform |
@@ -209,15 +209,19 @@ The client stores a `capabilities: string[]` array. Components check this array 
 
 ### 5.5 Capability Keys
 
+> **Two-class capability model (v3.1.3).** Capabilities fall into two classes:
+> - **Tier-gated keys** (growth/pro): enforced via `resolve_capabilities` + RLS; client checks required.
+> - **Always-on catalog keys** (free): documented for completeness; always granted; client checks optional/informational.
+
 | Capability | Description | Min Tier | Business Types |
 |------------|-------------|----------|----------------|
-| `pos` | POS terminal | free | all |
+| `pos` | POS terminal — **implicit always-on:** client injects `['pos']`; DB row informational (`default_enabled=false`); `resolve_capabilities` never returns it | free | all |
 | `inventory` | Stock tracking | free | all |
 | `discounts` | Discount engine | free | all |
-| `draft_sales` | Draft/pending sales | free | all |
+| `draft_sales` | Draft/pending sales — **always-on catalog key for PENDING v1 feature (PRD FR-POS-05)**; not yet implemented | free | all |
 | `customer_management` | Customer records | free | all |
-| `batch_tracking` | Batch/lot tracking (embedded in ProductModal) | free | all |
-| `weight_based_products` | Per-unit/weight-based pricing (embedded in ProductModal) | free | all |
+| `batch_tracking` | Batch/lot tracking (embedded in ProductModal) — **always-on catalog key:** feature shipped ungated; gate optional (free) | free | all |
+| `weight_based_products` | Per-unit/weight-based pricing (embedded in ProductModal) — **always-on catalog key:** feature shipped ungated; gate optional (free) | free | all |
 | `credit_system` | Customer credit tracking | free | all |
 | `multi_tab_sales` | Multi-tab POS workflow | free | all |
 | `printer_integration` | Thermal printer | growth | all |
@@ -226,7 +230,7 @@ The client stores a `capabilities: string[]` array. Components check this array 
 | `low_stock_alerts` | Threshold-based alerts | growth | all |
 | `staff_accounts` | Multiple staff logins | growth | all |
 | `cash_drawer` | Shift start/end | growth | all |
-| `owner_insights` | P&L dashboard | pro | all |
+| `owner_insights` | P&L dashboard — **parent-gated via `advanced_reports`** (own key not directly checked) | pro | all |
 | `simple_profit_report` | Revenue − Purchases | pro | all |
 | `advanced_reports` | Consolidated Pro reports gate (parent of `owner_insights`, `simple_profit_report`) | pro | all |
 
@@ -766,6 +770,7 @@ AI Agent Workflow: The project utilizes a gated agent system (`db-guardian`, `pr
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 3.1.3 | 2026-08-07 | Capability key reconciliation (§5.5). Rationale: live-DB + codebase audit (2026-08-07) showed §5.5 implied all 18 keys are tier-enforced, but 5 diverged. Formalized a two-class capability model: tier-gated keys (growth/pro, enforced via `resolve_capabilities` + RLS, client checks required) vs always-on catalog keys (free, always granted, client checks optional). `pos` declared implicit always-on — client injects `['pos']`, DB row informational (`default_enabled=false`), `resolve_capabilities` never returns it. `weight_based_products` and `batch_tracking` annotated as always-on (features shipped ungated; do NOT add gates). `draft_sales` annotated as always-on catalog key for PENDING v1 feature (PRD FR-POS-05). `owner_insights` annotated as parent-gated via `advanced_reports`. No keys removed — all 18 retained. |
 | 3.1.2 | 2026-07-30 | Evolved AI Agent workflow discipline: Formalized `architecture-architect`, `onboarding-pipeline`, and `state-refactor` agents to prevent scope creep and guide phased execution. Updated Document Dependencies path for `CLAUDE.md`. |
 | 3.1.0 | 2026-07-10 | Scope reframe: removed BOM, COGS, consumption log, UOM conversion, waste tracking, KDS from v1. Simplified inventory model (Purchase Log + Stock Overview + Low Stock Alerts + Simple Profit Report). `multi_currency` moved to DEAD. Cross-document SSOT audit completed — VISION.md confirmed as business scope authority. |
 | 3.0.0 | 2026-06-29 | Initial LOCKED version. 3-tier subscription model. 4-role RBAC. Capability-based feature gating. |
