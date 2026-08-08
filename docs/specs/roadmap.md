@@ -214,6 +214,7 @@ Not blocking beta. Schedule after stabilization.
 **Not on roadmap yet but surfaced in discussions:**
 - Sales tab sharing between baristas
 - Alert system wiring into navigation
+- `platform-cleanup` edge function — referenced by the `db-guardian` agent's test-data cleanup workflow (VISION §4.3 platform-admin path) but does not exist yet; build as a `SECURITY DEFINER` function invoked via `supabase.functions.invoke()` + `service_role`, writing `audit_logs` rows per action
 
 ### Multi-Tenant Readiness
 
