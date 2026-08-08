@@ -63,6 +63,41 @@ Commits referenced: `8556dc3`, `25da4db`, `64e0082`
 
 ---
 
+### ✅ Platform Admin Cleanup Edge Function (Completed 2026-08-08)
+
+**Feature:** New `platform-admin-cleanup` Edge Function + `cleanup_test_data` SECURITY DEFINER RPC for removing transient E2E test data.
+
+**Implementation:**
+- Migration `20260808043750_fix_reject_shop_service_role_grant.sql` — Restores missing `service_role` EXECUTE grant on `reject_shop` (same bug as `approve_shop` before 2026-08-06).
+- Migration `20260808043800_platform_admin_cleanup.sql` — Creates `cleanup_test_data(p_dry_run BOOLEAN DEFAULT TRUE, p_approver_id UUID)` RPC with:
+  - Functional dry-run (default true) — preview counts via `SELECT COUNT(*)` with same WHERE clauses
+  - Destructive path — FK-safe deletion: `audit_logs → app_settings → shop_memberships → users → shops`
+  - Hard-coded scoping: only deletes onboarding test shops (`is_active=false` + owner email `onboarding-*@coffeeshop.local` or `reject-*@coffeeshop.local`) and their users
+  - Seed fixtures excluded: default shop, Free/Growth/Pro shops, tier accounts (`*@test.local`), platform_admin users
+  - No exception handler — native PostgreSQL transaction rollback for atomicity
+  - Audit log entry on success (last DML before RETURN)
+  - Grants EXECUTE to `service_role` only
+- Edge Function `supabase/functions/platform-admin-cleanup/index.ts`:
+  - Auth via `verifyPlatformAdmin` + `service_role` admin client
+  - Defaults to `dry_run: true` (safer)
+  - After destructive RPC success, cleans matching `auth.users` via admin client (non-fatal on failure)
+  - Records `audit_logs` entry
+- E2E tests in `tests/e2e/journeys/platform-cleanup.spec.ts`: dry-run preview, destructive cleanup + fixture preservation, idempotency
+- VISION.md §17.3 Edge Function Inventory updated
+
+**5 Critical Fixes Baked In:**
+1. `p_dry_run` functional (not decorative) — defaults to true
+2. No exception handler — PostgreSQL native rollback
+3. `auth.users` cleanup in Edge Function layer (not RPC)
+4. Separate migration for `reject_shop` service_role grant fix
+5. Hard-scoped to 5 onboarding tables only (no sales/discounts/products)
+
+**Verification:** Seed fixtures (Free/Growth/Pro shops, 8 tier accounts, platform_admin users) preserved after cleanup.
+
+**PR:** feat/platform-admin-cleanup (pending review)
+
+---
+
 ### ✅ Multi-Tenancy Foundation — shop_id Placeholder (Completed 2026-06-20)
 
 **Decision:** Add `shop_id` foundation before onboarding more shops.
@@ -214,7 +249,6 @@ Not blocking beta. Schedule after stabilization.
 **Not on roadmap yet but surfaced in discussions:**
 - Sales tab sharing between baristas
 - Alert system wiring into navigation
-- `platform-cleanup` edge function — referenced by the `db-guardian` agent's test-data cleanup workflow (VISION §4.3 platform-admin path) but does not exist yet; build as a `SECURITY DEFINER` function invoked via `supabase.functions.invoke()` + `service_role`, writing `audit_logs` rows per action
 
 ### Multi-Tenant Readiness
 

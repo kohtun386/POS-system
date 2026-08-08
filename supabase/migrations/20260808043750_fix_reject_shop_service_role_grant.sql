@@ -1,0 +1,34 @@
+-- ================================================================
+-- Migration: Restore service_role EXECUTE on reject_shop RPC
+-- Date: 2026-08-08
+-- Description:
+--   20260805000001_create_reject_shop_rpc.sql revoked EXECUTE on
+--   reject_shop from anon/authenticated (closing the any-
+--   authenticated-user privilege escalation) but never re-granted
+--   EXECUTE to service_role. reject_shop is SECURITY DEFINER owned
+--   by postgres, so the platform-admin-reject-shop Edge Function
+--   (which runs its admin client as service_role) cannot call it.
+--
+--   This mirrors the pattern established for approve_shop in
+--   20260806060000_fix_approve_shop_service_role_grant.sql.
+--   REVOKE FROM anon, authenticated (already done in original
+--   migration) + GRANT EXECUTE TO service_role only. Authenticated
+--   users still cannot call it directly; only the Edge Function's
+--   privileged role can.
+--
+--   VISION.md §4.3 (platform_admin bypasses RLS via service_role EFs
+--   only), §6 (Onboarding pipeline).
+-- ================================================================
+
+GRANT EXECUTE ON FUNCTION public.reject_shop(UUID, UUID, TEXT) TO service_role;
+
+-- ================================================================
+-- VERIFICATION (run after apply)
+-- ================================================================
+-- SELECT proacl FROM pg_proc
+-- WHERE proname = 'reject_shop';
+-- Expected: {service_role=X/postgres, postgres=X/postgres} — and NO
+-- bare '=X/...' (PUBLIC) entry.
+-- authenticated cannot execute:
+--   SELECT has_function_privilege('authenticated', 'public.reject_shop(uuid,uuid,text)', 'EXECUTE');
+-- Expected: false. service_role: true.
