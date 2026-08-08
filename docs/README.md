@@ -40,7 +40,7 @@ When documents conflict, resolve in this order:
 # CoffeeShop POS — Documentation Index
 
 > Master table of contents for all project documentation.
-> Last updated: 2026-06-29 (aligned with VISION.md v3.0.0)
+> Last updated: 2026-08-07 (aligned with VISION.md v3.1.2)
 
 ---
 
@@ -55,6 +55,7 @@ When documents conflict, resolve in this order:
 | [Coding Patterns](architecture/patterns.md) | Conventions: component structure, service layer, state updates, RLS, naming | Developers |
 | [Technical Debt](specs/technical-debt.md) | Known debt: any types, React Refresh warnings, color drift, workarounds | Developers |
 | [Design System](architecture/design-system.md) | Espresso & Copper tokens, component CSS classes, typography, spacing, dark mode | Developers, Designers |
+| [User Onboarding](onboarding.md) | Signup → approval → first login walkthrough, Edge Function activation, troubleshooting | Everyone |
 
 ---
 
@@ -66,6 +67,9 @@ When documents conflict, resolve in this order:
 | [Authentication](architecture/auth.md) | Auth flows, role hierarchy, permission matrix, RLS policy patterns, security posture | Backend, Full-stack |
 | [State Management](architecture/state-management.md) | Provider tree, 25 reducer actions, cart persistence, data loading, checkout/tab flows | Frontend |
 | [Deployment](architecture/deployment.md) | Env vars, local dev, Supabase config, build/deploy, PWA, monitoring, backup | DevOps, Full-stack |
+| [Edge Functions — Onboarding](architecture/edge-functions/onboarding.md) | Onboarding pipeline Edge Functions: `staff-create`, `staff-invite`, `staff-accept-invitation`, `send-notification` | Backend, Full-stack |
+| [ADR](architecture/adr/) | Architecture Decision Records | Developers |
+| [Maintenance Checklist](operations/maintenance-checklist.md) | Routine ops: DB health, migrations, backups, Edge Functions | DevOps |
 
 ---
 
@@ -86,7 +90,6 @@ User-facing guides written for shop owners and staff — no technical jargon.
 | Document | Description | Audience |
 |----------|-------------|----------|
 | [User Onboarding](specs/user-onboarding.md) | Signup → approval → first login tour → Free tier setup → upgrade flow → grace period | New shop owners |
-| [Inventory Model](specs/inventory-model.md) | Purchase log, stock overview, low stock alerts, simple profit report | Growth+ shop owners |
 
 ---
 

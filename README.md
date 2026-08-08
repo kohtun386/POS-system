@@ -208,6 +208,9 @@ For a complete walkthrough of the user onboarding and approval flow, including t
 | `npm run preview` | Preview production build locally |
 | `npm run lint` | ESLint across all source files |
 | `npm run test` | Run unit/component tests once (Vitest + React Testing Library) |
+| `npm run test:unit` | Unit/component tests once (Vitest + React Testing Library; alias of `npm run test`) |
+| `npm run test:db` | Run DB tests (`supabase db test`; pgTAP in `supabase/tests/`) |
+| `npm run typecheck` | TypeScript build check (`tsc --build`) |
 | `npm run test:watch` | Run unit/component tests in watch mode |
 | `npm run test:e2e` | Run end-to-end tests (Playwright) |
 | `npm run test:e2e:ui` | Run end-to-end tests with Playwright UI mode |
