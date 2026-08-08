@@ -1,7 +1,7 @@
 # Database Architecture — CoffeeShop POS
 
 **Supabase project:** `ejvvwnupiqytximrbmfw`
-**Last schema migration:** `20260805144623_cashier_role_check.sql`
+**Last schema migration:** `20260806060000_fix_approve_shop_service_role_grant.sql`
 **Generated:** 2026-06-20
 **Reconciled:** 2026-08-05 (schema truth verified against live DB)
 
@@ -214,6 +214,7 @@ Staff profiles. Extends Supabase `auth.users`.
 | `username` | text NOT NULL | | UNIQUE |
 | `name` | text NOT NULL | | |
 | `email` | text NOT NULL | | |
+| `shop_id` | uuid FK NOT NULL | | → `shops(id)`. No default (removed `20260726044400`). |
 | `role` | text NOT NULL | `'cashier'` | CHECK: `'platform_admin'` \| `'admin'` \| `'manager'` \| `'cashier'`. 4 roles (VISION.md v3.1.0 §4). |
 | `permissions` | text[] | `'{}'` | Currently unused (role governs access) |
 | `active` | boolean | `true` | |
@@ -277,8 +278,8 @@ Transaction records. JSONB `items` stores cart snapshot at time of sale.
 | `sales_status_check` | `status IN ('pending','completed','refunded','credit','draft')` |
 
 **Triggers:**
-- ~~`trigger_auto_generate_invoice_number`~~ — **DROPPED** (migration m38). Invoice generation now handled inside `checkout_complete()` RPC.
-- ~~`trigger_update_customer_stats`~~ — **DROPPED** (migration m39). Customer stats update now handled inside `checkout_complete()` RPC.
+- ~~`trigger_auto_generate_invoice_number`~~ — **DROPPED** (migration `20260805163424_drop_redundant_sales_triggers.sql`). Invoice generation now handled inside `checkout_complete()` RPC.
+- ~~`trigger_update_customer_stats`~~ — **DROPPED** (migration `20260805163424_drop_redundant_sales_triggers.sql`). Customer stats update now handled inside `checkout_complete()` RPC.
 
 **Service:** `salesService` — `getAll()` cursor-based pagination (`limit`, `cursor`). `create()`, `delete()`. No `update()`.
 
@@ -362,7 +363,9 @@ Audit trail for rate changes.
 
 ```
 auth.users
-  └── users.id (CASCADE)
+  ├── users.id (CASCADE)
+  ├── purchase_logs.created_by (SET NULL)
+  └── stock_adjustments.adjusted_by (SET NULL)
 
 products
   ├── product_batches.product_id (CASCADE)
@@ -493,32 +496,32 @@ currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only
 | Function | Security | Purpose | Trigger? |
 |----------|----------|---------|----------|
 | `update_updated_at_column()` | SECURITY DEFINER | Sets `updated_at = now()` on UPDATE | Yes — all tables with `updated_at` |
-| `generate_invoice_number()` | INVOKER, `search_path=''` | Reads `app_settings.invoice_prefix`/`invoice_counter`, increments counter, returns formatted invoice number | No — called by `checkout_complete()` RPC (trigger path dropped in m38) |
+| `generate_invoice_number()` | INVOKER, `search_path=''` | Reads `app_settings.invoice_prefix`/`invoice_counter`, increments counter, returns formatted invoice number | No — called by `checkout_complete()` RPC (trigger path dropped in `20260805163424_drop_redundant_sales_triggers.sql`) |
 | `handle_new_auth_user()` | SECURITY DEFINER, `search_path=''` | Creates `public.users` + `shops` + `shop_memberships` rows on `auth.users` insert | Yes — AFTER INSERT on `auth.users` |
 | `handle_new_shop_app_settings()` | SECURITY DEFINER, `search_path=''` | Auto-creates `app_settings` row for newly inserted shops. Inserts with defaults: `interface_mode='touch'`, `theme='light'`, `auto_backup=true`, `invoice_prefix=COALESCE(shop.invoice_prefix,'INV')`, `invoice_counter=COALESCE(shop.invoice_counter,1000)`. Ensures 1:1 data integrity between shops and app_settings. | Yes — AFTER INSERT on `shops` |
 | `get_current_exchange_rate(text, text)` | INVOKER, `search_path=''` | **DEPRECATED (v3.1.0).** Returns current rate between two currencies. MMK-only — no multi-currency. | No — called from app |
 | `convert_currency_amount(decimal, text, text)` | INVOKER, `search_path=''` | **DEPRECATED (v3.1.0).** Converts amount using current rate. MMK-only — no multi-currency. | No — called from app |
 | `update_exchange_rate(text, text, decimal, text, boolean)` | INVOKER, `search_path=''` | **DEPRECATED (v3.1.0).** Ends current rate, inserts new, records history. MMK-only — no multi-currency. | No — called from app |
 | `rls_auto_enable()` | SECURITY DEFINER | Auto-enables RLS. Revoked from client roles | Event trigger |
-| `checkout_complete(uuid, jsonb, jsonb, uuid)` | SECURITY DEFINER, `search_path='public'` | Atomic all-or-nothing checkout transaction. Race condition protection via `SELECT ... FOR UPDATE` on shops row. Checks `daily_order_limit`, generates invoice, inserts sale, deducts inventory (product stock only), updates customer stats. RAISES `DAILY_LIMIT_REACHED` if limit exceeded. | No — called via `supabase.rpc()` |
+| `checkout_complete(uuid, jsonb, jsonb, uuid)` | SECURITY DEFINER, `search_path='public'` | Atomic all-or-nothing checkout transaction. Race condition protection via `SELECT ... FOR UPDATE` on shops row. **Recomputes total server-side (`GREATEST(subtotal - discount + tax, 0)`); client-supplied `total` is ignored and discount clamped at `[0, subtotal]`.** Checks `daily_order_limit`, generates invoice, inserts sale, deducts inventory (product stock only), updates customer stats. RAISES `DAILY_LIMIT_REACHED` if limit exceeded. | No — called via `supabase.rpc()` |
 | `current_shop_ids()` | INVOKER, `search_path=''` | Returns shop IDs where current user has active membership. Used in RLS policies for shop-scoped access. | No — called in RLS policies |
-| `is_platform_admin()` | SECURITY DEFINER | Checks if `auth.uid()` maps to a user with `role = 'platform_admin'`. Used in RLS for cross-tenant access. | No — called in RLS policies |
+| ~~`is_platform_admin()`~~ | — | **REMOVED** — not present in the live database. No policy references it; `platform_admin` bypasses via `service_role` Edge Functions only. |
 | `replace_recipe_lines(uuid, jsonb)` | SECURITY DEFINER | **DEPRECATED (v3.1.0).** Atomically deletes existing recipe_lines for a recipe and inserts new lines. Was used by recipe BOM management — BOM removed from v1 scope. | No — called via RPC |
-| `auto_generate_invoice_number()` | INVOKER, `search_path=''` | Auto-increment invoice counter. Reads current counter from `shops.invoice_counter`, increments atomically, returns formatted invoice number. Used inside `checkout_complete()` RPC. | No — called by `checkout_complete()` RPC |
+| `auto_generate_invoice_number()` | INVOKER, `search_path=''` | Auto-increment invoice counter. Reads current counter from `app_settings.invoice_counter`, increments atomically, returns formatted invoice number. Used inside `checkout_complete()` RPC. | No — called by `checkout_complete()` RPC |
 | `check_inventory_alerts()` | INVOKER, `search_path=''` | Alert system: checks product stock levels against configured thresholds in `alert_configurations`. Returns products that breach low-stock or out-of-stock thresholds. | No — called by pg_cron or Edge Function |
 | `deduct_product_stock(uuid, integer)` | SECURITY DEFINER, `search_path=''` | Deducts stock during checkout. Decrements `products.stock` by the given quantity for the specified product. Includes `CHECK (stock >= 0)` guard. Called inside `checkout_complete()` RPC for inventory-tracked products. | No — called by `checkout_complete()` RPC |
 | `get_alert_recipients(uuid)` | INVOKER, `search_path=''` | Alert system: returns active alert recipients for a given shop. Filters by `shop_id` and `is_active = true`. Returns recipient contact info and alert type preferences. | No — called by Edge Function |
 | `should_send_alert(uuid, text)` | INVOKER, `search_path=''` | Alert system: throttling check. Returns `true` if no alert of the given type was sent to the shop within the configured cooldown window (`alert_configurations.cooldown_minutes`, default 24h). Prevents duplicate alert floods. | No — called by Edge Function |
 | `update_customer_stats(uuid, decimal)` | SECURITY DEFINER, `search_path=''` | Updates customer purchase totals. Increments `customers.total_purchases` by the sale total and sets `customers.last_purchase` to `now()`. Called inside `checkout_complete()` RPC. | No — called by `checkout_complete()` RPC |
 | `provision_user(uuid, uuid, uuid, text, text)` | SECURITY DEFINER, `search_path=''` | Atomic user provisioning. Upserts `shop_memberships`, marks invitation accepted (if token flow), and inserts to `audit_logs` — all in one transaction. Role is read from invitation when token is present (prevents privilege escalation). Called by Edge Functions after `auth.admin.createUser()`. Revoked from `anon`/`authenticated`. VISION.md §6. Related: `docs/specs/technical-debt.md §6` (replaces sequential writes pattern). | No — called via `supabase.rpc()` by Edge Functions |
-| `approve_shop(uuid, uuid)` | SECURITY DEFINER, `search_path=''` | Atomic shop approval. Validates shop exists and is inactive, validates approver is platform_admin, gets admin membership, then atomically updates `shops.is_active`, `shop_memberships.is_active`, and `users.active` in one transaction. Inserts audit log entry. Called by `platform-admin-approve-shop` Edge Function. Revoked from `anon`/`authenticated`. Resolves `docs/specs/technical-debt.md §6`. | No — called via `supabase.rpc()` by Edge Functions |
+| `approve_shop(uuid, uuid)` | SECURITY DEFINER, `search_path=''` | Atomic shop approval. Validates shop exists and is inactive, validates approver is platform_admin, gets admin membership, then atomically updates `shops.is_active`, `shop_memberships.is_active`, and `users.active` in one transaction. Inserts audit log entry. Called by `platform-admin-approve-shop` Edge Function. Revoked from `anon`/`authenticated`; **GRANT EXECUTE TO `service_role` only** (provision_user pattern). Resolves `docs/specs/technical-debt.md §6`. | No — called via `supabase.rpc()` by Edge Functions |
 | `reject_shop(uuid, uuid, text)` | SECURITY DEFINER, `search_path=''` | Atomic shop rejection. Validates shop exists and is inactive, validates approver is platform_admin, then deletes the shop and related rows in one transaction. Inserts audit log entry with rejection reason. Called by `platform-admin-reject-shop` Edge Function. Revoked from `anon`/`authenticated`. | No — called via `supabase.rpc()` by Edge Functions |
 | `has_capability(uuid, text)` | SECURITY DEFINER, `search_path=''` | Checks if a shop has a specific capability key via `resolve_capabilities()`. Used in RLS policies for capability-gated access. | No — called in RLS policies |
 | `count_shop_memberships(uuid)` | SECURITY DEFINER, `search_path=''` | Returns count of active members in a shop. Used to enforce free-tier member limits. | No — called via RPC |
 | `enforce_free_tier_product_limit()` | SECURITY DEFINER, `search_path=''` | Trigger function: BLOCKS product inserts when shop is at free-tier product limit (50 products). RAISES exception if limit exceeded. | Yes — BEFORE INSERT on `products` |
 | `is_shop_admin(uuid)` | SECURITY DEFINER, `search_path=''` | Returns `true` if the current user has `admin` role in the given shop. Used in RLS policies for admin-only operations. | No — called in RLS policies |
 | `is_shop_admin_or_manager(uuid)` | SECURITY DEFINER, `search_path=''` | Returns `true` if the current user has `admin` or `manager` role in the given shop. Used in RLS policies for write operations. | No — called in RLS policies |
-| `reserve_invoice_number(uuid)` | SECURITY DEFINER, `search_path='public'` | Reserves an invoice number atomically. Increments `shops.invoice_counter` and returns the formatted invoice number. Called by `checkout_complete()` RPC. | No — called by `checkout_complete()` RPC |
+| `reserve_invoice_number(uuid)` | SECURITY DEFINER, `search_path='public'` | Reserves an invoice number atomically. Increments `app_settings.invoice_counter` and returns the formatted invoice number. Called by `checkout_complete()` RPC. | No — called by `checkout_complete()` RPC |
 | `resolve_capabilities(uuid)` | SECURITY DEFINER, `search_path=''` | Resolves feature capabilities for a shop based on its subscription tier. Queries `feature_definitions` filtered by tier. Used by `has_capability()` and the app context loader. | No — called via RPC |
 | `users_get_own_active()` | SECURITY DEFINER, `search_path=''` | Returns `true` if the current user (`auth.uid()`) has `active = true` in the `users` table. Used in RLS policies to gate access for inactive/pending users. | No — called in RLS policies |
 | `users_get_own_role()` | SECURITY DEFINER, `search_path=''` | Returns the current user's role from the `users` table. Used in RLS policies and app context. | No — called in RLS policies |
@@ -543,13 +546,17 @@ currency_config, exchange_rates, exchange_rate_history  — DEPRECATED (MMK only
 | `products` | Shop members | admin/manager | admin/manager | admin/manager |
 | `product_batches` | Shop members | admin/manager | admin/manager | admin/manager |
 | `discounts` | Shop members | admin/manager | admin/manager | admin/manager |
-| `users` | All authenticated | All authenticated | Self OR admin | (none — no DELETE policy) |
+| `users` | Self OR shop member | Self (role=`cashier`, active=`false`) OR admin/manager w/ `staff_accounts` | Self profile (role/active/shop_id pinned) OR admin (not self) | (none — no DELETE policy) |
 | `sales` | Shop members | Shop members | admin/manager | admin/manager |
 | `sales_tabs` | Own tabs only | Own tabs only | Own tabs only | Own tabs only |
 | `feature_definitions` | All authenticated | (Edge Function only) | (Edge Function only) | (Edge Function only) |
 | `print_jobs` | Shop members | (RPC/Edge Function) | (Edge Function) | (none) |
 | `cash_shifts` | Shop members | cashier+ (own) | cashier+ (own) | admin/manager |
 | `shop_invitations` | Invited user (own) OR admin/manager (all) | admin/manager | admin/manager | (none — service_role only) |
+| `purchase_logs` | Shop members w/ `purchase_log` | admin/manager w/ `purchase_log` | admin/manager w/ `purchase_log` | admin/manager w/ `purchase_log` |
+| `stock_items` | Shop members w/ `stock_overview` | admin/manager w/ `stock_overview` | admin/manager w/ `stock_overview` | admin/manager w/ `stock_overview` |
+| `stock_adjustments` | Shop members w/ `stock_overview` | admin/manager w/ `stock_overview` | (none — append-only) | (none — append-only) |
+| `notification_service_config` | admin/manager w/ `low_stock_alerts` | (Edge Function only) | (Edge Function only) | (Edge Function only) |
 
 **Shop-scoped SELECT policy pattern:**
 ```sql
@@ -575,8 +582,8 @@ FOR INSERT WITH CHECK (
 ```
 
 **Notable:**
-- `users` UPDATE: `(auth.uid() = id) OR EXISTS (admin user)` — self-edit or admin
-- `users` INSERT: `auth.role() = 'authenticated'` — trigger handles profile creation
+- `users` UPDATE: `(auth.uid() = id) OR users_get_own_role() = 'admin'` — recursion-proof via SECURITY DEFINER helpers; WITH CHECK pins role/active/shop_id for self so a user cannot self-promote
+- `users` INSERT: two policies (OR) — self-insert `(id=auth.uid(), role='cashier', active=false)` for signup, plus admin/manager insert gated by `has_capability(shop_id, 'staff_accounts')`
 - `users` DELETE: No policy defined (implicit deny — no one can delete users via RLS)
 - `sales_tabs`: Only `user_id = auth.uid()` — complete user isolation
 - `sales`: Cashiers can INSERT (record transactions) but not UPDATE/DELETE
@@ -605,7 +612,7 @@ FOR INSERT WITH CHECK (
 | `currency` | text | `'MMK'` | Per-shop display currency |
 | `base_currency` | text | `'MMK'` | Per-shop base currency for pricing |
 | `invoice_prefix` | text | `'INV'` | Invoice prefix |
-| `invoice_counter` | integer | `1000` | Mutated only by atomic invoice DB function |
+| `invoice_counter` | integer | `1000` | Column exists but **not mutated by invoice functions** — the live counter lives in `app_settings.invoice_counter` |
 | `draft_retention_days` | integer | `30` | Cleanup retention for draft sales |
 | `subscription_tier` | text | `'free'` | CHECK: `'free'` \| `'growth'` \| `'pro'`. 3-tier model (VISION.md v3.1.0 §3). |
 | `daily_order_limit` | integer | `50` | Free tier: 50. Growth/Pro: NULL (unlimited). Enforced in `checkout_complete` RPC. (VISION.md v3.1.0 §16) |
@@ -734,6 +741,8 @@ shop_id UUID NOT NULL DEFAULT '4f3dab19-144e-4a29-95a5-2ee82f160ce5'::uuid REFER
 
 Tables: `app_settings`, `categories`, `customers`, `suppliers`, `products`, `product_batches`, `discounts`, `users`, `sales`, `sales_tabs`, `currency_config`, `exchange_rates`, `exchange_rate_history`
 
+> **Update (`20260726044400_remove_hardcoded_shop_id_defaults.sql`):** the DEFAULT was removed from `categories`, `products`, `sales`, `customers`, `discounts`, `users`, `shop_memberships` (and later from `print_jobs`, `purchase_logs`, `stock_items`, `stock_adjustments`, `cash_shifts`, `shop_invitations`, `audit_logs`). The hardcoded default **remains only** on `alert_recipients`, `alert_templates`, `alert_configurations`, `alert_history`, `app_settings`, `product_batches`, `sales_tabs`, `suppliers`, `notification_service_config` (verified live).
+
 ### 6.5 shop_id Indexes
 
 | Index | Table | Type |
@@ -763,12 +772,12 @@ Tables: `app_settings`, `categories`, `customers`, `suppliers`, `products`, `pro
 
 ### 6.6 RLS on New Tables (Temporary — Chunk 1)
 
-All 7 new tables have RLS enabled with **temporary permissive policies** (`auth.role() = 'authenticated'` for all operations). These will be replaced with role-aware policies in Chunk 2.
+All 7 tables have RLS enabled. **Chunk 2 has shipped** — role-aware, capability-gated policies (see §5 matrix). This section is historical.
 
 | Table | Current Policy | Chunk 2 Target |
 |-------|---------------|----------------|
 | `shops` | All authenticated (full access) | SELECT: member of shop. Write: admin of shop. |
-| `shop_memberships` | All authenticated (full access) | SELECT: member of shop. Write: admin of shop. |
+| `shop_memberships` | Self OR shop admin/manager | `count_shop_memberships(shop_id)=0` OR `subscription_tier IN ('growth','pro')`; plus shop admin | Shop admin | Shop admin |
 | `alert_recipients` | All authenticated (full access) | SELECT: all authenticated. Write: admin/manager. |
 | `alert_templates` | All authenticated (full access) | SELECT: all authenticated. Write: admin/manager. |
 | `alert_configurations` | All authenticated (full access) | SELECT: all authenticated. Write: admin/manager. |
@@ -1113,7 +1122,7 @@ All user-defined functions use `SET search_path = ''` to prevent search path inj
 | Business type = `coffee_shop` only | `shops.business_type` CHECK |
 | 3-tier: free/growth/pro | `shops.subscription_tier` CHECK |
 | Free: 50 orders/day | `shops.daily_order_limit` + `checkout_complete()` RPC |
-| Free: 50 products max | Client + server validation (no DB constraint) |
+| Free: 50 products max | `enforce_free_tier_product_limit()` BEFORE INSERT trigger on `products` (§16.3) |
 | 4 roles | `users.role` CHECK + `shop_memberships.role` |
 | Feature flags (capability-based) | `feature_definitions` (tier-based only) |
 | Recipe/BOM **OUT OF SCOPE** | `recipes` + `recipe_lines` deprecated (§10.3, §19) |
