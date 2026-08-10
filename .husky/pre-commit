@@ -1,1 +1,2 @@
 npm run check:schema
+npx tsx scripts/check-i18n-parity.ts

@@ -1,0 +1,24 @@
+name: i18n Parity Check
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - run: npm ci
+
+      - run: npx tsx scripts/check-i18n-parity.ts
+
+      - name: Upload i18n parity report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: i18n-parity-report
+          path: i18n-parity-report.json
