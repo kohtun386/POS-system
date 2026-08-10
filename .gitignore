@@ -89,3 +89,4 @@ backups/
 
 # TypeScript build info
 *.tsbuildinfo
+i18n-parity-report.json

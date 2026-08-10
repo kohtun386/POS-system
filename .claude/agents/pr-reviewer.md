@@ -115,6 +115,12 @@ Check every new migration file for:
 | Timestamps use `TIMESTAMP WITH TIME ZONE` | Timezone safety |
 | No `current_shop_ids()` in policy ON `shop_memberships` | Infinite RLS recursion → 500 error |
 
+### 11. i18n & Layout Safety
+
+- No hardcoded user-facing strings in non-platform code (platform folder remains exempt)
+- `en` and `my` locale keys remain paired and parity-safe
+- Layout re-check for longer Myanmar text in forms, tables, and popups
+
 ## Output Format
 
 ```

@@ -1,0 +1,10 @@
+{
+  "app_name": "CoffeeShop POS",
+  "nav_dashboard": "Dashboard",
+  "nav_sales": "Sales",
+  "nav_inventory": "Inventory",
+  "save": "Save",
+  "cancel": "Cancel",
+  "customer": "Customer",
+  "loading": "Loading..."
+}
