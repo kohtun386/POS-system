@@ -38,7 +38,7 @@ Shop-level preferences and configuration. One row per shop. Auto-created by `trg
 |--------|------|---------|-------|
 | `id` | uuid PK | `gen_random_uuid()` | |
 | `shop_id` | uuid FK | default shop | Compatibility tenant link and cleanup key |
-| `store_name` | text | `'sekaLabs 2025 POS'` | Display name for receipts |
+| `store_name` | text | `'CoffeeShop POS'` | Display name for receipts |
 | `store_address` | text | | Physical address for receipts |
 | `store_phone` | text | | Contact phone for receipts |
 | `store_email` | text | | Contact email |
