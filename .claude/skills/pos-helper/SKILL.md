@@ -36,7 +36,7 @@ Scan the current diff (or all `src/components/` if no active diff) for these vio
 | **Color palette drift** | Only these hex values are allowed: `#9a693a` / `#7a4f2c` (primary browns), `#f0ece5` / `#ded7cc` (secondary stones), `#f57323` / `#e55c13` (accent coppers). Flag any other custom hex color as a potential drift |
 | **Typography** | Headings must use `font-fraunces` (serif, 600 weight). Body text must use `DM Sans`. Flag any raw `font-family` or improper heading weight |
 | **Animation consistency** | Framer Motion transitions should use `duration: 0.2`. Flag anything significantly different or inconsistent `animate`/`initial` props |
-| **Import hygiene** | Flag any import from `AppContext.tsx` (deprecated — use `SupabaseAppContext.tsx`). Flag any direct `supabase.from()` call outside `src/lib/services.ts` |
+| **Import hygiene** | Flag any import from `AppContext.tsx` (deleted — use `SupabaseAppContext.tsx`). Flag any direct `supabase.from()` call outside `src/lib/services/*` |
 | **CSS class usage** | Cards: `.card`, `.card-glass`, `.card-hover`. Badges: `.badge-{success,warning,danger,info,accent}`. Tables: `.table`, `.table-header`, `.table-row`, `.table-cell`. Modals: `.modal-overlay`, `.modal`, `.modal-header`, `.modal-body`, `.modal-footer` |
 | **Touch mode** | If `state.settings.interfaceMode === 'touch'`, verify `.touch-friendly` is applied for larger tap targets |
 

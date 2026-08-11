@@ -12,7 +12,7 @@
 
 ## Architecture
 
-### Service Layer (`src/lib/services.ts`)
+### Service Layer (`src/lib/services/*`)
 
 All DB access goes through service objects, not raw `supabase.from()`. Each service maps **camelCase** (frontend) ↔ **snake_case** (PostgreSQL). `settingsService.update()` updates by finding the existing record's ID first — not by name.
 
@@ -106,11 +106,11 @@ Platform admin operations MUST use `supabase.functions.invoke()` only. Never use
 
 ## Common Pitfalls
 
-- **Don't import from `AppContext.tsx`** — it's deprecated. Always use `SupabaseAppContext.tsx`.
+- **Don't import from `AppContext.tsx`** — it's deleted v3.1.0. Always use `SupabaseAppContext.tsx`.
 - **Don't call `supabase.from()` directly in components** — route through service objects.
 - **Don't forget camelCase ↔ snake_case mapping** — services handle this; if you add a new field, add mapping in both directions.
 - **Stock updates** — the checkout flow in `CheckoutModal.tsx` already handles inventory deduction. Don't duplicate this logic.
-- **Invoice numbers** — use `useInvoiceGeneration()` from SupabaseAppContext, not manual string construction.
+- **Invoice numbers** — use `useInvoiceGeneration()` from `src/hooks/useInvoiceStats.ts`, not manual string construction.
 - **Discount eligibility** — use `checkDiscountEligibility()` from SupabaseAppContext; don't reimplement condition checking.
 - **Alerts access** — the AlertManager component exists but is NOT wired into the nav yet. It's accessible if needed but not in the main navigation flow.
 - **SalesTabs** — are user-scoped in the DB (RLS). Each user only sees their own tabs. The initial tab is auto-created on first data load if none exist.

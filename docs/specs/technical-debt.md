@@ -33,7 +33,7 @@ All hooks extracted to dedicated files (`src/hooks/`), eliminating mixed export 
 |---|---|---|
 | ~~`src/context/AppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` hook + `checkDiscountEligibility` utility~~ | ~~deleted v3.1.0~~ |
 | ~~`src/context/AuthContext.tsx`~~ | ~~Exports `AuthProvider` + `useAuth` hook~~ | ✅ resolved 2026-07-31 |
-| ~~`src/context/SupabaseAppContext.tsx`~~ | ~~Exports `AppProvider` + `useApp` + `useInvoiceGeneration` + `checkDiscountEligibility`~~ | ✅ resolved 2026-07-31 |
+| `src/context/SupabaseAppContext.tsx` | Exports `AppProvider` + `useApp` (active, NOT removed) | Active — the central context |
 | ~~`src/context/ThemeContext.tsx`~~ | ~~Exports `ThemeProvider` + `useTheme` hook~~ | ✅ resolved 2026-07-31 |
 | ~~`src/lib/alertScheduler.tsx`~~ | ~~Exports `useAlertScheduler` hook + `AlertStatusIndicator` component~~ | ✅ resolved 2026-07-31 |
 

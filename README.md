@@ -141,7 +141,7 @@ A multi-tenant SaaS point-of-sale platform built for coffee shops and tea shops 
 |-------|-----------|
 | Frontend | React 18.3, TypeScript 5.5 (strict) |
 | Styling | Tailwind CSS 3.4 — Espresso & Copper design system |
-| State | React Context + useReducer (44 actions) |
+| State | React Context + useReducer (38 actions) |
 | Backend | Supabase (PostgreSQL, Auth, REST API) |
 | Build | Vite 5.4 with code-splitting |
 | PWA | vite-plugin-pwa (Workbox) |
@@ -238,11 +238,11 @@ src/
 │   ├── ui/                # Reusable: Button, Card, Input, ErrorBoundary, LoadingComponents, UpgradePrompt
 │   └── users/             # User manager and modal
 ├── context/
-│   ├── SupabaseAppContext.tsx   # Active state management (useReducer, 44 actions)
+│   ├── SupabaseAppContext.tsx   # Active state management (useReducer, 38 actions)
 │   ├── AuthContext.tsx          # Supabase auth wrapper
 │   └── ThemeContext.tsx         # Light/dark/system theme
 ├── lib/
-│   ├── services.ts              # 22 service objects (all DB access)
+│   ├── services/                # Domain-scoped service objects (all DB access)
 │   ├── supabase.ts              # Supabase client init
 │   ├── sweetAlert.ts            # SweetAlert2 themed configs
 │   ├── inventoryUtils.ts        # Inventory helper utilities

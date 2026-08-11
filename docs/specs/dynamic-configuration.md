@@ -219,7 +219,7 @@ const initialState = {
 ### 2.5 `shopsService` — New
 
 ```typescript
-// src/lib/services.ts
+// src/lib/services/*
 
 export const shopsService = {
   async getByUserId(userId: string): Promise<Shop> {
@@ -713,7 +713,7 @@ SELECT cron.schedule(
 |------|--------|
 | 2.1 | Add `Shop` interface to `src/types/index.ts` |
 | 2.2 | Trim `AppSettings` interface (remove 10 fields) |
-| 2.3 | Create `shopsService` in `src/lib/services.ts` |
+| 2.3 | Create `shopsService` in `src/lib/services/shops.ts` |
 | 2.4 | Trim `settingsService.get()` and `settingsService.update()` |
 | 2.5 | Update `useInvoiceGeneration()` to use DB-backed `invoicesService`/RPC, not frontend counter increments |
 | 2.6 | Deprecate frontend `generateNextInvoiceNumber()` for persistence; keep only display helpers if needed |

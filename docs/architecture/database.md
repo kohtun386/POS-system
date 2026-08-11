@@ -51,10 +51,10 @@ Shop-level preferences and configuration. One row per shop. Auto-created by `trg
 | `theme` | text | `'light'` | CHECK: `'light'` \| `'dark'` \| `'auto'` |
 | `invoice_prefix` | text | `'INV'` | Invoice number prefix |
 | `invoice_counter` | integer | `1000` | Current invoice counter |
-| `notification_channel` | text | `'none'` | Daily report delivery channel. CHECK: `'none'` \| `'whatsapp'` \| `'discord'`. Added `20260811000001`. |
-| `whatsapp_recipient_phone` | text | `''` | WhatsApp recipient for daily report (E.164, e.g. `+959…`). Added `20260811000001`. |
-| `discord_webhook_url` | text | `''` | Discord webhook URL for daily report. Added `20260811000001`. |
-| `whatsapp_report_time` | text | `'18:00'` | Daily report time (24h `HH:MM`, format CHECK). Added `20260811000001`. |
+| `notification_channel` | text | `'none'` | Daily report delivery channel. CHECK: `'none'` \| `'whatsapp'` \| `'discord'`. Added `20260811131014`. |
+| `whatsapp_recipient_phone` | text | `''` | WhatsApp recipient for daily report (E.164, e.g. `+959…`). Added `20260811131014`. |
+| `discord_webhook_url` | text | `''` | Discord webhook URL for daily report. Added `20260811131014`. |
+| `whatsapp_report_time` | text | `'18:00'` | Daily report time (24h `HH:MM`, format CHECK). Added `20260811131014`. |
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
@@ -168,7 +168,7 @@ Supplier records. No direct FK from products (supplier info stored as text in ba
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
-**Service:** No dedicated service in `services.ts`. Unused in frontend currently.
+**Service:** No dedicated service (unused in frontend currently).
 
 ---
 
@@ -1053,7 +1053,7 @@ Owner-recorded supply purchases (date, supplier, item, quantity, cost).
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
-**Service:** `purchaseLogsService` (services.ts:2010). Capability: `purchase_log` (Growth+, VISION §5.5, §10.2).
+**Service:** `purchaseLogsService` (src/lib/services/purchaseLogs.ts). Capability: `purchase_log` (Growth+, VISION §5.5, §10.2).
 
 ---
 
@@ -1075,7 +1075,7 @@ Current supply levels (manual entry, not auto-calculated) with low-stock thresho
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
-**Service:** `stockItemsService` (services.ts:2113). Capability: `stock_overview` (Growth+, VISION §5.5, §10.2).
+**Service:** `stockItemsService` (src/lib/services/stockItems.ts). Capability: `stock_overview` (Growth+, VISION §5.5, §10.2).
 
 ---
 

@@ -63,11 +63,11 @@ Check changed files for:
 
 ### 5. Service Layer (DB Access)
 
-- **Never** use `supabase.from()` directly in components — route through service objects in `src/lib/services.ts`
+- **Never** use `supabase.from()` directly in components — route through service objects in `src/lib/services/*`
 - Service objects handle camelCase ↔ snake_case mapping — don't bypass this
 - `checkoutService.complete()` — single atomic RPC call. Flag any sequential JS approach (e.g. create sale, then update inventory, then insert print job as separate calls)
 - **Platform admin operations MUST use `supabase.functions.invoke()` only** — prohibited: `supabase.from()` in `src/components/platform/` or any component reading admin-only tables. VISION §17.4: "Platform admin operations MUST use `supabase.functions.invoke()` only. Never use `supabase.from()` for platform admin operations."
-- Flag any new service method added to the 2232‑line `services.ts` without noting the file size — at this point adding more code there should be deliberate
+- Flag new code added to `src/lib/services.ts` — it is a deprecation shim; new service methods must go in the matching `src/lib/services/<domain>.ts`
 
 ### 6. Tier Gating & Capabilities
 

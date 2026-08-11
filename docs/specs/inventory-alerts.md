@@ -49,7 +49,7 @@ Main service class that handles:
 - Cooldown management
 - Service integration (SendGrid, Twilio, AWS SES)
 
-#### 2. Database Services (`src/lib/services.ts`)
+#### 2. Database Services (`src/lib/services/*`)
 
 Service functions for:
 
