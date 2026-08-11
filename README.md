@@ -264,7 +264,7 @@ supabase/
 │   ├── platform-admin-manage-features/
 │   ├── platform-admin-reject-shop/
 │   └── platform-admin-update-subscription/
-└── migrations/                  # 55 SQL migration files
+└── migrations/                  # 91 SQL migration files
 ```
 
 ---
@@ -320,7 +320,7 @@ supabase/
 
 ### Migrations
 
-55 migration files in `supabase/migrations/`. Run `supabase db push` to apply.
+91 migration files in `supabase/migrations/`. Run `supabase db push` to apply.
 
 ### Key Database Features
 

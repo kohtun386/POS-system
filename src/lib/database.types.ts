@@ -190,7 +190,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           phone?: string | null
-          role: string
+          role?: string
           shop_id?: string
           updated_at?: string
         }
@@ -1350,7 +1350,7 @@ export type Database = {
           payment_terms?: string | null
           phone?: string | null
           rating?: number | null
-          shop_id: string
+          shop_id?: string
           updated_at?: string
         }
         Update: {
@@ -1458,16 +1458,12 @@ export type Database = {
         }
         Returns: Json
       }
+      cleanup_test_data: {
+        Args: { p_approver_id?: string; p_dry_run?: boolean }
+        Returns: Json
+      }
       count_shop_memberships: { Args: { p_shop_id: string }; Returns: number }
       current_shop_ids: { Args: never; Returns: string[] }
-      deduct_product_stock: {
-        Args: never
-        Returns: trigger
-      }
-      enforce_free_tier_product_limit: {
-        Args: never
-        Returns: trigger
-      }
       generate_invoice_number: { Args: never; Returns: string }
       get_alert_recipients: {
         Args: { alert_type_param: string }
@@ -1478,14 +1474,6 @@ export type Database = {
           phone: string
           role: string
         }[]
-      }
-      handle_new_auth_user: {
-        Args: never
-        Returns: trigger
-      }
-      handle_new_shop_app_settings: {
-        Args: never
-        Returns: trigger
       }
       has_capability: {
         Args: { p_capability_key: string; p_shop_id: string }
@@ -1593,10 +1581,12 @@ export type TablesInsert<
     }
     ? I
     : never
-  : DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Insert: infer I
-    }
-    ? I
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
     : never
 
 export type TablesUpdate<
@@ -1616,10 +1606,12 @@ export type TablesUpdate<
     }
     ? U
     : never
-  : DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Update: infer U
-    }
-    ? U
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
     : never
 
 export type Enums<
@@ -1629,13 +1621,15 @@ export type Enums<
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : never
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
@@ -1650,9 +1644,14 @@ export type CompositeTypes<
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : never
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

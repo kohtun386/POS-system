@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { CartItem, Product, Discount, AppliedDiscount } from '../../../types'
+import type { CartItem, Product, AppliedDiscount } from '../../../types'
 
 // ── Helpers ─────────────────────────────────────────────────────────
 

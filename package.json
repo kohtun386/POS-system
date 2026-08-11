@@ -17,7 +17,7 @@
   "author": "Ko Htun <kohtunhtun386@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "git@github.com:Keshara1997/POS-system.git"
+    "url": "git@github.com:kohtun386/POS-system.git"
   },
   "scripts": {
     "dev": "vite --host",
@@ -38,7 +38,6 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.50.5",
     "@vercel/analytics": "^2.0.1",
-    "claude-mem": "^13.10.2",
     "date-fns": "^3.6.0",
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.400.0",
