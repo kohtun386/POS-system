@@ -716,7 +716,7 @@ AI Agent Workflow: The project utilizes a gated agent system (`db-guardian`, `pr
 
 ### 18.3 Service Layer Rules
 
-- All DB access through service objects in `src/lib/services.ts`
+- All DB access through service objects in `src/lib/services/*`
 - No `supabase.from()` calls in components
 - Platform admin operations: `supabase.functions.invoke()` only
 - Checkout: `supabase.rpc('checkout_complete', ...)` only

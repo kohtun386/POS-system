@@ -32,7 +32,7 @@ Defined in `src/App.tsx`.
 | `ThemeContext` | `src/context/ThemeContext.tsx` | `useState` | `isDark`, `toggleTheme`, `setTheme`, `theme` |
 | `AuthContext` | `src/context/AuthContext.tsx` | `useState` × 4 | `user`, `profile`, `session`, `loading`, `signIn`, `signUp`, `signOut`, `updateProfile` |
 | `AppContext` (active) | `src/context/SupabaseAppContext.tsx` | `useReducer` | `state`, `dispatch` |
-| `AppContext` (deprecated) | `src/context/AppContext.tsx` | `useReducer` | **DO NOT IMPORT.** localStorage mock data only. |
+| `AppContext` (deleted v3.1.0) | — | — | File removed; use `SupabaseAppContext.tsx` |
 
 ---
 
@@ -67,7 +67,7 @@ interface AppState {
 
 `capabilities` is a flat string array of capability keys (e.g., `['pos', 'inventory', 'printer_integration', 'purchase_log']`). Resolved server-side at login from subscription tier and business type. Components check `capabilities.includes('key')` — never check `shop.subscriptionTier` or `shop.businessType` directly. (VISION.md v3.1.0 Section 5)
 
-### 3.2 Action Types (~44 actions)
+### 3.2 Action Types (38 actions)
 
 | Action | Payload | Behavior |
 |--------|---------|----------|
@@ -165,7 +165,7 @@ if (salesTabs.length === 0 && user) {
 | Hook | Purpose |
 |------|---------|
 | `useApp()` | Returns `{ state, dispatch }`. Every component uses this. |
-| `useInvoiceGeneration()` | Returns async function that requests an invoice number from the DB-owned atomic invoice path. |
+| `useInvoiceGeneration()` (in `src/hooks/useInvoiceStats.ts`) | Returns async function that requests an invoice number from the DB-owned atomic invoice path. |
 | `useInvoiceStats()` | Returns function that computes invoice statistics from current state. |
 | `getActiveShopId(state)` | Returns `state.activeShopId`. For future service layer injection. |
 | `useActiveShopId()` | Hook returning active shop ID from context. For future service layer injection. |
@@ -471,8 +471,8 @@ Close: UPDATE cash_shifts (closing_cash, expected_cash, variance, status='closed
 
 | Anti-Pattern | Why | Correct Pattern |
 |-------------|-----|-----------------|
-| Import from `AppContext.tsx` | Deprecated. Uses localStorage mock data. | Import from `SupabaseAppContext.tsx` |
-| Call `supabase.from()` in components | Bypasses service layer. No camelCase↔snake_case mapping. | Use service objects from `src/lib/services.ts` |
+| Import from `AppContext.tsx` | Deleted v3.1.0 — file no longer exists (was localStorage mock data). | Import from `SupabaseAppContext.tsx` |
+| Call `supabase.from()` in components | Bypasses service layer. No camelCase↔snake_case mapping. | Use service objects from `src/lib/services/*` |
 | Mutate `state` directly | Breaks React rendering. Reducer won't fire. | Always `dispatch()` |
 | Sequential JS service calls for checkout | Leaves data inconsistent if middle step fails. Double-deduction, duplicate invoices. | Use `supabase.rpc('checkout_complete', ...)` — single atomic transaction |
 | Duplicate stock deduction logic | `checkout_complete` RPC already handles inventory deduction, consumption logging, and print jobs. | Let the RPC handle everything. |
@@ -491,4 +491,4 @@ Close: UPDATE cash_shifts (closing_cash, expected_cash, variance, status='closed
 |--------|--------|--------|
 | Discriminated union for actions | Eliminates `payload: any`. Type-safe dispatch. | Planned (tech debt #1) |
 | Split context exports to separate files | Fixes React Refresh warnings (15 warnings, 6 files). | ✅ Resolved (tech debt #2) — hooks live in `src/hooks/`; context files retain provider and raw context exports |
-| Zustand or Redux Toolkit evaluation | Current useReducer pattern works but scales poorly with ~44 actions. | Not started |
+| Zustand or Redux Toolkit evaluation | Current useReducer pattern works but scales poorly with ~38 actions. | Not started |

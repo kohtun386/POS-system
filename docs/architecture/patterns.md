@@ -66,7 +66,7 @@ Check `state.settings.interfaceMode === 'touch'` and apply `.touch-friendly` cla
 
 ### Structure
 
-All DB access through service objects in `src/lib/services.ts`. Never call `supabase.from()` directly in components.
+All DB access through service objects in `src/lib/services/*`. Never call `supabase.from()` directly in components.
 
 ```ts
 export const productsService = {
@@ -150,7 +150,7 @@ Edge Function inventory: `platform-admin-approve-shop`, `platform-admin-reject-s
 
 **Source:** `docs/vision/VISION.md` §17
 
-**Source:** `CLAUDE.md`, `src/lib/services.ts`
+**Source:** `CLAUDE.md`, `src/lib/services/*`
 
 ---
 
@@ -353,7 +353,7 @@ Components use local `loading` state or `state.loading` from context. Buttons di
 
 ## Invoice Number Generation
 
-Use `useInvoiceGeneration()` from SupabaseAppContext, not manual string construction. The hook must call the DB-owned atomic invoice generation path for the active shop. Frontend-side counter increments are prohibited because concurrent checkouts can generate duplicate invoices.
+Use `useInvoiceGeneration()` from `src/hooks/useInvoiceStats.ts`, not manual string construction. The hook must call the DB-owned atomic invoice generation path for the active shop. Frontend-side counter increments are prohibited because concurrent checkouts can generate duplicate invoices.
 
 ```ts
 const generateInvoice = useInvoiceGeneration();
@@ -425,7 +425,7 @@ Use `checkDiscountEligibility()` from SupabaseAppContext. Don't reimplement cond
 
 | Anti-Pattern | Why | Do Instead |
 |-------------|-----|------------|
-| Import from `AppContext.tsx` | Deprecated, localStorage mock data | Import from `SupabaseAppContext.tsx` |
+| Import from `AppContext.tsx` | Deleted v3.1.0 — file no longer exists | Import from `SupabaseAppContext.tsx` |
 | `supabase.from()` in components | Bypasses service layer mapping | Use service objects |
 | Mutate `state` directly | Breaks React state model | Use `dispatch()` |
 | Forget camelCase↔snake_case mapping | Data silently wrong | Map in service methods |

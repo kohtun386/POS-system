@@ -53,7 +53,7 @@ When presented with a query, migration, or schema change, check:
 | **Column existence (live)** | All referenced columns exist on their respective tables in the LIVE schema — cross-check against `database.types.ts` but trust live if they disagree |
 | **Type safety** | Values assigned to columns match the TypeScript type (e.g., `Json` columns get proper objects, `number` columns get numbers, dates are ISO strings) |
 | **Enum / CHECK constraint values (live)** | Any enum-typed or CHECK-constrained column receives a valid value from the LIVE constraint definition, not just the TypeScript union type. TS unions can be wider than the DB constraint (known case: TS `Discount.type` allows `'bogo'`, but the live DB CHECK on `discounts.type` only permits `percentage`, `fixed`, `free_gift` — an insert with `'bogo'` will fail at the DB level). |
-| **Naming convention** | DB columns use `snake_case` → TypeScript uses `camelCase`. Ensure the mapping is consistent (services in `src/lib/services.ts` handle this automatically) |
+| **Naming convention** | DB columns use `snake_case` → TypeScript uses `camelCase`. Ensure the mapping is consistent (services in `src/lib/services/*` handle this automatically) |
 | **shop_id scoping** | Any SELECT/UPDATE/DELETE on a tenant-scoped table (`products`, `sales`, `discounts`, `app_settings`, `customers`, `users`, `sales_tabs`, `categories`, `suppliers`, `product_batches`) MUST filter or rely on RLS-enforced `shop_id`. Flag any raw query without explicit shop scoping as a **warning** even if RLS theoretically covers it — defense in depth. Known gap: `productsService`, `salesService`, `discountsService`, `settingsService`, `customersService`, `usersService`, `salesTabsService` currently have no explicit `shop_id` filter in code. |
 | **RLS compatibility** | All tables have Row Level Security enabled. Queries must work within the authenticated user's RLS scope |
 | **JSONB structure** | Columns typed as `Json` in the types file must receive properly structured objects matching their expected shape (e.g., `items`, `payments`, `conditions`, `applied_discounts`) |
@@ -92,7 +92,7 @@ Output a structured report:
 
 - Supabase project ref: `ejvvwnupiqytximrbmfw`
 - Migrations live in `supabase/migrations/`
-- Services in `src/lib/services.ts` handle camelCase ↔ snake_case mapping
+- Services in `src/lib/services/*` handle camelCase ↔ snake_case mapping
 - All tables have RLS enabled with policies granting access scoped via `current_shop_ids()`
 - Sales tabs are user-scoped AND shop-scoped via RLS
 - Boolean columns in DB drop the `is_` prefix (e.g., `track_inventory` not `is_track_inventory`)

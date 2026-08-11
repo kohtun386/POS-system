@@ -123,7 +123,7 @@ User-facing guides written for shop owners and staff — no technical jargon.
 | Topic | Location |
 |-------|----------|
 | Component tree | [CLAUDE.md](../CLAUDE.md#architecture) |
-| Service layer | `src/lib/services.ts` |
+| Service layer | `src/lib/services/*` (domain-scoped) |
 | Type definitions | `src/types/index.ts` |
 | Database schema | `supabase/migrations/` |
 | Reducer actions | [State Management](architecture/state-management.md) |

@@ -1,6 +1,6 @@
 # State Refactor Workflow
 
-Splits monolithic services and reducer into domain-scoped modules. One service or reducer per session — never batch.
+Maintains the domain-scoped service layer and reducer chain; re-splits any module that regresses into a monolith. One service or reducer per session — never batch.
 
 ## Architecture-Approval Gate
 
@@ -11,14 +11,14 @@ Before any refactor session, check:
 
 ## Decision
 
-1. Check `src/lib/services.ts` — current line count, identify next domain candidate  
+1. Check `src/lib/services/` — identify next domain candidate (services are already split; find what remains to be refactored, e.g. reducers)  
 2. Check `src/context/SupabaseAppContext.tsx` → AppReducer — current action count, identify next domain
 3. Pick ONE service or ONE reducer domain. Never combine.
 
-## Phase A: Split a Service
+## Phase A: Re-split a Service (or add a new domain module)
 
 ```
-services.ts → src/lib/services/{products,customers,sales,...}.ts
+src/lib/services/<domain>.ts   (one service per file, barrel in src/lib/services/index.ts)
 ```
 
 - Extract one service object and its camelCase ↔ snake_case mappings
@@ -28,10 +28,10 @@ services.ts → src/lib/services/{products,customers,sales,...}.ts
   - ❌ breakage: Typescript error, test failure, import mismatch
   - ✅ success: all existing tests pass with zero app code changes
 
-## Phase B: Extract a Domain Reducer
+## Phase B: Re-split a Domain Reducer
 
 ```
-context/SupabaseAppContext.tsx → src/context/reducers/{products,cart,sales,...}.ts
+src/context/reducers/<domain>.ts   (composed by src/context/reducers/index.ts + appReducer.ts)
 ```
 
 - Extract reducer function + dispatch → retain identical export API

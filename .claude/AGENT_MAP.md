@@ -191,7 +191,7 @@ Next: user reviews + merges on GitHub, then local cleanup
 | user | architecture-architect | New feature / major change / question about scope |
 | architecture-architect | db-guardian | Approved change requires a migration (ADR step 3) |
 | architecture-architect | onboarding-pipeline | Approved change touches auth, user flows, or platform admin |
-| architecture-architect | state-refactor | Approved change touches services.ts or state management |
+| architecture-architect | state-refactor | Approved change touches the services layer (`src/lib/services/*`) or state management (`src/context/reducers/*`) |
 
 ---
 
@@ -289,7 +289,7 @@ Already defined above (§3). This entry is the **post-merge cleanup** workflow o
 | "Push this migration" | db-guardian | user (if safe) |
 | "Is this in scope?" or "Should I build this?" | architecture-architect | db-guardian / onboarding-pipeline / state-refactor |
 | "Clean up after merge" | git-pilot | — |
-| "Split services.ts" or "refactor state" | state-refactor | pr-reviewer (after impl) |
+| "Refactor state" or "keep services/reducers domain-scoped" | state-refactor | pr-reviewer (after impl) |
 | "Add onboarding screen / Pipeline A or B" | onboarding-pipeline | architecture-architect (RLS design) → db-guardian (policy sign-off) → create migration → pr-reviewer |
 
 ## Agent Hierarchy

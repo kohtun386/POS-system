@@ -238,7 +238,7 @@ export type Capabilities = string[];
 ## 6. Service Layer
 
 ```typescript
-// src/lib/services.ts
+// src/lib/services/*
 
 export const featureDefinitionsService = {
   async getAll(): Promise<FeatureDefinition[]> { ... },

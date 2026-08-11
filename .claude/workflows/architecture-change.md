@@ -21,7 +21,7 @@ U S E R proposes change
 │  │
 │  ├─ DB change? → @db-guardian
 │  ├─ Auth/user flows? → @onboarding-pipeline
-│  └─ State/services.ts touched? → @state-refactor
+│  └─ State/services layer touched? → @state-refactor
 │
 ├─ PHASE → break into numbered steps → decide for each
 │
