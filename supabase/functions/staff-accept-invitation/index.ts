@@ -36,6 +36,17 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Format gate: staff-invite mints tokens as 32 hex chars (UUID without
+    // dashes) + a random hex suffix — always exactly 64 hex chars.
+    // Reject anything else up front so garbage tokens can't reach the
+    // user-creation branch (Branch B) below.
+    if (typeof token !== "string" || !/^[0-9a-f]{64}$/i.test(token)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid invitation token" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const adminClient = createAdminClient();
 
     // ── 1. Look up invitation by token ──────────────────────────
