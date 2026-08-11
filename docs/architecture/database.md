@@ -51,6 +51,10 @@ Shop-level preferences and configuration. One row per shop. Auto-created by `trg
 | `theme` | text | `'light'` | CHECK: `'light'` \| `'dark'` \| `'auto'` |
 | `invoice_prefix` | text | `'INV'` | Invoice number prefix |
 | `invoice_counter` | integer | `1000` | Current invoice counter |
+| `notification_channel` | text | `'none'` | Daily report delivery channel. CHECK: `'none'` \| `'whatsapp'` \| `'discord'`. Added `20260811000001`. |
+| `whatsapp_recipient_phone` | text | `''` | WhatsApp recipient for daily report (E.164, e.g. `+959…`). Added `20260811000001`. |
+| `discord_webhook_url` | text | `''` | Discord webhook URL for daily report. Added `20260811000001`. |
+| `whatsapp_report_time` | text | `'18:00'` | Daily report time (24h `HH:MM`, format CHECK). Added `20260811000001`. |
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 

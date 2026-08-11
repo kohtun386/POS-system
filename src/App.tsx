@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth';
 import { AppProvider } from './context/SupabaseAppContext';
 import { useApp } from './hooks/useApp';
 import { useCapability } from './hooks/useCapability';
+import { useDailyReportScheduler } from './hooks/useDailyReportScheduler';
 import { ThemeProvider } from './context/ThemeContext';
 import { LoadingSpinner } from './components/ui/LoadingComponents';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -34,6 +35,15 @@ function AppContent() {
   const discountEnabled = useCapability('discounts');
   const purchaseLogEnabled = useCapability('purchase_log');
   const stockOverviewEnabled = useCapability('stock_overview');
+
+  // Daily report scheduler — fires once/day at the configured time while the POS is open.
+  useDailyReportScheduler(
+    state.settings.notificationChannel !== 'none',
+    state.settings.whatsappReportTime ?? '18:00',
+    state.settings.notificationChannel,
+    state.sales,
+    state.shop?.id,
+  );
 
   const handleViewChange = (view: string) => {
     setCurrentView(view);

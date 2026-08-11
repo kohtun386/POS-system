@@ -19,7 +19,7 @@ export interface SendNotificationInput {
     subject?: string;
     body: string;
   };
-  channel: 'email' | 'sms';
+  channel: 'email' | 'sms' | 'whatsapp' | 'discord';
   shop_id: string;
 }
 
@@ -61,8 +61,8 @@ export function validateSendNotificationInput(body: unknown): { success: true; d
     return { success: false, error: 'template.body must be a non-empty string' };
   }
 
-  if (b.channel !== 'email' && b.channel !== 'sms') {
-    return { success: false, error: 'channel must be either "email" or "sms"' };
+  if (b.channel !== 'email' && b.channel !== 'sms' && b.channel !== 'whatsapp' && b.channel !== 'discord') {
+    return { success: false, error: 'channel must be "email", "sms", "whatsapp", or "discord"' };
   }
 
   if (typeof b.shop_id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(b.shop_id)) {

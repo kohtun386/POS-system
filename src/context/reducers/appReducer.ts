@@ -29,6 +29,7 @@ export const initialState: AppState = {
     theme: 'light',
     invoicePrefix: 'INV',
     invoiceCounter: 1000,
+    notificationChannel: 'none',
   },
   salesTabs: [],
   activeSalesTab: '',

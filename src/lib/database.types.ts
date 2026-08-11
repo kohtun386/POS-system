@@ -268,10 +268,12 @@ export type Database = {
           auto_backup: boolean | null
           created_at: string
           currency: string | null
+          discord_webhook_url: string
           id: string
           interface_mode: string | null
           invoice_counter: number | null
           invoice_prefix: string | null
+          notification_channel: string
           receipt_printer: boolean | null
           shop_id: string
           store_address: string | null
@@ -282,15 +284,19 @@ export type Database = {
           tax_rate: number | null
           theme: string | null
           updated_at: string
+          whatsapp_recipient_phone: string
+          whatsapp_report_time: string
         }
         Insert: {
           auto_backup?: boolean | null
           created_at?: string
           currency?: string | null
+          discord_webhook_url?: string
           id?: string
           interface_mode?: string | null
           invoice_counter?: number | null
           invoice_prefix?: string | null
+          notification_channel?: string
           receipt_printer?: boolean | null
           shop_id?: string
           store_address?: string | null
@@ -301,15 +307,19 @@ export type Database = {
           tax_rate?: number | null
           theme?: string | null
           updated_at?: string
+          whatsapp_recipient_phone?: string
+          whatsapp_report_time?: string
         }
         Update: {
           auto_backup?: boolean | null
           created_at?: string
           currency?: string | null
+          discord_webhook_url?: string
           id?: string
           interface_mode?: string | null
           invoice_counter?: number | null
           invoice_prefix?: string | null
+          notification_channel?: string
           receipt_printer?: boolean | null
           shop_id?: string
           store_address?: string | null
@@ -320,6 +330,8 @@ export type Database = {
           tax_rate?: number | null
           theme?: string | null
           updated_at?: string
+          whatsapp_recipient_phone?: string
+          whatsapp_report_time?: string
         }
         Relationships: [
           {

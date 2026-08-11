@@ -358,7 +358,7 @@ function checkColumnCountDrift(
       shops: 20,
       sales: 23,
       products: 18,
-      app_settings: 17,
+      app_settings: 21,
     }
 
     const expected = expectedCounts[table]

@@ -205,6 +205,11 @@ export interface AppSettings {
   theme: 'light' | 'dark' | 'auto';
   invoicePrefix: string;
   invoiceCounter: number;
+  /** Daily report delivery channel. 'none' disables the daily report. */
+  notificationChannel: 'none' | 'whatsapp' | 'discord';
+  whatsappRecipientPhone?: string;
+  discordWebhookUrl?: string;
+  whatsappReportTime?: string;
 }
 
 
