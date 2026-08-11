@@ -586,26 +586,15 @@ export function DiscountModal({ isOpen, onClose, discount }: DiscountModalProps)
                               className="select"
                             >
                               <option value="">Select Bank</option>
-                              <option value="Bank of Ceylon">Bank of Ceylon</option>
-                              <option value="People's Bank">People's Bank</option>
-                              <option value="Commercial Bank of Ceylon PLC">Commercial Bank of Ceylon PLC</option>
-                              <option value="Hatton National Bank PLC">Hatton National Bank PLC</option>
-                              <option value="Sampath Bank PLC">Sampath Bank PLC</option>
-                              <option value="Nations Trust Bank PLC">Nations Trust Bank PLC</option>
-                              <option value="DFCC Bank PLC">DFCC Bank PLC</option>
-                              <option value="Pan Asia Banking Corporation PLC">Pan Asia Banking Corporation PLC</option>
-                              <option value="Seylan Bank PLC">Seylan Bank PLC</option>
-                              <option value="Union Bank of Colombo PLC">Union Bank of Colombo PLC</option>
-                              <option value="National Development Bank PLC">National Development Bank PLC</option>
-                              <option value="Regional Development Bank">Regional Development Bank</option>
-                              <option value="Sanasa Development Bank PLC">Sanasa Development Bank PLC</option>
-                              <option value="HDFC Bank">HDFC Bank</option>
-                              <option value="Standard Chartered Bank">Standard Chartered Bank</option>
-                              <option value="Citibank N.A.">Citibank N.A.</option>
-                              <option value="MCB Bank Limited">MCB Bank Limited</option>
-                              <option value="Habib Bank Limited">Habib Bank Limited</option>
-                              <option value="Deutsche Bank AG">Deutsche Bank AG</option>
-                              <option value="ICBC">ICBC</option>
+                              <option value="KBZ Bank">KBZ Bank (Kanbawza)</option>
+                              <option value="AYA Bank">AYA Bank</option>
+                              <option value="CB Bank">CB Bank (Co-operative)</option>
+                              <option value="UAB Bank">UAB Bank</option>
+                              <option value="AGD Bank">AGD Bank</option>
+                              <option value="Yoma Bank">Yoma Bank</option>
+                              <option value="Shwe Bank">Shwe Bank</option>
+                              <option value="MAB Bank">MAB Bank (Myanmar Apex)</option>
+                              <option value="Myanmar Citizens Bank">Myanmar Citizens Bank (MCB)</option>
                             </select>
                             <p className="text-xs text-primary-600 mt-1">
                               💡 This condition only applies when payment method is 'Card'
