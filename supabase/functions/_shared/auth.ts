@@ -20,13 +20,38 @@ if (!URL_VAL || !ANON_KEY_VAL || !SERVICE_ROLE_KEY_VAL) {
 
 /**
  * Decode a JWT payload without verification.
- * Used for service_role tokens which fail auth.getUser() (no sub claim).
+ * Used only for inspecting the role claim of an incoming header — never
+ * as proof of authenticity. Authentic service_role access is established
+ * by isRealServiceRoleToken() (constant-time compare against the env key).
  */
 function decodeJwt(token: string): Record<string, unknown> {
   const parts = token.split(".");
   if (parts.length !== 3) throw new Error("Invalid JWT format");
   const payload = atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"));
   return JSON.parse(payload);
+}
+
+/**
+ * Constant-time equality to avoid timing side-channels.
+ */
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+/**
+ * True only when the header carries the real service_role key (secret).
+ * This is the ONLY way service_role access is authorized — a JWT whose
+ * payload merely claims role=service_role is a forgery and is rejected.
+ */
+function isRealServiceRoleToken(token: string): boolean {
+  const configured = SERVICE_ROLE_KEY_VAL.trim();
+  if (!configured) return false; // fail closed — no secret configured, no access
+  return safeEqual(token, configured);
 }
 
 export interface PlatformAdminUser {
@@ -67,8 +92,13 @@ export async function verifyPlatformAdmin(
     throw makeErrorResponse(401, "Invalid token format", corsHeaders);
   }
 
-  // Service role token — verify via users table lookup
+  // Service role token — only the real secret key grants access.
+  // A JWT that merely *claims* role=service_role is a forgery; reject it.
   if (payload.role === "service_role") {
+    if (!isRealServiceRoleToken(token)) {
+      throw makeErrorResponse(403, "Forbidden: invalid service role token", corsHeaders);
+    }
+
     const adminClient = createAdminClient();
 
     // Find a platform_admin user to associate the action with
@@ -115,10 +145,12 @@ export async function verifyPlatformAdmin(
 /**
  * Create an admin client using the service_role key.
  * Used for all DB mutations (bypasses RLS).
+ * Fails closed if the service_role key is not configured.
  */
 export function createAdminClient() {
-  return createClient(
-    URL_VAL,
-    SERVICE_ROLE_KEY_VAL,
-  );
+  const key = SERVICE_ROLE_KEY_VAL;
+  if (!key) {
+    throw makeErrorResponse(500, "Server misconfigured: service role key missing", {});
+  }
+  return createClient(URL_VAL, key);
 }
