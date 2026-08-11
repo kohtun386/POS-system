@@ -75,7 +75,7 @@ function makeErrorResponse(status: number, error: string, corsHeaders: Record<st
  */
 export async function verifyPlatformAdmin(
   req: Request,
-  corsHeaders: Record<string, string>,
+  corsHeaders: Record<string, string> = {},
 ): Promise<PlatformAdminUser> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
