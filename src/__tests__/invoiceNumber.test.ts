@@ -16,6 +16,7 @@ function makeSettings(overrides: Partial<AppSettings> = {}): AppSettings {
     theme: 'light',
     invoicePrefix: 'INV',
     invoiceCounter: 1000,
+    notificationChannel: 'none',
     ...overrides,
   };
 }

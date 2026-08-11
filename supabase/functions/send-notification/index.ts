@@ -88,7 +88,46 @@ Deno.serve(async (req) => {
 
     let result: { success: boolean; messageId?: string; error?: string };
 
-    if (channel === "email") {
+    if (channel === "whatsapp") {
+      // WhatsApp rides the existing Twilio Messages API — the shop's Twilio
+      // row (service_type 'sms') provides the sender; the recipient is the
+      // phone number from app_settings, delivered via whatsapp:.
+      const { data: whatsappSettings, error: waError } = await adminClient
+        .from("app_settings")
+        .select("whatsapp_recipient_phone")
+        .eq("shop_id", shop_id)
+        .maybeSingle();
+
+      if (waError || !whatsappSettings?.whatsapp_recipient_phone) {
+        return new Response(
+          JSON.stringify({ success: false, error: "No WhatsApp recipient phone configured" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const waRecipient = {
+        phone: `whatsapp:${whatsappSettings.whatsapp_recipient_phone}`,
+        name: recipient.name,
+      };
+      result = await sendSMS(config, waRecipient, template);
+    } else if (channel === "discord") {
+      // Discord webhook — delivered to the URL configured in app_settings.
+      const { data: discordSettings, error: discError } = await adminClient
+        .from("app_settings")
+        .select("discord_webhook_url")
+        .eq("shop_id", shop_id)
+        .maybeSingle();
+
+      const webhookUrl = discordSettings?.discord_webhook_url;
+      if (discError || !webhookUrl) {
+        return new Response(
+          JSON.stringify({ success: false, error: "No Discord webhook URL configured" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      result = await sendViaDiscord(webhookUrl, template.body);
+    } else if (channel === "email") {
       result = await sendEmail(config, recipient, template);
     } else {
       result = await sendSMS(config, recipient, template);
@@ -243,5 +282,28 @@ async function sendViaTwilio(
     const error = await response.text();
     console.error("Twilio error:", error);
     return { success: false, error: "SMS delivery failed" };
+  }
+}
+
+async function sendViaDiscord(
+  webhookUrl: string,
+  body: string
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: body }),
+    });
+
+    if (response.ok) {
+      return { success: true, messageId: "discord" };
+    } else {
+      const error = await response.text();
+      console.error("Discord webhook error:", error);
+      return { success: false, error: "Discord delivery failed" };
+    }
+  } catch (error) {
+    return { success: false, error: `Discord delivery failed: ${error instanceof Error ? error.message : String(error)}` };
   }
 }

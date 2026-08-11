@@ -30,6 +30,10 @@ export const settingsService = {
         theme: 'light',
         invoicePrefix: 'INV',
         invoiceCounter: 1000,
+        notificationChannel: 'none',
+        whatsappRecipientPhone: '',
+        discordWebhookUrl: '',
+        whatsappReportTime: '18:00',
       }
     }
 
@@ -46,6 +50,10 @@ export const settingsService = {
       theme: (data.theme as AppSettings['theme']) || 'light',
       invoicePrefix: data.invoice_prefix || 'INV',
       invoiceCounter: data.invoice_counter || 1000,
+      notificationChannel: (data.notification_channel as AppSettings['notificationChannel']) || 'none',
+      whatsappRecipientPhone: data.whatsapp_recipient_phone || '',
+      discordWebhookUrl: data.discord_webhook_url || '',
+      whatsappReportTime: data.whatsapp_report_time || '18:00',
     }
   },
 
@@ -79,6 +87,10 @@ export const settingsService = {
         theme: settings.theme,
         invoice_prefix: settings.invoicePrefix,
         invoice_counter: settings.invoiceCounter,
+        notification_channel: settings.notificationChannel,
+        whatsapp_recipient_phone: settings.whatsappRecipientPhone,
+        discord_webhook_url: settings.discordWebhookUrl,
+        whatsapp_report_time: settings.whatsappReportTime,
         updated_at: new Date().toISOString()
       })
       .eq('id', existingData.id)
@@ -100,6 +112,10 @@ export const settingsService = {
       theme: (data.theme as AppSettings['theme']) || 'light',
       invoicePrefix: data.invoice_prefix || 'INV',
       invoiceCounter: data.invoice_counter || 1000,
+      notificationChannel: (data.notification_channel as AppSettings['notificationChannel']) || 'none',
+      whatsappRecipientPhone: data.whatsapp_recipient_phone || '',
+      discordWebhookUrl: data.discord_webhook_url || '',
+      whatsappReportTime: data.whatsapp_report_time || '18:00',
     }
   }
 }

@@ -8,7 +8,7 @@ import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { UpgradePrompt } from '../ui/UpgradePrompt';
 import { OwnerInsights } from './OwnerInsights';
 import { ProfitMarginAnalytics } from './ProfitMarginAnalytics';
-import { WhatsAppReportConfig } from './WhatsAppReportConfig';
+import { NotificationChannelConfig } from './NotificationChannelConfig';
 import { SimpleProfitReport } from './SimpleProfitReport';
 
 export function ReportsManager() {
@@ -301,7 +301,7 @@ export function ReportsManager() {
               <option value="simple-profit" disabled={!hasSimpleProfit}>Simple Profit {hasSimpleProfit ? '' : '(Pro)'}</option>
               <option value="owner-insights" disabled={!hasProReports}>Owner Insights {hasProReports ? '' : '(Pro)'}</option>
               <option value="profit-margin" disabled={!hasProReports}>Profit Margin {hasProReports ? '' : '(Pro)'}</option>
-              <option value="whatsapp" disabled={!hasProReports}>WhatsApp Reports {hasProReports ? '' : '(Pro)'}</option>
+              <option value="whatsapp" disabled={!hasProReports}>Notification Channels {hasProReports ? '' : '(Pro)'}</option>
             </select>
 
             <select
@@ -949,9 +949,9 @@ export function ReportsManager() {
       {/* Pro: WhatsApp Reports */}
       {reportType === 'whatsapp' && (
         hasProReports
-          ? <WhatsAppReportConfig />
+          ? <NotificationChannelConfig />
           : <div className="space-y-4">
-              <UpgradePrompt feature="WhatsApp Daily Reports" tier="pro" onClose={() => setReportType('sales')} />
+              <UpgradePrompt feature="Daily Report Notifications" tier="pro" onClose={() => setReportType('sales')} />
             </div>
       )}
     </div>
