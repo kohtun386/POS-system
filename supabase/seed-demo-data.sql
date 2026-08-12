@@ -67,7 +67,7 @@ BEGIN
     ('Cele Snacks & Pastries', 'Baked goods and light snacks', v_shop_id),
     ('Cele Light Foods', 'Simple meals and sandwiches', v_shop_id),
     ('Cele Beverages', 'Non-coffee drinks and specialty teas', v_shop_id)
-  ON CONFLICT (name) DO NOTHING;
+  ON CONFLICT (shop_id, name) DO NOTHING;
 
   -- Capture category IDs
   SELECT id INTO v_cat_coffee FROM categories WHERE name = 'Cele Coffee' AND shop_id = v_shop_id;
