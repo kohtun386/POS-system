@@ -6,9 +6,10 @@ import { DEFAULT_CURRENCY } from '../../lib/constants';
 
 interface ProductGridProps {
   onAddToCart: (product: Product, weight?: number) => void;
+  onNavigateToInventory?: () => void;
 }
 
-export function ProductGrid({ onAddToCart }: ProductGridProps) {
+export function ProductGrid({ onAddToCart, onNavigateToInventory }: ProductGridProps) {
   const { state } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -153,7 +154,7 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
 
         {/* Product Grid */}
         <div className="flex-1 p-4 lg:p-6 overflow-hidden">
-          {filteredProducts.length === 0 && state.products.length === 0 && searchTerm === '' && selectedCategory === 'All' ? (
+          {state.loading && filteredProducts.length === 0 && state.products.length === 0 && searchTerm === '' && selectedCategory === 'All' ? (
             <div className="grid gap-4 lg:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className={`card ${isTouchMode ? 'p-4' : 'p-3'}`}>
@@ -171,6 +172,25 @@ export function ProductGrid({ onAddToCart }: ProductGridProps) {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : !state.loading && state.products.length === 0 && searchTerm === '' && selectedCategory === 'All' ? (
+            <div className="flex flex-col items-center justify-center h-64">
+              <div className="bg-secondary-100 dark:bg-primary-900 p-6 rounded-3xl mb-4">
+                <Package className="h-16 w-16 text-secondary-400" />
+              </div>
+              <p className="text-secondary-600 dark:text-secondary-300 text-lg font-medium">No products yet</p>
+              <p className="text-secondary-400 text-sm mt-1">Add your first product to start selling.</p>
+              {(state.currentUser?.role === 'admin' || state.currentUser?.role === 'manager') && onNavigateToInventory ? (
+                <button
+                  onClick={onNavigateToInventory}
+                  className="btn btn-primary btn-md mt-4 flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Product
+                </button>
+              ) : (
+                <p className="text-secondary-400 text-sm mt-2">Ask your shop admin to add products.</p>
+              )}
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64">

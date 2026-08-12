@@ -12,7 +12,11 @@ import { salesService } from '../../lib/services';
 import { swalConfig } from '../../lib/sweetAlert';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 
-export function POSTerminal() {
+interface POSTerminalProps {
+  onNavigateToInventory?: () => void;
+}
+
+export function POSTerminal({ onNavigateToInventory }: POSTerminalProps) {
   const { state, dispatch } = useApp();
   const { user } = useAuth();
   const [showCheckout, setShowCheckout] = useState(false);
@@ -178,7 +182,7 @@ export function POSTerminal() {
           {isMobile ? (
             <MobileProductList onAddToCart={addToCart} />
           ) : (
-            <ProductGrid onAddToCart={addToCart} />
+            <ProductGrid onAddToCart={addToCart} onNavigateToInventory={onNavigateToInventory} />
           )}
         </div>
 
