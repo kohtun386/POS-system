@@ -91,7 +91,7 @@ function AppContent() {
 
     switch (currentView) {
       case 'pos':
-        return <POSTerminal />;
+        return <POSTerminal onNavigateToInventory={() => handleViewChange('inventory')} />;
       case 'transactions':
         if (userRole === 'admin' || userRole === 'manager') {
           return <TransactionsManager />;
