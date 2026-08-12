@@ -68,7 +68,7 @@ Product categories. Flat structure (no hierarchy).
 | Column | Type | Default | Notes |
 |--------|------|---------|-------|
 | `id` | uuid PK | `gen_random_uuid()` | |
-| `name` | text NOT NULL | | UNIQUE |
+| `name` | text NOT NULL | | UNIQUE(shop_id, name) — per-shop uniqueness |
 | `description` | text | | |
 | `active` | boolean | `true` | |
 | `created_at` | timestamptz | `now()` | NOT NULL |
