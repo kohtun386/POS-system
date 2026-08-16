@@ -9,6 +9,7 @@ export interface Product {
   stock?: number;
   minStock?: number;
   category: string;
+  categoryId?: string | null; // FK to categories.id during transition (nullable until cutover)
   description?: string;
   image?: string;
   taxable?: boolean;
@@ -153,6 +154,27 @@ export interface SalesTab {
   /** Hydrated by service layer from `selected_customer_id` */
   selectedCustomer: Customer | null;
   createdAt: Date;
+}
+
+export interface Category {
+  id: string;
+  shopId: string;
+  name: string;
+  description?: string;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateCategoryInput {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateCategoryInput {
+  name?: string;
+  description?: string;
+  active?: boolean;
 }
 
 export interface User {
