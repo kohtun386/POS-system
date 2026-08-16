@@ -74,7 +74,7 @@ Product categories. Flat structure (no hierarchy).
 | `created_at` | timestamptz | `now()` | NOT NULL |
 | `updated_at` | timestamptz | `now()` | NOT NULL, auto-update trigger |
 
-**Service:** No dedicated service. Products reference `category` as TEXT, not FK.
+**Service:** `categoriesService` (src/lib/services/categories.ts)
 
 ---
 
@@ -92,6 +92,7 @@ Product catalog. Supports weight-based and unit-based pricing.
 | `stock` | integer | `0` | CHECK: `>= 0` |
 | `min_stock` | integer | `0` | CHECK: `>= 0` |
 | `category` | text NOT NULL | | Free text, not FK to `categories` |
+| `category_id` | uuid FK | | Nullable, references categories(id) — dual-write transition |
 | `description` | text | | |
 | `image` | text | | Base64 or URL |
 | `taxable` | boolean | `true` | |
