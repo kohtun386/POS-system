@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Plus, Search, Edit, Trash2, Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Product } from '../../types';
 import { useApp } from '../../hooks/useApp';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { ProductModal } from './ProductModal';
-import { CategoriesManager } from './CategoriesManager';
+import { CategoriesManager, CategoriesManagerHandle } from './CategoriesManager';
 import { swalConfig } from '../../lib/sweetAlert';
 
 export function InventoryManager() {
   const { state, dispatch } = useApp();
+  const categoriesRef = useRef<CategoriesManagerHandle>(null);
   const [view, setView] = useState<'products' | 'categories'>('products');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -90,17 +91,21 @@ export function InventoryManager() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-secondary-900 dark:text-secondary-100">Inventory Management</h1>
-          <p className="text-secondary-600 dark:text-secondary-300 mt-1">Manage your products and stock levels</p>
+          <h1 className="text-2xl lg:text-3xl font-bold font-fraunces text-secondary-900 dark:text-secondary-100">
+            {view === 'products' ? 'Inventory Management' : 'Category Management'}
+          </h1>
+          <p className="text-secondary-600 dark:text-secondary-300 mt-1">
+            {view === 'products' ? 'Manage your products and stock levels' : 'Organize your products into categories'}
+          </p>
         </div>
         
         <div className="relative">
           <button
-            onClick={handleAddProduct}
+            onClick={view === 'products' ? handleAddProduct : () => categoriesRef.current?.openAddModal()}
             className="btn btn-lg btn-primary"
           >
             <Plus className="h-5 w-5" />
-            <span>Add Product</span>
+            <span>{view === 'products' ? 'Add Product' : 'Add Category'}</span>
           </button>
         </div>
       </div>
@@ -313,7 +318,7 @@ export function InventoryManager() {
           </div>
         </>
       ) : (
-        <CategoriesManager />
+        <CategoriesManager ref={categoriesRef} />
       )}
 
       <ProductModal
