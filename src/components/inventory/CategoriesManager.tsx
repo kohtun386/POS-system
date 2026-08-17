@@ -1,11 +1,16 @@
-import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Tag } from 'lucide-react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { Search, Edit, Trash2, Tag } from 'lucide-react';
 import { Category } from '../../types';
 import { useActiveShopId } from '../../hooks/useApp';
 import { swalConfig } from '../../lib/sweetAlert';
 import { CategoryModal } from './CategoryModal';
 
-export function CategoriesManager() {
+export interface CategoriesManagerHandle {
+  openAddModal: () => void;
+}
+
+export const CategoriesManager = forwardRef<CategoriesManagerHandle>(
+  function CategoriesManager(_props, ref) {
   const shopId = useActiveShopId();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,6 +90,10 @@ export function CategoriesManager() {
     setShowModal(true);
   };
 
+  useImperativeHandle(ref, () => ({
+    openAddModal: () => handleAddCategory(),
+  }));
+
   const toggleCategoryStatus = async (category: Category) => {
     try {
       swalConfig.loading(`${category.active ? 'Deactivating' : 'Activating'} category...`);
@@ -101,23 +110,7 @@ export function CategoriesManager() {
   };
 
   return (
-    <div className="p-4 lg:p-6 space-y-6 bg-secondary-50 min-h-full">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-secondary-900">Category Management</h1>
-          <p className="text-secondary-600 mt-1">Organize your products into categories</p>
-        </div>
-
-        <button
-          onClick={handleAddCategory}
-          className="btn btn-primary btn-lg"
-        >
-          <Plus className="h-5 w-5" />
-          <span>Add Category</span>
-        </button>
-      </div>
-
+    <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         <div className="stat-card bg-gradient-to-br from-primary-500 to-primary-600">
@@ -189,19 +182,19 @@ export function CategoriesManager() {
                 <th className="table-header-cell text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-secondary-50 divide-y divide-secondary-200">
+            <tbody className="bg-secondary-50 dark:bg-primary-950 divide-y divide-secondary-200 dark:divide-secondary-800">
               {filteredCategories.map((category) => (
                 <tr key={category.id} className="table-row">
                   <td className="table-cell">
                     <div>
-                      <div className="text-sm font-semibold text-secondary-900">{category.name}</div>
+                      <div className="text-sm font-semibold text-secondary-900 dark:text-secondary-100">{category.name}</div>
                       {category.description && (
                         <div className="text-xs text-secondary-500">{category.description}</div>
                       )}
                     </div>
                   </td>
                   <td className="table-cell">
-                    <span className="text-sm text-secondary-700">
+                    <span className="text-sm text-secondary-700 dark:text-secondary-300">
                       {productCounts[category.id] ?? '—'}
                     </span>
                   </td>
@@ -269,4 +262,4 @@ export function CategoriesManager() {
       />
     </div>
   );
-}
+});
