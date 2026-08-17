@@ -154,6 +154,10 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
         });
         return;
       }
+      if (error instanceof Error && error.message.includes('already in use in this shop')) {
+        setErrors(prev => ({ ...prev, sku: error.message }));
+        return;
+      }
       console.error('Error saving product:', error);
       await Swal.fire({
         title: 'Error!',

@@ -96,6 +96,10 @@ export const productsService = {
       if (error.message?.includes('Unable to create product')) {
         throw new ProductLimitError()
       }
+      // 23505 = unique_violation on products_shop_id_sku_unique (per-shop SKU uniqueness).
+      if (error.code === '23505' && error.message?.includes('products_shop_id_sku_unique')) {
+        throw new Error(`SKU "${product.sku}" is already in use in this shop.`)
+      }
       throw error
     }
 
@@ -142,7 +146,12 @@ export const productsService = {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      if (error.code === '23505' && error.message?.includes('products_shop_id_sku_unique')) {
+        throw new Error(`SKU "${product.sku}" is already in use in this shop.`)
+      }
+      throw error
+    }
 
     if (product.batches) {
       await supabase.from('product_batches').delete().eq('product_id', id)
