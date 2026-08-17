@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, Scale } from 'lucide-react';
-import { Product, ProductBatch } from '../../types';
-import { useApp } from '../../hooks/useApp';
+import { Product, ProductBatch, Category } from '../../types';
+import { useApp, useActiveShopId } from '../../hooks/useApp';
 import { useModalEscape } from '../../hooks/useModalEscape';
-import { productsService, ProductLimitError } from '../../lib/services';
+import { productsService, ProductLimitError, categoriesService } from '../../lib/services';
 import Swal from 'sweetalert2';
 
 interface ProductModalProps {
@@ -37,6 +37,8 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
   
   const [batches, setBatches] = useState<ProductBatch[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const shopId = useActiveShopId();
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     if (product) {
@@ -82,6 +84,14 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
       setBatches([]);
     }
   }, [product]);
+
+  useEffect(() => {
+    if (isOpen) {
+      categoriesService.getActive(shopId).then(setCategories).catch(err => {
+        console.error('Error loading categories:', err);
+      });
+    }
+  }, [isOpen, shopId]);
 
   if (!isOpen) return null;
 
@@ -262,17 +272,23 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                 <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Category *
                 </label>
-                <input
-                  type="text"
+                <select
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
                   required
-                  className={`input ${errors.category ? 'border-danger-500' : ''}`}
-                  placeholder="Enter category"
+                  className={`select ${errors.category ? 'border-danger-500' : ''}`}
                   aria-invalid={!!errors.category}
                   aria-describedby={errors.category ? 'error-category' : undefined}
-                />
+                >
+                  <option value="">Select category</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  ))}
+                  {formData.category && !categories.some(c => c.name === formData.category) && (
+                    <option value={formData.category}>{formData.category} (inactive/legacy)</option>
+                  )}
+                </select>
                 {errors.category && <p id="error-category" className="text-danger-600 text-xs mt-1" role="alert">{errors.category}</p>}
               </div>
 

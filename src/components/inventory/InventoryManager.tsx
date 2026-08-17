@@ -4,10 +4,12 @@ import { Product } from '../../types';
 import { useApp } from '../../hooks/useApp';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { ProductModal } from './ProductModal';
+import { CategoriesManager } from './CategoriesManager';
 import { swalConfig } from '../../lib/sweetAlert';
 
 export function InventoryManager() {
   const { state, dispatch } = useApp();
+  const [view, setView] = useState<'products' | 'categories'>('products');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showProductModal, setShowProductModal] = useState(false);
@@ -84,12 +86,12 @@ export function InventoryManager() {
   };
 
   return (
-    <div className="p-4 lg:p-6 space-y-6 bg-secondary-50 min-h-full">
+    <div className="p-4 lg:p-6 space-y-6 bg-secondary-50 dark:bg-primary-950 min-h-full">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-secondary-900">Inventory Management</h1>
-          <p className="text-secondary-600 mt-1">Manage your products and stock levels</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-secondary-900 dark:text-secondary-100">Inventory Management</h1>
+          <p className="text-secondary-600 dark:text-secondary-300 mt-1">Manage your products and stock levels</p>
         </div>
         
         <div className="relative">
@@ -103,194 +105,216 @@ export function InventoryManager() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        <div className="stat-card bg-gradient-to-br from-primary-500 to-primary-600">
-          <div className="flex items-center justify-between relative z-10">
-            <div>
-              <p className="text-primary-100 text-sm font-medium">Total Products</p>
-              <p className="text-2xl lg:text-3xl font-bold">{state.products.length}</p>
-            </div>
-            <div className="bg-white/20 p-3 rounded-2xl">
-              <Package className="h-6 w-6 lg:h-8 lg:w-8" />
-            </div>
-          </div>
-        </div>
-
-        <div className="stat-card bg-gradient-to-br from-warning-500 to-warning-600">
-          <div className="flex items-center justify-between relative z-10">
-            <div>
-              <p className="text-warning-100 text-sm font-medium">Low Stock Items</p>
-              <p className="text-2xl lg:text-3xl font-bold">{lowStockProducts.length}</p>
-            </div>
-            <div className="bg-white/20 p-3 rounded-2xl">
-              <AlertTriangle className="h-6 w-6 lg:h-8 lg:w-8" />
-            </div>
-          </div>
-        </div>
-
-        <div className="stat-card bg-gradient-to-br from-success-500 to-success-600">
-          <div className="flex items-center justify-between relative z-10">
-            <div>
-              <p className="text-success-100 text-sm font-medium">Inventory Value</p>
-              <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {totalValue.toFixed(2)}</p>
-            </div>
-            <div className="bg-white/20 p-3 rounded-2xl">
-              <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8" />
-            </div>
-          </div>
-        </div>
-
-        <div className="stat-card bg-gradient-to-br from-danger-500 to-danger-600">
-          <div className="flex items-center justify-between relative z-10">
-            <div>
-              <p className="text-danger-100 text-sm font-medium">Out of Stock</p>
-              <p className="text-2xl lg:text-3xl font-bold">{outOfStockProducts.length}</p>
-            </div>
-            <div className="bg-white/20 p-3 rounded-2xl">
-              <TrendingDown className="h-6 w-6 lg:h-8 lg:w-8" />
-            </div>
-          </div>
-        </div>
+      {/* View Switcher */}
+      <div className="flex space-x-2">
+        <button
+          onClick={() => setView('products')}
+          className={`nav-item ${view === 'products' ? 'nav-item-active' : ''}`}
+        >
+          Products
+        </button>
+        <button
+          onClick={() => setView('categories')}
+          className={`nav-item ${view === 'categories' ? 'nav-item-active' : ''}`}
+        >
+          Categories
+        </button>
       </div>
 
-      {/* Filters and Controls */}
-      <div className="card p-4 lg:p-6">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 gap-4">
-          <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 flex-1 w-full lg:w-auto">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400 h-5 w-5" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="input pl-10"
-              />
+      {view === 'products' ? (
+        <>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+            <div className="stat-card bg-gradient-to-br from-primary-500 to-primary-600">
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <p className="text-primary-100 text-sm font-medium">Total Products</p>
+                  <p className="text-2xl lg:text-3xl font-bold">{state.products.length}</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-2xl">
+                  <Package className="h-6 w-6 lg:h-8 lg:w-8" />
+                </div>
+              </div>
             </div>
 
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="select min-w-[150px]"
-            >
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
+            <div className="stat-card bg-gradient-to-br from-warning-500 to-warning-600">
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <p className="text-warning-100 text-sm font-medium">Low Stock Items</p>
+                  <p className="text-2xl lg:text-3xl font-bold">{lowStockProducts.length}</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-2xl">
+                  <AlertTriangle className="h-6 w-6 lg:h-8 lg:w-8" />
+                </div>
+              </div>
+            </div>
 
-            <select
-              value={`${sortBy}-${sortOrder}`}
-              onChange={(e) => {
-                const [field, order] = e.target.value.split('-');
-                setSortBy(field as 'name' | 'stock' | 'price');
-                setSortOrder(order as 'asc' | 'desc');
-              }}
-              className="select min-w-[150px]"
-            >
-              <option value="name-asc">Name A-Z</option>
-              <option value="name-desc">Name Z-A</option>
-              <option value="stock-asc">Stock Low-High</option>
-              <option value="stock-desc">Stock High-Low</option>
-              <option value="price-asc">Price Low-High</option>
-              <option value="price-desc">Price High-Low</option>
-            </select>
+            <div className="stat-card bg-gradient-to-br from-success-500 to-success-600">
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <p className="text-success-100 text-sm font-medium">Inventory Value</p>
+                  <p className="text-xl lg:text-2xl font-bold">{DEFAULT_CURRENCY} {totalValue.toFixed(2)}</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-2xl">
+                  <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8" />
+                </div>
+              </div>
+            </div>
+
+            <div className="stat-card bg-gradient-to-br from-danger-500 to-danger-600">
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <p className="text-danger-100 text-sm font-medium">Out of Stock</p>
+                  <p className="text-2xl lg:text-3xl font-bold">{outOfStockProducts.length}</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-2xl">
+                  <TrendingDown className="h-6 w-6 lg:h-8 lg:w-8" />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Products Table */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="table">
-            <thead className="table-header">
-              <tr>
-                <th className="table-header-cell">Product</th>
-                <th className="table-header-cell">SKU</th>
-                <th className="table-header-cell">Category</th>
-                <th className="table-header-cell">Price</th>
-                <th className="table-header-cell">Cost</th>
-                <th className="table-header-cell">Stock</th>
-                <th className="table-header-cell">Status</th>
-                <th className="table-header-cell text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-secondary-50 divide-y divide-secondary-200">
-              {filteredProducts.map((product) => {
-                const isLowStock = product.trackInventory && (product.stock ?? 0) <= (product.minStock ?? 0);
-                const isOutOfStock = product.trackInventory && product.stock === 0;
-                
-                return (
-                  <tr key={product.id} className="table-row">
-                    <td className="table-cell">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 bg-secondary-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <Package className="h-5 w-5 text-secondary-400" />
-                        </div>
-                        <div className="ml-4 min-w-0">
-                          <div className="text-sm font-semibold text-secondary-900 truncate">{product.name}</div>
-                          <div className="text-xs text-secondary-500 truncate">{product.description}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="table-cell font-mono text-sm">{product.sku}</td>
-                    <td className="table-cell">
-                      <span className="badge badge-info">{product.category}</span>
-                    </td>
-                    <td className="table-cell font-semibold">
-                      {DEFAULT_CURRENCY} {product.price.toFixed(2)}
-                    </td>
-                    <td className="table-cell text-secondary-600">
-                      {DEFAULT_CURRENCY} {(product.cost ?? 0).toFixed(2)}
-                    </td>
-                    <td className="table-cell">
-                      <div className="flex items-center space-x-2">
-                        <span className={`font-medium ${
-                          isOutOfStock ? 'text-danger-600' : isLowStock ? 'text-warning-600' : 'text-secondary-900'
-                        }`}>
-                          {product.stock}
-                        </span>
-                        {isLowStock && (
-                          <AlertTriangle className="h-4 w-4 text-warning-500" />
-                        )}
-                      </div>
-                    </td>
-                    <td className="table-cell">
-                      <span className={`badge ${
-                        isOutOfStock
-                          ? 'badge-danger'
-                          : isLowStock
-                          ? 'badge-warning'
-                          : 'badge-success'
-                      }`}>
-                        {isOutOfStock ? 'Out of Stock' : isLowStock ? 'Low Stock' : 'In Stock'}
-                      </span>
-                    </td>
-                    <td className="table-cell text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button
-                          onClick={() => handleEditProduct(product)}
-                          aria-label="Edit product"
-                          className="text-primary-600 hover:text-primary-900 p-2 rounded-xl hover:bg-primary-50 transition-colors"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProduct(product.id)}
-                          aria-label="Delete product"
-                          className="text-danger-600 hover:text-danger-900 p-2 rounded-xl hover:bg-danger-50 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
+          {/* Filters and Controls */}
+          <div className="card p-4 lg:p-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 gap-4">
+              <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 flex-1 w-full lg:w-auto">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400 h-5 w-5" />
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="input pl-10"
+                  />
+                </div>
+
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="select min-w-[150px]"
+                >
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={`${sortBy}-${sortOrder}`}
+                  onChange={(e) => {
+                    const [field, order] = e.target.value.split('-');
+                    setSortBy(field as 'name' | 'stock' | 'price');
+                    setSortOrder(order as 'asc' | 'desc');
+                  }}
+                  className="select min-w-[150px]"
+                >
+                  <option value="name-asc">Name A-Z</option>
+                  <option value="name-desc">Name Z-A</option>
+                  <option value="stock-asc">Stock Low-High</option>
+                  <option value="stock-desc">Stock High-Low</option>
+                  <option value="price-asc">Price Low-High</option>
+                  <option value="price-desc">Price High-Low</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Products Table */}
+          <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="table">
+                <thead className="table-header">
+                  <tr>
+                    <th className="table-header-cell">Product</th>
+                    <th className="table-header-cell">SKU</th>
+                    <th className="table-header-cell">Category</th>
+                    <th className="table-header-cell">Price</th>
+                    <th className="table-header-cell">Cost</th>
+                    <th className="table-header-cell">Stock</th>
+                    <th className="table-header-cell">Status</th>
+                    <th className="table-header-cell text-right">Actions</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </thead>
+                <tbody className="bg-secondary-50 dark:bg-primary-950 divide-y divide-secondary-200 dark:divide-secondary-800">
+                  {filteredProducts.map((product) => {
+                    const isLowStock = product.trackInventory && (product.stock ?? 0) <= (product.minStock ?? 0);
+                    const isOutOfStock = product.trackInventory && product.stock === 0;
+                    
+                    return (
+                      <tr key={product.id} className="table-row">
+                        <td className="table-cell">
+                          <div className="flex items-center">
+                            <div className="h-10 w-10 bg-secondary-100 dark:bg-primary-900 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <Package className="h-5 w-5 text-secondary-400" />
+                            </div>
+                            <div className="ml-4 min-w-0">
+                              <div className="text-sm font-semibold text-secondary-900 dark:text-secondary-100 truncate">{product.name}</div>
+                              <div className="text-xs text-secondary-500 truncate">{product.description}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="table-cell font-mono text-sm">{product.sku}</td>
+                        <td className="table-cell">
+                          <span className="badge badge-info">{product.category}</span>
+                        </td>
+                        <td className="table-cell font-semibold">
+                          {DEFAULT_CURRENCY} {product.price.toFixed(2)}
+                        </td>
+                        <td className="table-cell text-secondary-600">
+                          {DEFAULT_CURRENCY} {(product.cost ?? 0).toFixed(2)}
+                        </td>
+                        <td className="table-cell">
+                          <div className="flex items-center space-x-2">
+                            <span className={`font-medium ${
+                              isOutOfStock ? 'text-danger-600' : isLowStock ? 'text-warning-600' : 'text-secondary-900 dark:text-secondary-100'
+                            }`}>
+                              {product.stock}
+                            </span>
+                            {isLowStock && (
+                              <AlertTriangle className="h-4 w-4 text-warning-500" />
+                            )}
+                          </div>
+                        </td>
+                        <td className="table-cell">
+                          <span className={`badge ${
+                            isOutOfStock
+                              ? 'badge-danger'
+                              : isLowStock
+                              ? 'badge-warning'
+                              : 'badge-success'
+                          }`}>
+                            {isOutOfStock ? 'Out of Stock' : isLowStock ? 'Low Stock' : 'In Stock'}
+                          </span>
+                        </td>
+                        <td className="table-cell text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <button
+                              onClick={() => handleEditProduct(product)}
+                              aria-label="Edit product"
+                              className="text-primary-600 hover:text-primary-900 p-2 rounded-xl hover:bg-primary-50 transition-colors"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProduct(product.id)}
+                              aria-label="Delete product"
+                              className="text-danger-600 hover:text-danger-900 p-2 rounded-xl hover:bg-danger-50 transition-colors"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      ) : (
+        <CategoriesManager />
+      )}
 
       <ProductModal
         isOpen={showProductModal}

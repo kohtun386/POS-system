@@ -1,6 +1,7 @@
 export * from './common';
 export * from './alerts';
 export * from './cashShifts';
+export * from './categories';
 export * from './checkout';
 export * from './customers';
 export * from './discounts';
