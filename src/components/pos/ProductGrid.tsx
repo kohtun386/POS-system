@@ -30,7 +30,7 @@ export function ProductGrid({ onAddToCart, onNavigateToInventory }: ProductGridP
   const filteredProducts = state.products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (product.barcode && product.barcode.includes(searchTerm));
+                         (product.barcode && product.barcode.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
     return matchesSearch && matchesCategory && product.active;
   });
