@@ -100,6 +100,10 @@ export const productsService = {
       if (error.code === '23505' && error.message?.includes('products_shop_id_sku_unique')) {
         throw new Error(`SKU "${product.sku}" is already in use in this shop.`)
       }
+      // 23505 = unique_violation on idx_products_shop_id_barcode_unique (per-shop barcode uniqueness).
+      if (error.code === '23505' && error.message?.includes('idx_products_shop_id_barcode_unique')) {
+        throw new Error(`Barcode "${product.barcode}" is already in use in this shop.`)
+      }
       throw error
     }
 
@@ -149,6 +153,10 @@ export const productsService = {
     if (error) {
       if (error.code === '23505' && error.message?.includes('products_shop_id_sku_unique')) {
         throw new Error(`SKU "${product.sku}" is already in use in this shop.`)
+      }
+      // 23505 = unique_violation on idx_products_shop_id_barcode_unique (per-shop barcode uniqueness).
+      if (error.code === '23505' && error.message?.includes('idx_products_shop_id_barcode_unique')) {
+        throw new Error(`Barcode "${product.barcode}" is already in use in this shop.`)
       }
       throw error
     }

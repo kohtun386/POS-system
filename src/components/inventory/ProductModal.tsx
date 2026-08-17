@@ -155,7 +155,11 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
         return;
       }
       if (error instanceof Error && error.message.includes('already in use in this shop')) {
-        setErrors(prev => ({ ...prev, sku: error.message }));
+        if (error.message.startsWith('SKU ')) {
+          setErrors(prev => ({ ...prev, sku: error.message }));
+        } else if (error.message.startsWith('Barcode ')) {
+          setErrors(prev => ({ ...prev, barcode: error.message }));
+        }
         return;
       }
       console.error('Error saving product:', error);
@@ -323,9 +327,12 @@ export function ProductModal({ isOpen, onClose, product }: ProductModalProps) {
                   name="barcode"
                   value={formData.barcode}
                   onChange={handleChange}
-                  className="input"
+                  className={`input ${errors.barcode ? 'border-danger-500' : ''}`}
                   placeholder="Enter barcode"
+                  aria-invalid={!!errors.barcode}
+                  aria-describedby={errors.barcode ? 'error-barcode' : undefined}
                 />
+                {errors.barcode && <p id="error-barcode" className="text-danger-600 text-xs mt-1" role="alert">{errors.barcode}</p>}
               </div>
 
               <div className="md:col-span-2">
