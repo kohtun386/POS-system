@@ -1,10 +1,12 @@
 import { useState, useRef } from 'react';
-import { Plus, Search, Edit, Trash2, Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, AlertTriangle, TrendingUp, TrendingDown, Upload } from 'lucide-react';
 import { Product } from '../../types';
 import { useApp } from '../../hooks/useApp';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { ProductModal } from './ProductModal';
 import { CategoriesManager, CategoriesManagerHandle } from './CategoriesManager';
+import { ExportButton } from './ExportButton';
+import { ImportModal } from './ImportModal';
 import { swalConfig } from '../../lib/sweetAlert';
 
 export function InventoryManager() {
@@ -17,6 +19,7 @@ export function InventoryManager() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [sortBy, setSortBy] = useState<'name' | 'stock' | 'price'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const categories = ['All', ...Array.from(new Set(state.products.map((p: Product) => p.category)))];
 
@@ -99,7 +102,20 @@ export function InventoryManager() {
           </p>
         </div>
         
-        <div className="relative">
+        <div className="flex gap-2 relative">
+          {view === 'products' && (
+            <>
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="btn btn-secondary btn-md"
+              >
+                <Upload className="h-4 w-4" />
+                <span>Import CSV</span>
+              </button>
+              <ExportButton products={filteredProducts} />
+            </>
+          )}
+
           <button
             onClick={view === 'products' ? handleAddProduct : () => categoriesRef.current?.openAddModal()}
             className="btn btn-lg btn-primary"
@@ -325,6 +341,16 @@ export function InventoryManager() {
         isOpen={showProductModal}
         onClose={() => setShowProductModal(false)}
         product={editingProduct}
+      />
+
+      <ImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImported={async () => {
+          const { productsService } = await import('../../lib/services');
+          const products = await productsService.getAll(state.activeShopId);
+          dispatch({ type: 'SET_PRODUCTS', payload: products });
+        }}
       />
     </div>
   );
