@@ -5,6 +5,7 @@ import { useApp } from '../../hooks/useApp';
 import { DEFAULT_CURRENCY } from '../../lib/constants';
 import { ProductModal } from './ProductModal';
 import { CategoriesManager, CategoriesManagerHandle } from './CategoriesManager';
+import { ExportButton } from './ExportButton';
 import { swalConfig } from '../../lib/sweetAlert';
 
 export function InventoryManager() {
@@ -99,7 +100,11 @@ export function InventoryManager() {
           </p>
         </div>
         
-        <div className="relative">
+        <div className="flex gap-2 relative">
+          {view === 'products' && (
+            <ExportButton products={filteredProducts} />
+          )}
+
           <button
             onClick={view === 'products' ? handleAddProduct : () => categoriesRef.current?.openAddModal()}
             className="btn btn-lg btn-primary"
